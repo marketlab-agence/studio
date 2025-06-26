@@ -9,6 +9,7 @@ import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
 import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
+import { ChartContainer } from '@/components/ui/chart';
 
 export default function DashboardPage() {
     const { progress, overallProgress, totalCompleted, totalLessons } = useTutorial();
