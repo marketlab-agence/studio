@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useState, useEffect } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
@@ -13,10 +13,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TutorialPage() {
-  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   
   const {
     progress,
@@ -29,8 +30,10 @@ export default function TutorialPage() {
   } = useTutorial();
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   const chapterQuiz = useMemo(() => currentChapter ? QUIZZES[currentChapter.id] : undefined, [currentChapter]);
   
@@ -112,7 +115,7 @@ export default function TutorialPage() {
       </aside>
       <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
         
-        {!isMounted ? (
+        {authLoading || !user ? (
             skeletonView
         ) : (
           <>

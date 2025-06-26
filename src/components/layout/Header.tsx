@@ -22,7 +22,9 @@ export function Header() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    if (auth) {
+        await signOut(auth);
+    }
     router.push('/');
   };
 
@@ -44,7 +46,7 @@ export function Header() {
         </Link>
       </nav>
       <div className="flex items-center gap-4 ml-auto">
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button variant="ghost" size="icon" className="rounded-full" disabled={!user}>
           <Bell className="h-5 w-5" />
           <span className="sr-only">Notifications</span>
         </Button>

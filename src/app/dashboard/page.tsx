@@ -27,14 +27,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress, resetChapter, averageQuizScore, masteryIndex } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
     const [languagesData, setLanguagesData] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, authLoading, router]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -58,7 +68,7 @@ export default function DashboardPage() {
         setCurrentLocation(chapterId, lessonId);
     };
 
-    if (!isMounted) {
+    if (authLoading || !user || !isMounted) {
         return (
             <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <div className="mx-auto max-w-7xl space-y-8">
