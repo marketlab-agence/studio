@@ -3,9 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 type AuthContextType = {
   user: User | null;
@@ -18,7 +17,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
     if (!auth) {
@@ -26,47 +24,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // This handles the result of a redirect sign-in flow.
+    // Handle the redirect result from an OAuth provider
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          // This confirms the user has just signed in.
-          toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
-          router.push('/dashboard');
+          // User has just signed in via redirect.
+          // The onAuthStateChanged observer will handle the user state update.
+          toast({ title: 'Connexion réussie !', description: 'Bienvenue.' });
         }
       })
       .catch((error) => {
-        console.error("Auth redirect error:", error);
-        toast({ variant: 'destructive', title: "Erreur de connexion", description: error.message });
+        console.error("Erreur de connexion par redirection:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Erreur de connexion',
+          description: "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
+        });
       });
 
-    // This listener is the single source of truth for the user's auth state.
-    // It will fire after getRedirectResult completes, or on any other auth change.
+    // The onAuthStateChanged listener is the single source of truth for auth state.
+    // It fires after getRedirectResult is complete, or on any other auth state change.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      setLoading(false);
+      setLoading(false); // We are now certain of the auth state.
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once on initial mount.
+  }, [toast]);
 
   const value = { user, loading };
-  
+
+  // While loading, show a full-page loader to prevent any content flash
   if (loading) {
-      return (
-         <div className="flex min-h-screen w-full flex-col">
-            <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
-                <Skeleton className="h-6 w-48" />
-                <div className="flex items-center gap-4 ml-auto">
-                    <Skeleton className="h-8 w-24" />
-                </div>
-            </header>
-            <main className="flex-1 p-6">
-                <Skeleton className="h-screen w-full" />
-            </main>
-         </div>
-      )
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
