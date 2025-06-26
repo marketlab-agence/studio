@@ -8,7 +8,7 @@ import { GitLogoIcon } from '@/components/icons';
 
 export default function Home() {
   const [currentContext, setCurrentContext] = useState(
-    'You are a beginner learning about Git. Start by introducing the `git init` command.'
+    'Vous êtes un débutant qui apprend Git. Commencez par présenter la commande `git init`.'
   );
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [currentCommand, setCurrentCommand] = useState('');
@@ -19,7 +19,7 @@ export default function Home() {
     command: string;
   }) => {
     setCurrentContext(
-      `The user is on the tutorial step "${step.title}". The goal is to understand and use the command: \`${step.command}\`. Explain this command in the context of this step.`
+      `L'utilisateur est à l'étape du tutoriel "${step.title}". L'objectif est de comprendre et d'utiliser la commande : \`${step.command}\`. Expliquez cette commande dans le contexte de cette étape.`
     );
     setCurrentCommand(step.command);
   };
@@ -36,7 +36,7 @@ export default function Home() {
       <header className="flex h-16 items-center border-b px-6">
         <div className="flex items-center gap-3">
           <GitLogoIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-semibold font-headline">Git Explorer</h1>
+          <h1 className="text-2xl font-semibold font-headline">Explorateur Git</h1>
         </div>
       </header>
       <main className="flex flex-1 overflow-hidden">

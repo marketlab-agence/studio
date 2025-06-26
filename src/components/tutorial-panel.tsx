@@ -44,7 +44,7 @@ export function TutorialPanel({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Rocket className="h-5 w-5 text-primary" />
-            Your Progress
+            Votre Progression
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -52,14 +52,14 @@ export function TutorialPanel({
             <Progress value={progress} className="w-full" />
             <span className="text-sm font-medium text-muted-foreground">{Math.round(progress)}%</span>
           </div>
-          <p className="text-xs text-muted-foreground">Complete all steps to master the basics of Git!</p>
+          <p className="text-xs text-muted-foreground">Terminez toutes les étapes pour maîtriser les bases de Git !</p>
         </CardContent>
       </Card>
 
       <Tabs defaultValue="tutorials" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="mx-4 grid w-auto grid-cols-2">
-          <TabsTrigger value="tutorials"><BookOpen className="w-4 h-4 mr-2" />Tutorials</TabsTrigger>
-          <TabsTrigger value="files"><FileCode className="w-4 h-4 mr-2" />Files</TabsTrigger>
+          <TabsTrigger value="tutorials"><BookOpen className="w-4 h-4 mr-2" />Tutoriels</TabsTrigger>
+          <TabsTrigger value="files"><FileCode className="w-4 h-4 mr-2" />Fichiers</TabsTrigger>
         </TabsList>
         <ScrollArea className="flex-1">
           <TabsContent value="tutorials" className="m-0">

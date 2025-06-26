@@ -68,7 +68,7 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
       const errorOutput: HistoryItem = {
         id: Date.now() + 1,
         type: 'output',
-        content: 'An error occurred while explaining the command.',
+        content: 'Une erreur est survenue lors de l\'explication de la commande.',
       };
       setHistory((prev) => [...prev, errorOutput]);
     }
@@ -98,7 +98,7 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Bot className="h-4 w-4 text-accent" />
-                AI Explanation
+                Explication de l'IA
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -115,7 +115,7 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
     <div className="flex h-full flex-col bg-card">
       <div className="flex h-12 items-center border-b px-4">
         <TerminalIcon className="mr-2 h-5 w-5" />
-        <h2 className="font-semibold">Simulated Terminal</h2>
+        <h2 className="font-semibold">Terminal Simulé</h2>
       </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
@@ -123,7 +123,7 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
           {isLoading && (
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-accent" />
-              <span className="text-sm text-muted-foreground">AI is thinking...</span>
+              <span className="text-sm text-muted-foreground">L'IA réfléchit...</span>
             </div>
           )}
         </div>
@@ -135,12 +135,12 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
             ref={inputRef}
             value={command}
             onChange={(e) => setCommand(e.target.value)}
-            placeholder="Type a git command and press Enter..."
+            placeholder="Tapez une commande git et appuyez sur Entrée..."
             className="flex-1 bg-background font-code"
             disabled={isLoading}
-            aria-label="Git command input"
+            aria-label="Entrée de commande Git"
           />
-          <Button type="submit" size="icon" disabled={isLoading || !command} aria-label="Submit command">
+          <Button type="submit" size="icon" disabled={isLoading || !command} aria-label="Envoyer la commande">
             <Send className="h-4 w-4" />
           </Button>
         </form>

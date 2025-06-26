@@ -1,24 +1,24 @@
 'use server';
 
 /**
- * @fileOverview An AI agent that explains Git commands based on the current tutorial context.
+ * @fileOverview Un agent IA qui explique les commandes Git en fonction du contexte du tutoriel actuel.
  *
- * - explainGitCommand - A function that explains a given Git command.
- * - ExplainGitCommandInput - The input type for the explainGitCommand function.
- * - ExplainGitCommandOutput - The return type for the explainGitCommand function.
+ * - explainGitCommand - Une fonction qui explique une commande Git donnée.
+ * - ExplainGitCommandInput - Le type d'entrée pour la fonction explainGitCommand.
+ * - ExplainGitCommandOutput - Le type de retour pour la fonction explainGitCommand.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExplainGitCommandInputSchema = z.object({
-  command: z.string().describe('The Git command to explain.'),
-  context: z.string().describe('The current tutorial context or user state.'),
+  command: z.string().describe('La commande Git à expliquer.'),
+  context: z.string().describe('Le contexte actuel du tutoriel ou l\'état de l\'utilisateur.'),
 });
 export type ExplainGitCommandInput = z.infer<typeof ExplainGitCommandInputSchema>;
 
 const ExplainGitCommandOutputSchema = z.object({
-  explanation: z.string().describe('A detailed explanation of the Git command in the given context.'),
+  explanation: z.string().describe('Une explication détaillée de la commande Git dans le contexte donné.'),
 });
 export type ExplainGitCommandOutput = z.infer<typeof ExplainGitCommandOutputSchema>;
 
@@ -30,15 +30,15 @@ const prompt = ai.definePrompt({
   name: 'explainGitCommandPrompt',
   input: {schema: ExplainGitCommandInputSchema},
   output: {schema: ExplainGitCommandOutputSchema},
-  prompt: `You are an expert Git instructor. A student has entered the following Git command:
+  prompt: `Vous êtes un instructeur Git expert. Un étudiant a entré la commande Git suivante :
 
   {{command}}
 
-  The student is currently in this context or tutorial state:
+  L'étudiant se trouve actuellement dans ce contexte ou état de tutoriel :
 
   {{context}}
 
-  Explain what the command does, tailored to the current tutorial context, so the student can understand its function and usage in this situation.`,
+  Expliquez ce que fait la commande, en l'adaptant au contexte actuel du tutoriel, afin que l'étudiant puisse comprendre sa fonction et son utilisation dans cette situation.`,
 });
 
 const explainGitCommandFlow = ai.defineFlow(
