@@ -208,8 +208,17 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         
-        const totalCompleted = p.completedLessons?.size || 0;
-        
+        // Corrected logic for calculating completed lessons
+        const derivedCompletedLessons = new Set(p.completedLessons || []);
+        TUTORIALS.forEach(chapter => {
+          const quiz = QUIZZES[chapter.id];
+          const score = p.quizScores?.[chapter.id] ?? 0;
+          if (quiz && score >= quiz.passingScore) {
+            chapter.lessons.forEach(lesson => derivedCompletedLessons.add(lesson.id));
+          }
+        });
+
+        const totalCompleted = derivedCompletedLessons.size;
         const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
