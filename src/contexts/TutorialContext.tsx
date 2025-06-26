@@ -71,7 +71,19 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     const showQuizForChapter = useCallback((chapterId: string) => {
         const chapter = TUTORIALS.find(c => c.id === chapterId);
         if (!chapter) return;
-        setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: chapter.lessons[chapter.lessons.length - 1].id, currentView: 'quiz' }));
+        setProgress(prev => {
+            const newCompleted = new Set(prev.completedLessons);
+            if (prev.currentLessonId) {
+                newCompleted.add(prev.currentLessonId);
+            }
+            return { 
+                ...prev, 
+                currentChapterId: chapterId, 
+                currentLessonId: prev.currentLessonId,
+                currentView: 'quiz',
+                completedLessons: newCompleted,
+            };
+        });
     }, [setProgress]);
 
     const completeLesson = useCallback((lessonId: string) => {
@@ -84,20 +96,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
     const setQuizScore = useCallback((quizId: string, score: number) => {
         setProgress(prev => {
-            const quiz = QUIZZES[quizId];
-            const chapter = TUTORIALS.find(t => t.id === quizId);
-            
-            const newCompletedLessons = new Set(prev.completedLessons);
-
-            // If the user passed the quiz, mark all lessons in that chapter as complete
-            if (quiz && chapter && score >= quiz.passingScore) {
-                chapter.lessons.forEach(lesson => newCompletedLessons.add(lesson.id));
-            }
-            
             return {
                 ...prev,
                 quizScores: { ...prev.quizScores, [quizId]: score },
-                completedLessons: newCompletedLessons,
             };
         });
     }, [setProgress]);
@@ -193,7 +194,6 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         
-        // Corrected calculation for totalCompleted to ensure consistency
         const totalCompleted = p.completedLessons?.size || 0;
         
         const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
