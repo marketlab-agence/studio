@@ -31,14 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // If no user, we must check if a redirect just happened.
         // It's possible getRedirectResult is still processing.
-        // We set loading to false only after we're sure there's no user and no redirect.
         try {
           const result = await getRedirectResult(auth);
           if (result) {
             // A sign-in just completed via redirect.
             // onAuthStateChanged will fire again with the new user object.
-            // We just show the toast and wait for the next onAuthStateChanged event.
-            toast({ title: 'Connexion réussie !', description: 'Bienvenue.' });
+            toast({ title: 'Connexion réussie', description: 'Bienvenue.' });
             // We DON'T setLoading(false) here, we wait for the state to update.
           } else {
             // No user and no redirect result means the user is genuinely not logged in.
