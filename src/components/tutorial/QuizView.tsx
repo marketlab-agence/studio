@@ -67,15 +67,23 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         if (!isLastQuestion) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            let correctCount = 0;
-            quiz.questions.forEach(q => {
-                const correctAnswers = q.answers.filter(a => a.isCorrect).map(a => a.id).sort();
-                const userSelection = (userAnswers[q.id] || []).sort();
-                if (JSON.stringify(correctAnswers) === JSON.stringify(userSelection)) {
-                    correctCount++;
+            const correctCount = quiz.questions.reduce((count, q) => {
+                const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
+                const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
+
+                if (correctAnswers.size !== userAnswersForQuestion.size) {
+                    return count;
                 }
-            });
-            const finalScore = (correctCount / quiz.questions.length) * 100;
+
+                const isCorrect = [...correctAnswers].every(answerId => userAnswersForQuestion.has(answerId));
+
+                return isCorrect ? count + 1 : count;
+            }, 0);
+            
+            const finalScore = quiz.questions.length > 0
+                ? (correctCount / quiz.questions.length) * 100
+                : 0;
+
             setCalculatedScore(finalScore);
             onQuizComplete(finalScore);
             setShowResults(true);
