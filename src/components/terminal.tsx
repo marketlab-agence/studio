@@ -6,31 +6,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { explainCommand } from '@/app/actions';
-
-type HistoryItem = {
-  id: number;
-  type: 'command' | 'output' | 'ai';
-  content: string;
-};
+import { useTutorial } from '@/contexts/TutorialContext';
 
 type TerminalProps = {
-  context: string;
   initialCommand?: string;
 };
 
-export function Terminal({ context, initialCommand }: TerminalProps) {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+export function Terminal({ initialCommand }: TerminalProps) {
+  const { commandHistory, runCommandInTerminal, isTerminalLoading } = useTutorial();
   const [command, setCommand] = useState(initialCommand || '');
-  const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      const viewport = scrollAreaRef.current.querySelector('div');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
     }
-  }, [history]);
+  }, [commandHistory]);
   
   useEffect(() => {
     inputRef.current?.focus();
@@ -38,57 +33,30 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!command || isLoading) return;
+    if (!command || isTerminalLoading) return;
 
-    setIsLoading(true);
-
-    const newCommand: HistoryItem = { id: Date.now(), type: 'command', content: command };
-    setHistory((prev) => [...prev, newCommand]);
-    
-    try {
-      const result = await explainCommand(command, context);
-      const newOutput: HistoryItem[] = [];
-
-      if (result.output !== null) {
-        newOutput.push({ id: Date.now() + 1, type: 'output', content: result.output });
-      }
-      if (result.explanation) {
-        newOutput.push({ id: Date.now() + 2, type: 'ai', content: result.explanation });
-      }
-      setHistory((prev) => [...prev, ...newOutput]);
-
-    } catch (error) {
-      console.error(error);
-      const errorOutput: HistoryItem = {
-        id: Date.now() + 1,
-        type: 'output',
-        content: 'Une erreur est survenue lors de l\'explication de la commande.',
-      };
-      setHistory((prev) => [...prev, errorOutput]);
-    }
-
+    await runCommandInTerminal(command);
     setCommand('');
-    setIsLoading(false);
     
     setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
   };
 
-  const renderHistoryItem = (item: HistoryItem) => {
+  const renderHistoryItem = (item: any, index: number) => {
     switch (item.type) {
       case 'command':
         return (
-          <div className="flex items-center gap-2">
+          <div key={index} className="flex items-center gap-2">
             <span className="text-accent font-bold">$</span>
             <p className="font-code text-primary-foreground">{item.content}</p>
           </div>
         );
       case 'output':
-        return <pre className="font-code text-sm text-muted-foreground whitespace-pre-wrap">{item.content}</pre>;
+        return <pre key={index} className="font-code text-sm text-muted-foreground whitespace-pre-wrap">{item.content}</pre>;
       case 'ai':
         return (
-          <Card className="bg-card/50">
+          <Card key={index} className="bg-card/50 my-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Bot className="h-4 w-4 text-accent" />
@@ -113,8 +81,8 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
       </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
-          {history.map(renderHistoryItem)}
-          {isLoading && (
+          {commandHistory.map(renderHistoryItem)}
+          {isTerminalLoading && (
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-accent" />
               <span className="text-sm text-muted-foreground">L'IA réfléchit...</span>
@@ -131,10 +99,10 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
             onChange={(e) => setCommand(e.target.value)}
             placeholder="Tapez une commande git et appuyez sur Entrée..."
             className="flex-1 bg-background font-code"
-            disabled={isLoading}
+            disabled={isTerminalLoading}
             aria-label="Entrée de commande Git"
           />
-          <Button type="submit" size="icon" disabled={isLoading || !command} aria-label="Envoyer la commande">
+          <Button type="submit" size="icon" disabled={isTerminalLoading || !command} aria-label="Envoyer la commande">
             <Send className="h-4 w-4" />
           </Button>
         </form>

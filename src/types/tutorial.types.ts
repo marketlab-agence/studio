@@ -21,7 +21,7 @@ export interface Quiz {
 }
 
 export interface Question {
-    id: string;
+    id:string;
     text: string;
     answers: Answer[];
     isMultipleChoice?: boolean;
@@ -42,3 +42,8 @@ export interface UserProgress {
   currentChapterId: string | null;
   currentLessonId: string | null;
 }
+
+export type CommandHistoryItem = {
+    type: 'command' | 'output' | 'ai';
+    content: string;
+};

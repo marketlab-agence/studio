@@ -10,14 +10,17 @@ export interface Branch {
   commit: string; // ID du dernier commit
 }
 
-export interface FileStatus {
+export interface FileNode {
   path: string;
-  status: 'untracked' | 'modified' | 'staged' | 'deleted';
+  type: 'file' | 'folder';
+  status: 'untracked' | 'modified' | 'staged' | 'committed';
+  content: string;
+  children?: FileNode[];
 }
 
 export interface GitRepositoryState {
   commits: Commit[];
   branches: Branch[];
   head: string; // Nom de la branche ou ID du commit
-  files: FileStatus[];
+  files: FileNode[];
 }
