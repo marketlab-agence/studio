@@ -3,6 +3,14 @@ import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAr
 import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
 import { GitFlowDiagram } from '@/components/visualizations/GitGraph';
 import { ConceptExplanation } from '@/components/tutorial/ConceptExplanation';
+import { BranchCreator } from '@/components/interactive/BranchCreator';
+import { MergeSimulator } from '@/components/interactive/MergeSimulator';
+import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
+import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
+import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
+import { ConflictResolver } from '@/components/interactive/ConflictResolver';
+import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
+
 
 export const TUTORIALS: Tutorial[] = [
   {
@@ -121,15 +129,14 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '3-1',
         title: 'Que sont les branches ?',
         objective: 'Comprendre le concept de branche et son utilité dans un flux de travail de développement.',
-        content: `Une branche dans Git est simplement un pointeur léger et mobile vers un de vos commits. La branche par défaut est nommée \`main\` (ou \`master\` dans les anciens projets).
-
-Travailler avec des branches vous permet de développer des fonctionnalités, de corriger des bugs, ou d'expérimenter de nouvelles idées dans un espace isolé sans affecter la ligne principale de développement. C'est une des fonctionnalités les plus puissantes de Git.`,
+        content: `Une branche dans Git est simplement un pointeur léger et mobile vers un de vos commits. La branche par défaut est nommée \`main\` (ou \`master\` dans les anciens projets).\n\nTravailler avec des branches vous permet de développer des fonctionnalités, de corriger des bugs, ou d'expérimenter de nouvelles idées dans un espace isolé sans affecter la ligne principale de développement. C'est une des fonctionnalités les plus puissantes de Git.`,
       },
       {
         id: '3-2',
         title: 'Créer et Lister les branches',
         objective: 'Savoir créer une nouvelle branche et lister toutes les branches existantes.',
-        content: "Pour créer une nouvelle branche, utilisez la commande `git branch <nom-de-la-branche>`. Cela crée la branche, mais ne vous déplace pas dessus.\n\n\`\`\`bash\ngit branch feature-nouvelle-page\n\`\`\`\n\nPour lister toutes les branches de votre dépôt local, exécutez simplement `git branch`. L'astérisque (\*) indique la branche sur laquelle vous vous trouvez actuellement.\n\n\`\`\`bash\ngit branch\n\`\`\`",
+        content: "Pour créer une nouvelle branche, utilisez la commande `git branch <nom-de-la-branche>`. Cela crée la branche, mais ne vous déplace pas dessus.\n\n\`\`\`bash\ngit branch feature-nouvelle-page\n\`\`\`\n\nPour lister toutes les branches de votre dépôt local, exécutez simplement `git branch`. L'astérisque (*) indique la branche sur laquelle vous vous trouvez actuellement.\n\n\`\`\`bash\ngit branch\n\`\`\`",
+        component: BranchCreator
       },
       {
         id: '3-3',
@@ -142,7 +149,101 @@ Travailler avec des branches vous permet de développer des fonctionnalités, de
         title: 'Créer et basculer en une commande',
         objective: 'Utiliser un raccourci pour créer une branche et s\'y déplacer immédiatement.',
         content: "Le cas le plus courant est de créer une nouvelle branche et de basculer immédiatement dessus. Vous pouvez le faire en une seule commande avec l'option \`-b\` de \`git checkout\` ou avec la commande `git switch -c`.\n\nAvec `switch` (recommandé) :\n\`\`\`bash\ngit switch -c correction-bug-affichage\n\`\`\`\n\nAvec `checkout` (plus ancien) :\n\`\`\`bash\ngit checkout -b correction-bug-affichage\n\`\`\`",
+      },
+      {
+        id: '3-5',
+        title: 'Fusionner des branches',
+        objective: 'Apprendre à combiner le travail de différentes branches avec `git merge`.',
+        content: `Une fois que le travail sur votre branche est terminé et testé, vous voudrez l'intégrer dans votre branche principale (généralement \`main\`). C'est ce qu'on appelle une fusion (merge).\n\nPour fusionner une branche, vous devez d'abord vous placer sur la branche qui va *recevoir* les changements, puis exécuter \`git merge\`.\n\n\`\`\`bash\n# 1. Revenir sur la branche principale\ngit switch main\n\n# 2. Fusionner la branche de fonctionnalité dans main\ngit merge feature-nouvelle-page\n\`\`\`\nGit créera un nouveau "commit de fusion" qui intègre l'historique des deux branches.`,
+        component: MergeSimulator
       }
     ],
   },
+  {
+    id: 'remote-repositories',
+    title: '4. Dépôts Distants',
+    description: 'Apprenez à collaborer en synchronisant votre travail avec un serveur distant comme GitHub.',
+    lessons: [
+      {
+        id: '4-1',
+        title: 'Cloner un dépôt existant',
+        objective: 'Apprendre à obtenir une copie locale d\'un projet distant existant.',
+        content: `Jusqu'à présent, nous avons travaillé uniquement en local. Pour collaborer, vous devez interagir avec des dépôts hébergés sur un serveur (comme GitHub, GitLab, etc.).\n\nLa première étape est souvent de "cloner" un dépôt existant. Cela crée une copie complète du projet, y compris tout l'historique, sur votre machine.\n\n\`\`\`bash\n# Syntaxe: git clone <URL_DU_DÉPÔT>\ngit clone https://github.com/facebook/react.git\n\`\`\`\nLorsque vous clonez un dépôt, Git configure automatiquement une connexion au dépôt d'origine, qu'il nomme par défaut **origin**. C'est votre "dépôt distant".`
+      },
+      {
+        id: '4-2',
+        title: 'Envoyer les changements (Push)',
+        objective: 'Savoir comment envoyer vos commits locaux vers le dépôt distant.',
+        content: `Une fois que vous avez effectué des commits locaux, vous devez les "pousser" (push) vers le dépôt distant pour les partager avec d'autres.\n\nLa commande est \`git push <nom-du-distant> <nom-de-la-branche>\`.\n\n\`\`\`bash\n# Envoie les commits de votre branche 'main' locale vers la branche 'main' du distant 'origin'\ngit push origin main\n\`\`\`\n> La première fois que vous poussez une nouvelle branche, vous devrez peut-être utiliser \`git push -u origin <nom-de-la-branche>\` pour lier votre branche locale à la branche distante.`,
+        component: PushPullAnimator
+      },
+      {
+        id: '4-3',
+        title: 'Récupérer les changements (Pull & Fetch)',
+        objective: 'Comprendre comment mettre à jour votre dépôt local avec les changements provenant du distant.',
+        content: `Si des collaborateurs ont poussé des changements, votre copie locale sera en retard. Vous devez la mettre à jour.\n\nIl y a deux commandes principales pour cela :\n- \`git fetch\`: Récupère toutes les nouveautés du distant mais **ne les fusionne pas** dans votre branche de travail. C'est une façon sûre de voir ce qui a changé.\n- \`git pull\`: Est une combinaison de \`git fetch\` suivi d'un \`git merge\`. Il récupère les changements et les fusionne immédiatement dans votre branche actuelle.\n\n\`\`\`bash\n# Option 1: Récupérer et fusionner manuellement (plus de contrôle)\ngit fetch origin\ngit merge origin/main\n\n# Option 2: Récupérer et fusionner automatiquement (plus simple)\ngit pull origin main\n\`\`\``
+      }
+    ]
+  },
+  {
+    id: 'collaboration',
+    title: '5. Collaboration sur GitHub',
+    description: 'Découvrez le flux de travail standard pour contribuer à des projets sur GitHub.',
+    lessons: [
+      {
+        id: '5-1',
+        title: 'Fork vs. Clone',
+        objective: 'Comprendre la différence entre "forker" et "cloner" et quand utiliser chaque approche.',
+        content: `**Cloner** crée une copie liée d'un dépôt sur lequel vous avez les droits d'écriture.\n\n**Forker** crée une copie personnelle d'un dépôt appartenant à quelqu'un d'autre sur votre propre compte GitHub. C'est la première étape pour contribuer à un projet open source sur lequel vous n'avez pas les droits de pousser directement.\n\nLe flux est le suivant :\n1.  **Fork** le dépôt original sur GitHub.\n2.  **Clone** votre fork sur votre machine locale.\n3.  Travaillez, faites des commits, et **push** vers votre fork.\n4.  Créez une **Pull Request** de votre fork vers le dépôt original.`,
+        component: ForkVsCloneDemo
+      },
+      {
+        id: '5-2',
+        title: 'Les Pull Requests (PR)',
+        objective: 'Apprendre à proposer des changements à un projet en utilisant les Pull Requests.',
+        content: `Une Pull Request (ou Merge Request sur d'autres plateformes) est une demande formelle d'intégrer vos changements (commits) d'une branche à une autre (généralement de votre branche de fonctionnalité vers la branche \`main\` du projet).\n\nC'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion où vous pouvez :\n- Décrire vos changements.\n- Discuter de l'implémentation.\n- Recevoir des commentaires et des revues de code.\n- Voir les résultats des tests automatisés.`,
+        component: PRWorkflowSimulator
+      }
+    ]
+  },
+  {
+    id: 'conflicts',
+    title: '6. Gérer les Conflits',
+    description: 'Apprenez à résoudre les inévitables conflits de fusion.',
+    lessons: [
+      {
+        id: '6-1',
+        title: 'Qu\'est-ce qu\'un conflit ?',
+        objective: 'Comprendre ce qui cause un conflit de fusion.',
+        content: `Un conflit de fusion survient lorsque vous essayez de fusionner deux branches qui ont modifié la même ligne dans le même fichier, et Git ne sait pas quelle version choisir.\n\nGit est très intelligent, mais il ne peut pas lire dans vos pensées ! Il marque alors le fichier comme étant en conflit et vous passe la main pour que vous preniez la décision finale.`
+      },
+      {
+        id: '6-2',
+        title: 'Résoudre un conflit de fusion',
+        objective: 'Apprendre le processus pour résoudre manuellement un conflit de fusion.',
+        content: `Lorsque vous avez un conflit, Git modifie le fichier problématique pour vous montrer les deux versions contradictoires, délimitées par des marqueurs comme ceci :\n\n\`\`\`\n<<<<<<< HEAD\nVotre version du code (de la branche actuelle)\n=======\nLa version du code de la branche que vous fusionnez\n>>>>>>> nom-de-la-branche\n\`\`\`\n\nVotre tâche est de :\n1. Ouvrir le fichier.\n2. Choisir la version que vous voulez garder (ou une combinaison des deux).\n3. Supprimer les marqueurs de conflit (\`<<<<<<<\`, \`=======\`, \`>>>>>>>\`).\n4. Sauvegarder le fichier.\n5. Ajouter le fichier résolu à la zone de staging avec \`git add\`.\n6. Finaliser la fusion avec \`git commit\`.`,
+        component: ConflictResolver
+      }
+    ]
+  },
+  {
+    id: 'undoing-changes',
+    title: '7. Annuler des Modifications',
+    description: 'Découvrez comment revenir en arrière en toute sécurité avec Git.',
+    lessons: [
+      {
+        id: '7-1',
+        title: 'Annuler des modifications',
+        objective: 'Comparer les différentes stratégies pour annuler des changements : `reset`, `revert` et `checkout`.',
+        content: `Git offre plusieurs outils pour revenir en arrière, chacun ayant un usage spécifique. Il est crucial de comprendre leurs différences pour ne pas perdre de travail.\n\n- \`git checkout -- <fichier>\` : Annule les modifications dans le répertoire de travail qui n'ont pas encore été stagées.\n- \`git reset HEAD <fichier>\` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.\n- \`git reset <commit>\` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.\n- \`git revert <commit>\` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.`,
+        component: UndoCommandComparison
+      },
+      {
+        id: '7-2',
+        title: 'Reflog : Votre filet de sécurité',
+        objective: 'Découvrir la commande `reflog` pour retrouver des commits perdus.',
+        content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard <hash-du-commit>\` pour y revenir.`
+      }
+    ]
+  }
 ];
