@@ -1,64 +1,55 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { EyeOff, Eye } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
 
-// Basic .gitignore matching logic (simplified for demo)
+// Simplified .gitignore matching logic for the demo
 const isIgnored = (filepath: string, gitignoreContent: string): boolean => {
   const patterns = gitignoreContent.split('\n').filter(p => p.trim() !== '' && !p.startsWith('#'));
+  
   return patterns.some(pattern => {
-    // Escape special regex characters from the pattern
-    let regexPattern = pattern
-        .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape basic regex characters
-        .replace(/\*\*/g, '.*') // Handle globstar for directories
-        .replace(/\*/g, '[^/]*'); // Handle star for files/dirs within a path segment
-
-    if (pattern.startsWith('/') && pattern.endsWith('/')) {
-         // Pattern like /build/
-        regexPattern = `^${regexPattern.slice(1, -1)}(/.*)?$`;
-    } else if (pattern.startsWith('/')) {
-        // Pattern like /file.log
-        regexPattern = `^${regexPattern.slice(1)}`;
-    } else if (pattern.endsWith('/')) {
-        // Pattern like node_modules/
-        regexPattern = `(^|/)${regexPattern.slice(0, -1)}(/|$)`;
-    } else if (!pattern.includes('/')) {
-        // Pattern like *.log
-        regexPattern = `(^|/)${regexPattern}$`;
+    pattern = pattern.trim();
+    
+    // Rule for directories (e.g., "node_modules/")
+    if (pattern.endsWith('/')) {
+      const dir = pattern.slice(0, -1);
+      return filepath.startsWith(dir + '/') || filepath === dir;
     }
     
-    try {
-        return new RegExp(regexPattern).test(filepath);
-    } catch (e) {
-        console.error("Invalid regex from gitignore pattern:", regexPattern, e);
-        return false;
+    // Rule for wildcard extensions (e.g., "*.log")
+    if (pattern.startsWith('*.')) {
+      const ext = pattern.slice(1); // includes the dot
+      return filepath.endsWith(ext);
     }
+    
+    // Rule for specific files (e.g., ".env") or files in any directory
+    // This is a simplification. A real gitignore has more complex rules.
+    return filepath.endsWith('/' + pattern) || filepath === pattern;
   });
 };
+
 
 export function GitignoreTester() {
   const [gitignoreContent, setGitignoreContent] = useState('node_modules/\n*.log\n.env');
   const [testPath, setTestPath] = useState('node_modules/express/index.js');
   const [result, setResult] = useState<boolean | null>(null);
-
-  const handleTest = () => {
-    setResult(isIgnored(testPath, gitignoreContent));
-  };
   
-  React.useEffect(() => {
-    // Initial test run
-    handleTest();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const debouncedGitignore = useDebounce(gitignoreContent, 300);
+  const debouncedTestPath = useDebounce(testPath, 300);
+
+  useEffect(() => {
+    setResult(isIgnored(debouncedTestPath, debouncedGitignore));
+  }, [debouncedTestPath, debouncedGitignore]);
+
 
   return (
     <Card className="my-6">
       <CardHeader>
         <CardTitle>Simulateur de `.gitignore`</CardTitle>
-        <CardDescription>Testez vos règles `.gitignore` pour voir si un chemin de fichier serait ignoré.</CardDescription>
+        <CardDescription>Testez vos règles `.gitignore` pour voir si un chemin de fichier serait ignoré. Le résultat se met à jour automatiquement.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
@@ -67,20 +58,21 @@ export function GitignoreTester() {
             <Textarea
               value={gitignoreContent}
               onChange={(e) => setGitignoreContent(e.target.value)}
-              className="font-code h-32"
+              className="font-code h-48"
             />
           </div>
-          <div>
-            <label htmlFor="test-path" className="text-sm font-medium mb-1 block">Chemin du fichier à tester</label>
-            <Input
-              id="test-path"
-              value={testPath}
-              onChange={(e) => setTestPath(e.target.value)}
-              className="font-code"
-            />
-            <Button onClick={handleTest} className="mt-2 w-full">Tester</Button>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="test-path" className="text-sm font-medium mb-1 block">Chemin du fichier à tester</label>
+              <Input
+                id="test-path"
+                value={testPath}
+                onChange={(e) => setTestPath(e.target.value)}
+                className="font-code"
+              />
+            </div>
             {result !== null && (
-              <div className="mt-4 flex items-center gap-2 p-3 rounded-md bg-muted">
+              <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
                 {result ? <EyeOff className="h-5 w-5 text-red-400" /> : <Eye className="h-5 w-5 text-green-400" />}
                 <p className="font-semibold">
                   Le fichier est {result ? 'ignoré' : 'suivi'}.
