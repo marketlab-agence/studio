@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/CodeBlock';
-import { PlayCircle, Build, TestTube, Rocket, Trash2 } from 'lucide-react';
+import { PlayCircle, Hammer, TestTube, Rocket, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 type ActionStep = {
@@ -16,7 +16,7 @@ type ActionStep = {
 
 const availableSteps: Record<string, Omit<ActionStep, 'id'>> = {
     test: { name: 'Run tests', run: 'npm test', icon: TestTube },
-    build: { name: 'Build project', run: 'npm run build', icon: Build },
+    build: { name: 'Build project', run: 'npm run build', icon: Hammer },
     deploy: { name: 'Deploy to production', run: 'vercel deploy --prod', icon: Rocket },
 };
 
@@ -76,7 +76,7 @@ export function ActionsWorkflowBuilder() {
                     Ajouter 'Test'
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => addStep('build')}>
-                    <Build className="mr-2 h-4 w-4" />
+                    <Hammer className="mr-2 h-4 w-4" />
                     Ajouter 'Build'
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => addStep('deploy')}>

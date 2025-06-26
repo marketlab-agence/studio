@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GitPullRequest, MessageSquare, CheckCircle, GitMerge } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -134,7 +134,9 @@ export function PRWorkflowSimulator() {
                                 isActive ? "bg-primary border-primary" : "bg-muted border-border",
                                 isCurrent && "ring-4 ring-primary/20"
                             )}>
-                                <stepsConfig[step].icon className={cn("h-4 w-4", isActive ? "text-primary-foreground" : "text-muted-foreground")} />
+                                {React.createElement(stepsConfig[step].icon, {
+                                    className: cn("h-4 w-4", isActive ? "text-primary-foreground" : "text-muted-foreground")
+                                })}
                             </div>
                             <p className={cn("text-xs mt-2", isCurrent ? "font-bold text-primary" : "text-muted-foreground")}>{stepsConfig[step].title}</p>
                         </div>
