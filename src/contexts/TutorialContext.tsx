@@ -185,8 +185,6 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         const totalCompleted = p.completedLessons?.size || 0;
         
-        const lessonCompletionProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
-
         const quizzes = Object.values(QUIZZES);
         const totalQuizzes = quizzes.length;
         const passedQuizzes = quizzes.reduce((acc, quiz) => {
@@ -197,10 +195,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             return acc;
         }, 0);
 
-        const quizCompletionProgress = totalQuizzes > 0 ? (passedQuizzes / totalQuizzes) * 100 : 0;
-
-        // New overall progress: 50% from lessons, 50% from quizzes
-        const overallProgress = (lessonCompletionProgress * 0.5) + (quizCompletionProgress * 0.5);
+        const overallProgress = totalQuizzes > 0 ? (passedQuizzes / totalQuizzes) * 100 : 0;
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
