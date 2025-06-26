@@ -8,6 +8,7 @@ export interface Tutorial {
 export interface Lesson {
   id: string;
   title: string;
+  objective: string;
   content: string; // Markdown content
   component?: React.ComponentType;
 }

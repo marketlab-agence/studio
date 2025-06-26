@@ -2,19 +2,12 @@
 
 import React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { ChartTooltipContent } from '@/components/ui/chart';
 
 type ChartData = {
     name: string;
     score: number;
 }
-
-const chartConfig = {
-    score: {
-      label: 'Score',
-      color: 'hsl(var(--primary))',
-    },
-} satisfies ChartConfig;
 
 export function StatisticsChart({ data }: { data: ChartData[] }) {
     if (!data || data.length === 0) {
@@ -26,19 +19,18 @@ export function StatisticsChart({ data }: { data: ChartData[] }) {
     }
 
   return (
-    <ChartContainer config={chartConfig} className="h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart accessibilityLayer data={data}>
             <XAxis
               dataKey="name"
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
               interval={0}
             />
             <YAxis
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -47,11 +39,10 @@ export function StatisticsChart({ data }: { data: ChartData[] }) {
             />
             <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent formatter={(value) => `${value}%`}/>}
+                content={<ChartTooltipContent formatter={(value) => `${value}%`} nameKey="name" />}
             />
-            <Bar dataKey="score" fill="var(--color-score)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-    </ChartContainer>
   );
 }

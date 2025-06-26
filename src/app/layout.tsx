@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import { TutorialProvider } from '@/contexts/TutorialContext';
 import './globals.css';
+import { Header } from '@/components/layout/Header';
 
 export const metadata: Metadata = {
   title: 'Git & GitHub Interactif',
@@ -23,7 +24,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <TutorialProvider>
-          {children}
+          <div className="flex min-h-screen w-full flex-col">
+            <Header />
+            {children}
+          </div>
         </TutorialProvider>
         <Toaster />
       </body>
