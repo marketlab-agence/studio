@@ -67,22 +67,48 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         if (!isLastQuestion) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            const correctCount = quiz.questions.reduce((count, q) => {
+            const { totalScore, maxScore } = quiz.questions.reduce((acc, q) => {
                 const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
                 const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
 
-                if (correctAnswers.size !== userAnswersForQuestion.size) {
-                    return count;
+                if (q.isMultipleChoice) {
+                    // Pour les questions à choix multiples, on utilise un système de crédit partiel
+                    const totalCorrectAnswers = correctAnswers.size;
+                    const totalIncorrectAnswers = q.answers.length - totalCorrectAnswers;
+                    
+                    let score = 0;
+                    
+                    // Points positifs pour les bonnes réponses sélectionnées
+                    const correctSelected = [...userAnswersForQuestion].filter(id => correctAnswers.has(id)).length;
+                    score += correctSelected;
+                    
+                    // Points négatifs pour les mauvaises réponses sélectionnées
+                    const incorrectSelected = [...userAnswersForQuestion].filter(id => !correctAnswers.has(id)).length;
+                    score -= incorrectSelected;
+                    
+                    // Le score ne peut pas être négatif
+                    score = Math.max(0, score);
+                    
+                    // Normaliser le score sur la base du nombre de bonnes réponses
+                    const questionScore = totalCorrectAnswers > 0 ? score / totalCorrectAnswers : 0;
+                    
+                    return {
+                        totalScore: acc.totalScore + questionScore,
+                        maxScore: acc.maxScore + 1
+                    };
+                } else {
+                    // Pour les questions à choix unique, logique existante
+                    const isCorrect = correctAnswers.size === userAnswersForQuestion.size && 
+                                    [...correctAnswers].every(answerId => userAnswersForQuestion.has(answerId));
+                    
+                    return {
+                        totalScore: acc.totalScore + (isCorrect ? 1 : 0),
+                        maxScore: acc.maxScore + 1
+                    };
                 }
-
-                const isCorrect = [...correctAnswers].every(answerId => userAnswersForQuestion.has(answerId));
-
-                return isCorrect ? count + 1 : count;
-            }, 0);
+            }, { totalScore: 0, maxScore: 0 });
             
-            const finalScore = quiz.questions.length > 0
-                ? (correctCount / quiz.questions.length) * 100
-                : 0;
+            const finalScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
 
             setCalculatedScore(finalScore);
             onQuizComplete(finalScore);
