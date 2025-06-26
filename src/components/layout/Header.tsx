@@ -43,7 +43,9 @@ export function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profil</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard">Tableau de bord</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Paramètres</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Déconnexion</DropdownMenuItem>

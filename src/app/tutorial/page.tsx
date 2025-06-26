@@ -9,7 +9,8 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { QUIZZES } from '@/lib/quiz';
 import { TUTORIALS } from '@/lib/tutorials';
 import { cn } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 
 export default function TutorialPage() {
   const {
@@ -73,11 +74,17 @@ export default function TutorialPage() {
                     <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
                 </>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <Card className="m-8 p-8 text-center text-muted-foreground border-dashed">
-                  <h2 className="text-xl font-semibold mb-2">Bienvenue !</h2>
-                  <p>Veuillez sélectionner une leçon dans le panneau de gauche pour commencer votre apprentissage.</p>
-                </Card>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <BookOpen className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Bienvenue dans le tutoriel interactif</h2>
+                <p className="max-w-md text-muted-foreground mb-6">
+                  Sélectionnez un chapitre dans le panneau de gauche, ou cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
+                </p>
+                <Button size="lg" onClick={() => setCurrentLocation(TUTORIALS[0].id, TUTORIALS[0].lessons[0].id)}>
+                    Commencer le tutoriel
+                </Button>
               </div>
             )}
         </div>
