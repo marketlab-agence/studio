@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { 
     GoogleAuthProvider, 
     GithubAuthProvider, 
-    signInWithPopup, 
+    signInWithRedirect,
+    getRedirectResult,
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword 
 } from 'firebase/auth';
@@ -20,14 +21,14 @@ import { useToast } from '@/hooks/use-toast';
 import { GoogleIcon, GithubIcon } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { Loader2, Terminal } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start loading to check for redirect
   const isFirebaseConfigured = !!auth;
 
   const handleAuthError = (error: any, title: string) => {
@@ -39,13 +40,35 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  // Check for redirect result on page load
+  useEffect(() => {
+    if (!auth) {
+        setLoading(false);
+        return;
+    }
+    
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // User is signed in.
+          toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
+          router.push('/dashboard');
+        } else {
+          // No user, normal page load.
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        handleAuthError(error, 'Erreur de connexion');
+      });
+  }, [auth, router, toast]);
+
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     if (!auth) return;
     setLoading(true);
     try {
-      await signInWithPopup(auth, provider);
-      toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
-      router.push('/dashboard');
+      await signInWithRedirect(auth, provider);
+      // The page will redirect.
     } catch (error: any) {
       handleAuthError(error, 'Erreur de connexion');
     }
@@ -76,6 +99,17 @@ export default function LoginPage() {
       handleAuthError(error, 'Erreur de connexion');
     }
   };
+
+  if (loading) {
+    return (
+        <main className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex items-center text-muted-foreground">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                <span>Vérification de l'authentification...</span>
+            </div>
+        </main>
+    );
+  }
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
