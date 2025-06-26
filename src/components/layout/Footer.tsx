@@ -8,7 +8,7 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <GitCommitHorizontal className="h-6 w-6 text-primary" />
-            <span>Git Explorer</span>
+            <span>Katalyst</span>
           </Link>
           <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium md:gap-6">
             <Link href="/courses" className="text-muted-foreground transition-colors hover:text-foreground">
@@ -26,7 +26,7 @@ export function Footer() {
           </nav>
         </div>
         <div className="mt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Git Explorer. Tous droits réservés.
+          © {new Date().getFullYear()} Katalyst. Tous droits réservés.
         </div>
       </div>
     </footer>

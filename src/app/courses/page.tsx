@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Formations - Git Explorer',
+  title: 'Formations - Katalyst',
   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
 };
 

@@ -3,8 +3,8 @@ import { Terminal, MousePointerClick, BrainCircuit, Bot, AreaChart, CheckCircle 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-  title: 'Fonctionnalités - Git Explorer',
-  description: 'Découvrez les outils interactifs qui font de Git Explorer la meilleure plateforme pour maîtriser les outils professionnels.',
+  title: 'Fonctionnalités - Katalyst',
+  description: 'Découvrez les outils interactifs qui font de Katalyst la meilleure plateforme pour maîtriser les outils professionnels.',
 };
 
 const features = [
@@ -49,7 +49,7 @@ export default function FeaturesPage() {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">La compétence par la pratique.</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Git Explorer est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. Découvrez les fonctionnalités qui rendent notre approche unique.
+                Katalyst est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. Découvrez les fonctionnalités qui rendent notre approche unique.
               </p>
             </div>
           </div>

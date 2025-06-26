@@ -7,8 +7,8 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Git Explorer | Formations Interactives pour Outils Professionnels',
-  description: 'Maîtrisez Jira, AWS, Trello, et plus encore, grâce à des simulations pratiques. La compétence par la pratique.',
+  title: 'Katalyst | Accélérez votre maîtrise des outils professionnels',
+  description: 'Devenez un expert des outils DevOps & AI. Maîtrisez Jira, AWS, GitHub Actions et plus encore grâce à des simulations pratiques.',
 };
 
 export default function RootLayout({

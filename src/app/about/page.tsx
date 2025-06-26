@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'À Propos - Git Explorer',
+  title: 'À Propos - Katalyst',
   description: 'Notre mission : accélérer votre maîtrise des outils professionnels grâce à une pédagogie basée sur la pratique.',
 };
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
                 Dans le monde de la technologie, savoir n'est pas suffisant. Il faut savoir *faire*. Pourtant, la plupart des formations s'arrêtent à la théorie, vous laissant face à un fossé entre ce que vous avez appris et ce que vous devez accomplir.
               </p>
               <p className="text-muted-foreground md:text-xl/relaxed">
-                **Git Explorer** a été créé pour combler ce fossé. Nous croyons que la compétence naît de la pratique délibérée. C'est pourquoi nous avons développé une plateforme d'apprentissage unique qui vous plonge dans des environnements simulés et des scénarios réels. Vous ne vous contentez pas de regarder, vous manipulez. Vous ne vous contentez pas de lire, vous construisez.
+                **Katalyst** a été créé pour combler ce fossé. Nous croyons que la compétence naît de la pratique délibérée. C'est pourquoi nous avons développé une plateforme d'apprentissage unique qui vous plonge dans des environnements simulés et des scénarios réels. Vous ne vous contentez pas de regarder, vous manipulez. Vous ne vous contentez pas de lire, vous construisez.
               </p>
               <p className="text-muted-foreground md:text-xl/relaxed">
                 Notre objectif est de transformer la manière dont vous apprenez les outils professionnels, en passant d'une assimilation passive à une acquisition active de compétences. Pour que vous soyez non seulement prêt, mais véritablement opérationnel.

@@ -32,7 +32,7 @@ export function Header() {
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
       <Link href="/" className="flex items-center gap-2 font-semibold">
         <GitCommitHorizontal className="h-6 w-6 text-primary" />
-        <span className="text-lg">Git Explorer</span>
+        <span className="text-lg">Katalyst</span>
       </Link>
       {user && (
         <nav className="mx-auto hidden flex-col gap-6 text-sm font-medium md:flex md:flex-row md:items-center">

@@ -23,8 +23,8 @@ export default function Home() {
             <div className="flex flex-col justify-center space-y-4">
               <div className="space-y-4">
                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                  La maîtrise des outils professionnels.
-                  <span className="block text-primary">Réinventée.</span>
+                  Accélérez votre maîtrise des outils.
+                  <span className="block text-primary">Devenez un Katalyst.</span>
                 </h1>
                 <p className="max-w-[600px] text-muted-foreground md:text-xl">
                   De Jira à AWS, apprenez en faisant. Nos simulations interactives vous plongent dans des scénarios réels pour une compétence qui dure vraiment.
@@ -61,7 +61,7 @@ export default function Home() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Notre différence</div>
+              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">La méthode Katalyst</div>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">La compétence par la pratique.</h2>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 Les tutoriels vidéo, c'est bien. La mémoire musculaire, c'est mieux. Notre approche unique vous fait manipuler les outils comme si vous étiez déjà en poste.

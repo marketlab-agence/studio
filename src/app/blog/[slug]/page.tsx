@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${post.title} - Git Explorer Blog`,
+    title: `${post.title} - Katalyst Blog`,
     description: post.description,
   };
 }

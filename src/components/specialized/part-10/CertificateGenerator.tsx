@@ -66,7 +66,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                         
                         <div className="flex items-center gap-4">
                             <GitCommitHorizontal className="h-10 w-10 text-primary"/>
-                            <h1 className="text-2xl font-bold">Git & GitHub Interactif</h1>
+                            <h1 className="text-2xl font-bold">Maîtrise de Git & GitHub</h1>
                         </div>
 
                         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Certificat d'Accomplissement</p>
@@ -91,7 +91,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                                     <div className="absolute inset-1 rounded-full border-2 border-dashed border-primary/50"></div>
                                     <ShieldCheck className="absolute inset-0 m-auto h-10 w-10 text-primary" />
                                 </div>
-                                <p className="text-sm font-semibold mt-2">Git Explorer Academy</p>
+                                <p className="text-sm font-semibold mt-2">Katalyst Academy</p>
                             </div>
 
                             <div className="text-center">

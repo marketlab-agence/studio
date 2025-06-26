@@ -13,7 +13,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: '5 Astuces Jira que même les Experts ignorent',
     description: 'Boostez votre productivité et celle de votre équipe avec ces fonctionnalités méconnues de Jira. Passez de simple utilisateur à véritable power-user.',
     date: '15 juillet 2024',
-    author: 'L\'équipe Git Explorer',
+    author: 'L\'équipe Katalyst',
     content: `
 Jira est un outil incroyablement puissant, mais la plupart des équipes n'en effleurent que la surface. Voici 5 astuces pour transformer votre gestion de projet.
 
@@ -58,7 +58,7 @@ Un bon tableau de bord donne une vue d'ensemble du projet en un clin d'œil.
     title: 'AWS pour les Débutants : Par où commencer en 2024 ?',
     description: 'Le cloud AWS peut sembler intimidant. Nous vous guidons à travers les 3 services fondamentaux pour commencer votre aventure dans le cloud computing.',
     date: '10 juillet 2024',
-    author: 'L\'équipe Git Explorer',
+    author: 'L\'équipe Katalyst',
     content: `
 Amazon Web Services (AWS) offre des centaines de services, ce qui peut être paralysant pour un débutant. La clé est de ne pas essayer de tout apprendre d'un coup. Concentrez-vous sur les 3 piliers.
 
