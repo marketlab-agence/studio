@@ -82,20 +82,21 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }, [setProgress]);
 
     const setQuizScore = useCallback((quizId: string, score: number) => {
-        const quiz = QUIZZES[quizId];
-        const chapter = TUTORIALS.find(t => t.id === quizId);
-
         setProgress(prev => {
-            const newCompleted = new Set(prev.completedLessons);
+            const quiz = QUIZZES[quizId];
+            const chapter = TUTORIALS.find(t => t.id === quizId);
+            
+            const newCompletedLessons = new Set(prev.completedLessons);
+
             // If the user passed the quiz, mark all lessons in that chapter as complete
             if (quiz && chapter && score >= quiz.passingScore) {
-                chapter.lessons.forEach(lesson => newCompleted.add(lesson.id));
+                chapter.lessons.forEach(lesson => newCompletedLessons.add(lesson.id));
             }
-
+            
             return {
                 ...prev,
                 quizScores: { ...prev.quizScores, [quizId]: score },
-                completedLessons: newCompleted,
+                completedLessons: newCompletedLessons,
             };
         });
     }, [setProgress]);
@@ -122,7 +123,10 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             if (!isLastLesson) {
                 nextLessonId = currentChapter.lessons[lessonIndex + 1].id;
             } else {
-                if (chapterIndex < TUTORIALS.length - 1) {
+                const quiz = QUIZZES[currentChapter.id];
+                const score = prev.quizScores[currentChapter.id] ?? 0;
+                const passed = score >= (quiz?.passingScore ?? 80);
+                if (chapterIndex < TUTORIALS.length - 1 && passed) {
                     const nextChapter = TUTORIALS[chapterIndex + 1];
                     nextChapterId = nextChapter.id;
                     nextLessonId = nextChapter.lessons[0].id;
@@ -185,17 +189,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         const totalCompleted = p.completedLessons?.size || 0;
         
-        const quizzes = Object.values(QUIZZES);
-        const totalQuizzes = quizzes.length;
-        const passedQuizzes = quizzes.reduce((acc, quiz) => {
-            const score = p.quizScores?.[quiz.id] ?? 0;
-            if (score >= quiz.passingScore) {
-                return acc + 1;
-            }
-            return acc;
-        }, 0);
-
-        const overallProgress = totalQuizzes > 0 ? (passedQuizzes / totalQuizzes) * 100 : 0;
+        const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
