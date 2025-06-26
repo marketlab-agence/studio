@@ -5,6 +5,7 @@ import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (!auth) {
@@ -29,8 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((result) => {
         if (result) {
           // User has just signed in via redirect.
-          // The onAuthStateChanged observer will handle the user state update.
           toast({ title: 'Connexion réussie !', description: 'Bienvenue.' });
+          // Redirect them to the dashboard immediately.
+          router.push('/dashboard');
         }
       })
       .catch((error) => {
@@ -43,16 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     // The onAuthStateChanged listener is the single source of truth for auth state.
-    // It fires after getRedirectResult is complete, or on any other auth state change.
+    // It fires after getRedirectResult has processed.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false); // We are now certain of the auth state.
     });
 
     return () => unsubscribe();
-  }, [toast]);
-
-  const value = { user, loading };
+  }, [toast, router]);
 
   // While loading, show a full-page loader to prevent any content flash
   if (loading) {
@@ -64,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
