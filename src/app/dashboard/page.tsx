@@ -160,9 +160,9 @@ export default function DashboardPage() {
                     const quizScorePrevChapter = prevChapter && progress.quizScores ? (progress.quizScores[prevChapter.id] ?? 0) : 0;
                     const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
 
-                    const allLessonsInChapter = tutorial.lessons.map(l => l.id);
-                    const completedLessonsInChapter = allLessonsInChapter.filter(id => progress.completedLessons.has(id));
-                    const isChapterCompleted = completedLessonsInChapter.length === allLessonsInChapter.length;
+                    const quiz = QUIZZES[tutorial.id];
+                    const quizScore = progress.quizScores[tutorial.id] ?? 0;
+                    const isChapterCompleted = quiz ? quizScore >= quiz.passingScore : false;
 
                     const firstUncompletedLesson = tutorial.lessons.find(l => !progress.completedLessons.has(l.id));
                     const continueLessonId = firstUncompletedLesson ? firstUncompletedLesson.id : tutorial.lessons[0].id;
