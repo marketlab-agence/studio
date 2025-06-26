@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
 
 export function CertificateGenerator() {
     const [name, setName] = useState('');
@@ -85,9 +86,16 @@ export function CertificateGenerator() {
                             </div>
 
                             <div className="text-center">
-                                <p className="font-['cursive'] text-2xl leading-none">L'Instructeur</p>
-                                <div className="h-px w-full bg-foreground my-1"></div>
-                                <p className="text-sm font-semibold">Signature</p>
+                                <Image
+                                  src="/signature.png"
+                                  alt="Signature de l'instructeur"
+                                  width={200}
+                                  height={75}
+                                  className="mx-auto dark:invert"
+                                  priority
+                                />
+                                <div className="h-px w-full bg-foreground my-1 max-w-[200px] mx-auto"></div>
+                                <p className="text-sm font-semibold">L'Instructeur</p>
                             </div>
                         </div>
                       </div>
