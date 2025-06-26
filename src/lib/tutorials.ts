@@ -12,6 +12,7 @@ import { ConflictVisualizer } from '@/components/specialized/part-7/ConflictVisu
 import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
 import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
 import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
+import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
 import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
 import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
 import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
@@ -257,6 +258,13 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
       },
       {
         id: '7-2',
+        title: 'Voyager dans le temps',
+        objective: 'Utiliser un navigateur de timeline pour visualiser l\'état du projet à différents moments.',
+        content: `Parfois, il est utile de se "déplacer" dans l'historique pour voir à quoi ressemblait le projet à un commit précis, sans pour autant annuler les changements. La commande \`git checkout <hash-du-commit>\` vous place dans un état "détaché" (detached HEAD), vous permettant d'explorer le passé.\n\nLe navigateur ci-dessous simule ce voyage dans le temps. Déplacez le curseur pour voir les détails d'un commit et l'état des fichiers à ce moment-là.`,
+        component: TimelineNavigator
+      },
+      {
+        id: '7-3',
         title: 'Reflog : Votre filet de sécurité',
         objective: 'Découvrir la commande `reflog` pour retrouver des commits perdus.',
         content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard <hash-du-commit>\` pour y revenir.`,
