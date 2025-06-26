@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -34,12 +33,19 @@ const initialState: Branches = {
 
 export function WorkflowSimulator() {
   const [branches, setBranches] = useState<Branches>(initialState);
+  const [featureCounter, setFeatureCounter] = useState(1);
+  const [releaseCounter, setReleaseCounter] = useState(1);
   const { toast } = useToast();
 
-  const handleReset = () => setBranches(initialState);
+  const handleReset = () => {
+    setBranches(initialState);
+    setFeatureCounter(1);
+    setReleaseCounter(1);
+  };
 
   const handleNewFeature = () => {
-    const featureName = `feature/f${Object.keys(branches.features).length + 1}`;
+    const featureName = `feature/f${featureCounter}`;
+    setFeatureCounter(prev => prev + 1);
     setBranches(prev => ({
       ...prev,
       features: { ...prev.features, [featureName]: [...prev.develop] }
@@ -58,7 +64,8 @@ export function WorkflowSimulator() {
   };
   
   const handleStartRelease = () => {
-    const releaseName = `release/v1.${Object.keys(branches.releases).length + 1}.0`;
+    const releaseName = `release/v1.${releaseCounter}.0`;
+    setReleaseCounter(prev => prev + 1);
     setBranches(prev => ({
       ...prev,
       releases: { ...prev.releases, [releaseName]: [...prev.develop] }
@@ -70,7 +77,7 @@ export function WorkflowSimulator() {
     setBranches(prev => {
         const releaseCommits = prev.releases[releaseName];
         const newMain = [...prev.main, ...releaseCommits.filter(rc => !prev.main.some(mc => mc.id === rc.id)), {id: `tag-${releaseName.split('/')[1]}`, message: releaseName.split('/')[1]}];
-        const newDevelop = [...prev.develop, ...releaseCommits.filter(rc => !prev.develop.some(dc => dc.id === dc.id)), {id: `merge-release-${releaseName.split('/')[1]}`, message: `Merge ${releaseName}`}];
+        const newDevelop = [...prev.develop, ...releaseCommits.filter(rc => !prev.develop.some(dc => dc.id === rc.id)), {id: `merge-release-${releaseName.split('/')[1]}`, message: `Merge ${releaseName}`}];
         const { [releaseName]: _, ...remainingReleases } = prev.releases;
         return { ...prev, main: newMain, develop: newDevelop, releases: remainingReleases};
     });
