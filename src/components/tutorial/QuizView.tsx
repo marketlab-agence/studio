@@ -19,15 +19,12 @@ type QuizViewProps = {
 };
 
 type UserAnswers = Record<string, string[]>;
-type QuestionState = 'answering' | 'showing_feedback';
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [questionState, setQuestionState] = useState<QuestionState>('answering');
-    const [isCurrentAnswerCorrect, setIsCurrentAnswerCorrect] = useState<boolean | null>(null);
 
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
@@ -37,13 +34,9 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         setIsSubmitted(false);
         setFinalScore(0);
         setCurrentQuestionIndex(0);
-        setQuestionState('answering');
-        setIsCurrentAnswerCorrect(null);
     };
 
     const handleAnswerChange = (questionId: string, answerId: string, isMultipleChoice?: boolean) => {
-        if (questionState === 'showing_feedback') return;
-
         setUserAnswers(prev => {
             const newAnswers = { ...prev };
             if (isMultipleChoice) {
@@ -60,35 +53,26 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         });
     };
 
-    const handleCheckAnswer = () => {
-        const correctAnswers = currentQuestion.answers.filter(a => a.isCorrect).map(a => a.id);
-        const userSelection = userAnswers[currentQuestion.id] || [];
-        
-        const isCorrect = correctAnswers.length === userSelection.length && 
-                          correctAnswers.sort().every((id, index) => id === userSelection.sort()[index]);
-        
-        setIsCurrentAnswerCorrect(isCorrect);
-        setQuestionState('showing_feedback');
+    const handleSubmitQuiz = () => {
+        let correctCount = 0;
+        quiz.questions.forEach(q => {
+             const correctIds = q.answers.filter(a => a.isCorrect).map(a => a.id).sort();
+             const userAns = (userAnswers[q.id] || []).sort();
+             if (correctIds.length === userAns.length && correctIds.every((id, i) => id === userAns[i])) {
+                 correctCount++;
+             }
+        });
+        const calculatedScore = (correctCount / quiz.questions.length) * 100;
+        setFinalScore(calculatedScore);
+        setIsSubmitted(true);
+        onQuizComplete(calculatedScore);
     };
 
     const handleNextQuestion = () => {
         if (isLastQuestion) {
-            let correctCount = 0;
-            quiz.questions.forEach(q => {
-                 const correctIds = q.answers.filter(a => a.isCorrect).map(a => a.id);
-                 const userAns = userAnswers[q.id] || [];
-                 if (correctIds.length === userAns.length && correctIds.sort().every((id, i) => id === userAns.sort()[i])) {
-                     correctCount++;
-                 }
-            });
-            const calculatedScore = (correctCount / quiz.questions.length) * 100;
-            setFinalScore(calculatedScore);
-            setIsSubmitted(true);
-            onQuizComplete(calculatedScore);
+            handleSubmitQuiz();
         } else {
             setCurrentQuestionIndex(prev => prev + 1);
-            setQuestionState('answering');
-            setIsCurrentAnswerCorrect(null);
         }
     };
     
@@ -117,7 +101,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         ) : (
                             <Alert variant="destructive">
                                 <XCircle className="h-4 w-4" />
-                                <AlertTitle>Oups !</AlertTitle>
+                                <AlertTitle>Oups ! Score insuffisant</AlertTitle>
                                 <AlertDescription>
                                     Vous n'avez pas atteint le score de {quiz.passingScore}%. Veuillez réviser le chapitre et réessayer le quiz.
                                 </AlertDescription>
@@ -150,15 +134,21 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                             </div>
                         )}
                     </CardContent>
-                    <CardFooter className="flex-row-reverse">
-                        <Button onClick={onFinishQuiz}>
-                            {isQuizPassed ? 'Chapitre suivant' : 'Retourner aux leçons'}
-                            <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                         {!isQuizPassed && (
-                            <Button variant="outline" onClick={resetQuiz} className="mr-2">
-                                Recommencer le quiz
+                    <CardFooter className="flex-row-reverse gap-2">
+                        {isQuizPassed ? (
+                             <Button onClick={onFinishQuiz}>
+                                Chapitre suivant
+                                <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
+                        ) : (
+                            <>
+                                <Button onClick={resetQuiz}>
+                                    Recommencer le quiz
+                                </Button>
+                                <Button variant="outline" onClick={onFinishQuiz}>
+                                    Réviser le chapitre
+                                </Button>
+                            </>
                         )}
                     </CardFooter>
                 </Card>
@@ -187,17 +177,11 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         {currentQuestion.isMultipleChoice ? (
                             <div className="space-y-3">
                                 {currentQuestion.answers.map(a => (
-                                    <div key={a.id} className={cn(
-                                        "flex items-center space-x-3 p-3 rounded-md border transition-colors",
-                                        questionState === 'showing_feedback' && a.isCorrect && "border-green-500 bg-green-500/10",
-                                        questionState === 'showing_feedback' && !a.isCorrect && userAnswers[currentQuestion.id]?.includes(a.id) && "border-destructive bg-destructive/10",
-                                        questionState === 'answering' && "border-transparent has-[:checked]:border-primary"
-                                    )}>
+                                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[:checked]:border-primary transition-colors">
                                         <Checkbox
                                             id={`${currentQuestion.id}-${a.id}`}
                                             onCheckedChange={() => handleAnswerChange(currentQuestion.id, a.id, true)}
                                             checked={userAnswers[currentQuestion.id]?.includes(a.id)}
-                                            disabled={questionState === 'showing_feedback'}
                                         />
                                         <Label htmlFor={`${currentQuestion.id}-${a.id}`} className="flex-1 cursor-pointer">{a.text}</Label>
                                     </div>
@@ -208,15 +192,9 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                 onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)}
                                 value={userAnswers[currentQuestion.id]?.[0]}
                                 className="space-y-3"
-                                disabled={questionState === 'showing_feedback'}
                             >
                                 {currentQuestion.answers.map(a => (
-                                    <div key={a.id} className={cn(
-                                        "flex items-center space-x-3 p-3 rounded-md border transition-colors",
-                                        questionState === 'showing_feedback' && a.isCorrect && "border-green-500 bg-green-500/10",
-                                        questionState === 'showing_feedback' && !a.isCorrect && userAnswers[currentQuestion.id]?.[0] === a.id && "border-destructive bg-destructive/10",
-                                        questionState === 'answering' && "border-transparent has-[:checked]:border-primary"
-                                     )}>
+                                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[:checked]:border-primary transition-colors">
                                         <RadioGroupItem value={a.id} id={`${currentQuestion.id}-${a.id}`} />
                                         <Label htmlFor={`${currentQuestion.id}-${a.id}`} className="flex-1 cursor-pointer">{a.text}</Label>
                                     </div>
@@ -226,28 +204,11 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                     </div>
                 </CardContent>
 
-                 {questionState === 'showing_feedback' && (
-                    <div className="px-6 pb-4">
-                        <Alert variant={isCurrentAnswerCorrect ? 'default' : 'destructive'} className={cn(
-                            isCurrentAnswerCorrect && 'bg-green-500/10 border-green-500/50 text-green-700 dark:text-green-300'
-                        )}>
-                           {isCurrentAnswerCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                           <AlertTitle>{isCurrentAnswerCorrect ? 'Bonne réponse !' : 'Réponse incorrecte'}</AlertTitle>
-                        </Alert>
-                    </div>
-                )}
-
                 <CardFooter>
-                    {questionState === 'answering' ? (
-                         <Button onClick={handleCheckAnswer} disabled={!isCurrentQuestionAnswered} className="ml-auto">
-                            Vérifier la réponse
-                         </Button>
-                    ) : (
-                         <Button onClick={handleNextQuestion} className="ml-auto">
-                            {isLastQuestion ? 'Terminer le quiz' : 'Question suivante'}
-                            {!isLastQuestion && <ChevronRight className="ml-2 h-4 w-4" />}
-                         </Button>
-                    )}
+                     <Button onClick={handleNextQuestion} disabled={!isCurrentQuestionAnswered} className="ml-auto">
+                        {isLastQuestion ? 'Terminer le quiz' : 'Question suivante'}
+                        {!isLastQuestion && <ChevronRight className="ml-2 h-4 w-4" />}
+                     </Button>
                 </CardFooter>
             </Card>
         </div>

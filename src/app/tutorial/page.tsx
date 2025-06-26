@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 
 export default function TutorialPage() {
   const {
+    progress,
     currentChapter,
     currentLesson,
     setQuizScore,
@@ -43,14 +44,27 @@ export default function TutorialPage() {
   }
 
   const handleFinishQuiz = () => {
-    const chapterIndex = TUTORIALS.findIndex(c => c.id === currentChapter?.id);
-    // If there is a next chapter, move to it
-    if (chapterIndex !== -1 && chapterIndex < TUTORIALS.length - 1) {
-        const nextChapter = TUTORIALS[chapterIndex + 1];
-        setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
+    const score = (currentChapter && progress.quizScores[currentChapter.id])
+      ? progress.quizScores[currentChapter.id]
+      : 0;
+
+    const quiz = currentChapter ? QUIZZES[currentChapter.id] : undefined;
+    const passingScore = quiz ? quiz.passingScore : 80;
+    
+    const passed = score >= passingScore;
+
+    if (passed) {
+        const chapterIndex = TUTORIALS.findIndex(c => c.id === currentChapter?.id);
+        // If there is a next chapter, move to it
+        if (chapterIndex !== -1 && chapterIndex < TUTORIALS.length - 1) {
+            const nextChapter = TUTORIALS[chapterIndex + 1];
+            setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
+        }
     }
+    // In all cases (passed and go next, passed and no next, or failed and review), we return to lesson view
     setViewMode('lesson');
   }
+
 
   return (
     <div className="flex h-screen w-full bg-background font-sans">
