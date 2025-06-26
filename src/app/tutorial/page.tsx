@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
@@ -11,8 +11,11 @@ import { TUTORIALS } from '@/lib/tutorials';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function TutorialPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  
   const {
     progress,
     currentChapter,
@@ -22,6 +25,10 @@ export default function TutorialPage() {
     showQuizForChapter,
     currentView
   } = useTutorial();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const chapterQuiz = useMemo(() => currentChapter ? QUIZZES[currentChapter.id] : undefined, [currentChapter]);
   
@@ -71,7 +78,22 @@ export default function TutorialPage() {
       <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
         
         <div className={cn("flex flex-col h-full", currentView !== 'lesson' && 'hidden')}>
-            {currentLesson && currentChapter ? (
+            {!isMounted ? (
+                 <div className="flex flex-col h-full">
+                    <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+                        <Skeleton className="h-6 w-1/4 mb-2" />
+                        <Skeleton className="h-10 w-3/4 mb-4" />
+                        <Skeleton className="h-6 w-full mb-8" />
+                        <Skeleton className="h-4 w-full mb-4" />
+                        <Skeleton className="h-4 w-full mb-4" />
+                        <Skeleton className="h-4 w-5/6 mb-4" />
+                    </div>
+                     <div className="flex justify-between items-center p-4 border-t bg-card">
+                        <Skeleton className="h-9 w-28" />
+                        <Skeleton className="h-9 w-36" />
+                    </div>
+                </div>
+            ) : currentLesson && currentChapter ? (
                 <>
                     <div className="flex-1 p-6 md:p-8 overflow-y-auto">
                         <LessonView lesson={currentLesson} />
@@ -95,7 +117,7 @@ export default function TutorialPage() {
         </div>
 
         <div className={cn("h-full", currentView !== 'quiz' && 'hidden')}>
-             {chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
+             {isMounted && chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
         </div>
 
       </main>
