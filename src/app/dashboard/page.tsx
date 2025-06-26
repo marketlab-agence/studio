@@ -46,15 +46,32 @@ export default function DashboardPage() {
         t.lessons.map(l => ({...l, chapterId: t.id}))
     ), []);
 
-    const uncompletedLessons = useMemo(() => 
-        allLessons.filter(l => !progress.completedLessons.has(l.id))
-    , [allLessons, progress.completedLessons]);
+    const uncompletedLessons = useMemo(() => {
+        const completedChapterIds = new Set(
+            Object.keys(progress.quizScores).filter(chapterId => 
+                (progress.quizScores[chapterId] ?? 0) >= (QUIZZES[chapterId]?.passingScore ?? 80)
+            )
+        );
+
+        return allLessons.filter(lesson => {
+            const isChapterCompletedByQuiz = completedChapterIds.has(lesson.chapterId);
+            const isLessonIndividuallyCompleted = progress.completedLessons.has(lesson.id);
+            // Une leçon est considérée comme "non complétée" seulement si son chapitre n'est pas terminé via le quiz,
+            // ET si elle n'a pas été complétée individuellement.
+            return !isChapterCompletedByQuiz && !isLessonIndividuallyCompleted;
+        });
+    }, [allLessons, progress.completedLessons, progress.quizScores]);
 
     const nextLessons = uncompletedLessons.slice(0, 5);
 
     const quizzes = Object.values(QUIZZES);
 
-    const completedQuizzes = progress.quizScores ? Object.values(progress.quizScores).filter(score => score >= 80).length : 0;
+    const completedQuizzes = useMemo(() => {
+      return Object.keys(progress.quizScores).filter(
+        (quizId) => (progress.quizScores[quizId] ?? 0) >= (QUIZZES[quizId]?.passingScore ?? 80)
+      ).length;
+    }, [progress.quizScores]);
+    
     const totalQuizzes = quizzes.length;
 
     const averageScore = (progress.quizScores && Object.keys(progress.quizScores).length > 0)
@@ -172,7 +189,7 @@ export default function DashboardPage() {
                             if (chapterIndex === 0) return false;
                             const prevChapter = TUTORIALS[chapterIndex - 1];
                             const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-                            return quizScorePrevChapter < 80;
+                            return quizScorePrevChapter < (QUIZZES[prevChapter.id]?.passingScore ?? 80);
                         };
 
                         return (
@@ -326,4 +343,5 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-}
+
+    
