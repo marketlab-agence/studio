@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,15 +26,19 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     const [finalScore, setFinalScore] = useState(0);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-    const currentQuestion = quiz.questions[currentQuestionIndex];
-    const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
-
-    const resetQuiz = () => {
+    const resetQuiz = useCallback(() => {
         setUserAnswers({});
         setIsSubmitted(false);
         setFinalScore(0);
         setCurrentQuestionIndex(0);
-    };
+    }, []);
+
+    useEffect(() => {
+        resetQuiz();
+    }, [quiz.id, resetQuiz]);
+
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
     const handleAnswerChange = (questionId: string, answerId: string, isMultipleChoice?: boolean) => {
         setUserAnswers(prev => {
