@@ -45,18 +45,27 @@ export function useLocalStorage<T>(
     }
   }, [key, initialValue, options, storedValue]);
 
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue as T) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        const serializedValue = options?.serializer ? options.serializer(valueToStore) : JSON.stringify(valueToStore);
-        localStorage.setItem(key, serializedValue);
-      }
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  }, [key, options, storedValue]);
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      setStoredValue((prev) => {
+        const valueToStore = value instanceof Function ? value(prev as T) : value;
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              key,
+              options?.serializer
+                ? options.serializer(valueToStore)
+                : JSON.stringify(valueToStore)
+            );
+          }
+        } catch (e) {
+          console.warn(`Error setting localStorage key “${key}”:`, e);
+        }
+        return valueToStore;
+      });
+    },
+    [key, options]
+  );
 
   return [storedValue as T, setValue] as const;
 }

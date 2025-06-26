@@ -12,6 +12,8 @@ type LessonViewProps = {
 };
 
 export function LessonView({ lesson }: LessonViewProps) {
+    const InteractiveComponent = lesson.component;
+
     return (
         <div>
             <div className="mb-8">
@@ -48,9 +50,9 @@ export function LessonView({ lesson }: LessonViewProps) {
                 }}>{lesson.content}</ReactMarkdown>
             </article>
             
-            {lesson.component && (
+            {InteractiveComponent && (
                 <div className="mt-8">
-                    {React.createElement(lesson.component)}
+                    <InteractiveComponent />
                 </div>
             )}
         </div>
