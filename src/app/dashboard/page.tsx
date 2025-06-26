@@ -5,6 +5,7 @@ import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, Hi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
@@ -19,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 
 
 export default function DashboardPage() {
+    const router = useRouter();
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
@@ -100,8 +102,8 @@ export default function DashboardPage() {
                             <History className="mr-2 h-4 w-4" />
                             Recommencer
                         </Button>
-                        <Button asChild size="lg">
-                            <Link href="/certificate">Obtenir mon certificat</Link>
+                        <Button size="lg" onClick={() => router.push('/certificate')}>
+                            Obtenir mon certificat
                         </Button>
                     </div>
                 </CardContent>
@@ -162,21 +164,20 @@ export default function DashboardPage() {
                     const scoreForPrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
                     const isLocked = !isFirstChapter && quizForPrevChapter && scoreForPrevChapter < (quizForPrevChapter.passingScore ?? 80);
 
+                    const chapterQuiz = QUIZZES[chapter.id];
+                    const isChapterComplete = chapterQuiz ? (progress.quizScores[chapter.id] ?? 0) >= chapterQuiz.passingScore : false;
+
                     const chapterLessons = chapter.lessons.map(l => l.id);
                     const completedLessonsInChapter = chapterLessons.filter(lId => progress.completedLessons.has(lId));
-                    const isChapterComplete = completedLessonsInChapter.length === chapterLessons.length;
-
+                    
                     const firstUncompletedLesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
                     const lessonToNavigateTo = firstUncompletedLesson || chapter.lessons[0];
-
-                    const chapterQuiz = QUIZZES[chapter.id];
-                    const quizPassed = chapterQuiz ? (progress.quizScores[chapter.id] ?? 0) >= chapterQuiz.passingScore : false;
-
+                    
                     return (
                         <Card key={chapter.id} className="flex flex-col hover:border-primary/50 transition-colors">
                             <CardHeader>
                                 <div className="flex items-start gap-4">
-                                    {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : quizPassed ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
+                                    {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : isChapterComplete ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
                                     <div>
                                         <CardTitle className="text-lg leading-tight">{chapter.title}</CardTitle>
                                         <CardDescription className="mt-2 text-xs">{chapter.description}</CardDescription>
