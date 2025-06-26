@@ -7,10 +7,70 @@ import { CertificateGenerator } from '@/components/specialized/part-10/Certifica
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CertificatePage() {
   const { overallProgress } = useTutorial();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const isComplete = overallProgress >= 100;
+
+  const renderContent = () => {
+    if (!isMounted) {
+      return (
+        <Card className="text-center py-8">
+          <CardHeader>
+            <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+            <Skeleton className="h-7 w-48 mx-auto" />
+            <Skeleton className="h-4 w-80 mx-auto mt-2" />
+          </CardHeader>
+          <CardContent className="max-w-sm mx-auto space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32 mx-auto" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-16 mx-auto" />
+            </div>
+            <Skeleton className="h-10 w-40 mx-auto" />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (isComplete) {
+      return <CertificateGenerator />;
+    }
+
+    return (
+      <Card className="text-center py-8">
+        <CardHeader>
+          <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+            <Lock className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <CardTitle>Certificat Verrouillé</CardTitle>
+          <CardDescription>
+            Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="max-w-sm mx-auto space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
+            <Progress value={overallProgress} />
+            <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
+          </div>
+          <Button asChild>
+            <Link href="/tutorial">Continuer le Tutoriel</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -25,31 +85,7 @@ export default function CertificatePage() {
           </div>
         </div>
 
-        {isComplete ? (
-          <CertificateGenerator />
-        ) : (
-          <Card className="text-center py-8">
-            <CardHeader>
-              <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-                <Lock className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <CardTitle>Certificat Verrouillé</CardTitle>
-              <CardDescription>
-                Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-sm mx-auto space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
-                <Progress value={overallProgress} />
-                <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
-              </div>
-              <Button asChild>
-                <Link href="/tutorial">Continuer le Tutoriel</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        {renderContent()}
       </div>
     </main>
   );
