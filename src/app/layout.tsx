@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Explorateur Git',
+  title: 'Git & GitHub Interactif',
   description: 'Un tutoriel interactif sur Git et GitHub.',
 };
 
