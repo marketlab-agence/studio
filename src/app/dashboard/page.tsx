@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp, History } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -52,19 +52,8 @@ export default function DashboardPage() {
 
     const nextLessons = uncompletedLessons.slice(0, 5);
 
-    const quizzes = Object.values(QUIZZES);
-
-    const completedQuizzes = useMemo(() => {
-      return Object.keys(progress.quizScores).filter(
-        (quizId) => (progress.quizScores[quizId] ?? 0) >= (QUIZZES[quizId]?.passingScore ?? 80)
-      ).length;
-    }, [progress.quizScores]);
-    
-    const totalQuizzes = quizzes.length;
-
-    const averageScore = (progress.quizScores && Object.keys(progress.quizScores).length > 0)
-        ? Object.values(progress.quizScores).reduce((a, b) => a + b, 0) / Object.keys(progress.quizScores).length
-        : 0;
+    const nextUncompletedLesson = uncompletedLessons.length > 0 ? uncompletedLessons[0] : null;
+    const chapterForNextLesson = nextUncompletedLesson ? TUTORIALS.find(t => t.id === nextUncompletedLesson.chapterId) : null;
     
     const handleContinue = (chapterId: string, lessonId: string) => {
         setCurrentLocation(chapterId, lessonId);
@@ -135,16 +124,6 @@ export default function DashboardPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Chapitres Réussis</CardTitle>
-                    <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{completedQuizzes}/{totalQuizzes}</div>
-                    <p className="text-xs text-muted-foreground">Quiz passés avec &gt;= 80%</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Leçons Terminées</CardTitle>
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -155,12 +134,22 @@ export default function DashboardPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Score Quiz Moyen</CardTitle>
-                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Chapitre Actuel</CardTitle>
+                    <BookCopy className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{Math.round(averageScore)}%</div>
-                    <p className="text-xs text-muted-foreground">sur les quiz tentés</p>
+                    <div className="text-2xl font-bold truncate" title={chapterForNextLesson?.title}>{chapterForNextLesson ? chapterForNextLesson.title : 'Terminé !'}</div>
+                    <p className="text-xs text-muted-foreground">Prochaine étape de votre parcours</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Prochain Objectif</CardTitle>
+                    <Flag className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold truncate" title={nextUncompletedLesson?.title}>{nextUncompletedLesson ? nextUncompletedLesson.title : 'Félicitations !'}</div>
+                    <p className="text-xs text-muted-foreground">La prochaine leçon à compléter</p>
                 </CardContent>
             </Card>
           </div>
@@ -338,5 +327,3 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-
-    
