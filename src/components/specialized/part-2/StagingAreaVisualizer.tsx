@@ -1,16 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
 import { File, GitCommitHorizontal, Inbox, Server } from 'lucide-react';
 
-export function StagingAreaVisualizer() {
-  const { filesystem } = useTutorial();
+const workingDirectoryFiles = [
+    { path: 'index.html', status: 'modified' },
+    { path: 'styles.css', status: 'untracked' },
+];
+const stagedFiles = [
+    { path: 'README.md', status: 'staged' },
+];
+const committedFiles = [
+    { path: 'package.json', status: 'committed' },
+];
 
-  const workingDirectoryFiles = filesystem.filter(f => f.status === 'untracked' || f.status === 'modified');
-  const stagedFiles = filesystem.filter(f => f.status === 'staged');
-  const committedFiles = filesystem.filter(f => f.status === 'committed');
-
-  const FileItem = ({ name, status }: { name: string; status: string }) => (
+const FileItem = ({ name, status }: { name: string; status: string }) => (
     <div className={cn(
       "flex items-center gap-2 p-2 rounded-md text-sm",
       status === 'untracked' && 'bg-yellow-500/10 text-yellow-300',
@@ -23,6 +26,7 @@ export function StagingAreaVisualizer() {
     </div>
   );
 
+export function StagingAreaVisualizer() {
   return (
     <Card className="my-6 bg-transparent border-border/50">
       <CardHeader>

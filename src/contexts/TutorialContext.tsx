@@ -1,11 +1,8 @@
 'use client';
 import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState } from 'react';
-import type { UserProgress, CommandHistoryItem } from '@/types/tutorial.types';
-import type { FileNode } from '@/types/git.types';
+import type { UserProgress } from '@/types/tutorial.types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
-import { executeCommand } from '@/lib/git-simulation';
-import { explainCommand } from '@/app/actions';
 
 const initialProgress: UserProgress = {
     quizScores: {},
@@ -24,11 +21,6 @@ type TutorialContextType = {
   totalLessons: number;
   totalCompleted: number;
   overallProgress: number;
-  // Simulation state
-  filesystem: FileNode[];
-  commandHistory: CommandHistoryItem[];
-  isTerminalLoading: boolean;
-  runCommandInTerminal: (command: string) => Promise<void>;
 };
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
@@ -50,7 +42,6 @@ const reviver = (key: string, value: any) => {
     return value;
 };
 
-const INITIAL_FILESYSTEM: FileNode[] = [];
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
     const [progress, setProgress] = useLocalStorage<UserProgress>('git-tutorial-progress', initialProgress, {
@@ -63,35 +54,6 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             return { ...initialProgress, ...parsed };
         },
     });
-
-    // Simulation state
-    const [filesystem, setFilesystem] = useState<FileNode[]>(INITIAL_FILESYSTEM);
-    const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
-    const [isTerminalLoading, setIsTerminalLoading] = useState(false);
-
-    const runCommandInTerminal = useCallback(async (command: string) => {
-      setIsTerminalLoading(true);
-
-      // Add command to history
-      setCommandHistory(prev => [...prev, { type: 'command', content: command }]);
-
-      // Simulate command execution
-      const { newState, output: commandOutput } = executeCommand(command, filesystem);
-      setFilesystem(newState);
-      
-      if (commandOutput) {
-        setCommandHistory(prev => [...prev, { type: 'output', content: commandOutput }]);
-      }
-      
-      // Get AI explanation
-      const context = TUTORIALS.find(t => t.id === progress.currentChapterId)?.lessons.find(l => l.id === progress.currentLessonId)?.title || "Contexte général";
-      const aiResponse = await explainCommand(command, context);
-      if (aiResponse.explanation) {
-          setCommandHistory(prev => [...prev, { type: 'ai', content: aiResponse.explanation }]);
-      }
-
-      setIsTerminalLoading(false);
-    }, [filesystem, progress.currentChapterId, progress.currentLessonId]);
 
     const setCurrentLocation = useCallback((chapterId: string, lessonId: string) => {
         setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId }));
@@ -132,12 +94,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             totalLessons,
             totalCompleted,
             overallProgress,
-            filesystem,
-            commandHistory,
-            isTerminalLoading,
-            runCommandInTerminal,
         };
-    }, [progress, setCurrentLocation, completeLesson, setQuizScore, filesystem, commandHistory, isTerminalLoading, runCommandInTerminal]);
+    }, [progress, setCurrentLocation, completeLesson, setQuizScore]);
 
 
     return (

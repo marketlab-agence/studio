@@ -14,15 +14,15 @@ import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 export default function Home() {
     const { progress, overallProgress, totalCompleted, totalLessons } = useTutorial();
     const quizzes = Object.values(QUIZZES);
-    const completedQuizzes = Object.keys(progress.quizScores).length;
+    const completedQuizzes = progress.quizScores ? Object.keys(progress.quizScores).length : 0;
     const averageScore = completedQuizzes > 0 
         ? Object.values(progress.quizScores).reduce((a, b) => a + b, 0) / completedQuizzes
         : 0;
 
-    const commitData = Object.entries(progress.quizScores).map(([key, value]) => ({
+    const commitData = progress.quizScores ? Object.entries(progress.quizScores).map(([key, value]) => ({
       name: TUTORIALS.find(t => t.id === key)?.title.split('. ')[1] ?? "Chapitre",
       score: value
-    }));
+    })) : [];
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -34,7 +34,6 @@ export default function Home() {
         <nav className="mx-auto hidden items-center gap-6 text-sm font-medium md:flex">
           <Link href="/" className="text-foreground transition-colors hover:text-foreground/80">Tableau de bord</Link>
           <Link href="/tutorial" className="text-foreground/80 transition-colors hover:text-foreground">Tutoriel</Link>
-          <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Exercices</a>
         </nav>
         <div className="flex flex-1 items-center justify-end gap-4">
           <Button variant="ghost" size="icon" className="relative rounded-full">

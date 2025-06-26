@@ -10,9 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, Rocket, FileCode, BookOpen, GitCommitHorizontal } from 'lucide-react';
-import { FileTreeViewer } from '@/components/visualizations/FileTreeViewer';
+import { CheckCircle, Rocket, BookOpen, GitCommitHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
@@ -64,13 +62,9 @@ export function TutorialPanel() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="tutorials" className="flex flex-1 flex-col overflow-hidden">
-        <TabsList className="mx-4 grid w-auto grid-cols-2">
-          <TabsTrigger value="tutorials"><BookOpen className="w-4 h-4 mr-2" />Tutoriels</TabsTrigger>
-          <TabsTrigger value="files"><FileCode className="w-4 h-4 mr-2" />Fichiers</TabsTrigger>
-        </TabsList>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <h2 className="px-4 text-lg font-semibold flex items-center gap-2 mb-2"><BookOpen className="w-5 h-5"/>Tutoriels</h2>
         <ScrollArea className="flex-1">
-          <TabsContent value="tutorials" className="m-0">
             <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full px-4">
               {TUTORIALS.map((tutorial) => (
                 <AccordionItem value={tutorial.id} key={tutorial.id}>
@@ -100,12 +94,8 @@ export function TutorialPanel() {
                 </AccordionItem>
               ))}
             </Accordion>
-          </TabsContent>
-          <TabsContent value="files" className="m-0 p-4">
-            <FileTreeViewer />
-          </TabsContent>
         </ScrollArea>
-      </Tabs>
+      </div>
     </div>
   );
 }

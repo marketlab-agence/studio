@@ -20,18 +20,20 @@ Avec un système de contrôle de version distribué (DVCS) comme **Git**, chaque
       {
         id: '1-2',
         title: 'Initialiser un dépôt',
-        content: `Chaque projet Git réside dans un "dépôt" (repository). Pour en démarrer un, naviguez dans votre dossier de projet et utilisez la commande \`git init\`.
-
+        content: `Chaque projet Git réside dans un "dépôt" (repository). Pour en démarrer un, naviguez dans votre dossier de projet et utilisez la commande suivante :
+\`\`\`bash
+git init
+\`\`\`
 Cette commande crée un nouveau sous-dossier nommé **.git** qui contient tous les fichiers nécessaires à votre dépôt – c’est là que Git stocke la base de données des modifications et les métadonnées.`,
-        command: 'git init',
       },
       {
         id: '1-3',
         title: 'Vérifier le statut',
         content: `La commande \`git status\` est votre meilleure amie. Elle affiche l'état actuel de votre dépôt.
-
+\`\`\`bash
+git status
+\`\`\`
 Utilisez-la fréquemment pour voir quels fichiers ont été modifiés, quels nouveaux fichiers ne sont pas encore suivis par Git (untracked), et quels changements sont prêts à être validés.`,
-        command: 'git status',
       },
     ],
   },
@@ -43,8 +45,7 @@ Utilisez-la fréquemment pour voir quels fichiers ont été modifiés, quels nou
       {
         id: '2-1',
         title: 'Créer et modifier des fichiers',
-        content: "Commençons par créer un fichier. La commande `touch` crée un fichier vide (ce n'est pas une commande Git). Ensuite, nous vérifierons le statut pour voir comment Git réagit.",
-        command: 'touch README.md',
+        content: "Commençons par créer un fichier. La commande \`touch\` crée un fichier vide (ce n'est pas une commande Git). Ensuite, nous vérifierons le statut pour voir comment Git réagit. \n\`\`\`bash\ntouch README.md\n\`\`\`",
       },
       {
         id: '2-2',
@@ -54,8 +55,11 @@ Utilisez-la fréquemment pour voir quels fichiers ont été modifiés, quels nou
 2.  **Zone de staging (Index)** : Une zone intermédiaire où vous préparez la prochaine "photo" de votre projet.
 3.  **Dépôt (.git)** : L'endroit où Git stocke définitivement ces photos (les commits).
 
-La commande \`git add\` déplace les changements du répertoire de travail vers la zone de staging.`,
-        command: 'git add README.md',
+La commande \`git add\` déplace les changements du répertoire de travail vers la zone de staging.
+\`\`\`bash
+git add README.md
+\`\`\`
+`,
         component: StagingAreaVisualizer
       },
       {
@@ -63,14 +67,16 @@ La commande \`git add\` déplace les changements du répertoire de travail vers 
         title: 'Valider les modifications (Commit)',
         content: `Un commit est un "instantané" de votre zone de staging à un instant T. Chaque commit a un identifiant unique et un message descriptif.
 
-Il est crucial d'écrire de **bons messages de commit** : clairs, concis et décrivant le *pourquoi* du changement, pas seulement le *quoi*. Utilisez \`git commit -m "Votre message"\` pour créer un commit.`,
-        command: 'git commit -m "Ajout du fichier README"',
+Il est crucial d'écrire de **bons messages de commit** : clairs, concis et décrivant le *pourquoi* du changement, pas seulement le *quoi*. Utilisez la commande suivante pour créer un commit :
+\`\`\`bash
+git commit -m "Ajout du fichier README"
+\`\`\`
+`,
       },
       {
         id: '2-4',
         title: 'Voir l\'historique',
-        content: 'Vous pouvez voir l\'historique de tous vos commits en utilisant la commande `git log`. Pour une vue plus compacte, essayez `git log --oneline`.',
-        command: 'git log',
+        content: 'Vous pouvez voir l\'historique de tous vos commits en utilisant la commande `git log`. Pour une vue plus compacte, essayez `git log --oneline`. \n\`\`\`bash\ngit log\n\`\`\`',
       },
     ],
   },
@@ -89,20 +95,17 @@ Travailler avec des branches vous permet de développer des fonctionnalités, de
       {
         id: '3-2',
         title: 'Créer une branche',
-        content: "Pour créer une nouvelle branche, utilisez la commande `git branch <nom-de-la-branche>`. Cela crée la branche, mais ne vous déplace pas dessus.",
-        command: 'git branch nouvelle-fonctionnalite',
+        content: "Pour créer une nouvelle branche, utilisez la commande `git branch <nom-de-la-branche>`. Cela crée la branche, mais ne vous déplace pas dessus.\n\`\`\`bash\ngit branch nouvelle-fonctionnalite\n\`\`\`",
       },
       {
         id: '3-3',
         title: 'Changer de branche',
-        content: "Pour commencer à travailler sur votre nouvelle branche, vous devez vous y déplacer. Utilisez `git checkout <nom-de-la-branche>` ou la commande plus moderne `git switch <nom-de-la-branche>`.",
-        command: 'git checkout nouvelle-fonctionnalite',
+        content: "Pour commencer à travailler sur votre nouvelle branche, vous devez vous y déplacer. Utilisez `git checkout <nom-de-la-branche>` ou la commande plus moderne `git switch <nom-de-la-branche>`.\n\`\`\`bash\ngit switch nouvelle-fonctionnalite\n\`\`\`",
       },
       {
         id: '3-4',
         title: 'Créer et basculer en une commande',
-        content: "Le cas le plus courant est de créer une nouvelle branche et de basculer immédiatement dessus. Vous pouvez le faire en une seule commande avec l'option `-b` de `git checkout`.",
-        command: 'git checkout -b autre-fonctionnalite',
+        content: "Le cas le plus courant est de créer une nouvelle branche et de basculer immédiatement dessus. Vous pouvez le faire en une seule commande avec l'option \`-b\` de \`git checkout\`.\n\`\`\`bash\ngit checkout -b autre-fonctionnalite\n\`\`\`",
       }
     ],
   },

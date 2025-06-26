@@ -9,7 +9,6 @@ export interface Lesson {
   id: string;
   title: string;
   content: string; // Markdown content
-  command?: string;
   component?: React.ComponentType;
 }
 
@@ -42,8 +41,3 @@ export interface UserProgress {
   currentChapterId: string | null;
   currentLessonId: string | null;
 }
-
-export type CommandHistoryItem = {
-    type: 'command' | 'output' | 'ai';
-    content: string;
-};
