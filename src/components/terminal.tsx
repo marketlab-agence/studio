@@ -21,16 +21,10 @@ type TerminalProps = {
 
 export function Terminal({ context, initialCommand }: TerminalProps) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [command, setCommand] = useState('');
+  const [command, setCommand] = useState(initialCommand || '');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (initialCommand) {
-      setCommand(initialCommand);
-    }
-  }, [initialCommand]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -55,7 +49,7 @@ export function Terminal({ context, initialCommand }: TerminalProps) {
       const result = await explainCommand(command, context);
       const newOutput: HistoryItem[] = [];
 
-      if (result.output) {
+      if (result.output !== null) {
         newOutput.push({ id: Date.now() + 1, type: 'output', content: result.output });
       }
       if (result.explanation) {

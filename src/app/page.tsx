@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -16,8 +17,8 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-tight">Git & GitHub Interactif</h1>
         </div>
         <nav className="mx-auto hidden items-center gap-6 text-sm font-medium md:flex">
-          <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Accueil</a>
-          <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Tutoriel</a>
+          <Link href="/" className="text-foreground/80 transition-colors hover:text-foreground">Accueil</Link>
+          <Link href="/tutorial" className="text-foreground/80 transition-colors hover:text-foreground">Tutoriel</Link>
           <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Exercices</a>
           <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Certificat</a>
         </nav>
@@ -101,10 +102,12 @@ export default function Home() {
                             Démarrez votre apprentissage avec le Chapitre 1: Introduction aux concepts de base de Git et GitHub.
                         </p>
                     </div>
-                    <Button size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                        Commencer le tutoriel
-                        <ChevronRight className="ml-2 h-5 w-5" />
-                    </Button>
+                    <Link href="/tutorial">
+                      <Button size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                          Commencer le tutoriel
+                          <ChevronRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
                 </div>
             </div>
         </section>
