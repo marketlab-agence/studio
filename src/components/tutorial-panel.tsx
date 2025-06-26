@@ -1,6 +1,5 @@
 'use client';
 
-import { FileExplorer } from '@/components/file-explorer';
 import { TUTORIALS } from '@/lib/tutorials';
 import {
   Accordion,
@@ -15,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle, Rocket, FileCode, BookOpen } from 'lucide-react';
+import { FileTreeViewer } from '@/components/visualizations/FileTreeViewer';
 
 type Tutorial = typeof TUTORIALS[0];
 type TutorialStep = Tutorial['steps'][0];
@@ -97,7 +97,7 @@ export function TutorialPanel({
             </Accordion>
           </TabsContent>
           <TabsContent value="files" className="m-0">
-            <FileExplorer />
+            <FileTreeViewer />
           </TabsContent>
         </ScrollArea>
       </Tabs>
