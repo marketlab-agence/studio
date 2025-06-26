@@ -267,7 +267,7 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '7-3',
         title: 'Reflog : Votre filet de sécurité',
         objective: 'Découvrir la commande `reflog` pour retrouver des commits perdus.',
-        content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard <hash-du-commit>\` pour y revenir.`,
+        content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard HEAD@{2}\` pour y revenir.`,
         component: ReflogExplorer
       }
     ]
@@ -318,13 +318,6 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         objective: 'Visualiser l\'état d\'avancement d\'un projet à travers un tableau de bord.',
         content: `La gestion d'un projet, même personnel, bénéficie d'une bonne visualisation. Les tableaux de bord peuvent aider à suivre les tâches en cours, l'état des Pull Requests et la santé globale du projet.`,
         component: ProjectDashboard
-      },
-      {
-        id: '9-3',
-        title: 'Vous avez terminé !',
-        objective: 'Générer votre certificat de complétion.',
-        content: `Félicitations ! Vous avez terminé le tutoriel interactif sur Git et GitHub. Vous avez maintenant des bases solides pour versionner vos projets et collaborer efficacement avec d'autres développeurs.\n\nN'oubliez pas que la meilleure façon d'apprendre est de pratiquer. N'hésitez pas à utiliser Git pour tous vos projets, même les plus petits.\n\nVous pouvez maintenant générer votre certificat de réussite.`,
-        component: CertificateGenerator
       }
     ]
   }

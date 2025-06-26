@@ -81,6 +81,23 @@ export default function DashboardPage() {
                 <p className="text-muted-foreground">Suivez votre progression et vos statistiques d'apprentissage.</p>
             </div>
           </div>
+          
+          {overallProgress >= 100 && (
+            <Card className="bg-gradient-to-r from-primary/20 to-primary/10 border-primary/30">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Award className="h-10 w-10 text-primary" />
+                        <div>
+                            <h3 className="text-xl font-bold">Félicitations !</h3>
+                            <p className="text-muted-foreground">Vous avez terminé le tutoriel. Réclamez votre certificat.</p>
+                        </div>
+                    </div>
+                    <Button asChild size="lg">
+                        <Link href="/certificate">Obtenir mon certificat</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>

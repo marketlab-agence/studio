@@ -47,6 +47,9 @@ export function Header() {
               <Link href="/dashboard">Tableau de bord</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>Paramètres</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/certificate">Certificat</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Déconnexion</DropdownMenuItem>
           </DropdownMenuContent>
