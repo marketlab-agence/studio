@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Circle, Lock, ChevronRight } from 'lucide-react';
+import { CheckCircle, Circle, Lock, ChevronRight, GraduationCap } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
@@ -21,10 +21,15 @@ export function TutorialPanel() {
     currentChapter,
     currentLesson,
     overallProgress,
+    showQuizForChapter,
   } = useTutorial();
 
   const handleLessonClick = (chapterId: string, lessonId: string) => {
     setCurrentLocation(chapterId, lessonId);
+  };
+  
+  const handleQuizClick = (chapterId: string) => {
+    showQuizForChapter(chapterId);
   };
 
   const defaultAccordionValue = currentChapter ? [currentChapter.id] : [];
@@ -79,7 +84,7 @@ export function TutorialPanel() {
                         key={lesson.id}
                         className={cn(
                           'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
-                          lesson.id === currentLesson?.id
+                          progress.currentView === 'lesson' && lesson.id === currentLesson?.id
                             ? 'bg-primary/10 text-primary-foreground'
                             : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                         )}
@@ -95,6 +100,29 @@ export function TutorialPanel() {
                         )}
                       </button>
                     ))}
+                     <button
+                        key={`${tutorial.id}-quiz`}
+                        className={cn(
+                          'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
+                          progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
+                            ? 'bg-primary/10 text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                        )}
+                        onClick={() => handleQuizClick(tutorial.id)}
+                        disabled={isLocked}
+                      >
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4" />
+                          <span>Quiz du Chapitre</span>
+                        </div>
+                        {isCompleted ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : progress.currentView === 'quiz' && tutorial.id === currentChapter?.id ? (
+                          <ChevronRight className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-border" />
+                        )}
+                      </button>
                   </div>
                 </AccordionContent>
               </AccordionItem>

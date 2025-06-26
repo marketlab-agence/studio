@@ -9,17 +9,20 @@ const initialProgress: UserProgress = {
     completedLessons: new Set(),
     currentChapterId: TUTORIALS[0]?.id || null,
     currentLessonId: TUTORIALS[0]?.lessons[0]?.id || null,
+    currentView: 'lesson',
 };
 
 type TutorialContextType = {
   progress: UserProgress;
   setCurrentLocation: (chapterId: string, lessonId: string) => void;
+  showQuizForChapter: (chapterId: string) => void;
   completeLesson: (lessonId: string) => void;
   setQuizScore: (quizId: string, score: number) => void;
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
   currentChapter: typeof TUTORIALS[0] | undefined;
   currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
+  currentView: 'lesson' | 'quiz';
   totalLessons: number;
   totalCompleted: number;
   overallProgress: number;
@@ -60,7 +63,13 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     });
 
     const setCurrentLocation = useCallback((chapterId: string, lessonId: string) => {
-        setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId }));
+        setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId, currentView: 'lesson' }));
+    }, [setProgress]);
+
+    const showQuizForChapter = useCallback((chapterId: string) => {
+        const chapter = TUTORIALS.find(c => c.id === chapterId);
+        if (!chapter) return;
+        setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: chapter.lessons[chapter.lessons.length - 1].id, currentView: 'quiz' }));
     }, [setProgress]);
 
     const completeLesson = useCallback((lessonId: string) => {
@@ -112,6 +121,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 completedLessons: newCompleted,
                 currentChapterId: nextChapterId,
                 currentLessonId: nextLessonId,
+                currentView: 'lesson',
             };
         });
     }, [setProgress]);
@@ -144,6 +154,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 ...prev,
                 currentChapterId: prevChapterId,
                 currentLessonId: prevLessonId,
+                currentView: 'lesson',
             };
         });
     }, [setProgress]);
@@ -153,6 +164,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
         const currentChapter = TUTORIALS.find(t => t.id === p.currentChapterId);
         const currentLesson = currentChapter?.lessons.find(l => l.id === p.currentLessonId);
+        const currentView = p.currentView || 'lesson';
 
         const chapterIndex = TUTORIALS.findIndex(c => c.id === p.currentChapterId);
         const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === p.currentLessonId);
@@ -167,19 +179,21 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         return { 
             progress: p, 
             setCurrentLocation,
+            showQuizForChapter,
             completeLesson,
             setQuizScore,
             goToNextLesson,
             goToPreviousLesson,
             currentChapter,
             currentLesson,
+            currentView,
             totalLessons,
             totalCompleted,
             overallProgress,
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson]);
+    }, [progress, setCurrentLocation, showQuizForChapter, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson]);
 
 
     return (

@@ -41,4 +41,6 @@ export interface UserProgress {
   // last position
   currentChapterId: string | null;
   currentLessonId: string | null;
+  // what is currently being displayed in the main panel
+  currentView: 'lesson' | 'quiz';
 }
