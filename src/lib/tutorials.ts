@@ -20,12 +20,12 @@ import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsW
 import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
 import { ProjectDashboard } from '@/components/specialized/part-10/ProjectDashboard';
 import { WorkflowComparisonTable } from '@/components/specialized/part-6/WorkflowComparisonTable';
-import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
 import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
 import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
 import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
 import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
+import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
 
 
 export const TUTORIALS: Tutorial[] = [
@@ -217,7 +217,7 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '5-2',
         title: 'Les Pull Requests (PR)',
         objective: 'Apprendre à proposer des changements à un projet en utilisant les Pull Requests.',
-        content: `Une Pull Request (ou Merge Request sur d'autres plateformes) est une demande formelle d'intégrer vos changements (commits) d'une branche à une autre (généralement de votre branche de fonctionnalité vers la branche \`main\` du projet).\n\nC'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion où vous pouvez :\n- Décrire vos changements.\n- Discuter de l'implémentation.\n- Recevoir des commentaires et des revues de code.\n- Voir les résultats des tests automatisés.`,
+        content: `Une Pull Request (ou MergeRequest sur d'autres plateformes) est une demande formelle d'intégrer vos changements (commits) d'une branche à une autre (généralement de votre branche de fonctionnalité vers la branche \`main\` du projet).\n\nC'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion où vous pouvez :\n- Décrire vos changements.\n- Discuter de l'implémentation.\n- Recevoir des commentaires et des revues de code.\n- Voir les résultats des tests automatisés.`,
         component: PRWorkflowSimulator
       }
     ]
@@ -243,10 +243,10 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
       },
       {
         id: '6-3',
-        title: 'Construire son propre diagramme',
-        objective: 'Utiliser un outil interactif pour construire et visualiser un diagramme de flux de travail simple.',
-        content: `Parfois, la meilleure façon de comprendre un flux de travail est de le dessiner soi-même. Utilisez l'outil ci-dessous pour ajouter des étapes et construire un diagramme simple représentant votre propre processus de développement.`,
-        component: FlowDiagramBuilder
+        title: 'Focus : Trunk-Based Development',
+        objective: 'Comprendre le flux de travail minimaliste et rapide du Trunk-Based Development.',
+        content: `À l'opposé de la complexité de GitFlow, le Trunk-Based Development (TBD) est une pratique où tous les développeurs intègrent leurs changements directement dans une seule branche principale, le "trunk" (tronc), généralement \`main\`.\n\nLes caractéristiques clés sont :\n- **Petits commits fréquents**: Les développeurs intègrent leur travail au moins une fois par jour.\n- **Forte culture de tests**: Une suite de tests automatisés (CI) est essentielle pour s'assurer que le trunk reste toujours stable.\n- **Feature Flags**: Pour les fonctionnalités plus importantes, on utilise des "feature flags" (ou "feature toggles") pour activer ou désactiver une fonctionnalité en production sans avoir besoin d'une branche séparée.\n\nCe workflow est très populaire dans les environnements de déploiement continu.`,
+        component: TrunkBasedDevelopmentVisualizer
       }
     ]
   },
