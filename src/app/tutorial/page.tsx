@@ -72,6 +72,23 @@ export default function TutorialPage() {
     }
   }, [currentChapter, setCurrentLocation, progress.quizScores, router]);
 
+  const skeletonView = (
+    <div className="flex flex-col h-full">
+       <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+           <Skeleton className="h-6 w-1/4 mb-2" />
+           <Skeleton className="h-10 w-3/4 mb-4" />
+           <Skeleton className="h-6 w-full mb-8" />
+           <Skeleton className="h-4 w-full mb-4" />
+           <Skeleton className="h-4 w-full mb-4" />
+           <Skeleton className="h-4 w-5/6 mb-4" />
+       </div>
+        <div className="flex justify-between items-center p-4 border-t bg-card">
+           <Skeleton className="h-9 w-28" />
+           <Skeleton className="h-9 w-36" />
+       </div>
+   </div>
+ );
+
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr] gap-6 p-4 md:p-6">
       <aside className="hidden md:flex md:flex-col">
@@ -79,48 +96,39 @@ export default function TutorialPage() {
       </aside>
       <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
         
-        <div className={cn("flex flex-col h-full", currentView !== 'lesson' && 'hidden')}>
-            {!isMounted ? (
-                 <div className="flex flex-col h-full">
-                    <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                        <Skeleton className="h-6 w-1/4 mb-2" />
-                        <Skeleton className="h-10 w-3/4 mb-4" />
-                        <Skeleton className="h-6 w-full mb-8" />
-                        <Skeleton className="h-4 w-full mb-4" />
-                        <Skeleton className="h-4 w-full mb-4" />
-                        <Skeleton className="h-4 w-5/6 mb-4" />
+        {!isMounted ? (
+            skeletonView
+        ) : (
+          <>
+            <div className={cn("flex flex-col h-full", currentView !== 'lesson' && 'hidden')}>
+                {currentLesson && currentChapter ? (
+                    <>
+                        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+                            <LessonView lesson={currentLesson} />
+                        </div>
+                        <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
+                    </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                    <div className="p-4 bg-primary/10 rounded-full mb-4">
+                      <BookOpen className="h-10 w-10 text-primary" />
                     </div>
-                     <div className="flex justify-between items-center p-4 border-t bg-card">
-                        <Skeleton className="h-9 w-28" />
-                        <Skeleton className="h-9 w-36" />
-                    </div>
-                </div>
-            ) : currentLesson && currentChapter ? (
-                <>
-                    <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                        <LessonView lesson={currentLesson} />
-                    </div>
-                    <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
-                </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                  <BookOpen className="h-10 w-10 text-primary" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Bienvenue dans le tutoriel interactif</h2>
-                <p className="max-w-md text-muted-foreground mb-6">
-                  Sélectionnez un chapitre dans le panneau de gauche, ou cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
-                </p>
-                <Button size="lg" onClick={() => setCurrentLocation(TUTORIALS[0].id, TUTORIALS[0].lessons[0].id)}>
-                    Commencer le tutoriel
-                </Button>
-              </div>
-            )}
-        </div>
+                    <h2 className="text-2xl font-bold mb-2">Bienvenue dans le tutoriel interactif</h2>
+                    <p className="max-w-md text-muted-foreground mb-6">
+                      Sélectionnez un chapitre dans le panneau de gauche, ou cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
+                    </p>
+                    <Button size="lg" onClick={() => setCurrentLocation(TUTORIALS[0].id, TUTORIALS[0].lessons[0].id)}>
+                        Commencer le tutoriel
+                    </Button>
+                  </div>
+                )}
+            </div>
 
-        <div className={cn("h-full", currentView !== 'quiz' && 'hidden')}>
-             {isMounted && chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
-        </div>
+            <div className={cn("h-full", currentView !== 'quiz' && 'hidden')}>
+                {chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
+            </div>
+          </>
+        )}
 
       </main>
     </div>
