@@ -345,12 +345,12 @@ export const QUIZZES: Record<string, Quiz> = {
       },
       {
         id: 'q4',
-        text: "Quelle est la principale conséquence de l'utilisation de `git rebase` pour intégrer des changements ?",
+        text: "Dans GitFlow, de quelle branche une branche de 'hotfix' part-elle, et où est-elle fusionnée ?",
         answers: [
-          { id: 'a1', text: 'Crée un commit de fusion.' },
-          { id: 'a2', text: "Réécrit l'historique pour le rendre linéaire.", isCorrect: true },
-          { id: 'a3', text: 'Est plus sûr que `git merge` pour les branches publiques.' },
-          { id: 'a4', text: 'Ne fonctionne que avec GitFlow.' },
+            { id: 'a1', text: 'Part de `develop` et fusionne dans `main`.' },
+            { id: 'a2', text: 'Part de `main` et fusionne dans `main` ET `develop`.', isCorrect: true },
+            { id: 'a3', text: 'Part de `develop` et fusionne dans `develop`.' },
+            { id: 'a4', text: 'Part de `main` et fusionne uniquement dans `main`.' },
         ],
       },
       {
