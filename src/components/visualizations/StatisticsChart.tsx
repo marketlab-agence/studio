@@ -2,12 +2,19 @@
 
 import React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 
 type ChartData = {
     name: string;
     score: number;
 }
+
+const chartConfig = {
+    score: {
+      label: 'Score',
+      color: 'hsl(var(--primary))',
+    },
+} satisfies ChartConfig;
 
 export function StatisticsChart({ data }: { data: ChartData[] }) {
     if (!data || data.length === 0) {
@@ -19,9 +26,9 @@ export function StatisticsChart({ data }: { data: ChartData[] }) {
     }
 
   return (
-    <div className="h-[250px]">
+    <ChartContainer config={chartConfig} className="h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
+          <BarChart accessibilityLayer data={data}>
             <XAxis
               dataKey="name"
               stroke="#888888"
@@ -42,9 +49,9 @@ export function StatisticsChart({ data }: { data: ChartData[] }) {
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={<ChartTooltipContent formatter={(value) => `${value}%`}/>}
             />
-            <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="score" fill="var(--color-score)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-    </div>
+    </ChartContainer>
   );
 }
