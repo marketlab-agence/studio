@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Award, GitCommitHorizontal } from 'lucide-react';
+import { GitCommitHorizontal, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export function CertificateGenerator() {
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
+    const [certificateId, setCertificateId] = useState('');
 
     const handleGenerate = () => {
         if (name.trim()) {
@@ -18,6 +19,7 @@ export function CertificateGenerator() {
                 month: 'long',
                 day: 'numeric',
             }));
+             setCertificateId(`GHI-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
             setGenerated(true);
         }
     };
@@ -45,31 +47,52 @@ export function CertificateGenerator() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <Card className="max-w-2xl mx-auto bg-gradient-to-br from-background to-muted/50 border-primary/20 shadow-lg">
-                        <CardContent className="p-8 text-center relative overflow-hidden">
-                            <Award className="absolute -top-10 -left-10 h-32 w-32 text-primary/5 opacity-50" />
-                            <Award className="absolute -bottom-12 -right-16 h-40 w-40 text-primary/5 opacity-50 rotate-45" />
+                    <div className="w-full max-w-3xl mx-auto border-4 border-primary/20 bg-card p-2 rounded-lg shadow-2xl">
+                      <div className="border-2 border-primary/30 p-8 text-center relative flex flex-col items-center space-y-6 bg-background/50">
+                        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-primary/30 rounded-tl-md"></div>
+                        <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-primary/30 rounded-tr-md"></div>
+                        <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-primary/30 rounded-bl-md"></div>
+                        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-primary/30 rounded-br-md"></div>
+                        
+                        <div className="flex items-center gap-4">
+                            <GitCommitHorizontal className="h-10 w-10 text-primary"/>
+                            <h1 className="text-2xl font-bold">Git & GitHub Interactif</h1>
+                        </div>
 
-                            <div className="mb-4">
-                                <Award className="h-16 w-16 text-primary mx-auto" />
+                        <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Certificat d'Accomplissement</p>
+                        
+                        <p className="text-muted-foreground">est décerné à</p>
+                        
+                        <h2 className="text-5xl font-bold font-headline text-primary">{name}</h2>
+                        
+                        <p className="max-w-lg text-muted-foreground">
+                            pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.
+                        </p>
+
+                        <div className="pt-8 w-full grid grid-cols-3 items-end gap-4">
+                            <div className="text-left text-xs space-y-1">
+                                <p className="font-code text-muted-foreground">Certificat No: {certificateId}</p>
+                                <p className="font-code text-muted-foreground">Date d'émission: {completionDate}</p>
                             </div>
-                            <h2 className="text-xl font-bold text-muted-foreground uppercase tracking-widest">Certificat de Réussite</h2>
-                            <p className="text-muted-foreground mt-4">décerné à</p>
-                            <h1 className="text-4xl font-bold my-4 text-primary">{name}</h1>
-                            <p className="text-muted-foreground">pour avoir terminé avec succès le tutoriel</p>
-                            <h3 className="text-2xl font-semibold my-2">Git & GitHub Interactif</h3>
-                             <div className="flex items-center justify-center gap-2 text-muted-foreground my-6">
-                                <div className="flex-1 h-px bg-border" />
-                                <GitCommitHorizontal className="h-4 w-4" />
-                                <div className="flex-1 h-px bg-border" />
+
+                            <div className="flex flex-col items-center">
+                                <div className="relative h-20 w-20">
+                                    <div className="absolute inset-0 rounded-full bg-primary/20"></div>
+                                    <div className="absolute inset-1 rounded-full border-2 border-dashed border-primary/50"></div>
+                                    <ShieldCheck className="absolute inset-0 m-auto h-10 w-10 text-primary" />
+                                </div>
+                                <p className="text-sm font-semibold mt-2">Git Explorer Academy</p>
                             </div>
-                            <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                <span>{completionDate}</span>
-                                <span>Git Explorer</span>
+
+                            <div className="text-center">
+                                <p className="font-['cursive'] text-2xl leading-none">L'Instructeur</p>
+                                <div className="h-px w-full bg-foreground my-1"></div>
+                                <p className="text-sm font-semibold">Signature</p>
                             </div>
-                        </CardContent>
-                    </Card>
-                    <div className="text-center mt-4">
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center mt-6">
                         <Button variant="outline" onClick={() => setGenerated(false)}>Générer un autre certificat</Button>
                     </div>
                 </motion.div>
