@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag, CheckCircle } from 'lucide-react';
@@ -307,3 +308,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+    
