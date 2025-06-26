@@ -25,7 +25,7 @@ function getValue<T>(key: string, initialValue: T | (() => T), options?: UseLoca
 }
 
 /**
- * Hook pour persister l'état dans le Local Storage.
+ * Hook pour persister l'état dans le Local Storage, avec synchronisation entre les onglets.
  * @param key La clé pour le local storage.
  * @param initialValue La valeur initiale.
  * @returns Une valeur d'état et une fonction pour la mettre à jour.
@@ -43,20 +43,36 @@ export function useLocalStorage<T>(
     if (storedValue === FAKE_SSR_VALUE) {
         setStoredValue(getValue(key, initialValue, options));
     }
-  }, [key, initialValue, options, storedValue]);
+
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === key && e.newValue) {
+          try {
+            setStoredValue(options?.deserializer ? options.deserializer(e.newValue) : JSON.parse(e.newValue));
+          } catch (error) {
+            console.warn(`Error parsing stored value for key “${key}”:`, error);
+          }
+        }
+      };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [key, options]); // This dependency array ensures the listener is set up correctly.
+
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
+      // Use a functional update to get the latest state value
       setStoredValue((prev) => {
         const valueToStore = value instanceof Function ? value(prev as T) : value;
         try {
           if (typeof window !== "undefined") {
-            localStorage.setItem(
-              key,
-              options?.serializer
+            const serializedValue = options?.serializer
                 ? options.serializer(valueToStore)
                 : JSON.stringify(valueToStore)
-            );
+            localStorage.setItem(key, serializedValue);
           }
         } catch (e) {
           console.warn(`Error setting localStorage key “${key}”:`, e);
