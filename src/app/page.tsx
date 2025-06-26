@@ -36,11 +36,12 @@ export default function Home() {
               </div>
             </div>
             <Image
-              src="https://images.unsplash.com/photo-1550745165-9bc0b252726a"
+              src="https://placehold.co/600x400.png"
               width={600}
               height={400}
               alt="Hero"
               className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
+              data-ai-hint="code technology"
             />
           </div>
         </div>
