@@ -14,7 +14,7 @@ export function ProgressBar() {
   return (
     <div className="p-4 w-full">
         <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-muted-foreground">Tutorial Progress</span>
+            <span className="text-sm font-medium text-muted-foreground">Progression du Tutoriel</span>
             <span className="text-sm font-bold">{Math.round(progress)}%</span>
         </div>
         <Progress value={progress} />

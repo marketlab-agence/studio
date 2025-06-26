@@ -3,11 +3,11 @@ import { ChevronRight } from 'lucide-react';
 
 export function BreadcrumbNavigation() {
   return (
-    <nav aria-label="Breadcrumb">
+    <nav aria-label="Fil d'Ariane">
       <ol className="flex items-center gap-2 text-sm text-muted-foreground">
         <li>
           <a href="#" className="transition-colors hover:text-foreground">
-            Git Tutorial
+            Tutoriel Git
           </a>
         </li>
         <li>
@@ -23,7 +23,7 @@ export function BreadcrumbNavigation() {
         </li>
         <li>
           <span className="font-medium text-foreground">
-            What is Git?
+            Qu'est-ce que Git ?
           </span>
         </li>
       </ol>

@@ -9,9 +9,9 @@ export function ChapterHeader() {
             <BookMarked className="h-6 w-6 text-primary" />
         </div>
         <div>
-            <h1 className="text-2xl font-bold tracking-tight">1. Introduction to Git</h1>
+            <h1 className="text-2xl font-bold tracking-tight">1. Introduction à Git</h1>
             <p className="text-md text-muted-foreground mt-1">
-              Learn the fundamentals of version control.
+              Apprenez les bases du contrôle de version.
             </p>
         </div>
       </div>
