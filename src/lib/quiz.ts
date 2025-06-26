@@ -83,16 +83,15 @@ export const QUIZZES: Record<string, Quiz> = {
             ]
         },
         {
-          id: 'q4',
-          text: "Pourquoi est-il important d'écrire de bons messages de commit ?",
-          isMultipleChoice: true,
-          answers: [
-              { id: 'a1', text: "Pour que Git fonctionne correctement." },
-              { id: 'a2', text: "Pour aider les autres (et vous-même) à comprendre rapidement pourquoi un changement a été fait.", isCorrect: true },
-              { id: 'a3', text: "Pour passer le temps." },
-              { id: 'a4', text: "Pour faciliter la recherche dans l'historique du projet.", isCorrect: true },
-          ]
-      }
+            id: 'q4',
+            text: "Quelle option de la commande `git commit` permet d'inclure le message directement en ligne de commande ?",
+            answers: [
+                { id: 'a1', text: '-message "Votre message"' },
+                { id: 'a2', text: '-m "Votre message"', isCorrect: true },
+                { id: 'a3', text: '-c "Votre message"' },
+                { id: 'a4', text: '--message "Votre message"' },
+            ]
+        }
     ],
     passingScore: 80,
   },
@@ -107,17 +106,17 @@ export const QUIZZES: Record<string, Quiz> = {
                 { id: 'a1', text: 'git new branch feature-login' },
                 { id: 'a2', text: 'git branch feature-login', isCorrect: true },
                 { id: 'a3', text: 'git create feature-login' },
-                { id: 'a4', text: 'git checkout feature-login' },
+                { id: 'a4', text: 'git feature-login' },
             ]
         },
         {
             id: 'q2',
-            text: 'Comment basculez-vous sur une branche existante nommée "develop" ?',
+            text: 'Quelle commande est la plus moderne et recommandée pour changer de branche ?',
             answers: [
-                { id: 'a1', text: 'git switch develop' },
-                { id: 'a2', text: 'git checkout develop', isCorrect: true },
-                { id: 'a3', text: 'git change-branch develop' },
-                { id: 'a4', text: 'Les deux premières réponses sont correctes.', isCorrect: true },
+                { id: 'a1', text: 'git move develop' },
+                { id: 'a2', text: 'git switch develop', isCorrect: true },
+                { id: 'a3', text: 'git go develop' },
+                { id: 'a4', text: 'git change-branch develop' },
             ]
         },
         {
@@ -130,6 +129,16 @@ export const QUIZZES: Record<string, Quiz> = {
                 { id: 'a4', text: 'git branch && git checkout' },
             ]
         },
+        {
+            id: 'q4',
+            text: 'Quelle commande est utilisée pour lister toutes les branches de votre dépôt ?',
+            answers: [
+                { id: 'a1', text: 'git list --branches' },
+                { id: 'a2', text: 'git show-branches' },
+                { id: 'a3', text: 'git branch', isCorrect: true },
+                { id: 'a4', text: 'git status --branches' },
+            ]
+        }
     ],
     passingScore: 80,
   }
