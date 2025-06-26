@@ -20,16 +20,29 @@ export default function CertificatePage() {
   }, []);
 
   const handleContinue = () => {
-    // This logic finds the first uncompleted lesson, which is the most robust way to "continue".
+    // Start searching from the user's last known chapter.
+    let startChapterIndex = progress.currentChapterId 
+        ? TUTORIALS.findIndex(c => c.id === progress.currentChapterId) 
+        : 0;
+
+    if (startChapterIndex === -1) {
+        // Fallback if currentChapterId is invalid for some reason
+        startChapterIndex = 0;
+    }
+    
+    // Create a reordered list of chapters to search, starting from the current one and wrapping around.
+    const chaptersToSearch = [...TUTORIALS.slice(startChapterIndex), ...TUTORIALS.slice(0, startChapterIndex)];
+    
     let nextLesson = null;
     let chapterOfNextLesson = null;
 
-    for (const chapter of TUTORIALS) {
+    for (const chapter of chaptersToSearch) {
+      // Find the first uncompleted lesson in this chapter
       const lesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
       if (lesson) {
           nextLesson = lesson;
           chapterOfNextLesson = chapter;
-          break;
+          break; // Found the first uncompleted lesson, stop searching.
       }
     }
     
@@ -37,7 +50,6 @@ export default function CertificatePage() {
         setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
     } else if (progress.currentChapterId && progress.currentLessonId) {
       // Fallback to last known position if for some reason we can't find the next one
-      // This case should ideally not happen if overallProgress < 100
       setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
     }
   };
