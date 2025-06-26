@@ -20,6 +20,7 @@ export default function CertificatePage() {
   }, []);
 
   const handleContinue = () => {
+    // This logic finds the first uncompleted lesson, which is the most robust way to "continue".
     let nextLesson = null;
     let chapterOfNextLesson = null;
 
@@ -31,11 +32,12 @@ export default function CertificatePage() {
           break;
       }
     }
-
+    
     if (nextLesson && chapterOfNextLesson) {
-      setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
+        setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
     } else if (progress.currentChapterId && progress.currentLessonId) {
       // Fallback to last known position if for some reason we can't find the next one
+      // This case should ideally not happen if overallProgress < 100
       setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
     }
   };
