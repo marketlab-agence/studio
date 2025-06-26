@@ -315,12 +315,12 @@ export const QUIZZES: Record<string, Quiz> = {
     questions: [
       {
         id: 'q1',
-        text: 'Quel workflow est généralement considéré comme le plus simple et le plus adapté au déploiement continu ?',
+        text: "Dans le workflow GitFlow, quelle est la fonction principale d'une branche de 'release' ?",
         answers: [
-          { id: 'a1', text: 'GitFlow' },
-          { id: 'a2', text: 'GitHub Flow', isCorrect: true },
-          { id: 'a3', text: 'Trunk-Based Development' },
-          { id: 'a4', text: 'Centralized Workflow' },
+          { id: 'a1', text: 'Développer des fonctionnalités nouvelles et expérimentales.' },
+          { id: 'a2', text: 'Contenir la version de production stable et historique.' },
+          { id: 'a3', text: 'Préparer une nouvelle version pour la production, en y agrégeant les fonctionnalités de `develop` et en y appliquant des corrections mineures.', isCorrect: true },
+          { id: 'a4', text: "Appliquer des correctifs urgents directement sur la production." },
         ],
       },
       {
