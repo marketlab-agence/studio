@@ -51,26 +51,42 @@ export default function TutorialPage() {
 
   const handleFinishQuiz = useCallback(() => {
     if (!currentChapter) return;
-    
+
     const score = progress.quizScores[currentChapter.id] ?? 0;
     const quiz = QUIZZES[currentChapter.id];
     const passed = score >= (quiz?.passingScore ?? 80);
 
     if (passed) {
-        const chapterIndex = TUTORIALS.findIndex(c => c.id === currentChapter.id);
-        const isLastChapter = chapterIndex === TUTORIALS.length - 1;
+      // Find the first uncompleted lesson anywhere in the tutorial.
+      // This is the most robust way to find the "next" place to go.
+      let nextUncompletedChapter = null;
+      let nextUncompletedLesson = null;
 
-        if (!isLastChapter) {
-            const nextChapter = TUTORIALS[chapterIndex + 1];
-            setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
-        } else {
-            router.push('/certificate');
+      for (const chapter of TUTORIALS) {
+        const lesson = chapter.lessons.find(
+          (l) => !progress.completedLessons.has(l.id)
+        );
+        if (lesson) {
+          nextUncompletedChapter = chapter;
+          nextUncompletedLesson = lesson;
+          break; // Found the very first one, stop searching.
         }
+      }
+
+      if (nextUncompletedChapter && nextUncompletedLesson) {
+        setCurrentLocation(
+          nextUncompletedChapter.id,
+          nextUncompletedLesson.id
+        );
+      } else {
+        // All lessons are complete, congratulations!
+        router.push('/certificate');
+      }
     } else {
-        // User failed and clicked "Réviser le chapitre"
-        setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
+      // User failed and clicked "Réviser le chapitre"
+      setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
     }
-  }, [currentChapter, setCurrentLocation, progress.quizScores, router]);
+  }, [currentChapter, progress.quizScores, progress.completedLessons, setCurrentLocation, router]);
 
   const skeletonView = (
     <div className="flex flex-col h-full">
