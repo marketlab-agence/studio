@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BrainCircuit, CheckCircle, Code, GitCommitHorizontal, Layers, MousePointerClick, Rocket } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -34,11 +35,10 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-            <img
-              src="https://placehold.co/600x400.png"
-              data-ai-hint="abstract code"
-              width="600"
-              height="400"
+            <Image
+              src="https://images.unsplash.com/photo-1550745165-9bc0b252726a"
+              width={600}
+              height={400}
               alt="Hero"
               className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
             />
