@@ -34,22 +34,26 @@ export function Header() {
         <GitCommitHorizontal className="h-6 w-6 text-primary" />
         <span className="text-lg">Git & GitHub Interactif</span>
       </Link>
-      <nav className="mx-auto hidden flex-col gap-6 text-sm font-medium md:flex md:flex-row md:items-center">
-        <Link href="/dashboard" className="text-muted-foreground transition-colors hover:text-foreground">
-          Tableau de bord
-        </Link>
-        <Link href="/tutorial" className="text-muted-foreground transition-colors hover:text-foreground">
-          Tutoriel
-        </Link>
-        <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
-          Certification
-        </Link>
-      </nav>
+      {user && (
+        <nav className="mx-auto hidden flex-col gap-6 text-sm font-medium md:flex md:flex-row md:items-center">
+          <Link href="/dashboard" className="text-muted-foreground transition-colors hover:text-foreground">
+            Tableau de bord
+          </Link>
+          <Link href="/tutorial" className="text-muted-foreground transition-colors hover:text-foreground">
+            Tutoriel
+          </Link>
+          <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
+            Certification
+          </Link>
+        </nav>
+      )}
       <div className="flex items-center gap-4 ml-auto">
-        <Button variant="ghost" size="icon" className="rounded-full" disabled={!user}>
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
+        {user && (
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Bell className="h-5 w-5" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+        )}
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
