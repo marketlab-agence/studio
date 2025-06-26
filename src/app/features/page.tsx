@@ -49,7 +49,7 @@ export default function FeaturesPage() {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">La compétence par la pratique.</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Katalyst est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. Découvrez les fonctionnalités qui rendent notre approche unique.
+                Katalyst est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. C'est pourquoi nous avons conçu des fonctionnalités qui vous immergent dans des scénarios réels pour une maîtrise accélérée de l'essentiel.
               </p>
             </div>
           </div>
