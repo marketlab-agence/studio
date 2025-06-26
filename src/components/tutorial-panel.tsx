@@ -8,13 +8,13 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, Rocket, FileCode, BookOpen } from 'lucide-react';
+import { CheckCircle, Rocket, FileCode, BookOpen, GitCommitHorizontal } from 'lucide-react';
 import { FileTreeViewer } from '@/components/visualizations/FileTreeViewer';
+import Link from 'next/link';
 
 type Tutorial = typeof TUTORIALS[0];
 type TutorialStep = Tutorial['steps'][0];
@@ -40,6 +40,15 @@ export function TutorialPanel({
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex items-center gap-4 border-b border-border p-4">
+        <Link href="/" className="flex items-center gap-2 group">
+          <GitCommitHorizontal className="h-7 w-7 text-primary transition-transform group-hover:rotate-12" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground/80 transition-colors group-hover:text-foreground">
+            Git & GitHub Interactif
+          </h1>
+        </Link>
+      </div>
+
       <Card className="m-4">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
