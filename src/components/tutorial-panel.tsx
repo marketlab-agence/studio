@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Circle, Lock } from 'lucide-react';
+import { CheckCircle, Circle, Lock, ChevronRight } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
@@ -48,18 +48,20 @@ export function TutorialPanel() {
         <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full p-2">
           {TUTORIALS.map((tutorial, index) => {
             const isFirstChapter = index === 0;
-            const prevChapter = isFirstChapter ? null : TUTORIALS[index-1];
+            const prevChapter = isFirstChapter ? null : TUTORIALS[index - 1];
             const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
             const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
             const isCompleted = (progress.quizScores?.[tutorial.id] ?? 0) >= 80;
-            
+
             return (
               <AccordionItem value={tutorial.id} key={tutorial.id} className="border-b-0" disabled={isLocked}>
-                <AccordionTrigger className={cn(
-                  "text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline",
-                  isLocked && "text-muted-foreground/50 cursor-not-allowed"
-                )}>
-                  <div className="flex items-center gap-3 flex-1">
+                <AccordionTrigger
+                  className={cn(
+                    'text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline',
+                    isLocked && 'cursor-not-allowed text-muted-foreground/50'
+                  )}
+                >
+                  <div className="flex flex-1 items-center gap-3">
                     {isLocked ? (
                       <Lock className="h-4 w-4 text-muted-foreground/50" />
                     ) : isCompleted ? (
@@ -86,6 +88,8 @@ export function TutorialPanel() {
                         <span className="font-medium">{lesson.title}</span>
                         {progress.completedLessons.has(lesson.id) ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : lesson.id === currentLesson?.id ? (
+                          <ChevronRight className="h-4 w-4 text-primary" />
                         ) : (
                           <Circle className="h-4 w-4 text-border" />
                         )}
