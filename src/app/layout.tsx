@@ -4,6 +4,7 @@ import { TutorialProvider } from '@/contexts/TutorialContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
   title: 'Git & GitHub Interactif',
@@ -28,6 +29,7 @@ export default function RootLayout({
             <div className="flex min-h-screen w-full flex-col">
               <Header />
               {children}
+              <Footer />
             </div>
           </TutorialProvider>
         </AuthProvider>
