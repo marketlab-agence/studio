@@ -96,9 +96,23 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
     const setQuizScore = useCallback((quizId: string, score: number) => {
         setProgress(prev => {
+            const quiz = QUIZZES[quizId];
+            if (!quiz) return { ...prev, quizScores: { ...prev.quizScores, [quizId]: score } };
+
+            const passed = score >= quiz.passingScore;
+            let newCompleted = new Set(prev.completedLessons);
+
+            if (passed) {
+                const chapter = TUTORIALS.find(c => c.id === quizId);
+                if (chapter) {
+                    chapter.lessons.forEach(lesson => newCompleted.add(lesson.id));
+                }
+            }
+            
             return {
                 ...prev,
                 quizScores: { ...prev.quizScores, [quizId]: score },
+                completedLessons: newCompleted,
             };
         });
     }, [setProgress]);

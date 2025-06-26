@@ -14,6 +14,7 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
 import { Skeleton } from './ui/skeleton';
+import { QUIZZES } from '@/lib/quiz';
 
 export function TutorialPanel() {
   const {
@@ -71,9 +72,12 @@ export function TutorialPanel() {
             {TUTORIALS.map((tutorial, index) => {
               const isFirstChapter = index === 0;
               const prevChapter = isFirstChapter ? null : TUTORIALS[index - 1];
+              const prevChapterQuiz = prevChapter ? QUIZZES[prevChapter.id] : null;
               const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-              const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
-              const isCompleted = (progress.quizScores?.[tutorial.id] ?? 0) >= 80;
+              const isLocked = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
+
+              const chapterQuiz = QUIZZES[tutorial.id];
+              const isCompleted = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
 
               return (
                 <AccordionItem value={tutorial.id} key={tutorial.id} className="border-b-0" disabled={isLocked}>
@@ -98,7 +102,7 @@ export function TutorialPanel() {
                   <AccordionContent className="pl-4">
                     <div className="space-y-1">
                       {tutorial.lessons.map((lesson) => {
-                        const isLessonMarkedAsComplete = progress.completedLessons.has(lesson.id) || isCompleted;
+                        const isLessonMarkedAsComplete = progress.completedLessons.has(lesson.id);
 
                         return (
                           <button
