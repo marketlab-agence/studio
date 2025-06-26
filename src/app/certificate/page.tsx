@@ -9,14 +9,36 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TUTORIALS } from '@/lib/tutorials';
 
 export default function CertificatePage() {
-  const { overallProgress } = useTutorial();
+  const { overallProgress, progress, setCurrentLocation } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleContinue = () => {
+    let nextLesson = null;
+    let chapterOfNextLesson = null;
+
+    for (const chapter of TUTORIALS) {
+      const lesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
+      if (lesson) {
+          nextLesson = lesson;
+          chapterOfNextLesson = chapter;
+          break;
+      }
+    }
+
+    if (nextLesson && chapterOfNextLesson) {
+      setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
+    } else if (progress.currentChapterId && progress.currentLessonId) {
+      // Fallback to last known position if for some reason we can't find the next one
+      setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
+    }
+  };
 
   const isComplete = overallProgress >= 100;
 
@@ -65,7 +87,7 @@ export default function CertificatePage() {
             <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
           </div>
           <Button asChild>
-            <Link href="/tutorial">Continuer le Tutoriel</Link>
+            <Link href="/tutorial" onClick={handleContinue}>Continuer le Tutoriel</Link>
           </Button>
         </CardContent>
       </Card>
