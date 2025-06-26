@@ -1,3 +1,4 @@
+
 import type { Quiz } from '@/types/tutorial.types';
 
 export const QUIZZES: Record<string, Quiz> = {
@@ -344,12 +345,12 @@ export const QUIZZES: Record<string, Quiz> = {
       },
       {
         id: 'q4',
-        text: 'Quel workflow encourage les petites modifications fréquentes sur une seule branche principale ?',
+        text: "Quelle est la principale conséquence de l'utilisation de `git rebase` pour intégrer des changements ?",
         answers: [
-          { id: 'a1', text: 'GitHub Flow' },
-          { id: 'a2', text: 'GitFlow' },
-          { id: 'a3', text: 'Trunk-Based Development', isCorrect: true },
-          { id: 'a4', text: 'Forking Workflow' },
+          { id: 'a1', text: 'Crée un commit de fusion.' },
+          { id: 'a2', text: "Réécrit l'historique pour le rendre linéaire.", isCorrect: true },
+          { id: 'a3', text: 'Est plus sûr que `git merge` pour les branches publiques.' },
+          { id: 'a4', text: 'Ne fonctionne que avec GitFlow.' },
         ],
       },
       {
@@ -663,3 +664,5 @@ export const QUIZZES: Record<string, Quiz> = {
     passingScore: 80,
   }
 };
+
+    
