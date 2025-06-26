@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Circle, BookCopy, ChevronRight, Activity, FlaskConical, GraduationCap } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
