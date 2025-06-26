@@ -45,6 +45,27 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a4', text: "Un fichier de configuration pour l'éditeur de code" },
         ],
       },
+      {
+        id: 'q5',
+        text: "Quelle commande est utilisée pour configurer votre nom d'utilisateur dans Git, qui sera associé à vos commits ?",
+        answers: [
+          { id: 'a1', text: 'git config --global user.name "Votre Nom"', isCorrect: true },
+          { id: 'a2', text: 'git user --name "Votre Nom"' },
+          { id: 'a3', text: 'git config --name "Votre Nom"' },
+          { id: 'a4', text: 'git profile --user "Votre Nom"' },
+        ],
+      },
+      {
+        id: 'q6',
+        text: "Parmi les affirmations suivantes sur Git, lesquelles sont vraies ? (plusieurs réponses possibles)",
+        isMultipleChoice: true,
+        answers: [
+          { id: 'a1', text: 'Git est un système de contrôle de version distribué.', isCorrect: true },
+          { id: 'a2', text: 'Git a été créé par Linus Torvalds.', isCorrect: true },
+          { id: 'a3', text: 'Le dossier .git peut être supprimé sans risque.' },
+          { id: 'a4', text: "Git ne fonctionne que si vous êtes connecté à Internet." },
+        ],
+      },
     ],
     passingScore: 80,
   },
@@ -91,6 +112,16 @@ export const QUIZZES: Record<string, Quiz> = {
                 { id: 'a3', text: '-c "Votre message"' },
                 { id: 'a4', text: '--message "Votre message"' },
             ]
+        },
+        {
+          id: 'q5',
+          text: 'À quoi sert le fichier `.gitignore` ?',
+          answers: [
+            { id: 'a1', text: 'À ignorer les erreurs Git.' },
+            { id: 'a2', text: 'À spécifier les fichiers et dossiers que Git doit ignorer et ne pas suivre.', isCorrect: true },
+            { id: 'a3', text: 'À lister les utilisateurs qui ne peuvent pas faire de commit.' },
+            { id: 'a4', text: 'À configurer les paramètres de Git.' },
+          ]
         }
     ],
     passingScore: 80,
@@ -138,7 +169,28 @@ export const QUIZZES: Record<string, Quiz> = {
                 { id: 'a3', text: 'git branch', isCorrect: true },
                 { id: 'a4', text: 'git status --branches' },
             ]
-        }
+        },
+        {
+          id: 'q5',
+          text: "Quelle commande est utilisée pour supprimer une branche locale nommée 'old-feature' en toute sécurité (seulement si elle a été fusionnée) ?",
+          answers: [
+            { id: 'a1', text: 'git branch -d old-feature', isCorrect: true },
+            { id: 'a2', text: 'git branch -D old-feature' },
+            { id: 'a3', text: 'git delete branch old-feature' },
+            { id: 'a4', text: 'git remove old-feature' },
+          ]
+        },
+        {
+          id: 'q6',
+          text: "Quels sont les avantages de l'utilisation des branches dans Git ? (plusieurs réponses possibles)",
+          isMultipleChoice: true,
+          answers: [
+            { id: 'a1', text: 'Isoler le développement de nouvelles fonctionnalités.', isCorrect: true },
+            { id: 'a2', text: 'Permettre à plusieurs personnes de travailler sur le même projet sans se gêner.', isCorrect: true },
+            { id: 'a3', text: 'Rendre le projet plus lourd et plus lent.' },
+            { id: 'a4', text: 'Créer des sauvegardes automatiques du projet.' },
+          ],
+        },
     ],
     passingScore: 80,
   },
@@ -186,6 +238,16 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a4', text: 'git commit --remote' },
         ],
       },
+      {
+        id: 'q5',
+        text: 'Quelle commande permet de lister tous les dépôts distants configurés pour votre projet, avec leurs URLs ?',
+        answers: [
+          { id: 'a1', text: 'git list remotes' },
+          { id: 'a2', text: 'git remote -v', isCorrect: true },
+          { id: 'a3', text: 'git show urls' },
+          { id: 'a4', text: 'git config --remotes' },
+        ]
+      },
     ],
     passingScore: 80,
   },
@@ -232,6 +294,16 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: 'À améliorer la qualité du code, partager des connaissances et s\'assurer que les changements sont pertinents.', isCorrect: true },
           { id: 'a4', text: 'À vérifier uniquement les fautes de frappe.' },
         ],
+      },
+      {
+        id: 'q5',
+        text: 'Comment maintenez-vous votre fork à jour avec les derniers changements du projet original (upstream) ?',
+        answers: [
+          { id: 'a1', text: 'En le supprimant et en le recréant.' },
+          { id: 'a2', text: 'En configurant un distant \'upstream\', en faisant un \'fetch\' dessus, puis en fusionnant les changements dans votre branche \'main\'.', isCorrect: true },
+          { id: 'a3', text: 'GitHub le met à jour automatiquement.' },
+          { id: 'a4', text: 'En faisant \'git push --update\'.' },
+        ]
       }
     ],
     passingScore: 80,
@@ -279,6 +351,16 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: 'Cela annule la fusion.' },
           { id: 'a4', text: 'Cela demande à nouveau de résoudre le conflit.' },
         ],
+      },
+      {
+        id: 'q5',
+        text: 'Si vous êtes au milieu d\'une fusion avec des conflits et que vous souhaitez annuler complètement la fusion et revenir à l\'état d\'avant, quelle commande utilisez-vous ?',
+        answers: [
+          { id: 'a1', text: 'git merge --undo' },
+          { id: 'a2', text: 'git merge --abort', isCorrect: true },
+          { id: 'a3', text: 'git reset --hard' },
+          { id: 'a4', text: 'git cancel merge' },
+        ]
       }
     ],
     passingScore: 80,
@@ -326,7 +408,28 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: '`git reset` est plus sûr que `git revert`.' },
           { id: 'a4', text: '`git revert` supprime des commits, `git reset` les déplace.' },
         ],
-      }
+      },
+      {
+        id: 'q5',
+        text: "Vous venez de faire un commit, mais vous réalisez que vous avez oublié d'inclure un fichier ou que le message du commit contient une faute de frappe. Quelle commande pouvez-vous utiliser pour modifier le dernier commit sans créer un nouveau commit ?",
+        answers: [
+          { id: 'a1', text: 'git fixup' },
+          { id: 'a2', text: 'git commit --amend', isCorrect: true },
+          { id: 'a3', text: 'git edit commit' },
+          { id: 'a4', text: 'git revert --soft' },
+        ]
+      },
+      {
+        id: 'q6',
+        text: "Quelles sont les situations où l'utilisation de `git reset --hard` peut être dangereuse et entraîner une perte de travail ? (plusieurs réponses possibles)",
+        isMultipleChoice: true,
+        answers: [
+          { id: 'a1', text: 'Quand vous avez des modifications non commitées dans votre répertoire de travail.', isCorrect: true },
+          { id: 'a2', text: 'Quand le commit que vous annulez a déjà été poussé vers un dépôt partagé.', isCorrect: true },
+          { id: 'a3', text: 'Quand vous voulez simplement retirer un fichier de la zone de staging.' },
+          { id: 'a4', text: 'Quand vous voulez annuler un commit public.' },
+        ],
+      },
     ],
     passingScore: 80,
   },
@@ -373,6 +476,16 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: 'Le jalon auquel l\'issue est rattachée.' },
           { id: 'a4', text: 'La personne responsable du traitement de l\'issue.', isCorrect: true },
         ],
+      },
+      {
+        id: 'q5',
+        text: "Quel est le nom du fichier qui, s'il est placé à la racine de votre dépôt, sera automatiquement affiché sur la page d'accueil de votre projet sur GitHub ?",
+        answers: [
+          { id: 'a1', text: 'HOME.md' },
+          { id: 'a2', text: 'index.md' },
+          { id: 'a3', text: 'README.md', isCorrect: true },
+          { id: 'a4', text: 'PROJECT.txt' },
+        ]
       }
     ],
     passingScore: 80,
@@ -420,6 +533,16 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: 'git clone' },
           { id: 'a4', text: 'git pull', isCorrect: true },
         ],
+      },
+      {
+        id: 'q5',
+        text: "Vous avez cloné un dépôt, créé une branche 'fix/typo', fait un commit, et maintenant vous voulez le partager. Quelle est la prochaine commande à exécuter ?",
+        answers: [
+          { id: 'a1', text: 'git pull' },
+          { id: 'a2', text: 'git merge main' },
+          { id: 'a3', text: 'git push origin fix/typo', isCorrect: true },
+          { id: 'a4', text: 'git commit --push' },
+        ]
       }
     ],
     passingScore: 80,
