@@ -22,6 +22,7 @@ type TutorialContextType = {
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
   resetProgress: () => void;
+  resetChapter: (chapterId: string) => void;
   currentChapter: typeof TUTORIALS[0] | undefined;
   currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
   currentView: 'lesson' | 'quiz';
@@ -189,6 +190,27 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         setProgress(initialProgress);
     }, [setProgress]);
 
+    const resetChapter = useCallback((chapterId: string) => {
+        setProgress(prev => {
+            const chapterToReset = TUTORIALS.find(c => c.id === chapterId);
+            if (!chapterToReset) return prev;
+
+            const newCompleted = new Set(prev.completedLessons);
+            chapterToReset.lessons.forEach(lesson => {
+                newCompleted.delete(lesson.id);
+            });
+            
+            const newQuizScores = { ...prev.quizScores };
+            delete newQuizScores[chapterId];
+
+            return {
+                ...prev,
+                quizScores: newQuizScores,
+                completedLessons: newCompleted,
+            };
+        });
+    }, [setProgress]);
+
     const value = useMemo(() => {
         const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
 
@@ -215,6 +237,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             goToNextLesson,
             goToPreviousLesson,
             resetProgress,
+            resetChapter,
             currentChapter,
             currentLesson,
             currentView,
@@ -224,7 +247,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress]);
+    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress, resetChapter]);
 
 
     return (

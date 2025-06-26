@@ -315,12 +315,12 @@ export const QUIZZES: Record<string, Quiz> = {
     questions: [
       {
         id: 'q1',
-        text: "Dans GitFlow, de quelle branche une branche de 'hotfix' part-elle, et où est-elle fusionnée à la fin ?",
+        text: "Dans GitFlow, d'où partent principalement les nouvelles branches de 'feature' ?",
         answers: [
-          { id: 'a1', text: 'Part de `develop` et fusionne dans `main`.' },
-          { id: 'a2', text: 'Part de `main` et fusionne dans `main` ET `develop`.', isCorrect: true },
-          { id: 'a3', text: 'Part de `develop` et fusionne dans `develop`.' },
-          { id: 'a4', text: 'Part de `main` et fusionne uniquement dans `main`.' },
+          { id: 'a1', text: 'De la branche `main`' },
+          { id: 'a2', text: 'De la branche `develop`', isCorrect: true },
+          { id: 'a3', text: 'De la dernière branche de `release`' },
+          { id: 'a4', text: "De n'importe quelle autre branche de `feature`" },
         ],
       },
       {
@@ -345,12 +345,12 @@ export const QUIZZES: Record<string, Quiz> = {
       },
       {
         id: 'q4',
-        text: "Quel workflow est souvent considéré comme le plus complexe, avec le plus grand nombre de types de branches différents ?",
+        text: 'Dans GitFlow, quel est le cycle de vie correct pour une branche de `hotfix` ?',
         answers: [
-          { id: 'a1', text: 'GitHub Flow' },
-          { id: 'a2', text: 'Trunk-Based Development' },
-          { id: 'a3', text: 'GitFlow', isCorrect: true },
-          { id: 'a4', text: 'SVN Flow' },
+          { id: 'a1', text: 'Partir de `develop`, corriger, fusionner dans `develop`.' },
+          { id: 'a2', text: 'Partir de `main`, corriger, fusionner dans `main` uniquement.' },
+          { id: 'a3', text: 'Partir de `main`, corriger, fusionner dans `main` PUIS dans `develop`.', isCorrect: true },
+          { id: 'a4', text: 'Partir de `develop`, corriger, fusionner dans `main`.' },
         ],
       },
       {

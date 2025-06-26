@@ -1,3 +1,4 @@
+
 import type { Tutorial } from '@/types/tutorial.types';
 import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
 import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
@@ -238,7 +239,7 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '6-2',
         title: 'Simulation de GitFlow',
         objective: 'Visualiser le flux complexe mais puissant de GitFlow en action.',
-        content: `GitFlow est un modèle de branchement robuste qui utilise plusieurs branches permanentes (\`main\` et \`develop\`) et des branches de support pour les fonctionnalités, les releases et les corrections urgentes.\n\n- \`main\` contient le code de production stable.\n- \`develop\` est la branche d'intégration pour les nouvelles fonctionnalités.\n- Les branches \`feature/*\` partent de \`develop\` et y sont fusionnées.\n- Les branches \`release/*\` préparent une nouvelle version de production.\n- Les branches \`hotfix/*\` corrigent des bugs urgents en production.\n\nUtilisez le simulateur ci-dessous pour voir comment ces branches interagissent.`,
+        content: `GitFlow est un modèle de branchement robuste qui utilise plusieurs branches permanentes (\`main\` et \`develop\`) et des branches de support pour les fonctionnalités, les releases et les corrections urgentes.\n\n- \`main\` contient le code de production stable.\n- \`develop\` est la branche d'intégration pour les nouvelles fonctionnalités.\n- Les branches \`feature/*\` partent de \`develop\` et y sont fusionnées.\n- Les branches \`release/*\` préparent une nouvelle version de production.\n- Les branches \`hotfix/*\` corrigent des bugs urgents. Elles partent de \`main\` et doivent être fusionnées à la fois dans \`main\` et dans \`develop\`.\n\nUtilisez le simulateur ci-dessous pour voir comment les branches de features et de releases interagissent.`,
         component: WorkflowSimulator
       },
       {

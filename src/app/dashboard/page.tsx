@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag, CheckCircle } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag, CheckCircle, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -30,7 +30,7 @@ import {
 
 
 export default function DashboardPage() {
-    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress } = useTutorial();
+    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress, resetChapter } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
@@ -195,6 +195,7 @@ export default function DashboardPage() {
 
                     const chapterLessons = chapter.lessons.map(l => l.id);
                     const completedLessonsInChapter = chapterLessons.filter(lId => progress.completedLessons.has(lId));
+                    const chapterProgress = (completedLessonsInChapter.length / chapterLessons.length) * 100;
                     
                     const firstUncompletedLesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
                     const lessonToNavigateTo = firstUncompletedLesson || chapter.lessons[0];
@@ -202,16 +203,39 @@ export default function DashboardPage() {
                     return (
                         <Card key={chapter.id} className="flex flex-col hover:border-primary/50 transition-colors">
                             <CardHeader>
-                                <div className="flex items-start gap-4">
-                                    {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : isChapterComplete ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
-                                    <div>
-                                        <CardTitle className="text-lg leading-tight">{chapter.title}</CardTitle>
-                                        <CardDescription className="mt-2 text-xs">{chapter.description}</CardDescription>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="flex items-start gap-4">
+                                        {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : isChapterComplete ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
+                                        <div>
+                                            <CardTitle className="text-lg leading-tight">{chapter.title}</CardTitle>
+                                            <CardDescription className="mt-2 text-xs">{chapter.description}</CardDescription>
+                                        </div>
                                     </div>
+                                     {chapterProgress > 0 && !isLocked && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" aria-label={`Réinitialiser le chapitre ${chapter.title}`}>
+                                                    <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Réinitialiser ce chapitre ?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Toute votre progression pour le chapitre "{chapter.title}" sera effacée. Cette action est irréversible.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => resetChapter(chapter.id)}>Confirmer</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-grow space-y-2">
-                                <Progress value={(completedLessonsInChapter.length / chapterLessons.length) * 100} className="h-2" />
+                                <Progress value={chapterProgress} className="h-2" />
                                 <p className="text-xs text-muted-foreground">{completedLessonsInChapter.length} / {chapterLessons.length} leçons terminées</p>
                             </CardContent>
                             <CardFooter className="pt-4">
