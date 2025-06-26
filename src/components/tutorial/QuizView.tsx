@@ -21,68 +21,83 @@ type QuizViewProps = {
 type UserAnswers = Record<string, string[]>;
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
+    // State for the whole quiz
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [finalScore, setFinalScore] = useState(0);
+    const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [showResults, setShowResults] = useState(false);
+
+    // State for the current question
+    const [currentSelection, setCurrentSelection] = useState<string[]>([]);
+    const [questionStatus, setQuestionStatus] = useState<'unanswered' | 'answered'>('unanswered');
+
 
     const resetQuiz = useCallback(() => {
         setUserAnswers({});
-        setIsSubmitted(false);
-        setFinalScore(0);
+        setCorrectAnswersCount(0);
         setCurrentQuestionIndex(0);
+        setShowResults(false);
+        setCurrentSelection([]);
+        setQuestionStatus('unanswered');
     }, []);
 
     useEffect(() => {
         resetQuiz();
     }, [quiz.id, resetQuiz]);
+    
+    if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+        return <div>Chargement du quiz...</div>;
+    }
 
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
-    const handleAnswerChange = (questionId: string, answerId: string, isMultipleChoice?: boolean) => {
-        setUserAnswers(prev => {
-            const newAnswers = { ...prev };
-            if (isMultipleChoice) {
-                const currentAnswers = newAnswers[questionId] || [];
-                if (currentAnswers.includes(answerId)) {
-                    newAnswers[questionId] = currentAnswers.filter(a => a !== answerId);
-                } else {
-                    newAnswers[questionId] = [...currentAnswers, answerId];
-                }
-            } else {
-                newAnswers[questionId] = [answerId];
-            }
-            return newAnswers;
-        });
+    const handleAnswerChange = (answerId: string) => {
+        if (questionStatus === 'answered') return;
+
+        if (currentQuestion.isMultipleChoice) {
+            setCurrentSelection(prev => 
+                prev.includes(answerId) 
+                    ? prev.filter(a => a !== answerId) 
+                    : [...prev, answerId]
+            );
+        } else {
+            setCurrentSelection([answerId]);
+        }
     };
 
-    const handleSubmitQuiz = () => {
-        let correctCount = 0;
-        quiz.questions.forEach(q => {
-             const correctIds = q.answers.filter(a => a.isCorrect).map(a => a.id).sort();
-             const userAns = (userAnswers[q.id] || []).sort();
-             if (correctIds.length === userAns.length && correctIds.every((id, i) => id === userAns[i])) {
-                 correctCount++;
-             }
-        });
-        const calculatedScore = (correctCount / quiz.questions.length) * 100;
-        setFinalScore(calculatedScore);
-        setIsSubmitted(true);
-        onQuizComplete(calculatedScore);
+    const handleCheckAnswer = () => {
+        if (currentSelection.length === 0) return;
+
+        const correctIds = currentQuestion.answers.filter(a => a.isCorrect).map(a => a.id).sort();
+        const userSelectionSorted = [...currentSelection].sort();
+
+        const isAnswerCorrect = correctIds.length === userSelectionSorted.length && correctIds.every((id, i) => id === userSelectionSorted[i]);
+
+        if (isAnswerCorrect) {
+            setCorrectAnswersCount(prev => prev + 1);
+        }
+
+        setQuestionStatus('answered');
+        setUserAnswers(prev => ({...prev, [currentQuestion.id]: currentSelection}));
     };
 
     const handleNextQuestion = () => {
         if (isLastQuestion) {
-            handleSubmitQuiz();
+            const finalScore = (correctAnswersCount / quiz.questions.length) * 100;
+            onQuizComplete(finalScore);
+            setShowResults(true);
         } else {
             setCurrentQuestionIndex(prev => prev + 1);
+            setCurrentSelection([]);
+            setQuestionStatus('unanswered');
         }
     };
-    
+
+    const finalScore = (correctAnswersCount / quiz.questions.length) * 100;
     const isQuizPassed = finalScore >= quiz.passingScore;
 
-    if (isSubmitted) {
+    if (showResults) {
         return (
             <div className="flex h-full items-center justify-center p-8 bg-muted/30">
                 <Card className="w-full max-w-2xl">
@@ -160,8 +175,55 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         );
     }
     
-    const isCurrentQuestionAnswered = userAnswers[currentQuestion.id] && userAnswers[currentQuestion.id].length > 0;
     const progressValue = ((currentQuestionIndex) / quiz.questions.length) * 100;
+
+    const renderAnswerOptions = () => {
+        const isAnswered = questionStatus === 'answered';
+        
+        const getAnswerClass = (answerId: string, isCorrect: boolean) => {
+            if (!isAnswered) return 'border-transparent has-[:checked]:border-primary';
+            const isSelected = currentSelection.includes(answerId);
+            if (isCorrect) return 'border-green-500 bg-green-500/10';
+            if (isSelected && !isCorrect) return 'border-destructive bg-destructive/10';
+            return 'border-transparent';
+        };
+
+        return currentQuestion.answers.map(a => {
+            if (currentQuestion.isMultipleChoice) {
+                return (
+                    <div key={a.id} className={cn(
+                        "flex items-center space-x-3 p-3 rounded-md border transition-colors",
+                        getAnswerClass(a.id, !!a.isCorrect)
+                    )}>
+                        <Checkbox
+                            id={`${currentQuestion.id}-${a.id}`}
+                            onCheckedChange={() => handleAnswerChange(a.id)}
+                            checked={currentSelection.includes(a.id)}
+                            disabled={isAnswered}
+                        />
+                        <Label htmlFor={`${currentQuestion.id}-${a.id}`} className="flex-1 cursor-pointer">{a.text}</Label>
+                        {isAnswered && a.isCorrect && <CheckCircle className="h-5 w-5 text-green-500" />}
+                        {isAnswered && !a.isCorrect && currentSelection.includes(a.id) && <XCircle className="h-5 w-5 text-destructive" />}
+                    </div>
+                )
+            }
+            return (
+                 <Label key={a.id} htmlFor={`${currentQuestion.id}-${a.id}`} className={cn(
+                    "flex items-center space-x-3 p-3 rounded-md border transition-colors cursor-pointer",
+                    getAnswerClass(a.id, !!a.isCorrect)
+                 )}>
+                    <RadioGroupItem 
+                        value={a.id} 
+                        id={`${currentQuestion.id}-${a.id}`}
+                        disabled={isAnswered}
+                    />
+                    <span className="flex-1">{a.text}</span>
+                    {isAnswered && a.isCorrect && <CheckCircle className="h-5 w-5 text-green-500" />}
+                    {isAnswered && !a.isCorrect && currentSelection.includes(a.id) && <XCircle className="h-5 w-5 text-destructive" />}
+                </Label>
+            )
+        });
+    }
 
     return (
         <div className="flex h-full items-center justify-center p-8 bg-muted/30">
@@ -180,39 +242,32 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         
                         {currentQuestion.isMultipleChoice ? (
                             <div className="space-y-3">
-                                {currentQuestion.answers.map(a => (
-                                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[:checked]:border-primary transition-colors">
-                                        <Checkbox
-                                            id={`${currentQuestion.id}-${a.id}`}
-                                            onCheckedChange={() => handleAnswerChange(currentQuestion.id, a.id, true)}
-                                            checked={userAnswers[currentQuestion.id]?.includes(a.id)}
-                                        />
-                                        <Label htmlFor={`${currentQuestion.id}-${a.id}`} className="flex-1 cursor-pointer">{a.text}</Label>
-                                    </div>
-                                ))}
+                                {renderAnswerOptions()}
                             </div>
                         ) : (
                             <RadioGroup 
-                                onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)}
-                                value={userAnswers[currentQuestion.id]?.[0]}
+                                onValueChange={(val) => handleAnswerChange(val)}
+                                value={currentSelection[0]}
                                 className="space-y-3"
+                                disabled={questionStatus === 'answered'}
                             >
-                                {currentQuestion.answers.map(a => (
-                                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[:checked]:border-primary transition-colors">
-                                        <RadioGroupItem value={a.id} id={`${currentQuestion.id}-${a.id}`} />
-                                        <Label htmlFor={`${currentQuestion.id}-${a.id}`} className="flex-1 cursor-pointer">{a.text}</Label>
-                                    </div>
-                                ))}
+                                {renderAnswerOptions()}
                             </RadioGroup>
                         )}
                     </div>
                 </CardContent>
 
                 <CardFooter>
-                     <Button onClick={handleNextQuestion} disabled={!isCurrentQuestionAnswered} className="ml-auto">
-                        {isLastQuestion ? 'Terminer le quiz' : 'Question suivante'}
-                        {!isLastQuestion && <ChevronRight className="ml-2 h-4 w-4" />}
-                     </Button>
+                    {questionStatus === 'unanswered' ? (
+                        <Button onClick={handleCheckAnswer} disabled={currentSelection.length === 0} className="ml-auto">
+                            Vérifier
+                        </Button>
+                    ) : (
+                        <Button onClick={handleNextQuestion} className="ml-auto">
+                           {isLastQuestion ? 'Terminer le quiz' : 'Question suivante'}
+                           {!isLastQuestion && <ChevronRight className="ml-2 h-4 w-4" />}
+                        </Button>
+                    )}
                 </CardFooter>
             </Card>
         </div>
