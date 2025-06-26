@@ -30,6 +30,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const isFirebaseConfigured = !!auth;
 
+  const handleAuthError = (error: any, title: string) => {
+    let description = error.message;
+    if (error.code === 'auth/invalid-api-key') {
+      description = "La clé d'API Firebase n'est pas valide. Veuillez vérifier les valeurs dans votre fichier .env et redémarrer le serveur de développement.";
+    }
+    toast({ variant: 'destructive', title, description });
+    setLoading(false);
+  }
+
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     if (!auth) return;
     setLoading(true);
@@ -38,8 +47,7 @@ export default function LoginPage() {
       toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erreur de connexion', description: error.message });
-      setLoading(false);
+      handleAuthError(error, 'Erreur de connexion');
     }
   };
 
@@ -52,8 +60,7 @@ export default function LoginPage() {
       toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erreur d\'inscription', description: error.message });
-      setLoading(false);
+      handleAuthError(error, 'Erreur d\'inscription');
     }
   };
 
@@ -66,8 +73,7 @@ export default function LoginPage() {
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erreur de connexion', description: error.message });
-      setLoading(false);
+      handleAuthError(error, 'Erreur de connexion');
     }
   };
 
