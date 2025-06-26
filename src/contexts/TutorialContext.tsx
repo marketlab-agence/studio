@@ -16,11 +16,15 @@ type TutorialContextType = {
   setCurrentLocation: (chapterId: string, lessonId: string) => void;
   completeLesson: (lessonId: string) => void;
   setQuizScore: (quizId: string, score: number) => void;
+  goToNextLesson: () => void;
+  goToPreviousLesson: () => void;
   currentChapter: typeof TUTORIALS[0] | undefined;
   currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
   totalLessons: number;
   totalCompleted: number;
   overallProgress: number;
+  isFirstLessonInTutorial: boolean;
+  isLastLessonInTutorial: boolean;
 };
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
@@ -74,28 +78,108 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         }));
     }, [setProgress]);
 
+    const goToNextLesson = useCallback(() => {
+        setProgress(prev => {
+            if (!prev.currentChapterId || !prev.currentLessonId) return prev;
+    
+            const newCompleted = new Set(prev.completedLessons);
+            newCompleted.add(prev.currentLessonId);
+    
+            const chapterIndex = TUTORIALS.findIndex(c => c.id === prev.currentChapterId);
+            if (chapterIndex === -1) return prev;
+            
+            const currentChapter = TUTORIALS[chapterIndex];
+            const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
+            if (lessonIndex === -1) return prev;
+    
+            const isLastLesson = lessonIndex === currentChapter.lessons.length - 1;
+    
+            let nextChapterId = prev.currentChapterId;
+            let nextLessonId = prev.currentLessonId;
+    
+            if (!isLastLesson) {
+                nextLessonId = currentChapter.lessons[lessonIndex + 1].id;
+            } else {
+                if (chapterIndex < TUTORIALS.length - 1) {
+                    const nextChapter = TUTORIALS[chapterIndex + 1];
+                    nextChapterId = nextChapter.id;
+                    nextLessonId = nextChapter.lessons[0].id;
+                }
+            }
+            
+            return {
+                ...prev,
+                completedLessons: newCompleted,
+                currentChapterId: nextChapterId,
+                currentLessonId: nextLessonId,
+            };
+        });
+    }, [setProgress]);
+
+    const goToPreviousLesson = useCallback(() => {
+        setProgress(prev => {
+            if (!prev.currentChapterId || !prev.currentLessonId) return prev;
+
+            const chapterIndex = TUTORIALS.findIndex(c => c.id === prev.currentChapterId);
+            if (chapterIndex === -1) return prev;
+            
+            const currentChapter = TUTORIALS[chapterIndex];
+            const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
+            if (lessonIndex === -1) return prev;
+
+            let prevChapterId = prev.currentChapterId;
+            let prevLessonId = prev.currentLessonId;
+
+            if (lessonIndex > 0) {
+                prevLessonId = currentChapter.lessons[lessonIndex - 1].id;
+            } else {
+                if (chapterIndex > 0) {
+                    const prevChapter = TUTORIALS[chapterIndex - 1];
+                    prevChapterId = prevChapter.id;
+                    prevLessonId = prevChapter.lessons[prevChapter.lessons.length - 1].id;
+                }
+            }
+            
+            return {
+                ...prev,
+                currentChapterId: prevChapterId,
+                currentLessonId: prevLessonId,
+            };
+        });
+    }, [setProgress]);
+
     const value = useMemo(() => {
         const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
 
         const currentChapter = TUTORIALS.find(t => t.id === p.currentChapterId);
         const currentLesson = currentChapter?.lessons.find(l => l.id === p.currentLessonId);
 
+        const chapterIndex = TUTORIALS.findIndex(c => c.id === p.currentChapterId);
+        const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === p.currentLessonId);
+
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         const totalCompleted = p.completedLessons?.size || 0;
         const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
+        
+        const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
+        const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
 
         return { 
             progress: p, 
             setCurrentLocation,
             completeLesson,
             setQuizScore,
+            goToNextLesson,
+            goToPreviousLesson,
             currentChapter,
             currentLesson,
             totalLessons,
             totalCompleted,
             overallProgress,
+            isFirstLessonInTutorial,
+            isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, completeLesson, setQuizScore]);
+    }, [progress, setCurrentLocation, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson]);
 
 
     return (
