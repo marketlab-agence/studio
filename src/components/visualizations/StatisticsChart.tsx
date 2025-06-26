@@ -6,14 +6,14 @@ import { ChartTooltipContent } from '@/components/ui/chart';
 
 type ChartData = {
     name: string;
-    score: number;
+    commits: number;
 }
 
 export function StatisticsChart({ data }: { data: ChartData[] }) {
     if (!data || data.length === 0) {
         return (
             <div className="flex h-[250px] w-full items-center justify-center rounded-md border border-dashed">
-                <p className="text-sm text-muted-foreground">Aucune donnée de quiz disponible.</p>
+                <p className="text-sm text-muted-foreground">Aucune donnée d'activité disponible.</p>
             </div>
         )
     }
@@ -34,14 +34,12 @@ export function StatisticsChart({ data }: { data: ChartData[] }) {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              domain={[0, 100]}
-              tickFormatter={(value) => `${value}%`}
             />
             <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent formatter={(value) => `${value}%`} nameKey="name" />}
+                content={<ChartTooltipContent nameKey="name" />}
             />
-            <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="commits" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
   );

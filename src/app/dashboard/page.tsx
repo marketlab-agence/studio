@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -13,23 +13,32 @@ import { ChartContainer } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
 
 export default function DashboardPage() {
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
-    const [commitData, setCommitData] = useState<{name: string, score: number}[]>([]);
+    const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
+    const [languagesData, setLanguagesData] = useState<any[]>([]);
 
     useEffect(() => {
         setIsMounted(true);
         setCommitData([
-            { name: 'Jan', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Fev', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Mar', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Avr', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Mai', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Juin', score: Math.floor(Math.random() * 70) + 10 },
-            { name: 'Juil', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Jan', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Fev', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Mar', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Avr', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Mai', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Juin', commits: Math.floor(Math.random() * 50) + 10 },
+            { name: 'Juil', commits: Math.floor(Math.random() * 50) + 10 },
+        ]);
+        setLanguagesData([
+            { name: 'TypeScript', value: 65, fill: 'hsl(var(--chart-1))' },
+            { name: 'HTML', value: 20, fill: 'hsl(var(--chart-2))' },
+            { name: 'CSS', value: 15, fill: 'hsl(var(--chart-3))' },
         ]);
     }, []);
 
@@ -188,26 +197,94 @@ export default function DashboardPage() {
                 <Tabs defaultValue="commits">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="commits">Activité des Commits</TabsTrigger>
-                        <TabsTrigger value="languages" disabled>Langages</TabsTrigger>
-                        <TabsTrigger value="contributors" disabled>Contributeurs</TabsTrigger>
+                        <TabsTrigger value="languages">Langages</TabsTrigger>
+                        <TabsTrigger value="contributors">Contributeurs</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="commits" className="space-y-4">
-                        <ChartContainer config={{ score: { label: 'Score', color: 'hsl(var(--primary))' } }} className="h-[250px]">
+                    <TabsContent value="commits" className="pt-4 space-y-4">
+                        <ChartContainer config={{ commits: { label: 'Commits', color: 'hsl(var(--primary))' } }} className="h-[250px] w-full">
                             <StatisticsChart data={commitData} />
                         </ChartContainer>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Total des commits</p>
-                                <p className="text-2xl font-bold">65</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-muted-foreground">Moyenne par jour</p>
-                                <p className="text-2xl font-bold">9.3</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-muted-foreground">Tendance</p>
-                                <p className="text-2xl font-bold text-green-400">+15%</p>
-                            </div>
+                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                            <Card className="p-4 bg-background/50">
+                                <CardHeader className="p-0 pb-2 flex-row items-center justify-center space-x-2 space-y-0">
+                                    <Target className="h-5 w-5 text-muted-foreground"/>
+                                    <CardTitle className="text-md font-medium">Total</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <p className="text-2xl font-bold">347 commits</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="p-4 bg-background/50">
+                                <CardHeader className="p-0 pb-2 flex-row items-center justify-center space-x-2 space-y-0">
+                                    <TrendingUp className="h-5 w-5 text-muted-foreground"/>
+                                    <CardTitle className="text-md font-medium">Tendance</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <p className="text-2xl font-bold text-green-400">+15%</p>
+                                    <p className="text-xs text-muted-foreground">vs le mois dernier</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="p-4 bg-background/50">
+                                <CardHeader className="p-0 pb-2 flex-row items-center justify-center space-x-2 space-y-0">
+                                    <BookOpen className="h-5 w-5 text-muted-foreground"/>
+                                    <CardTitle className="text-md font-medium">Moyenne</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                     <p className="text-2xl font-bold">11.5</p>
+                                     <p className="text-xs text-muted-foreground">commits par jour</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="languages" className="pt-4">
+                         <ChartContainer config={{}} className="h-[350px] w-full -mt-8">
+                            <LanguagesChart data={languagesData} />
+                         </ChartContainer>
+                    </TabsContent>
+                    <TabsContent value="contributors" className="pt-4">
+                        <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground">Top contributeurs sur ce projet simulé.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9"><AvatarFallback>U</AvatarFallback></Avatar>
+                                        <div>
+                                            <p className="font-semibold">Vous</p>
+                                            <p className="text-sm text-muted-foreground">210 commits</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold text-green-400">+ 12 commits</p>
+                                        <p className="text-xs text-muted-foreground">cette semaine</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9"><AvatarFallback>AD</AvatarFallback></Avatar>
+                                        <div>
+                                            <p className="font-semibold">Alex Dev</p>
+                                            <p className="text-sm text-muted-foreground">85 commits</p>
+                                        </div>
+                                    </div>
+                                     <div className="text-right">
+                                        <p className="font-semibold text-green-400">+ 5 commits</p>
+                                        <p className="text-xs text-muted-foreground">cette semaine</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9"><AvatarFallback>SC</AvatarFallback></Avatar>
+                                        <div>
+                                            <p className="font-semibold">Sarah Code</p>
+                                            <p className="text-sm text-muted-foreground">52 commits</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold text-destructive">- 2 commits</p>
+                                        <p className="text-xs text-muted-foreground">cette semaine</p>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                     </TabsContent>
                 </Tabs>
