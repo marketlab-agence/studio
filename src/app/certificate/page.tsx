@@ -40,7 +40,8 @@ export default function CertificatePage() {
     }
   };
 
-  const isComplete = overallProgress >= 100;
+  const isTutorialComplete = overallProgress >= 100;
+  const isScoreSufficient = averageQuizScore >= 80;
 
   const renderContent = () => {
     if (!isMounted) {
@@ -65,32 +66,59 @@ export default function CertificatePage() {
       );
     }
 
-    if (isComplete) {
+    if (isTutorialComplete && isScoreSufficient) {
       return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} />;
     }
 
+    if (!isTutorialComplete) {
+        return (
+          <Card className="text-center py-8">
+            <CardHeader>
+              <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+                <Lock className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <CardTitle>Certificat Verrouillé</CardTitle>
+              <CardDescription>
+                Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="max-w-sm mx-auto space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
+                <Progress value={overallProgress} />
+                <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
+              </div>
+              <Button asChild>
+                <Link href="/tutorial" onClick={handleContinue}>Continuer le Tutoriel</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        );
+    }
+    
+    // Case: tutorial complete but score not sufficient
     return (
-      <Card className="text-center py-8">
-        <CardHeader>
-          <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-            <Lock className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <CardTitle>Certificat Verrouillé</CardTitle>
-          <CardDescription>
-            Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="max-w-sm mx-auto space-y-4">
-          <div>
-            <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
-            <Progress value={overallProgress} />
-            <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
-          </div>
-          <Button asChild>
-            <Link href="/tutorial" onClick={handleContinue}>Continuer le Tutoriel</Link>
-          </Button>
-        </CardContent>
-      </Card>
+        <Card className="text-center py-8">
+            <CardHeader>
+                <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+                <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <CardTitle>Certificat Presque Débloqué</CardTitle>
+                <CardDescription>
+                Vous devez obtenir un score moyen d'au moins 80% aux quiz pour générer votre certificat.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="max-w-sm mx-auto space-y-4">
+                <div>
+                <p className="text-sm font-medium mb-2">Votre score moyen actuel :</p>
+                <div className="text-4xl font-bold text-destructive">{averageQuizScore.toFixed(0)}%</div>
+                <p className="text-sm text-muted-foreground mt-2">Objectif : 80%</p>
+                </div>
+                <Button asChild>
+                <Link href="/dashboard">Améliorer mon score</Link>
+                </Button>
+            </CardContent>
+        </Card>
     );
   };
 

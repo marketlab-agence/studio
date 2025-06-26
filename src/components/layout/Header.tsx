@@ -25,6 +25,9 @@ export function Header() {
         <Link href="/tutorial" className="text-muted-foreground transition-colors hover:text-foreground">
           Tutoriel
         </Link>
+        <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
+          Certification
+        </Link>
       </nav>
       <div className="flex items-center gap-4 ml-auto">
         <Button variant="ghost" size="icon" className="rounded-full">
