@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -11,7 +11,7 @@ import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
 import { ChartContainer } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -42,8 +42,17 @@ export default function DashboardPage() {
         ]);
     }, []);
 
+    const allLessons = useMemo(() => TUTORIALS.flatMap(t => 
+        t.lessons.map(l => ({...l, chapterId: t.id}))
+    ), []);
+
+    const uncompletedLessons = useMemo(() => 
+        allLessons.filter(l => !progress.completedLessons.has(l.id))
+    , [allLessons, progress.completedLessons]);
+
+    const nextLessons = uncompletedLessons.slice(0, 5);
+
     const quizzes = Object.values(QUIZZES);
-    const tutorials = Object.values(TUTORIALS);
 
     const completedQuizzes = progress.quizScores ? Object.values(progress.quizScores).filter(score => score >= 80).length : 0;
     const totalQuizzes = quizzes.length;
@@ -152,45 +161,63 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Continuer l'apprentissage</h2>
-            <div className="space-y-2">
-                {tutorials.map((tutorial, index) => {
-                    const isFirstChapter = index === 0;
-                    const prevChapter = isFirstChapter ? null : tutorials[index - 1];
-                    const quizScorePrevChapter = prevChapter && progress.quizScores ? (progress.quizScores[prevChapter.id] ?? 0) : 0;
-                    const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
+            <h2 className="text-xl font-bold">Prochaines leçons</h2>
+            {nextLessons.length > 0 ? (
+                <div className="space-y-2">
+                    {nextLessons.map((lesson) => {
+                        const chapter = TUTORIALS.find(t => t.id === lesson.chapterId);
+                        const isChapterLocked = () => {
+                            if (!chapter) return true;
+                            const chapterIndex = TUTORIALS.findIndex(c => c.id === chapter.id);
+                            if (chapterIndex === 0) return false;
+                            const prevChapter = TUTORIALS[chapterIndex - 1];
+                            const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
+                            return quizScorePrevChapter < 80;
+                        };
 
-                    const quiz = QUIZZES[tutorial.id];
-                    const quizScore = progress.quizScores[tutorial.id] ?? 0;
-                    const isChapterCompleted = quiz ? quizScore >= quiz.passingScore : false;
-
-                    const firstUncompletedLesson = tutorial.lessons.find(l => !progress.completedLessons.has(l.id));
-                    const continueLessonId = firstUncompletedLesson ? firstUncompletedLesson.id : tutorial.lessons[0].id;
-
-                    return (
-                        <Card key={tutorial.id} className="transition-all hover:border-primary/50">
-                            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
-                                <div className="flex-1">
-                                    <h3 className="font-semibold">{tutorial.title}</h3>
-                                    <p className="text-sm text-muted-foreground mt-1">{tutorial.description}</p>
-                                </div>
-                                {isLocked ? (
-                                    <Badge variant="secondary" className="flex items-center gap-2">
-                                        <Lock className="h-3 w-3" /> Verrouillé
-                                    </Badge>
-                                ) : (
-                                    <Link href="/tutorial">
-                                        <Button size="sm" onClick={() => handleContinue(tutorial.id, continueLessonId)}>
-                                            {isChapterCompleted ? 'Revoir' : 'Continuer'}
-                                            <ChevronRight className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                )}
-                            </CardContent>
-                        </Card>
-                    )
-                })}
-            </div>
+                        return (
+                            <Link key={lesson.id} href="/tutorial" onClick={(e) => {
+                                if (isChapterLocked()) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                handleContinue(lesson.chapterId, lesson.id)
+                            }}>
+                                <Card className="transition-all hover:bg-muted/50 hover:border-primary/50 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={isChapterLocked()}>
+                                    <CardContent className="flex items-center justify-between gap-4 p-4">
+                                        <div className="flex items-center gap-3">
+                                            {isChapterLocked() ? (
+                                                <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                            ) : (
+                                                <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                            )}
+                                            <div>
+                                                <h3 className="font-semibold">{lesson.title}</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">
+                                                    Chapitre : {chapter?.title}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        )
+                    })}
+                </div>
+            ) : (
+                overallProgress >= 100 && (
+                     <Card>
+                        <CardContent className="p-6 text-center">
+                             <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
+                                <Award className="h-8 w-8 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-bold">Bravo !</h3>
+                            <p className="text-muted-foreground">Vous avez terminé toutes les leçons !</p>
+                        </CardContent>
+                    </Card>
+                )
+            )}
           </div>
 
           <Card>
