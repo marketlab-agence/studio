@@ -2,7 +2,6 @@
 
 import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -12,34 +11,63 @@ import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
 import { ChartContainer } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation } = useTutorial();
+    
+    const [isMounted, setIsMounted] = useState(false);
+    const [commitData, setCommitData] = useState<{name: string, score: number}[]>([]);
+
+    useEffect(() => {
+        setIsMounted(true);
+        setCommitData([
+            { name: 'Jan', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Fev', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Mar', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Avr', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Mai', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Juin', score: Math.floor(Math.random() * 70) + 10 },
+            { name: 'Juil', score: Math.floor(Math.random() * 70) + 10 },
+        ]);
+    }, []);
+
     const quizzes = Object.values(QUIZZES);
     const tutorials = Object.values(TUTORIALS);
 
     const completedQuizzes = progress.quizScores ? Object.values(progress.quizScores).filter(score => score >= 80).length : 0;
     const totalQuizzes = quizzes.length;
 
-    const averageScore = completedQuizzes > 0
+    const averageScore = (progress.quizScores && Object.keys(progress.quizScores).length > 0)
         ? Object.values(progress.quizScores).reduce((a, b) => a + b, 0) / Object.keys(progress.quizScores).length
         : 0;
     
-    const remainingChapters = tutorials.length - completedQuizzes;
-
-    const commitData = [
-        { name: 'Jan', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Fev', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Mar', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Avr', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Mai', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Juin', score: Math.floor(Math.random() * 70) + 10 },
-        { name: 'Juil', score: Math.floor(Math.random() * 70) + 10 },
-    ];
-
     const handleContinue = (chapterId: string, lessonId: string) => {
         setCurrentLocation(chapterId, lessonId);
     };
+
+    if (!isMounted) {
+        return (
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+              <div className="mx-auto max-w-7xl space-y-8">
+                  <div className="flex items-center gap-4">
+                      <Skeleton className="h-12 w-12 rounded-lg" />
+                      <div className="space-y-2">
+                          <Skeleton className="h-8 w-60" />
+                          <Skeleton className="h-4 w-80" />
+                      </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <Card><CardHeader><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                      <Card><CardHeader><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                      <Card><CardHeader><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                      <Card><CardHeader><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                  </div>
+              </div>
+            </main>
+        )
+    }
 
     return (
     <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -103,11 +131,10 @@ export default function DashboardPage() {
                 {tutorials.map((tutorial, index) => {
                     const isFirstChapter = index === 0;
                     const prevChapter = isFirstChapter ? null : tutorials[index-1];
-                    const quizScorePrevChapter = prevChapter ? (progress.quizScores[prevChapter.id] ?? 0) : 0;
+                    const quizScorePrevChapter = prevChapter && progress.quizScores ? (progress.quizScores[prevChapter.id] ?? 0) : 0;
                     
                     const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
-                    const isCurrent = progress.currentChapterId === tutorial.id;
-                    const isCompleted = (progress.quizScores[tutorial.id] ?? 0) >= 80;
+                    const isCompleted = (progress.quizScores?.[tutorial.id] ?? 0) >= 80;
 
                     return (
                         <Card key={tutorial.id} className="transition-all hover:border-primary/50">
