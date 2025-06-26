@@ -147,6 +147,12 @@ src/
 - **`ProjectDashboard.tsx`** - Tableau de bord de projet
 - **`CertificateGenerator.tsx`** - Générateur de certificat
 
+### Partie 11 - Bonnes Pratiques et Astuces
+- **`CommitMessageLinter.tsx`** - Outil pour rédiger de bons messages de commit
+- **`GitignoreTester.tsx`** - Simulateur de fichier .gitignore
+- **`AliasCreator.tsx`** - Assistant de création d'alias Git
+- **`SecurityScanner.tsx`** - Démonstration des bonnes pratiques de sécurité
+
 ## 🔧 Composants de Contexte et Providers
 
 ### `components/providers/`

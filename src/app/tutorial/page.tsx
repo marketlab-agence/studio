@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
@@ -15,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function TutorialPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
   
   const {
     progress,
@@ -62,13 +64,13 @@ export default function TutorialPage() {
             const nextChapter = TUTORIALS[chapterIndex + 1];
             setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
         } else {
-            setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
+            router.push('/certificate');
         }
     } else {
         // User failed and clicked "Réviser le chapitre"
         setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
     }
-  }, [currentChapter, setCurrentLocation, progress.quizScores]);
+  }, [currentChapter, setCurrentLocation, progress.quizScores, router]);
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr] gap-6 p-4 md:p-6">
