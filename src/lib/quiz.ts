@@ -308,6 +308,63 @@ export const QUIZZES: Record<string, Quiz> = {
     ],
     passingScore: 80,
   },
+  'workflows': {
+    id: 'workflows',
+    title: 'Quiz: Workflows Git',
+    questions: [
+      {
+        id: 'q1',
+        text: 'Quel workflow est généralement considéré comme le plus simple et le plus adapté au déploiement continu ?',
+        answers: [
+          { id: 'a1', text: 'GitFlow' },
+          { id: 'a2', text: 'GitHub Flow', isCorrect: true },
+          { id: 'a3', text: 'Trunk-Based Development' },
+          { id: 'a4', text: 'Centralized Workflow' },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'Dans GitFlow, de quelle branche les branches de fonctionnalité (`feature/*`) partent-elles et vers laquelle sont-elles fusionnées ?',
+        answers: [
+          { id: 'a1', text: 'Elles partent de `main` et sont fusionnées dans `main`.' },
+          { id: 'a2', text: 'Elles partent de `develop` et sont fusionnées dans `develop`.', isCorrect: true },
+          { id: 'a3', text: 'Elles partent de `main` et sont fusionnées dans `develop`.' },
+          { id: 'a4', text: 'Elles partent de `develop` et sont fusionnées dans `main`.' },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'Quel est l\'inconvénient principal de GitFlow ?',
+        answers: [
+          { id: 'a1', text: 'Il est trop simple pour les gros projets.' },
+          { id: 'a2', text: 'Il ne permet pas de gérer les hotfixes.' },
+          { id: 'a3', text: 'Sa complexité peut ralentir le cycle de développement.', isCorrect: true },
+          { id: 'a4', text: 'Il n\'est pas compatible avec GitHub.' },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Quel workflow encourage les petites modifications fréquentes sur une seule branche principale ?',
+        answers: [
+          { id: 'a1', text: 'GitHub Flow' },
+          { id: 'a2', text: 'GitFlow' },
+          { id: 'a3', text: 'Trunk-Based Development', isCorrect: true },
+          { id: 'a4', text: 'Forking Workflow' },
+        ],
+      },
+      {
+        id: 'q5',
+        text: "Dans GitHub Flow, quelle est la règle d'or pour la branche `main` ?",
+        answers: [
+          { id: 'a1', text: 'Elle doit toujours être déployable.', isCorrect: true },
+          { id: 'a2', text: 'Elle ne doit être mise à jour qu\'une fois par semaine.' },
+          { id: 'a3', text: 'Seul le chef de projet peut y pusher.' },
+          { id: 'a4', text: 'Elle doit être supprimée après chaque release.' },
+        ]
+      }
+    ],
+    passingScore: 80,
+  },
   'conflicts': {
     id: 'conflicts',
     title: 'Quiz: Gérer les Conflits',
@@ -486,6 +543,64 @@ export const QUIZZES: Record<string, Quiz> = {
           { id: 'a3', text: 'README.md', isCorrect: true },
           { id: 'a4', text: 'PROJECT.txt' },
         ]
+      }
+    ],
+    passingScore: 80,
+  },
+  'best-practices': {
+    id: 'best-practices',
+    title: 'Quiz: Bonnes Pratiques',
+    questions: [
+      {
+        id: 'q1',
+        text: 'Quelle est la bonne pratique pour la première ligne (sujet) d\'un message de commit ?',
+        answers: [
+          { id: 'a1', text: 'Être très détaillée et longue.' },
+          { id: 'a2', text: 'Ne pas dépasser 50 caractères et utiliser l\'impératif.', isCorrect: true },
+          { id: 'a3', text: 'Toujours se terminer par un point.' },
+          { id: 'a4', text: 'Être écrite au passé (ex: "J\'ai ajouté...")' },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'Où devriez-vous stocker des informations sensibles comme des clés d\'API ?',
+        answers: [
+          { id: 'a1', text: 'Directement dans le code pour un accès facile.' },
+          { id: 'a2', text: 'Dans un fichier de configuration commité, mais chiffré.' },
+          { id: 'a3', text: 'Dans des variables d\'environnement et un fichier `.env` ajouté au `.gitignore`.', isCorrect: true },
+          { id: 'a4', text: 'Dans le message d\'un commit privé.' },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'À quoi sert un alias Git ?',
+        answers: [
+          { id: 'a1', text: 'À créer un pseudonyme pour votre nom d\'utilisateur.' },
+          { id: 'a2', text: 'À créer un raccourci pour une commande Git longue ou fréquente.', isCorrect: true },
+          { id: 'a3', text: 'À ignorer certains fichiers.' },
+          { id: 'a4', 'text': 'À changer de branche rapidement.' },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Que faut-il faire si vous commitez accidentellement un fichier sensible sur une branche locale non encore partagée ?',
+        answers: [
+          { id: 'a1', text: 'Le supprimer et faire un nouveau commit.' },
+          { id: 'a2', text: 'Utiliser `git reset` pour retirer le commit, puis refaire un commit propre.', isCorrect: true },
+          { id: 'a3', text: 'Pousser la branche et la supprimer ensuite.' },
+          { id: 'a4', text: 'Utiliser `git revert`.' },
+        ],
+      },
+      {
+        id: 'q5',
+        text: 'Quels types de fichiers sont de bons candidats pour être ajoutés au `.gitignore` ? (plusieurs réponses possibles)',
+        isMultipleChoice: true,
+        answers: [
+          { id: 'a1', text: 'Le dossier `node_modules/`.', isCorrect: true },
+          { id: 'a2', text: 'Les fichiers contenant des secrets comme `.env`.', isCorrect: true },
+          { id: 'a3', text: 'Les fichiers de log (`*.log`).', isCorrect: true },
+          { id: 'a4', text: 'Le code source principal de l\'application comme `index.js`.' },
+        ],
       }
     ],
     passingScore: 80,

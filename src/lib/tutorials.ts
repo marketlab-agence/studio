@@ -19,7 +19,13 @@ import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
 import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
 import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
 import { ProjectDashboard } from '@/components/specialized/part-10/ProjectDashboard';
-import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
+import { WorkflowComparisonTable } from '@/components/specialized/part-6/WorkflowComparisonTable';
+import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
+import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
+import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
+import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
+import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
+import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
 
 
 export const TUTORIALS: Tutorial[] = [
@@ -217,26 +223,54 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
     ]
   },
   {
-    id: 'conflicts',
-    title: '6. Gérer les Conflits',
-    description: 'Apprenez à résoudre les inévitables conflits de fusion.',
+    id: 'workflows',
+    title: '6. Workflows Git',
+    description: 'Explorez différentes stratégies d\'organisation des branches pour des projets de toutes tailles.',
     lessons: [
       {
         id: '6-1',
+        title: 'Comparer les Workflows',
+        objective: 'Comprendre les avantages et inconvénients des principaux workflows Git.',
+        content: `Il n'y a pas une seule "bonne" façon d'utiliser Git. Différents workflows conviennent à différents types de projets et d'équipes. Les plus connus sont :\n\n- **GitFlow**: Très structuré, idéal pour les projets avec des cycles de release planifiés.\n- **GitHub Flow**: Simple et basé sur les Pull Requests, parfait pour le déploiement continu.\n- **Trunk-Based Development**: Tous les développeurs travaillent sur une seule branche principale, favorisant une intégration très rapide.\n\nLe tableau ci-dessous les compare en détail.`,
+        component: WorkflowComparisonTable
+      },
+      {
+        id: '6-2',
+        title: 'Simulation de GitFlow',
+        objective: 'Visualiser le flux complexe mais puissant de GitFlow en action.',
+        content: `GitFlow est un modèle de branchement robuste qui utilise plusieurs branches permanentes (\`main\` et \`develop\`) et des branches de support pour les fonctionnalités, les releases et les corrections urgentes.\n\n- \`main\` contient le code de production stable.\n- \`develop\` est la branche d'intégration pour les nouvelles fonctionnalités.\n- Les branches \`feature/*\` partent de \`develop\` et y sont fusionnées.\n- Les branches \`release/*\` préparent une nouvelle version de production.\n- Les branches \`hotfix/*\` corrigent des bugs urgents en production.\n\nUtilisez le simulateur ci-dessous pour voir comment ces branches interagissent.`,
+        component: WorkflowSimulator
+      },
+      {
+        id: '6-3',
+        title: 'Construire son propre diagramme',
+        objective: 'Utiliser un outil interactif pour construire et visualiser un diagramme de flux de travail simple.',
+        content: `Parfois, la meilleure façon de comprendre un flux de travail est de le dessiner soi-même. Utilisez l'outil ci-dessous pour ajouter des étapes et construire un diagramme simple représentant votre propre processus de développement.`,
+        component: FlowDiagramBuilder
+      }
+    ]
+  },
+  {
+    id: 'conflicts',
+    title: '7. Gérer les Conflits',
+    description: 'Apprenez à résoudre les inévitables conflits de fusion.',
+    lessons: [
+      {
+        id: '7-1',
         title: 'Qu\'est-ce qu\'un conflit ?',
         objective: 'Comprendre ce qui cause un conflit de fusion.',
         content: `Un conflit de fusion survient lorsque vous essayez de fusionner deux branches qui ont modifié la même ligne dans le même fichier, et Git ne sait pas quelle version choisir.\n\nLe visualiseur ci-dessous montre un scénario typique : les deux branches (\`main\` et \`feature\`) ont modifié le même fichier, ce qui empêche une fusion automatique.`,
         component: ConflictVisualizer
       },
       {
-        id: '6-2',
+        id: '7-2',
         title: 'Guide de résolution',
         objective: 'Apprendre le processus pour résoudre manuellement un conflit de fusion.',
         content: `La résolution d'un conflit suit un processus systématique. Git vous aide en marquant clairement les zones de conflit dans vos fichiers. Le guide ci-dessous décompose chaque étape, de l'identification à la finalisation de la fusion.`,
         component: ResolutionGuide
       },
       {
-        id: '6-3',
+        id: '7-3',
         title: 'Mise en pratique',
         objective: 'Résoudre un conflit de fusion dans un simulateur interactif.',
         content: `C'est à votre tour de jouer ! Le simulateur ci-dessous présente un fichier en état de conflit. Modifiez le code directement dans l'éditeur pour résoudre le conflit, puis vérifiez votre solution.`,
@@ -246,25 +280,25 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
   },
   {
     id: 'undoing-changes',
-    title: '7. Annuler des Modifications',
+    title: '8. Annuler des Modifications',
     description: 'Découvrez comment revenir en arrière en toute sécurité avec Git.',
     lessons: [
       {
-        id: '7-1',
+        id: '8-1',
         title: 'Annuler des modifications',
         objective: 'Comparer les différentes stratégies pour annuler des changements : `reset`, `revert` et `restore`.',
         content: `Git offre plusieurs outils pour revenir en arrière, chacun ayant un usage spécifique. Il est crucial de comprendre leurs différences pour ne pas perdre de travail.\n\n- \`git checkout -- <fichier>\` : Annule les modifications dans le répertoire de travail qui n'ont pas encore été stagées.\n- \`git reset HEAD <fichier>\` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.\n- \`git reset <commit>\` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.\n- \`git revert <commit>\` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.`,
         component: UndoCommandComparison
       },
       {
-        id: '7-2',
+        id: '8-2',
         title: 'Voyager dans le temps',
         objective: 'Utiliser un navigateur de timeline pour visualiser l\'état du projet à différents moments.',
         content: `Parfois, il est utile de se "déplacer" dans l'historique pour voir à quoi ressemblait le projet à un commit précis, sans pour autant annuler les changements. La commande \`git checkout <hash-du-commit>\` vous place dans un état "détaché" (detached HEAD), vous permettant d'explorer le passé.\n\nLe navigateur ci-dessous simule ce voyage dans le temps. Déplacez le curseur pour voir les détails d'un commit et l'état des fichiers à ce moment-là.`,
         component: TimelineNavigator
       },
       {
-        id: '7-3',
+        id: '8-3',
         title: 'Reflog : Votre filet de sécurité',
         objective: 'Découvrir la commande `reflog` pour retrouver des commits perdus.',
         content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard HEAD@{2}\` pour y revenir.`,
@@ -274,25 +308,25 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
   },
   {
     id: 'github-features',
-    title: '8. Fonctionnalités de GitHub',
+    title: '9. Fonctionnalités de GitHub',
     description: 'Explorez les outils qui font de GitHub une plateforme si puissante.',
     lessons: [
       {
-        id: '8-1',
+        id: '9-1',
         title: 'Interface de GitHub',
         objective: 'Se familiariser avec l\'interface de GitHub pour les Pull Requests et les Issues.',
         content: `GitHub n'est pas seulement un hébergement pour votre code, c'est une plateforme complète pour la gestion de projet. Les deux fonctionnalités principales que vous utiliserez quotidiennement sont les **Issues** et les **Pull Requests**.\n\n- **Issues** : Permettent de suivre les bugs, les demandes de fonctionnalités et d'autres tâches.\n- **Pull Requests** : En plus d'être des demandes de fusion, ce sont des espaces de discussion et de revue de code.\n\nLe simulateur ci-dessous vous donne un aperçu de cette interface.`,
         component: GitHubInterfaceSimulator
       },
       {
-        id: '8-2',
+        id: '9-2',
         title: 'Suivi des Tâches avec les Issues',
         objective: 'Apprendre à créer et gérer des tâches avec le système d\'issues de GitHub.',
         content: `Une bonne gestion de projet commence par un bon suivi des tâches. Les issues de GitHub sont parfaites pour cela. Vous pouvez les utiliser pour signaler un bug, proposer une nouvelle idée, ou simplement organiser votre travail.\n\nUne issue peut contenir :\n- Un titre descriptif et un corps détaillé (avec du Markdown).\n- Des étiquettes (labels) pour la catégorisation (ex: 'bug', 'feature', 'documentation').\n- Des personnes assignées (assignees).\n- Des jalons (milestones) pour regrouper les issues par objectif.`,
         component: IssueTracker
       },
       {
-        id: '8-3',
+        id: '9-3',
         title: 'Automatisation avec GitHub Actions',
         objective: 'Découvrir le potentiel de l\'automatisation de votre flux de travail avec GitHub Actions.',
         content: `GitHub Actions est un outil d'intégration et de déploiement continu (CI/CD) incroyablement puissant, directement intégré à votre dépôt. Il vous permet d'automatiser des tâches en réponse à des événements survenant sur GitHub (comme un \`push\` ou la création d'une PR).\n\nVous pouvez l'utiliser pour :\n- Lancer vos tests automatiquement à chaque commit.\n- Compiler votre code.\n- Déployer votre site web en production.\n- Et bien plus encore !\n\nLes workflows sont définis dans des fichiers YAML situés dans le dossier \`.github/workflows\` de votre projet.`,
@@ -301,19 +335,54 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
     ]
   },
   {
+    id: 'best-practices',
+    title: '10. Bonnes Pratiques',
+    description: 'Affinez vos compétences avec des astuces et des pratiques de pro.',
+    lessons: [
+      {
+        id: '10-1',
+        title: 'Écrire de bons messages de commit',
+        objective: 'Apprendre la convention pour rédiger des messages de commit clairs et utiles.',
+        content: `Un bon message de commit est aussi important que le code lui-même. Il doit être concis et explicatif. La convention la plus populaire est :\n\n- **Sujet court (max 50 car.)**: Commence par une majuscule, utilise l'impératif (ex: "Ajoute" et non "Ajouté").\n- **Corps optionnel**: Séparé du sujet par une ligne vide, il explique le *pourquoi* et le *comment* du changement.\n\nLe linter ci-dessous vous aidera à respecter ces règles.`,
+        component: CommitMessageLinter
+      },
+      {
+        id: '10-2',
+        title: 'Maîtriser .gitignore',
+        objective: 'Comprendre et tester efficacement les règles du fichier .gitignore.',
+        content: `Le fichier \`.gitignore\` est essentiel pour garder votre dépôt propre en évitant de versionner des fichiers inutiles (fichiers de log, dépendances, secrets, etc.).\n\nChaque ligne du fichier est un motif qui spécifie quels fichiers ou dossiers ignorer. Utilisez le simulateur ci-dessous pour tester si un chemin de fichier serait ignoré par vos règles.`,
+        component: GitignoreTester
+      },
+      {
+        id: '10-3',
+        title: 'Utiliser les alias',
+        objective: 'Créer des raccourcis pour vos commandes Git les plus fréquentes.',
+        content: `Si vous tapez souvent les mêmes commandes longues (comme \`git log --oneline --graph\`), les alias sont faits pour vous ! Un alias est un raccourci personnalisé que vous définissez dans votre configuration Git.\n\nPar exemple, vous pouvez configurer \`git co\` pour qu'il exécute \`git checkout\`. Utilisez l'assistant ci-dessous pour générer la commande de configuration pour vos propres alias.`,
+        component: AliasCreator
+      },
+      {
+        id: '10-4',
+        title: 'Sécurité : Ne commitez pas de secrets !',
+        objective: 'Comprendre les risques liés à la publication de données sensibles et comment les éviter.',
+        content: `Un des plus grands dangers est de commiter accidentellement des informations sensibles comme des clés d'API, des mots de passe ou des tokens d'accès. Une fois qu'un secret est dans l'historique Git, il est très difficile de l'enlever complètement.\n\n**Règle d'or :** Ne stockez jamais de secrets directement dans votre code. Utilisez des variables d'environnement et un fichier \`.env\` qui est listé dans votre \`.gitignore\`.\n\nLe scanner ci-dessous simule une recherche de secrets dans votre projet.`,
+        component: SecurityScanner
+      }
+    ]
+  },
+  {
     id: 'final-project',
-    title: '9. Projet Final',
+    title: '11. Projet Final',
     description: 'Mettez en pratique tout ce que vous avez appris en contribuant à un projet simulé.',
     lessons: [
       {
-        id: '9-1',
+        id: '11-1',
         title: 'Contribution à un Projet Open Source',
         objective: 'Simuler le processus complet de contribution à un projet open source.',
         content: `C'est le moment de tout assembler ! Dans cet exercice final, vous allez suivre le flux de travail complet d'un contributeur open source :\n\n1.  **Trouver une issue** à résoudre dans le projet.\n2.  **Forker** le dépôt et le **cloner** localement.\n3.  Créer une **branche** pour votre travail.\n4.  Effectuer les modifications de code et les **commits**.\n5.  **Pousser** votre branche vers votre fork.\n6.  Ouvrir une **Pull Request** vers le projet original.\n7.  Participer à la **revue de code** et apporter des modifications si nécessaire.`,
         component: OpenSourceSimulator
       },
       {
-        id: '9-2',
+        id: '11-2',
         title: 'Tableau de Bord du Projet',
         objective: 'Visualiser l\'état d\'avancement d\'un projet à travers un tableau de bord.',
         content: `Un tableau de bord est un outil essentiel pour avoir une vue d'ensemble de l'état d'un projet. Sur des plateformes comme GitHub, vous trouverez des tableaux de bord sous les onglets 'Projects' ou 'Insights', qui vous aident à suivre les issues, les Pull Requests, et l'activité des contributeurs.
