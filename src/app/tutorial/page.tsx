@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
@@ -49,7 +49,7 @@ export default function TutorialPage() {
 
     if (passed) {
         const chapterIndex = TUTORIALS.findIndex(c => c.id === currentChapter?.id);
-        if (chapterIndex !== -1 && chapterIndex < TUTORIALTUTORIALS.length - 1) {
+        if (chapterIndex !== -1 && chapterIndex < TUTORIALS.length - 1) {
             const nextChapter = TUTORIALS[chapterIndex + 1];
             setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
         }
