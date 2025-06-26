@@ -1,23 +1,26 @@
 'use client';
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { ChartTooltipContent } from '@/components/ui/chart';
 
-const data = [
-  { name: "Vous", commits: 12 },
-  { name: "Alice", commits: 8 },
-  { name: "Bob", commits: 5 },
-]
+type ChartData = {
+    name: string;
+    score: number;
+}
 
-export function StatisticsChart() {
+export function StatisticsChart({ data }: { data: ChartData[] }) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex h-[250px] w-full items-center justify-center rounded-md border border-dashed">
+                <p className="text-sm text-muted-foreground">Aucune donnée de quiz disponible.</p>
+            </div>
+        )
+    }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Graphique de Statistiques</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
+    <div className="h-[250px]">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <XAxis
               dataKey="name"
@@ -25,17 +28,23 @@ export function StatisticsChart() {
               fontSize={12}
               tickLine={false}
               axisLine={false}
+              interval={0}
             />
             <YAxis
               stroke="#888888"
               fontSize={12}
               tickLine={false}
               axisLine={false}
+              domain={[0, 100]}
+              tickFormatter={(value) => `${value}%`}
             />
-            <Bar dataKey="commits" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Tooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={<ChartTooltipContent formatter={(value) => `${value}%`}/>}
+            />
+            <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

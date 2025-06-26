@@ -1,14 +1,29 @@
 'use client';
 
-import { Award, Bell, BookOpen, ChevronRight, GitCommitHorizontal, PlayCircle } from 'lucide-react';
+import { Bell, ChevronRight, GitCommitHorizontal } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
+import { useTutorial } from '@/contexts/TutorialContext';
+import { TUTORIALS } from '@/lib/tutorials';
+import { QUIZZES } from '@/lib/quiz';
+import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 
 export default function Home() {
+    const { progress, overallProgress, totalCompleted, totalLessons } = useTutorial();
+    const quizzes = Object.values(QUIZZES);
+    const completedQuizzes = Object.keys(progress.quizScores).length;
+    const averageScore = completedQuizzes > 0 
+        ? Object.values(progress.quizScores).reduce((a, b) => a + b, 0) / completedQuizzes
+        : 0;
+
+    const commitData = Object.entries(progress.quizScores).map(([key, value]) => ({
+      name: TUTORIALS.find(t => t.id === key)?.title.split('. ')[1] ?? "Chapitre",
+      score: value
+    }));
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
@@ -17,25 +32,14 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-tight">Git & GitHub Interactif</h1>
         </div>
         <nav className="mx-auto hidden items-center gap-6 text-sm font-medium md:flex">
-          <Link href="/" className="text-foreground/80 transition-colors hover:text-foreground">Accueil</Link>
+          <Link href="/" className="text-foreground transition-colors hover:text-foreground/80">Tableau de bord</Link>
           <Link href="/tutorial" className="text-foreground/80 transition-colors hover:text-foreground">Tutoriel</Link>
           <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Exercices</a>
-          <a href="#" className="text-foreground/80 transition-colors hover:text-foreground">Certificat</a>
         </nav>
         <div className="flex flex-1 items-center justify-end gap-4">
           <Button variant="ghost" size="icon" className="relative rounded-full">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-            </span>
           </Button>
-          <div className="hidden items-center gap-3 lg:flex">
-            <div className="w-24">
-              <Progress value={5} className="h-2" />
-            </div>
-            <Badge variant="outline" className="border-yellow-400/50 text-yellow-400">Niveau Débutant</Badge>
-          </div>
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground">U</AvatarFallback>
@@ -44,73 +48,74 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <main className="flex-1">
-        <section className="container mx-auto max-w-5xl px-4 py-20 text-center sm:py-28 md:py-32">
-          <div className="mb-4 flex items-center justify-center gap-2 text-primary">
-            <GitCommitHorizontal className="h-8 w-8" />
-            <span className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Tutoriel Git & GitHub</span>
-          </div>
-          <p className="mx-auto max-w-3xl text-lg text-muted-foreground md:text-xl">
-            Maîtrisez les fondamentaux du contrôle de version avec Git et GitHub à travers un parcours d'apprentissage interactif et progressif.
-          </p>
-        </section>
-
-        <section className="container mx-auto max-w-6xl px-4 pb-20">
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20">
-              <CardHeader className="flex-row items-center gap-4">
-                <div className="rounded-lg bg-primary/10 p-3">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>5 Chapitres</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Un parcours structuré couvrant tous les aspects essentiels de Git et GitHub</p>
-              </CardContent>
-            </Card>
-            <Card className="transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20">
-              <CardHeader className="flex-row items-center gap-4">
-                <div className="rounded-lg bg-accent/10 p-3">
-                  <PlayCircle className="h-6 w-6 text-accent" />
-                </div>
-                <CardTitle>Interactif</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Simulations et exercices pratiques pour une meilleure compréhension</p>
-              </CardContent>
-            </Card>
-            <Card className="transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20">
-              <CardHeader className="flex-row items-center gap-4">
-                <div className="rounded-lg bg-purple-400/10 p-3">
-                  <Award className="h-6 w-6 text-purple-400" />
-                </div>
-                <CardTitle>Certification</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Obtenez votre certificat de complétion à la fin du parcours</p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        <section className="container mx-auto max-w-6xl px-4 pb-20">
-            <div className="rounded-xl bg-gradient-to-r from-primary/80 via-primary to-indigo-600 p-8 text-primary-foreground md:p-12">
-                <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
-                    <div className="max-w-xl">
-                        <h2 className="text-3xl font-bold tracking-tight">Prêt à commencer ?</h2>
-                        <p className="mt-2 text-lg text-primary-foreground/80">
-                            Démarrez votre apprentissage avec le Chapitre 1: Introduction aux concepts de base de Git et GitHub.
-                        </p>
-                    </div>
-                    <Link href="/tutorial">
-                      <Button size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                          Commencer le tutoriel
-                          <ChevronRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
-                </div>
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-8">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight">Tableau de Bord</h1>
+                <p className="text-muted-foreground">Bienvenue ! Voici un aperçu de votre progression.</p>
             </div>
-        </section>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Progression du Tutoriel</CardTitle>
+                        <CardDescription>{totalCompleted} sur {totalLessons} leçons terminées.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Progress value={overallProgress} className="h-3" />
+                        <div className="mt-4 flex justify-end">
+                            <Link href="/tutorial">
+                            <Button size="sm">
+                                {totalCompleted > 0 ? 'Continuer le tutoriel' : 'Commencer le tutoriel'}
+                                <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Score Moyen aux Quiz</CardTitle>
+                        <CardDescription>{completedQuizzes} sur {quizzes.length} quiz terminés.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-center gap-4">
+                        <div className="relative h-24 w-24">
+                           <svg className="h-full w-full" viewBox="0 0 36 36">
+                                <path
+                                    className="stroke-muted"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    strokeWidth="3"
+                                />
+                                <path
+                                    className="stroke-primary"
+                                    strokeDasharray={`${averageScore}, 100`}
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-2xl font-bold">{Math.round(averageScore)}%</span>
+                            </div>
+                        </div>
+                        <p className="text-muted-foreground text-sm">Continuez pour améliorer votre score !</p>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Scores par Chapitre</CardTitle>
+                    <CardDescription>Visualisez vos résultats pour chaque quiz de chapitre.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <StatisticsChart data={commitData} />
+                </CardContent>
+            </Card>
+
+        </div>
       </main>
     </div>
   );

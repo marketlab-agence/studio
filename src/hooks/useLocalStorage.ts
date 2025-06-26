@@ -1,16 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-function getValue<T>(key: string, initialValue: T | (() => T)) {
+type UseLocalStorageOptions<T> = {
+  serializer?: (value: T) => string;
+  deserializer?: (value: string) => T;
+};
+
+// A value that is not likely to be in the initial value
+const FAKE_SSR_VALUE = 'FLVS_SSR';
+
+function getValue<T>(key: string, initialValue: T | (() => T), options?: UseLocalStorageOptions<T>) {
   if (typeof window === 'undefined') {
+    return FAKE_SSR_VALUE;
+  }
+  try {
+    const savedValue = localStorage.getItem(key);
+    if (savedValue !== null) {
+      return options?.deserializer ? options.deserializer(savedValue) : JSON.parse(savedValue);
+    }
+    return initialValue instanceof Function ? initialValue() : initialValue;
+  } catch (error) {
+    console.warn(`Error reading localStorage key “${key}”:`, error);
     return initialValue instanceof Function ? initialValue() : initialValue;
   }
-  const savedValue = localStorage.getItem(key);
-  if (savedValue !== null) {
-    return JSON.parse(savedValue);
-  }
-  return initialValue instanceof Function ? initialValue() : initialValue;
 }
-
 
 /**
  * Hook pour persister l'état dans le Local Storage.
@@ -18,12 +30,33 @@ function getValue<T>(key: string, initialValue: T | (() => T)) {
  * @param initialValue La valeur initiale.
  * @returns Une valeur d'état et une fonction pour la mettre à jour.
  */
-export function useLocalStorage<T>(key: string, initialValue: T | (() => T)) {
-  const [value, setValue] = useState<T>(() => getValue(key, initialValue));
+export function useLocalStorage<T>(
+    key: string, 
+    initialValue: T | (() => T),
+    options?: UseLocalStorageOptions<T>
+) {
+  const [storedValue, setStoredValue] = useState<T | string>(() => getValue(key, initialValue, options));
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [value, key]);
+    // This effect runs on the client after hydration
+    // It replaces the server-side FAKE_SSR_VALUE with the actual localStorage value
+    if (storedValue === FAKE_SSR_VALUE) {
+        setStoredValue(getValue(key, initialValue, options));
+    }
+  }, [key, initialValue, options, storedValue]);
 
-  return [value, setValue] as const;
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue as T) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        const serializedValue = options?.serializer ? options.serializer(valueToStore) : JSON.stringify(valueToStore);
+        localStorage.setItem(key, serializedValue);
+      }
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, options, storedValue]);
+
+  return [storedValue as T, setValue] as const;
 }

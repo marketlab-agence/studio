@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,28 +14,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle, Rocket, FileCode, BookOpen, GitCommitHorizontal } from 'lucide-react';
 import { FileTreeViewer } from '@/components/visualizations/FileTreeViewer';
 import Link from 'next/link';
+import { useTutorial } from '@/contexts/TutorialContext';
+import { cn } from '@/lib/utils';
 
-type Tutorial = typeof TUTORIALS[0];
-type TutorialStep = Tutorial['steps'][0];
+export function TutorialPanel() {
+  const {
+    progress,
+    setCurrentLocation,
+    currentChapter,
+    currentLesson,
+    overallProgress,
+    totalCompleted,
+    totalLessons,
+  } = useTutorial();
 
-type TutorialPanelProps = {
-  onStepSelect: (step: TutorialStep) => void;
-  onStepComplete: (stepId: string) => void;
-  completedSteps: Set<string>;
-  progress: number;
-};
 
-export function TutorialPanel({
-  onStepSelect,
-  onStepComplete,
-  completedSteps,
-  progress,
-}: TutorialPanelProps) {
-
-  const handleStepClick = (step: TutorialStep) => {
-    onStepSelect(step);
-    onStepComplete(step.id);
+  const handleLessonClick = (chapterId: string, lessonId: string) => {
+    setCurrentLocation(chapterId, lessonId);
   };
+
+  const defaultAccordionValue = currentChapter ? [currentChapter.id] : [];
 
   return (
     <div className="flex h-full flex-col">
@@ -58,10 +55,12 @@ export function TutorialPanel({
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 mb-2">
-            <Progress value={progress} className="w-full" />
-            <span className="text-sm font-medium text-muted-foreground">{Math.round(progress)}%</span>
+            <Progress value={overallProgress} className="w-full" />
+            <span className="text-sm font-medium text-muted-foreground">{Math.round(overallProgress)}%</span>
           </div>
-          <p className="text-xs text-muted-foreground">Terminez toutes les étapes pour maîtriser les bases de Git !</p>
+          <p className="text-xs text-muted-foreground">
+            {totalCompleted} sur {totalLessons} leçons terminées. Continuez comme ça !
+          </p>
         </CardContent>
       </Card>
 
@@ -72,7 +71,7 @@ export function TutorialPanel({
         </TabsList>
         <ScrollArea className="flex-1">
           <TabsContent value="tutorials" className="m-0">
-            <Accordion type="multiple" defaultValue={['intro-to-git']} className="w-full px-4">
+            <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full px-4">
               {TUTORIALS.map((tutorial) => (
                 <AccordionItem value={tutorial.id} key={tutorial.id}>
                   <AccordionTrigger className="text-lg font-semibold hover:no-underline">
@@ -80,24 +79,21 @@ export function TutorialPanel({
                   </AccordionTrigger>
                   <AccordionContent>
                     <p className="text-muted-foreground mb-4">{tutorial.description}</p>
-                    <div className="space-y-2">
-                      {tutorial.steps.map((step) => (
-                        <Card
-                          key={step.id}
-                          className={`cursor-pointer transition-all hover:border-primary ${completedSteps.has(step.id) ? 'bg-muted/50' : ''}`}
-                          onClick={() => handleStepClick(step)}
+                    <div className="space-y-1">
+                      {tutorial.lessons.map((lesson) => (
+                        <button
+                          key={lesson.id}
+                          className={cn(
+                              'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left transition-colors',
+                              lesson.id === currentLesson?.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
+                          )}
+                          onClick={() => handleLessonClick(tutorial.id, lesson.id)}
                         >
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold">{step.title}</h4>
-                              {completedSteps.has(step.id) && (
+                            <span className="font-medium">{lesson.title}</span>
+                            {progress.completedLessons.has(lesson.id) && (
                                 <CheckCircle className="h-5 w-5 text-green-500" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">{step.content}</p>
-                            <Badge variant="outline" className="font-code">{step.command}</Badge>
-                          </CardContent>
-                        </Card>
+                            )}
+                        </button>
                       ))}
                     </div>
                   </AccordionContent>
@@ -105,7 +101,7 @@ export function TutorialPanel({
               ))}
             </Accordion>
           </TabsContent>
-          <TabsContent value="files" className="m-0">
+          <TabsContent value="files" className="m-0 p-4">
             <FileTreeViewer />
           </TabsContent>
         </ScrollArea>
