@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -15,20 +17,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (!auth) {
       setLoading(false);
       return;
     }
-    
+
+    // This handles the result of a redirect sign-in flow.
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // This confirms the user has just signed in.
+          toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
+          router.push('/dashboard');
+        }
+      })
+      .catch((error) => {
+        console.error("Auth redirect error:", error);
+        toast({ variant: 'destructive', title: "Erreur de connexion", description: error.message });
+      });
+
+    // This listener is the single source of truth for the user's auth state.
+    // It will fire after getRedirectResult completes, or on any other auth change.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only once on initial mount.
 
   const value = { user, loading };
   

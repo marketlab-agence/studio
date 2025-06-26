@@ -7,7 +7,6 @@ import {
     GoogleAuthProvider, 
     GithubAuthProvider, 
     signInWithRedirect,
-    getRedirectResult,
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword 
 } from 'firebase/auth';
@@ -22,14 +21,23 @@ import { GoogleIcon, GithubIcon } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Terminal } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(true); // Start loading to check for redirect
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isFirebaseConfigured = !!auth;
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, router]);
 
   const handleAuthError = (error: any, title: string) => {
     let description = error.message;
@@ -37,38 +45,15 @@ export default function LoginPage() {
       description = "La clé d'API Firebase n'est pas valide. Veuillez vérifier les valeurs dans votre fichier .env et redémarrer le serveur de développement.";
     }
     toast({ variant: 'destructive', title, description });
-    setLoading(false);
+    setIsSubmitting(false);
   }
-
-  // Check for redirect result on page load
-  useEffect(() => {
-    if (!auth) {
-        setLoading(false);
-        return;
-    }
-    
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // User is signed in.
-          toast({ title: 'Connexion réussie', description: 'Vous allez être redirigé.' });
-          router.push('/dashboard');
-        } else {
-          // No user, normal page load.
-          setLoading(false);
-        }
-      })
-      .catch((error) => {
-        handleAuthError(error, 'Erreur de connexion');
-      });
-  }, [auth, router, toast]);
 
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     if (!auth) return;
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       await signInWithRedirect(auth, provider);
-      // The page will redirect.
+      // The page will redirect. The result is handled globally in AuthContext.
     } catch (error: any) {
       handleAuthError(error, 'Erreur de connexion');
     }
@@ -77,7 +62,7 @@ export default function LoginPage() {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
@@ -90,7 +75,7 @@ export default function LoginPage() {
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
@@ -100,12 +85,12 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || user) {
     return (
         <main className="flex-1 flex flex-col items-center justify-center p-4">
             <div className="flex items-center text-muted-foreground">
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                <span>Vérification de l'authentification...</span>
+                <span>Chargement...</span>
             </div>
         </main>
     );
@@ -135,10 +120,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading || !isFirebaseConfigured}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
                   <GoogleIcon className="mr-2 h-4 w-4" /> Google
                 </Button>
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading || !isFirebaseConfigured}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
                   <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                 </Button>
               </div>
@@ -153,14 +138,14 @@ export default function LoginPage() {
               <form onSubmit={handleEmailSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-signin">Email</Label>
-                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured} />
+                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-signin">Mot de passe</Label>
-                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured} />
+                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading || !isFirebaseConfigured}>
-                  {loading ? 'Connexion...' : 'Se connecter'}
+                <Button type="submit" className="w-full" disabled={isSubmitting || !isFirebaseConfigured}>
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
                 </Button>
               </form>
             </CardContent>
@@ -174,10 +159,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading || !isFirebaseConfigured}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
                         <GoogleIcon className="mr-2 h-4 w-4" /> Google
                     </Button>
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading || !isFirebaseConfigured}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
                         <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                     </Button>
                 </div>
@@ -192,14 +177,14 @@ export default function LoginPage() {
                 <form onSubmit={handleEmailSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email-signup">Email</Label>
-                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured} />
+                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password-signup">Mot de passe</Label>
-                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured} />
+                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading || !isFirebaseConfigured}>
-                      {loading ? 'Création...' : 'Créer mon compte'}
+                    <Button type="submit" className="w-full" disabled={isSubmitting || !isFirebaseConfigured}>
+                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
                     </Button>
                 </form>
             </CardContent>
