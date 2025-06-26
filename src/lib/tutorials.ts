@@ -8,7 +8,9 @@ import { MergeSimulator } from '@/components/interactive/MergeSimulator';
 import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
 import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
 import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
-import { ConflictResolver } from '@/components/interactive/ConflictResolver';
+import { ConflictVisualizer } from '@/components/specialized/part-7/ConflictVisualizer';
+import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
+import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
 import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
 import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
 import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
@@ -222,14 +224,22 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '6-1',
         title: 'Qu\'est-ce qu\'un conflit ?',
         objective: 'Comprendre ce qui cause un conflit de fusion.',
-        content: `Un conflit de fusion survient lorsque vous essayez de fusionner deux branches qui ont modifié la même ligne dans le même fichier, et Git ne sait pas quelle version choisir.\n\nGit est très intelligent, mais il ne peut pas lire dans vos pensées ! Il marque alors le fichier comme étant en conflit et vous passe la main pour que vous preniez la décision finale.`
+        content: `Un conflit de fusion survient lorsque vous essayez de fusionner deux branches qui ont modifié la même ligne dans le même fichier, et Git ne sait pas quelle version choisir.\n\nLe visualiseur ci-dessous montre un scénario typique : les deux branches (\`main\` et \`feature\`) ont modifié le même fichier, ce qui empêche une fusion automatique.`,
+        component: ConflictVisualizer
       },
       {
         id: '6-2',
-        title: 'Résoudre un conflit de fusion',
+        title: 'Guide de résolution',
         objective: 'Apprendre le processus pour résoudre manuellement un conflit de fusion.',
-        content: `Lorsque vous avez un conflit, Git modifie le fichier problématique pour vous montrer les deux versions contradictoires, délimitées par des marqueurs comme ceci :\n\n\`\`\`\n<<<<<<< HEAD\nVotre version du code (de la branche actuelle)\n=======\nLa version du code de la branche que vous fusionnez\n>>>>>>> nom-de-la-branche\n\`\`\`\n\nVotre tâche est de :\n1. Ouvrir le fichier.\n2. Choisir la version que vous voulez garder (ou une combinaison des deux).\n3. Supprimer les marqueurs de conflit (\`<<<<<<<\`, \`=======\`, \`>>>>>>>\`).\n4. Sauvegarder le fichier.\n5. Ajouter le fichier résolu à la zone de staging avec \`git add\`.\n6. Finaliser la fusion avec \`git commit\`.`,
-        component: ConflictResolver
+        content: `La résolution d'un conflit suit un processus systématique. Git vous aide en marquant clairement les zones de conflit dans vos fichiers. Le guide ci-dessous décompose chaque étape, de l'identification à la finalisation de la fusion.`,
+        component: ResolutionGuide
+      },
+      {
+        id: '6-3',
+        title: 'Mise en pratique',
+        objective: 'Résoudre un conflit de fusion dans un simulateur interactif.',
+        content: `C'est à votre tour de jouer ! Le simulateur ci-dessous présente un fichier en état de conflit. Modifiez le code directement dans l'éditeur pour résoudre le conflit, puis vérifiez votre solution.`,
+        component: ConflictPlayground
       }
     ]
   },
