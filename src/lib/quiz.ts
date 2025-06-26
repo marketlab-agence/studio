@@ -329,5 +329,99 @@ export const QUIZZES: Record<string, Quiz> = {
       }
     ],
     passingScore: 80,
+  },
+  'github-features': {
+    id: 'github-features',
+    title: 'Quiz: Fonctionnalités de GitHub',
+    questions: [
+      {
+        id: 'q1',
+        text: 'Quelle fonctionnalité de GitHub est principalement utilisée pour suivre les bugs et les demandes de fonctionnalités ?',
+        answers: [
+          { id: 'a1', text: 'Pull Requests' },
+          { id: 'a2', text: 'Actions' },
+          { id: 'a3', text: 'Issues', isCorrect: true },
+          { id: 'a4', text: 'Projects' },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'À quoi sert principalement GitHub Actions ?',
+        answers: [
+          { id: 'a1', text: 'À discuter du code avec d\'autres développeurs.' },
+          { id: 'a2', text: 'À automatiser les flux de travail comme les tests et le déploiement (CI/CD).', isCorrect: true },
+          { id: 'a3', text: 'À héberger la documentation du projet.' },
+          { id: 'a4', text: 'À suivre les statistiques d\'utilisation du projet.' },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'Dans quel dossier de votre projet les fichiers de configuration de GitHub Actions doivent-ils être placés ?',
+        answers: [
+          { id: 'a1', text: '.github/workflows', isCorrect: true },
+          { id: 'a2', text: '.actions/' },
+          { id: 'a3', text: 'workflows/' },
+          { id: 'a4', text: '.github/actions' },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Qu\'est-ce qu\'un "assignee" dans une Issue GitHub ?',
+        answers: [
+          { id: 'a1', text: 'La personne qui a trouvé le bug.' },
+          { id: 'a2', text: 'Une étiquette de catégorie.' },
+          { id: 'a3', text: 'Le jalon auquel l\'issue est rattachée.' },
+          { id: 'a4', text: 'La personne responsable du traitement de l\'issue.', isCorrect: true },
+        ],
+      }
+    ],
+    passingScore: 80,
+  },
+  'final-project': {
+    id: 'final-project',
+    title: 'Quiz: Révision Finale',
+    questions: [
+      {
+        id: 'q1',
+        text: 'Quel est le premier réflexe à avoir lorsque l\'on veut contribuer à un projet open source sur lequel on n\'a pas les droits d\'écriture ?',
+        answers: [
+          { id: 'a1', text: 'Cloner le projet' },
+          { id: 'a2', text: 'Créer une Pull Request' },
+          { id: 'a3', text: 'Forker le projet', isCorrect: true },
+          { id: 'a4', text: 'Créer une issue' },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'Quelle commande est la plus SÛRE pour annuler un commit public (déjà "pushé") ?',
+        answers: [
+          { id: 'a1', text: 'git reset --hard' },
+          { id: 'a2', text: 'git revert', isCorrect: true },
+          { id: 'a3', text: 'git rebase' },
+          { id: 'a4', text: 'git checkout' },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'Après avoir résolu manuellement un conflit de fusion, quelle est la prochaine étape cruciale avant de faire le commit de fusion ?',
+        answers: [
+          { id: 'a1', text: 'git pull' },
+          { id: 'a2', text: 'git merge --continue' },
+          { id: 'a3', text: 'git add <fichiers-résolus>', isCorrect: true },
+          { id: 'a4', text: 'git status' },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Quelle est la commande qui combine `git fetch` et `git merge` en une seule étape ?',
+        answers: [
+          { id: 'a1', text: 'git push' },
+          { id: 'a2', text: 'git sync' },
+          { id: 'a3', text: 'git clone' },
+          { id: 'a4', text: 'git pull', isCorrect: true },
+        ],
+      }
+    ],
+    passingScore: 80,
   }
 };

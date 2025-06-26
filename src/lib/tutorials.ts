@@ -10,6 +10,13 @@ import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo
 import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
 import { ConflictResolver } from '@/components/interactive/ConflictResolver';
 import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
+import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
+import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
+import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
+import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
+import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
+import { ProjectDashboard } from '@/components/specialized/part-10/ProjectDashboard';
+import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
 
 
 export const TUTORIALS: Tutorial[] = [
@@ -242,7 +249,64 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '7-2',
         title: 'Reflog : Votre filet de sécurité',
         objective: 'Découvrir la commande `reflog` pour retrouver des commits perdus.',
-        content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard <hash-du-commit>\` pour y revenir.`
+        content: `Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un \`git reset\` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande \`git reflog\` (référence log) affiche un journal de tous les endroits où votre \`HEAD\` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser \`git reset --hard <hash-du-commit>\` pour y revenir.`,
+        component: ReflogExplorer
+      }
+    ]
+  },
+  {
+    id: 'github-features',
+    title: '8. Fonctionnalités de GitHub',
+    description: 'Explorez les outils qui font de GitHub une plateforme si puissante.',
+    lessons: [
+      {
+        id: '8-1',
+        title: 'Interface de GitHub',
+        objective: 'Se familiariser avec l\'interface de GitHub pour les Pull Requests et les Issues.',
+        content: `GitHub n'est pas seulement un hébergement pour votre code, c'est une plateforme complète pour la gestion de projet. Les deux fonctionnalités principales que vous utiliserez quotidiennement sont les **Issues** et les **Pull Requests**.\n\n- **Issues** : Permettent de suivre les bugs, les demandes de fonctionnalités et d'autres tâches.\n- **Pull Requests** : En plus d'être des demandes de fusion, ce sont des espaces de discussion et de revue de code.\n\nLe simulateur ci-dessous vous donne un aperçu de cette interface.`,
+        component: GitHubInterfaceSimulator
+      },
+      {
+        id: '8-2',
+        title: 'Suivi des Tâches avec les Issues',
+        objective: 'Apprendre à créer et gérer des tâches avec le système d\'issues de GitHub.',
+        content: `Une bonne gestion de projet commence par un bon suivi des tâches. Les issues de GitHub sont parfaites pour cela. Vous pouvez les utiliser pour signaler un bug, proposer une nouvelle idée, ou simplement organiser votre travail.\n\nUne issue peut contenir :\n- Un titre descriptif et un corps détaillé (avec du Markdown).\n- Des étiquettes (labels) pour la catégorisation (ex: 'bug', 'feature', 'documentation').\n- Des personnes assignées (assignees).\n- Des jalons (milestones) pour regrouper les issues par objectif.`,
+        component: IssueTracker
+      },
+      {
+        id: '8-3',
+        title: 'Automatisation avec GitHub Actions',
+        objective: 'Découvrir le potentiel de l\'automatisation de votre flux de travail avec GitHub Actions.',
+        content: `GitHub Actions est un outil d'intégration et de déploiement continu (CI/CD) incroyablement puissant, directement intégré à votre dépôt. Il vous permet d'automatiser des tâches en réponse à des événements survenant sur GitHub (comme un \`push\` ou la création d'une PR).\n\nVous pouvez l'utiliser pour :\n- Lancer vos tests automatiquement à chaque commit.\n- Compiler votre code.\n- Déployer votre site web en production.\n- Et bien plus encore !\n\nLes workflows sont définis dans des fichiers YAML situés dans le dossier \`.github/workflows\` de votre projet.`,
+        component: ActionsWorkflowBuilder
+      }
+    ]
+  },
+  {
+    id: 'final-project',
+    title: '9. Projet Final',
+    description: 'Mettez en pratique tout ce que vous avez appris en contribuant à un projet simulé.',
+    lessons: [
+      {
+        id: '9-1',
+        title: 'Contribution à un Projet Open Source',
+        objective: 'Simuler le processus complet de contribution à un projet open source.',
+        content: `C'est le moment de tout assembler ! Dans cet exercice final, vous allez suivre le flux de travail complet d'un contributeur open source :\n\n1.  **Trouver une issue** à résoudre dans le projet.\n2.  **Forker** le dépôt et le **cloner** localement.\n3.  Créer une **branche** pour votre travail.\n4.  Effectuer les modifications de code et les **commits**.\n5.  **Pousser** votre branche vers votre fork.\n6.  Ouvrir une **Pull Request** vers le projet original.\n7.  Participer à la **revue de code** et apporter des modifications si nécessaire.`,
+        component: OpenSourceSimulator
+      },
+      {
+        id: '9-2',
+        title: 'Tableau de Bord du Projet',
+        objective: 'Visualiser l\'état d\'avancement d\'un projet à travers un tableau de bord.',
+        content: `La gestion d'un projet, même personnel, bénéficie d'une bonne visualisation. Les tableaux de bord peuvent aider à suivre les tâches en cours, l'état des Pull Requests et la santé globale du projet.`,
+        component: ProjectDashboard
+      },
+      {
+        id: '9-3',
+        title: 'Vous avez terminé !',
+        objective: 'Générer votre certificat de complétion.',
+        content: `Félicitations ! Vous avez terminé le tutoriel interactif sur Git et GitHub. Vous avez maintenant des bases solides pour versionner vos projets et collaborer efficacement avec d'autres développeurs.\n\nN'oubliez pas que la meilleure façon d'apprendre est de pratiquer. N'hésitez pas à utiliser Git pour tous vos projets, même les plus petits.\n\nVous pouvez maintenant générer votre certificat de réussite.`,
+        component: CertificateGenerator
       }
     ]
   }
