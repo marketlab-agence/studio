@@ -5,7 +5,6 @@ import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, Hi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
@@ -17,10 +16,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 export default function DashboardPage() {
-    const router = useRouter();
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
@@ -98,12 +107,29 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     <div className='flex gap-2'>
-                        <Button variant="secondary" onClick={resetProgress}>
-                            <History className="mr-2 h-4 w-4" />
-                            Recommencer
-                        </Button>
-                        <Button size="lg" onClick={() => router.push('/certificate')}>
-                            Obtenir mon certificat
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="secondary">
+                                <History className="mr-2 h-4 w-4" />
+                                Recommencer
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Êtes-vous sûr de vouloir recommencer ?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Toute votre progression sera effacée et vous retournerez à la première leçon. Cette action est irréversible.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogAction onClick={resetProgress}>Confirmer</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        <Button size="lg" asChild>
+                            <Link href="/certificate">Obtenir mon certificat</Link>
                         </Button>
                     </div>
                 </CardContent>
@@ -309,5 +335,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    

@@ -1,5 +1,6 @@
+
 'use client';
-import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
 import type { UserProgress } from '@/types/tutorial.types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
@@ -17,7 +18,6 @@ type TutorialContextType = {
   progress: UserProgress;
   setCurrentLocation: (chapterId: string, lessonId: string) => void;
   showQuizForChapter: (chapterId: string) => void;
-  completeLesson: (lessonId: string) => void;
   setQuizScore: (quizId: string, score: number) => void;
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
@@ -86,22 +86,15 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         });
     }, [setProgress]);
 
-    const completeLesson = useCallback((lessonId: string) => {
-        setProgress(prev => {
-            const newCompleted = new Set(prev.completedLessons);
-            newCompleted.add(lessonId);
-            return { ...prev, completedLessons: newCompleted };
-        });
-    }, [setProgress]);
-
     const setQuizScore = useCallback((quizId: string, score: number) => {
         setProgress(prev => {
             const quiz = QUIZZES[quizId];
             if (!quiz) return { ...prev, quizScores: { ...prev.quizScores, [quizId]: score } };
 
             const passed = score >= quiz.passingScore;
-            let newCompleted = new Set(prev.completedLessons);
+            const newCompleted = new Set(prev.completedLessons);
 
+            // If the user passes the quiz, mark all lessons in that chapter as complete.
             if (passed) {
                 const chapter = TUTORIALS.find(c => c.id === quizId);
                 if (chapter) {
@@ -208,17 +201,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         
-        // Corrected logic for calculating completed lessons
-        const derivedCompletedLessons = new Set(p.completedLessons || []);
-        TUTORIALS.forEach(chapter => {
-          const quiz = QUIZZES[chapter.id];
-          const score = p.quizScores?.[chapter.id] ?? 0;
-          if (quiz && score >= quiz.passingScore) {
-            chapter.lessons.forEach(lesson => derivedCompletedLessons.add(lesson.id));
-          }
-        });
-
-        const totalCompleted = derivedCompletedLessons.size;
+        const totalCompleted = (p.completedLessons || new Set()).size;
         const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
@@ -228,7 +211,6 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             progress: p, 
             setCurrentLocation,
             showQuizForChapter,
-            completeLesson,
             setQuizScore,
             goToNextLesson,
             goToPreviousLesson,
@@ -242,7 +224,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, showQuizForChapter, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress]);
+    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress]);
 
 
     return (
