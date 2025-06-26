@@ -188,7 +188,7 @@ export default function DashboardPage() {
                             </CardContent>
                             <CardFooter className="pt-4">
                                 <Button asChild className="w-full" disabled={isLocked}>
-                                    <Link href="/tutorial" onClick={() => handleContinue(lessonToNavigateTo.chapterId, lessonToNavigateTo.id)}>
+                                    <Link href="/tutorial" onClick={() => handleContinue(chapter.id, lessonToNavigateTo.id)}>
                                         {isChapterComplete ? "Revoir le chapitre" : "Continuer"}
                                         <ChevronRight className="ml-2 h-4 w-4" />
                                     </Link>
