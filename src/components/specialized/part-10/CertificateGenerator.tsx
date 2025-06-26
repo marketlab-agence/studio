@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export function CertificateGenerator() {
+export function CertificateGenerator({ averageQuizScore, masteryIndex }: { averageQuizScore: number, masteryIndex: number }) {
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
@@ -22,6 +22,16 @@ export function CertificateGenerator() {
              setCertificateId(`GHI-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
             setGenerated(true);
         }
+    };
+    
+    const getMentionText = () => {
+        if (averageQuizScore >= 98 && masteryIndex <= 1.1) {
+            return "avec mention Excellence, pour sa compréhension exceptionnelle et sa maîtrise du premier coup.";
+        }
+        if (averageQuizScore >= 90) {
+            return "avec mention Très Bien, pour sa solide et constante maîtrise des concepts.";
+        }
+        return "pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.";
     };
 
   return (
@@ -66,7 +76,7 @@ export function CertificateGenerator() {
                         <h2 className="text-5xl font-bold font-headline text-primary">{name}</h2>
                         
                         <p className="max-w-lg text-muted-foreground">
-                            pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.
+                            {getMentionText()}
                         </p>
 
                         <div className="pt-8 w-full grid grid-cols-3 items-end gap-4">

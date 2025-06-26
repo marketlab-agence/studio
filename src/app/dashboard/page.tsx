@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag, CheckCircle, RotateCcw } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, CheckCircle, RotateCcw, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -30,7 +30,7 @@ import {
 
 
 export default function DashboardPage() {
-    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress, resetChapter } = useTutorial();
+    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress, resetChapter, averageQuizScore, masteryIndex } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
@@ -54,9 +54,6 @@ export default function DashboardPage() {
         ]);
     }, []);
 
-    const nextUncompletedLesson = TUTORIALS.flatMap(t => t.lessons).find(l => !progress.completedLessons.has(l.id));
-    const chapterForNextLesson = nextUncompletedLesson ? TUTORIALS.find(t => t.id === nextUncompletedLesson.chapterId) : null;
-    
     const handleContinue = (chapterId: string, lessonId: string) => {
         setCurrentLocation(chapterId, lessonId);
     };
@@ -159,22 +156,22 @@ export default function DashboardPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Chapitre Actuel</CardTitle>
-                    <BookCopy className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Score Moyen Quiz</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold truncate" title={chapterForNextLesson?.title}>{chapterForNextLesson ? chapterForNextLesson.title : 'Terminé !'}</div>
-                    <p className="text-xs text-muted-foreground">Prochaine étape de votre parcours</p>
+                    <div className="text-2xl font-bold">{averageQuizScore.toFixed(0)}%</div>
+                    <p className="text-xs text-muted-foreground">sur les quiz réussis</p>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Prochain Objectif</CardTitle>
-                    <Flag className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Indice de Maîtrise</CardTitle>
+                    <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold truncate" title={nextUncompletedLesson?.title}>{nextUncompletedLesson ? nextUncompletedLesson.title : 'Félicitations !'}</div>
-                    <p className="text-xs text-muted-foreground">La prochaine leçon à compléter</p>
+                    <div className="text-2xl font-bold">{masteryIndex.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">Tentatives par quiz réussi</p>
                 </CardContent>
             </Card>
           </div>

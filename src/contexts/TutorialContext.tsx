@@ -8,6 +8,7 @@ import { QUIZZES } from '@/lib/quiz';
 
 const initialProgress: UserProgress = {
     quizScores: {},
+    quizAttempts: {},
     completedLessons: new Set(),
     currentChapterId: TUTORIALS[0]?.id || null,
     currentLessonId: TUTORIALS[0]?.lessons[0]?.id || null,
@@ -29,6 +30,8 @@ type TutorialContextType = {
   totalLessons: number;
   totalCompleted: number;
   overallProgress: number;
+  averageQuizScore: number;
+  masteryIndex: number;
   isFirstLessonInTutorial: boolean;
   isLastLessonInTutorial: boolean;
 };
@@ -94,6 +97,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
             const passed = score >= quiz.passingScore;
             const newCompleted = new Set(prev.completedLessons);
+            
+            const newAttempts = { ...prev.quizAttempts, [quizId]: (prev.quizAttempts?.[quizId] || 0) + 1 };
 
             // If the user passes the quiz, mark all lessons in that chapter as complete.
             if (passed) {
@@ -106,6 +111,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             return {
                 ...prev,
                 quizScores: { ...prev.quizScores, [quizId]: score },
+                quizAttempts: newAttempts,
                 completedLessons: newCompleted,
             };
         });
@@ -203,9 +209,13 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             const newQuizScores = { ...prev.quizScores };
             delete newQuizScores[chapterId];
 
+            const newQuizAttempts = { ...prev.quizAttempts };
+            delete newQuizAttempts[chapterId];
+
             return {
                 ...prev,
                 quizScores: newQuizScores,
+                quizAttempts: newQuizAttempts,
                 completedLessons: newCompleted,
             };
         });
@@ -229,6 +239,23 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
 
+        const { quizScores = {}, quizAttempts = {} } = p;
+        const passedQuizIds = Object.keys(quizScores).filter(quizId => {
+            const quiz = QUIZZES[quizId];
+            if (!quiz) return false;
+            return quizScores[quizId] >= quiz.passingScore;
+        });
+
+        const passedScores = passedQuizIds.map(id => quizScores[id]);
+        const averageQuizScore = passedScores.length > 0
+            ? passedScores.reduce((a, b) => a + b, 0) / passedScores.length
+            : 0;
+
+        const attemptsForPassedQuizzes = passedQuizIds.map(id => quizAttempts[id] || 1);
+        const masteryIndex = attemptsForPassedQuizzes.length > 0
+            ? attemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / attemptsForPassedQuizzes.length
+            : 0;
+
         return { 
             progress: p, 
             setCurrentLocation,
@@ -244,6 +271,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             totalLessons,
             totalCompleted,
             overallProgress,
+            averageQuizScore,
+            masteryIndex,
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };

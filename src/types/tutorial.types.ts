@@ -36,6 +36,8 @@ export interface Answer {
 export interface UserProgress {
   // chapterId -> score
   quizScores: Record<string, number>;
+  // chapterId -> attempts
+  quizAttempts: Record<string, number>;
   // lessonId -> completed
   completedLessons: Set<string>;
   // last position

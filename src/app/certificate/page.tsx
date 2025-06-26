@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TUTORIALS } from '@/lib/tutorials';
 
 export default function CertificatePage() {
-  const { overallProgress, progress, setCurrentLocation } = useTutorial();
+  const { overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function CertificatePage() {
     }
 
     if (isComplete) {
-      return <CertificateGenerator />;
+      return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} />;
     }
 
     return (
