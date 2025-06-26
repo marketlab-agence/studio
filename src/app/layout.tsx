@@ -7,8 +7,8 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Git & GitHub Interactif',
-  description: 'Un tutoriel interactif sur Git et GitHub.',
+  title: 'Git Explorer | Formations Interactives pour Outils Professionnels',
+  description: 'Maîtrisez Jira, AWS, Trello, et plus encore, grâce à des simulations pratiques. La compétence par la pratique.',
 };
 
 export default function RootLayout({

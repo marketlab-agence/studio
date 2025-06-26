@@ -4,39 +4,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
   title: 'Fonctionnalités - Git Explorer',
-  description: 'Découvrez les outils interactifs qui font de Git Explorer la meilleure plateforme pour apprendre Git et GitHub.',
+  description: 'Découvrez les outils interactifs qui font de Git Explorer la meilleure plateforme pour maîtriser les outils professionnels.',
 };
 
 const features = [
   {
     icon: MousePointerClick,
-    title: 'Tutoriels Interactifs',
+    title: 'Simulations Interactives',
     description: "Plongez dans des leçons qui intègrent des simulateurs pour une pratique immédiate. Apprenez en faisant, pas seulement en lisant.",
   },
   {
     icon: Terminal,
-    title: 'Environnement Simulé',
-    description: "Utilisez un terminal et un explorateur de fichiers intégrés pour exécuter des commandes Git dans un environnement sans risque.",
+    title: 'Environnements Sans Risque',
+    description: "Utilisez des interfaces et terminaux intégrés pour manipuler les outils dans un environnement sécurisé, sans craindre de casser quoi que ce soit.",
   },
   {
     icon: BrainCircuit,
     title: 'Visualisations Claires',
-    description: "Comprenez les concepts complexes comme les branches, les fusions et le flux de données grâce à des diagrammes animés et interactifs.",
+    description: "Comprenez les concepts complexes comme les workflows Jira, les architectures AWS ou les flux de données grâce à des diagrammes animés et interactifs.",
   },
   {
     icon: Bot,
     title: 'Aide Contextuelle IA',
-    description: "Coincé sur une commande ? Notre IA vous fournit des explications contextuelles basées sur votre état actuel dans le tutoriel.",
+    description: "Coincé sur une tâche ? Notre IA vous fournit des explications et des indices basés sur votre état actuel dans le simulateur.",
   },
   {
     icon: AreaChart,
-    title: 'Suivi de Progression',
-    description: "Visualisez votre progression, vos scores aux quiz et votre maîtrise des commandes sur un tableau de bord personnalisé.",
+    title: 'Suivi de Compétences',
+    description: "Visualisez votre progression, vos scores aux quiz et votre maîtrise des fonctionnalités sur un tableau de bord personnalisé.",
   },
   {
     icon: CheckCircle,
     title: 'Validation des Acquis',
-    description: "Testez vos connaissances avec des quiz à la fin de chaque chapitre et obtenez une certification pour valider vos nouvelles compétences.",
+    description: "Testez vos connaissances avec des projets finaux et obtenez une certification pour valider vos nouvelles compétences.",
   },
 ];
 
@@ -47,7 +47,7 @@ export default function FeaturesPage() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Apprendre en Faisant, Pas en Regardant</h1>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">La compétence par la pratique.</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 Git Explorer est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. Découvrez les fonctionnalités qui rendent notre approche unique.
               </p>

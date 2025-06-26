@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'À Propos - Git Explorer',
-  description: 'Découvrez notre mission : rendre l\'apprentissage de Git et GitHub accessible, pratique et amusant pour tous.',
+  description: 'Notre mission : accélérer votre maîtrise des outils professionnels grâce à une pédagogie basée sur la pratique.',
 };
 
 export default function AboutPage() {
@@ -14,16 +14,16 @@ export default function AboutPage() {
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                Notre Mission : Démystifier Git
+                Notre Mission : Accélérer votre Maîtrise.
               </h1>
               <p className="text-muted-foreground md:text-xl/relaxed">
-                Le contrôle de version est l'une des compétences les plus fondamentales pour un développeur moderne, mais son apprentissage peut être intimidant. Les concepts abstraits comme les branches, les fusions et les dépôts distants sont souvent difficiles à saisir à travers de simples lectures.
+                Dans le monde de la technologie, savoir n'est pas suffisant. Il faut savoir *faire*. Pourtant, la plupart des formations s'arrêtent à la théorie, vous laissant face à un fossé entre ce que vous avez appris et ce que vous devez accomplir.
               </p>
               <p className="text-muted-foreground md:text-xl/relaxed">
-                C'est pourquoi nous avons créé **Git Explorer**. Notre conviction est que la meilleure façon d'apprendre des outils pratiques est de les pratiquer. Nous avons conçu une plateforme qui vous plonge dans un environnement simulé, où vous pouvez faire des erreurs, expérimenter et construire une véritable "mémoire musculaire" sans la peur de casser un vrai projet.
+                **Git Explorer** a été créé pour combler ce fossé. Nous croyons que la compétence naît de la pratique délibérée. C'est pourquoi nous avons développé une plateforme d'apprentissage unique qui vous plonge dans des environnements simulés et des scénarios réels. Vous ne vous contentez pas de regarder, vous manipulez. Vous ne vous contentez pas de lire, vous construisez.
               </p>
               <p className="text-muted-foreground md:text-xl/relaxed">
-                Nous voulons transformer l'apprentissage de Git d'une corvée en une aventure interactive et gratifiante.
+                Notre objectif est de transformer la manière dont vous apprenez les outils professionnels, en passant d'une assimilation passive à une acquisition active de compétences. Pour que vous soyez non seulement prêt, mais véritablement opérationnel.
               </p>
             </div>
             <div className="flex items-center justify-center">
@@ -31,9 +31,9 @@ export default function AboutPage() {
                 src="https://placehold.co/600x400.png"
                 width={600}
                 height={400}
-                alt="Une image représentant la collaboration et la technologie"
+                alt="Une image représentant la technologie et l'apprentissage"
                 className="mx-auto aspect-video overflow-hidden rounded-xl object-cover"
-                data-ai-hint="collaboration technology"
+                data-ai-hint="technology learning"
               />
             </div>
           </div>

@@ -3,18 +3,18 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GitCommitHorizontal, Layers, Code, Rocket, ArrowRight } from 'lucide-react';
+import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Formations - Git Explorer',
-  description: 'Découvrez toutes nos formations interactives pour maîtriser Git, GitHub, Docker, et plus encore.',
+  description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
 };
 
 const mainCourse = {
   title: 'Git & GitHub : Le Guide Complet',
-  description: 'De la première ligne de commande à la contribution open source.',
+  description: 'La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.',
   icon: GitCommitHorizontal,
-  tags: ['Débutant à Avancé', '11 Chapitres', 'Quiz Interactifs'],
+  tags: ['Inclus', '11 Chapitres', 'Quiz Interactifs'],
   features: [
     'Apprenez les commandes fondamentales et avancées de Git.',
     'Maîtrisez les workflows professionnels comme GitFlow.',
@@ -26,19 +26,34 @@ const mainCourse = {
 
 const futureCourses = [
   {
-    title: 'Docker & Conteneurs : Le Guide Pratique',
-    icon: Layers,
-    description: 'Apprenez à créer, gérer et déployer des applications conteneurisées.',
+    title: 'Jira : De Zéro à Héros',
+    icon: KanbanSquare,
+    description: 'Organisez, suivez et gérez le travail de votre équipe avec le leader de la gestion de projet Agile.',
   },
   {
-    title: 'Principes de la Programmation (Python)',
-    icon: Code,
-    description: 'Pour les vrais débutants en code, avec des exercices interactifs.',
+    title: 'Trello : La Simplicité Visuelle',
+    icon: Users,
+    description: 'Maîtrisez l\'art des tableaux Kanban pour une gestion de projet intuitive et collaborative.',
   },
   {
-    title: 'CI/CD avec GitHub Actions (Avancé)',
-    icon: Rocket,
-    description: 'Approfondissement des workflows, gestion des secrets, déploiements multi-environnements.',
+    title: 'Slack : Communication & Automatisation',
+    icon: MessageSquare,
+    description: 'Transformez votre manière de communiquer et intégrez des workflows automatisés.',
+  },
+  {
+    title: 'Notion : Votre Second Cerveau',
+    icon: BookMarked,
+    description: 'Structurez la connaissance, gérez les tâches et construisez des systèmes d\'organisation personnels et d\'équipe.',
+  },
+  {
+    title: 'AWS : Les Fondamentaux du Cloud',
+    icon: Database,
+    description: 'Comprenez les services cloud essentiels et apprenez à déployer des applications sur AWS.',
+  },
+  {
+    title: 'Docker : Le Guide Pratique',
+    icon: GitCommitHorizontal, // placeholder
+    description: 'Apprenez à créer, gérer et déployer des applications conteneurisées pour des déploiements cohérents.',
   }
 ];
 
@@ -51,7 +66,7 @@ export default function CoursesPage() {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Nos Formations Interactives</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Plongez dans des formations pratiques conçues pour vous faire apprendre en faisant.
+                Apprenez en faisant. Chaque cours est une simulation conçue pour vous rendre opérationnel.
               </p>
             </div>
           </div>

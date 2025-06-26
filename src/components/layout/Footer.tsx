@@ -14,6 +14,9 @@ export function Footer() {
             <Link href="/courses" className="text-muted-foreground transition-colors hover:text-foreground">
               Formations
             </Link>
+            <Link href="/blog" className="text-muted-foreground transition-colors hover:text-foreground">
+              Blog
+            </Link>
             <Link href="/features" className="text-muted-foreground transition-colors hover:text-foreground">
               Fonctionnalités
             </Link>
