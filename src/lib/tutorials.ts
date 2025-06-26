@@ -252,7 +252,7 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
       {
         id: '7-1',
         title: 'Annuler des modifications',
-        objective: 'Comparer les différentes stratégies pour annuler des changements : `reset`, `revert` et `checkout`.',
+        objective: 'Comparer les différentes stratégies pour annuler des changements : `reset`, `revert` et `restore`.',
         content: `Git offre plusieurs outils pour revenir en arrière, chacun ayant un usage spécifique. Il est crucial de comprendre leurs différences pour ne pas perdre de travail.\n\n- \`git checkout -- <fichier>\` : Annule les modifications dans le répertoire de travail qui n'ont pas encore été stagées.\n- \`git reset HEAD <fichier>\` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.\n- \`git reset <commit>\` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.\n- \`git revert <commit>\` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.`,
         component: UndoCommandComparison
       },
@@ -316,7 +316,11 @@ Si vous n'utilisez pas \`-m\`, Git ouvrira votre éditeur de texte par défaut p
         id: '9-2',
         title: 'Tableau de Bord du Projet',
         objective: 'Visualiser l\'état d\'avancement d\'un projet à travers un tableau de bord.',
-        content: `La gestion d'un projet, même personnel, bénéficie d'une bonne visualisation. Les tableaux de bord peuvent aider à suivre les tâches en cours, l'état des Pull Requests et la santé globale du projet.`,
+        content: `Un tableau de bord est un outil essentiel pour avoir une vue d'ensemble de l'état d'un projet. Sur des plateformes comme GitHub, vous trouverez des tableaux de bord sous les onglets 'Projects' ou 'Insights', qui vous aident à suivre les issues, les Pull Requests, et l'activité des contributeurs.
+
+Dans le cadre de cette application, nous avons également créé un **Tableau de Bord personnalisé** pour suivre votre propre parcours d'apprentissage. Il centralise votre progression, vos scores aux quiz et vos statistiques. Vous pouvez y accéder à tout moment en cliquant sur le lien "Tableau de bord" dans la barre de navigation en haut de la page.
+
+Le simulateur ci-dessous représente un exemple de tableau de bord de fin de projet, récapitulant toutes les compétences que vous avez acquises.`,
         component: ProjectDashboard
       }
     ]
