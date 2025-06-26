@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp, History } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 
 export default function DashboardPage() {
-    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation } = useTutorial();
+    const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
@@ -47,20 +47,8 @@ export default function DashboardPage() {
     ), []);
 
     const uncompletedLessons = useMemo(() => {
-        const completedChapterIds = new Set(
-            Object.keys(progress.quizScores).filter(chapterId => 
-                (progress.quizScores[chapterId] ?? 0) >= (QUIZZES[chapterId]?.passingScore ?? 80)
-            )
-        );
-
-        return allLessons.filter(lesson => {
-            const isChapterCompletedByQuiz = completedChapterIds.has(lesson.chapterId);
-            const isLessonIndividuallyCompleted = progress.completedLessons.has(lesson.id);
-            // Une leçon est considérée comme "non complétée" seulement si son chapitre n'est pas terminé via le quiz,
-            // ET si elle n'a pas été complétée individuellement.
-            return !isChapterCompletedByQuiz && !isLessonIndividuallyCompleted;
-        });
-    }, [allLessons, progress.completedLessons, progress.quizScores]);
+        return allLessons.filter(lesson => !progress.completedLessons.has(lesson.id));
+    }, [allLessons, progress.completedLessons]);
 
     const nextLessons = uncompletedLessons.slice(0, 5);
 
@@ -223,17 +211,24 @@ export default function DashboardPage() {
                     })}
                 </div>
             ) : (
-                overallProgress >= 100 && (
-                     <Card>
-                        <CardContent className="p-6 text-center">
-                             <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
-                                <Award className="h-8 w-8 text-primary" />
-                            </div>
-                            <h3 className="text-lg font-bold">Bravo !</h3>
-                            <p className="text-muted-foreground">Vous avez terminé toutes les leçons !</p>
-                        </CardContent>
-                    </Card>
-                )
+                 <Card>
+                    <CardContent className="p-6 text-center space-y-4">
+                         <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
+                            <Award className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-bold">Bravo, vous avez tout terminé !</h3>
+                        <p className="text-muted-foreground">Vous pouvez réclamer votre certificat ou recommencer le tutoriel.</p>
+                        <div className="flex gap-2 justify-center">
+                            <Button variant="secondary" onClick={resetProgress}>
+                                <History className="mr-2 h-4 w-4" />
+                                Recommencer le parcours
+                            </Button>
+                            <Button asChild>
+                                <Link href="/certificate">Obtenir mon certificat</Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
           </div>
 

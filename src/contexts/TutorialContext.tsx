@@ -21,6 +21,7 @@ type TutorialContextType = {
   setQuizScore: (quizId: string, score: number) => void;
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
+  resetProgress: () => void;
   currentChapter: typeof TUTORIALS[0] | undefined;
   currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
   currentView: 'lesson' | 'quiz';
@@ -176,6 +177,10 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         });
     }, [setProgress]);
 
+    const resetProgress = useCallback(() => {
+        setProgress(initialProgress);
+    }, [setProgress]);
+
     const value = useMemo(() => {
         const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
 
@@ -187,6 +192,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === p.currentLessonId);
 
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
+        
+        // Corrected calculation for totalCompleted to ensure consistency
         const totalCompleted = p.completedLessons?.size || 0;
         
         const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
@@ -202,6 +209,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             setQuizScore,
             goToNextLesson,
             goToPreviousLesson,
+            resetProgress,
             currentChapter,
             currentLesson,
             currentView,
@@ -211,7 +219,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, showQuizForChapter, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson]);
+    }, [progress, setCurrentLocation, showQuizForChapter, completeLesson, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress]);
 
 
     return (
