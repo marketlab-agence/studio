@@ -156,11 +156,16 @@ export default function DashboardPage() {
             <div className="space-y-2">
                 {tutorials.map((tutorial, index) => {
                     const isFirstChapter = index === 0;
-                    const prevChapter = isFirstChapter ? null : tutorials[index-1];
+                    const prevChapter = isFirstChapter ? null : tutorials[index - 1];
                     const quizScorePrevChapter = prevChapter && progress.quizScores ? (progress.quizScores[prevChapter.id] ?? 0) : 0;
-                    
                     const isLocked = !isFirstChapter && quizScorePrevChapter < 80;
-                    const isCompleted = (progress.quizScores?.[tutorial.id] ?? 0) >= 80;
+
+                    const allLessonsInChapter = tutorial.lessons.map(l => l.id);
+                    const completedLessonsInChapter = allLessonsInChapter.filter(id => progress.completedLessons.has(id));
+                    const isChapterCompleted = completedLessonsInChapter.length === allLessonsInChapter.length;
+
+                    const firstUncompletedLesson = tutorial.lessons.find(l => !progress.completedLessons.has(l.id));
+                    const continueLessonId = firstUncompletedLesson ? firstUncompletedLesson.id : tutorial.lessons[0].id;
 
                     return (
                         <Card key={tutorial.id} className="transition-all hover:border-primary/50">
@@ -175,8 +180,8 @@ export default function DashboardPage() {
                                     </Badge>
                                 ) : (
                                     <Link href="/tutorial">
-                                        <Button size="sm" onClick={() => handleContinue(tutorial.id, tutorial.lessons[0].id)}>
-                                            {isCompleted ? 'Revoir' : 'Continuer'}
+                                        <Button size="sm" onClick={() => handleContinue(tutorial.id, continueLessonId)}>
+                                            {isChapterCompleted ? 'Revoir' : 'Continuer'}
                                             <ChevronRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </Link>
