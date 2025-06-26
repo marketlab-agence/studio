@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
@@ -8,55 +8,49 @@ import { NavigationControls } from '@/components/tutorial/NavigationControls';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { QUIZZES } from '@/lib/quiz';
 import { TUTORIALS } from '@/lib/tutorials';
+import { cn } from '@/lib/utils';
 
 export default function TutorialPage() {
   const {
     currentChapter,
     currentLesson,
-    progress,
-    setQuizScore
+    setQuizScore,
+    setCurrentLocation
   } = useTutorial();
 
   const [viewMode, setViewMode] = useState<'lesson' | 'quiz'>('lesson');
 
   useEffect(() => {
-    // Reset to lesson view when lesson changes
-    setViewMode('lesson');
-  }, [currentLesson]);
+    // Reset to lesson view when lesson changes, but not if we're in a quiz
+    if (viewMode !== 'quiz') {
+      setViewMode('lesson');
+    }
+  }, [currentLesson, viewMode]);
 
-  const chapterQuiz = currentChapter ? QUIZZES[currentChapter.id] : undefined;
+  const chapterQuiz = useMemo(() => currentChapter ? QUIZZES[currentChapter.id] : undefined, [currentChapter]);
+  
+  const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
+  const isQuizAvailable = !!chapterQuiz;
 
   const handleQuizComplete = (score: number) => {
     if (currentChapter) {
       setQuizScore(currentChapter.id, score);
     }
   };
-
+  
   const handleStartQuiz = () => {
     setViewMode('quiz');
   }
 
-  const RightPanelContent = () => {
-    if (viewMode === 'quiz' && chapterQuiz) {
-        return <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} />;
+  const handleFinishQuiz = () => {
+    const chapterIndex = TUTORIALS.findIndex(c => c.id === currentChapter?.id);
+    // If there is a next chapter, move to it
+    if (chapterIndex !== -1 && chapterIndex < TUTORIALS.length - 1) {
+        const nextChapter = TUTORIALS[chapterIndex + 1];
+        setCurrentLocation(nextChapter.id, nextChapter.lessons[0].id);
     }
-
-    if (currentLesson && currentChapter) {
-        const isLastLesson = currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id;
-        const isQuizAvailable = !!chapterQuiz;
-
-      return (
-        <div className="flex flex-col h-full">
-            <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                <LessonView lesson={currentLesson} />
-            </div>
-            <NavigationControls onTakeQuiz={isLastLesson && isQuizAvailable ? handleStartQuiz : undefined} />
-        </div>
-      );
-    }
-
-    return <div className="p-8 text-center text-muted-foreground">Veuillez sélectionner une leçon pour commencer.</div>;
-  };
+    setViewMode('lesson');
+  }
 
   return (
     <div className="flex h-screen w-full bg-background font-sans">
@@ -64,7 +58,24 @@ export default function TutorialPage() {
         <TutorialPanel />
       </aside>
       <main className="flex-1 flex flex-col min-w-0">
-        <RightPanelContent />
+        
+        <div className={cn("flex flex-col h-full", viewMode !== 'lesson' && 'hidden')}>
+            {currentLesson && currentChapter ? (
+                <>
+                    <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+                        <LessonView lesson={currentLesson} />
+                    </div>
+                    <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
+                </>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">Veuillez sélectionner une leçon pour commencer.</div>
+            )}
+        </div>
+
+        <div className={cn("h-full", viewMode !== 'quiz' && 'hidden')}>
+             {chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
+        </div>
+
       </main>
     </div>
   );

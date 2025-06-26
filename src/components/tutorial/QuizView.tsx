@@ -8,19 +8,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Quiz } from '@/types/tutorial.types';
-import { CheckCircle, XCircle, ChevronRight, Info } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
 
 type QuizViewProps = {
     quiz: Quiz;
     onQuizComplete: (score: number) => void;
+    onFinishQuiz: () => void;
 };
 
 type UserAnswers = Record<string, string[]>;
 type QuestionState = 'answering' | 'showing_feedback';
 
-export function QuizView({ quiz, onQuizComplete }: QuizViewProps) {
+export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
@@ -30,6 +31,15 @@ export function QuizView({ quiz, onQuizComplete }: QuizViewProps) {
 
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
+
+    const resetQuiz = () => {
+        setUserAnswers({});
+        setIsSubmitted(false);
+        setFinalScore(0);
+        setCurrentQuestionIndex(0);
+        setQuestionState('answering');
+        setIsCurrentAnswerCorrect(null);
+    };
 
     const handleAnswerChange = (questionId: string, answerId: string, isMultipleChoice?: boolean) => {
         if (questionState === 'showing_feedback') return;
@@ -140,8 +150,16 @@ export function QuizView({ quiz, onQuizComplete }: QuizViewProps) {
                             </div>
                         )}
                     </CardContent>
-                    <CardFooter>
-                        {/* The parent component will show navigation controls to move to next chapter */}
+                    <CardFooter className="flex-row-reverse">
+                        <Button onClick={onFinishQuiz}>
+                            {isQuizPassed ? 'Chapitre suivant' : 'Retourner aux leçons'}
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                         {!isQuizPassed && (
+                            <Button variant="outline" onClick={resetQuiz} className="mr-2">
+                                Recommencer le quiz
+                            </Button>
+                        )}
                     </CardFooter>
                 </Card>
             </div>
@@ -235,5 +253,3 @@ export function QuizView({ quiz, onQuizComplete }: QuizViewProps) {
         </div>
     );
 }
-
-    
