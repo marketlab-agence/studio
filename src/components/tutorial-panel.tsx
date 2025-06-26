@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Circle, Lock, ChevronRight, GraduationCap } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -35,7 +34,7 @@ export function TutorialPanel() {
   const defaultAccordionValue = currentChapter ? [currentChapter.id] : [];
 
   return (
-    <Card className="flex h-full flex-col bg-card/50 border-0 md:border">
+    <aside className="hidden md:flex md:flex-col bg-card/50 border-0 md:border md:rounded-lg">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold">Tutoriel GitHub</h2>
         <p className="text-sm text-muted-foreground">Votre guide interactif</p>
@@ -63,7 +62,8 @@ export function TutorialPanel() {
                 <AccordionTrigger
                   className={cn(
                     'text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline',
-                    isLocked && 'cursor-not-allowed text-muted-foreground/50'
+                    isLocked && 'cursor-not-allowed text-muted-foreground/50',
+                    !isLocked && currentChapter?.id === tutorial.id && 'text-primary'
                   )}
                 >
                   <div className="flex flex-1 items-center gap-3">
@@ -79,27 +79,31 @@ export function TutorialPanel() {
                 </AccordionTrigger>
                 <AccordionContent className="pl-4">
                   <div className="space-y-1">
-                    {tutorial.lessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        className={cn(
-                          'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
-                          progress.currentView === 'lesson' && lesson.id === currentLesson?.id
-                            ? 'bg-primary/10 text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                        )}
-                        onClick={() => handleLessonClick(tutorial.id, lesson.id)}
-                      >
-                        <span className="font-medium">{lesson.title}</span>
-                        {progress.completedLessons.has(lesson.id) ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : lesson.id === currentLesson?.id ? (
-                          <ChevronRight className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-border" />
-                        )}
-                      </button>
-                    ))}
+                    {tutorial.lessons.map((lesson) => {
+                      const isLessonMarkedAsComplete = progress.completedLessons.has(lesson.id) || isCompleted;
+
+                      return (
+                        <button
+                          key={lesson.id}
+                          className={cn(
+                            'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
+                            progress.currentView === 'lesson' && lesson.id === currentLesson?.id
+                              ? 'bg-primary/10 text-primary-foreground'
+                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          )}
+                          onClick={() => handleLessonClick(tutorial.id, lesson.id)}
+                        >
+                          <span className="font-medium">{lesson.title}</span>
+                          {isLessonMarkedAsComplete ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : lesson.id === currentLesson?.id && progress.currentView === 'lesson' ? (
+                            <ChevronRight className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-border" />
+                          )}
+                        </button>
+                      );
+                    })}
                      <button
                         key={`${tutorial.id}-quiz`}
                         className={cn(
@@ -130,6 +134,6 @@ export function TutorialPanel() {
           })}
         </Accordion>
       </ScrollArea>
-    </Card>
+    </aside>
   );
 }
