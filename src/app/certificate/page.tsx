@@ -7,7 +7,7 @@ import { CertificateGenerator } from '@/components/specialized/part-10/Certifica
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,11 @@ export default function CertificatePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex } = useTutorial();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -64,7 +69,7 @@ export default function CertificatePage() {
   const isScoreSufficient = averageQuizScore >= 80;
 
   const renderContent = () => {
-    if (authLoading || !user) {
+    if (!isMounted || authLoading || !user) {
       return (
         <Card className="text-center py-8">
           <CardHeader>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function TutorialPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
   
   const {
     progress,
@@ -28,6 +29,10 @@ export default function TutorialPage() {
     showQuizForChapter,
     currentView
   } = useTutorial();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,7 +120,7 @@ export default function TutorialPage() {
       </aside>
       <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
         
-        {authLoading || !user ? (
+        {!isMounted || authLoading || !user ? (
             skeletonView
         ) : (
           <>
