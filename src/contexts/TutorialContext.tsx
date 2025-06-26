@@ -3,6 +3,7 @@ import React, { createContext, useContext, ReactNode, useMemo, useCallback, useS
 import type { UserProgress } from '@/types/tutorial.types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
+import { QUIZZES } from '@/lib/quiz';
 
 const initialProgress: UserProgress = {
     quizScores: {},
@@ -81,10 +82,22 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }, [setProgress]);
 
     const setQuizScore = useCallback((quizId: string, score: number) => {
-        setProgress(prev => ({
-            ...prev,
-            quizScores: { ...prev.quizScores, [quizId]: score }
-        }));
+        const quiz = QUIZZES[quizId];
+        const chapter = TUTORIALS.find(t => t.id === quizId);
+
+        setProgress(prev => {
+            const newCompleted = new Set(prev.completedLessons);
+            // If the user passed the quiz, mark all lessons in that chapter as complete
+            if (quiz && chapter && score >= quiz.passingScore) {
+                chapter.lessons.forEach(lesson => newCompleted.add(lesson.id));
+            }
+
+            return {
+                ...prev,
+                quizScores: { ...prev.quizScores, [quizId]: score },
+                completedLessons: newCompleted,
+            };
+        });
     }, [setProgress]);
 
     const goToNextLesson = useCallback(() => {
@@ -171,7 +184,23 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         const totalCompleted = p.completedLessons?.size || 0;
-        const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
+        
+        const lessonCompletionProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
+
+        const quizzes = Object.values(QUIZZES);
+        const totalQuizzes = quizzes.length;
+        const passedQuizzes = quizzes.reduce((acc, quiz) => {
+            const score = p.quizScores?.[quiz.id] ?? 0;
+            if (score >= quiz.passingScore) {
+                return acc + 1;
+            }
+            return acc;
+        }, 0);
+
+        const quizCompletionProgress = totalQuizzes > 0 ? (passedQuizzes / totalQuizzes) * 100 : 0;
+
+        // New overall progress: 50% from lessons, 50% from quizzes
+        const overallProgress = (lessonCompletionProgress * 0.5) + (quizCompletionProgress * 0.5);
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
