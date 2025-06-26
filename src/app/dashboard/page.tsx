@@ -1,7 +1,7 @@
 'use client';
 
-import { Award, BookOpen, ChevronRight, Circle, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Award, BookOpen, ChevronRight, LayoutGrid, Lock, Target, TrendingUp, History, BookCopy, Flag, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -10,11 +10,11 @@ import { QUIZZES } from '@/lib/quiz';
 import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
 import { ChartContainer } from '@/components/ui/chart';
-import { Badge } from '@/components/ui/badge';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 
 
 export default function DashboardPage() {
@@ -42,17 +42,7 @@ export default function DashboardPage() {
         ]);
     }, []);
 
-    const allLessons = useMemo(() => TUTORIALS.flatMap(t => 
-        t.lessons.map(l => ({...l, chapterId: t.id}))
-    ), []);
-
-    const uncompletedLessons = useMemo(() => {
-        return allLessons.filter(lesson => !progress.completedLessons.has(lesson.id));
-    }, [allLessons, progress.completedLessons]);
-
-    const nextLessons = uncompletedLessons.slice(0, 5);
-
-    const nextUncompletedLesson = uncompletedLessons.length > 0 ? uncompletedLessons[0] : null;
+    const nextUncompletedLesson = TUTORIALS.flatMap(t => t.lessons).find(l => !progress.completedLessons.has(l.id));
     const chapterForNextLesson = nextUncompletedLesson ? TUTORIALS.find(t => t.id === nextUncompletedLesson.chapterId) : null;
     
     const handleContinue = (chapterId: string, lessonId: string) => {
@@ -96,7 +86,7 @@ export default function DashboardPage() {
           
           {overallProgress >= 100 && (
             <Card className="bg-gradient-to-r from-primary/20 to-primary/10 border-primary/30">
-                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-4">
                         <Award className="h-10 w-10 text-primary" />
                         <div>
@@ -104,9 +94,15 @@ export default function DashboardPage() {
                             <p className="text-muted-foreground">Vous avez terminé le tutoriel. Réclamez votre certificat.</p>
                         </div>
                     </div>
-                    <Button asChild size="lg">
-                        <Link href="/certificate">Obtenir mon certificat</Link>
-                    </Button>
+                    <div className='flex gap-2'>
+                        <Button variant="secondary" onClick={resetProgress}>
+                            <History className="mr-2 h-4 w-4" />
+                            Recommencer
+                        </Button>
+                        <Button asChild size="lg">
+                            <Link href="/certificate">Obtenir mon certificat</Link>
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
           )}
@@ -155,70 +151,53 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Prochaines leçons</h2>
-            {nextLessons.length > 0 ? (
-                <div className="space-y-2">
-                    {nextLessons.map((lesson) => {
-                        const chapter = TUTORIALS.find(t => t.id === lesson.chapterId);
-                        const isChapterLocked = () => {
-                            if (!chapter) return true;
-                            const chapterIndex = TUTORIALS.findIndex(c => c.id === chapter.id);
-                            if (chapterIndex === 0) return false;
-                            const prevChapter = TUTORIALS[chapterIndex - 1];
-                            const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-                            return quizScorePrevChapter < (QUIZZES[prevChapter.id]?.passingScore ?? 80);
-                        };
+            <h2 className="text-xl font-bold">Parcours d'Apprentissage</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {TUTORIALS.map((chapter, index) => {
+                    const chapterIndex = TUTORIALS.findIndex(c => c.id === chapter.id);
+                    const isFirstChapter = chapterIndex === 0;
+                    const prevChapter = isFirstChapter ? null : TUTORIALS[chapterIndex - 1];
+                    const quizForPrevChapter = prevChapter ? QUIZZES[prevChapter.id] : null;
+                    const scoreForPrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
+                    const isLocked = !isFirstChapter && quizForPrevChapter && scoreForPrevChapter < (quizForPrevChapter.passingScore ?? 80);
 
-                        return (
-                            <Link key={lesson.id} href="/tutorial" onClick={(e) => {
-                                if (isChapterLocked()) {
-                                    e.preventDefault();
-                                    return;
-                                }
-                                handleContinue(lesson.chapterId, lesson.id)
-                            }}>
-                                <Card className="transition-all hover:bg-muted/50 hover:border-primary/50 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={isChapterLocked()}>
-                                    <CardContent className="flex items-center justify-between gap-4 p-4">
-                                        <div className="flex items-center gap-3">
-                                            {isChapterLocked() ? (
-                                                <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                            ) : (
-                                                <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                            )}
-                                            <div>
-                                                <h3 className="font-semibold">{lesson.title}</h3>
-                                                <p className="text-sm text-muted-foreground mt-1">
-                                                    Chapitre : {chapter?.title}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        )
-                    })}
-                </div>
-            ) : (
-                 <Card>
-                    <CardContent className="p-6 text-center space-y-4">
-                         <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
-                            <Award className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-bold">Bravo, vous avez tout terminé !</h3>
-                        <p className="text-muted-foreground">Vous pouvez réclamer votre certificat ou recommencer le tutoriel.</p>
-                        <div className="flex gap-2 justify-center">
-                            <Button variant="secondary" onClick={resetProgress}>
-                                <History className="mr-2 h-4 w-4" />
-                                Recommencer le parcours
-                            </Button>
-                            <Button asChild>
-                                <Link href="/certificate">Obtenir mon certificat</Link>
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                    const chapterLessons = chapter.lessons.map(l => l.id);
+                    const completedLessonsInChapter = chapterLessons.filter(lId => progress.completedLessons.has(lId));
+                    const isChapterComplete = completedLessonsInChapter.length === chapterLessons.length;
+
+                    const firstUncompletedLesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
+                    const lessonToNavigateTo = firstUncompletedLesson || chapter.lessons[0];
+
+                    const chapterQuiz = QUIZZES[chapter.id];
+                    const quizPassed = chapterQuiz ? (progress.quizScores[chapter.id] ?? 0) >= chapterQuiz.passingScore : false;
+
+                    return (
+                        <Card key={chapter.id} className="flex flex-col hover:border-primary/50 transition-colors">
+                            <CardHeader>
+                                <div className="flex items-start gap-4">
+                                    {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : quizPassed ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
+                                    <div>
+                                        <CardTitle className="text-lg leading-tight">{chapter.title}</CardTitle>
+                                        <CardDescription className="mt-2 text-xs">{chapter.description}</CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-grow space-y-2">
+                                <Progress value={(completedLessonsInChapter.length / chapterLessons.length) * 100} className="h-2" />
+                                <p className="text-xs text-muted-foreground">{completedLessonsInChapter.length} / {chapterLessons.length} leçons terminées</p>
+                            </CardContent>
+                            <CardFooter className="pt-4">
+                                <Button asChild className="w-full" disabled={isLocked}>
+                                    <Link href="/tutorial" onClick={() => handleContinue(lessonToNavigateTo.chapterId, lessonToNavigateTo.id)}>
+                                        {isChapterComplete ? "Revoir le chapitre" : "Continuer"}
+                                        <ChevronRight className="ml-2 h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    )
+                })}
+            </div>
           </div>
 
           <Card>
@@ -327,3 +306,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
+}
