@@ -30,7 +30,7 @@ export function ReflogExplorer() {
           <Lightbulb className="h-4 w-4" />
           <AlertTitle>À quoi ça sert ?</AlertTitle>
           <AlertDescription>
-            Si vous avez "perdu" un commit (par exemple avec un `git reset --hard` malencontreux), `git reflog` est votre meilleur ami pour le retrouver. Chaque ligne représente une action que vous avez faite. Vous pouvez revenir à n'importe lequel de ces états avec `git reset --hard {ref}` (ex: `git reset --hard HEAD@{2}`).
+            {`Si vous avez "perdu" un commit (par exemple avec un \`git reset --hard\` malencontreux), \`git reflog\` est votre meilleur ami pour le retrouver. Chaque ligne représente une action que vous avez faite. Vous pouvez revenir à n'importe lequel de ces états avec \`git reset --hard {ref}\` (ex: \`git reset --hard HEAD@{2}\`).`}
           </AlertDescription>
         </Alert>
 
