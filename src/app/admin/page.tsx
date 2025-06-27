@@ -163,7 +163,7 @@ export default function AdminDashboardPage() {
                         <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Totals</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
                         <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Abonnés Premium</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
                         <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenus (Mensuel)</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</div></CardContent></Card>
-                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Actifs</CardTitle><LineChart className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.activeUsers}</div><p className="text-xs text-muted-foreground">{stats.totalUsers > 0 ? `${((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}% du total` : 'N/A'}</p></CardContent></Card>
+                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Taux d'Activité</CardTitle><LineChart className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers > 0 ? `${((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}%` : 'N/A'}</div></CardContent></Card>
                     </>
                 )}
             </div>
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
                                     <TableCell>{u.email}</TableCell>
                                     <TableCell>{u.phone || 'N/A'}</TableCell>
                                     <TableCell><Badge variant={roleVariant}>{u.role}</Badge></TableCell>
-                                    <TableCell><Badge variant={u.plan === 'Premium' ? 'destructive' : 'secondary'}>{u.plan}</Badge></TableCell>
+                                    <TableCell><Badge variant={u.plan === 'Premium' ? 'default' : 'secondary'}>{u.plan}</Badge></TableCell>
                                     <TableCell>{u.status}</TableCell>
                                     <TableCell>{u.joined}</TableCell>
                                     <TableCell>
