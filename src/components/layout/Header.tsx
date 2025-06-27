@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -75,7 +76,9 @@ export function Header() {
               <DropdownMenuItem asChild>
                 <Link href="/dashboard">Tableau de bord</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Paramètres</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account">Mon compte</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/certificate">Certificat</Link>
               </DropdownMenuItem>

@@ -26,35 +26,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    console.log('AuthContext: Initializing auth listener');
+
     // Set up the onAuthStateChanged listener. This will be our single source of truth for the user object.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('AuthContext: onAuthStateChanged triggered', { 
+        user: user?.email || 'null',
+        pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+      });
+      
       setUser(user);
       setLoading(false);
     });
 
-    // Separately, check for a redirect result when the component mounts.
-    // This is a side-effect that happens after a successful OAuth login.
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // If a result is found, it means a login was successful.
-          // We can toast and redirect the user to the dashboard.
-          // onAuthStateChanged will have already been triggered to set the user state.
-          toast({ title: 'Connexion réussie', description: 'Bienvenue.' });
-          router.push('/dashboard');
-        }
-      })
-      .catch((error) => {
-        console.error("Erreur de connexion par redirection:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Erreur de connexion',
-          description: "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
-        });
-      });
-
     return () => unsubscribe();
-  }, [toast, router]); // Dependency array ensures this runs once.
+  }, []); // Empty dependency array since we don't need toast and router here anymore
 
   if (loading) {
     return (

@@ -6,7 +6,7 @@ import { auth } from '@/lib/firebase';
 import { 
     GoogleAuthProvider, 
     GithubAuthProvider, 
-    signInWithRedirect,
+    signInWithPopup,
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword 
 } from 'firebase/auth';
@@ -34,9 +34,29 @@ export default function LoginPage() {
 
   // Redirect if user is already logged in
   useEffect(() => {
+    console.log('LoginPage: useEffect triggered', { 
+      authLoading, 
+      user: user?.email || 'null',
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+    
     if (!authLoading && user) {
+      console.log('LoginPage: User is logged in, redirecting to dashboard');
       router.push('/dashboard');
     }
+  }, [user, authLoading, router]);
+
+  // Additional effect to handle OAuth redirects more aggressively
+  useEffect(() => {
+    // Small delay to ensure auth state is properly set after OAuth redirect
+    const timer = setTimeout(() => {
+      if (!authLoading && user && typeof window !== 'undefined' && window.location.pathname === '/login') {
+        console.log('LoginPage: Delayed redirect check - redirecting to dashboard');
+        router.push('/dashboard');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [user, authLoading, router]);
 
   const handleAuthError = (error: any, title: string) => {
@@ -49,13 +69,51 @@ export default function LoginPage() {
   }
 
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
-    if (!auth) return;
+    if (!auth) {
+      console.error('LoginPage: Auth not initialized');
+      toast({ variant: 'destructive', title: 'Erreur', description: 'Firebase n\'est pas configuré correctement.' });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      await signInWithRedirect(auth, provider);
-      // The page will redirect. The result is handled globally in AuthContext.
+      console.log('LoginPage: Starting OAuth popup signin', { 
+        provider: provider.providerId,
+        authDomain: auth.config.authDomain 
+      });
+      
+      const result = await signInWithPopup(auth, provider);
+      console.log('LoginPage: OAuth signin successful', { 
+        user: result.user.email,
+        uid: result.user.uid 
+      });
+      
+      toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
+      router.push('/dashboard');
     } catch (error: any) {
-      handleAuthError(error, 'Erreur de connexion');
+      console.error('LoginPage: OAuth signin error', {
+        code: error.code,
+        message: error.message,
+        details: error
+      });
+      
+      let errorMessage = error.message;
+      let shouldShowError = true;
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Connexion annulée. Veuillez compléter le processus d\'authentification dans la popup pour vous connecter.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        // Don't show error for cancelled popup requests
+        shouldShowError = false;
+      }
+      
+      if (shouldShowError) {
+        handleAuthError({ ...error, message: errorMessage }, 'Information de connexion');
+      }
     }
   };
 
