@@ -310,7 +310,11 @@ export default function AdminDashboardPage() {
                            <li>Quiz de fin de chapitre</li>
                        </ul>
                     </CardContent>
-                    <CardFooter><Button variant="outline">Gérer le plan</Button></CardFooter>
+                    <CardFooter>
+                        <Button asChild variant="outline">
+                            <Link href="/admin/subscriptions/create">Gérer le plan</Link>
+                        </Button>
+                    </CardFooter>
                 </Card>
                  <Card className="border-primary">
                     <CardHeader>
@@ -334,7 +338,11 @@ export default function AdminDashboardPage() {
                            <li>Certificat de réussite</li>
                        </ul>
                     </CardContent>
-                    <CardFooter><Button>Gérer le plan</Button></CardFooter>
+                    <CardFooter>
+                        <Button asChild>
+                            <Link href="/admin/subscriptions/create">Gérer le plan</Link>
+                        </Button>
+                    </CardFooter>
                 </Card>
             </div>
           </TabsContent>
