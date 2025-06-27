@@ -253,9 +253,9 @@ export default function AdminDashboardPage() {
                                 
                                 const roleVariant = {
                                     'Super Admin': 'destructive',
-                                    Admin: 'default',
-                                    Modérateur: 'secondary',
-                                    Utilisateur: 'outline',
+                                    'Admin': 'default',
+                                    'Modérateur': 'secondary',
+                                    'Utilisateur': 'outline',
                                 }[u.role] as "default" | "secondary" | "outline" | "destructive" | null | undefined;
                                 
                                 return (
@@ -281,12 +281,25 @@ export default function AdminDashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="subscriptions" className="space-y-4 pt-4">
+          <TabsContent value="subscriptions" className="space-y-6 pt-4">
+            <div className="flex justify-end">
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Créer un Plan
+                </Button>
+            </div>
             <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Formule Gratuite</CardTitle>
-                        <CardDescription>Accès limité à la plateforme.</CardDescription>
+                        <div className="flex justify-between items-start">
+                           <div>
+                                <CardTitle>Formule Gratuite</CardTitle>
+                                <CardDescription>Accès limité à la plateforme.</CardDescription>
+                           </div>
+                            <div className="text-right">
+                                <p className="text-3xl font-bold">0 €</p>
+                                <p className="text-xs text-muted-foreground">/ mois</p>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
                        <p className="text-sm font-medium">Fonctionnalités incluses:</p>
@@ -299,8 +312,16 @@ export default function AdminDashboardPage() {
                 </Card>
                  <Card className="border-primary">
                     <CardHeader>
-                        <CardTitle>Formule Premium</CardTitle>
-                        <CardDescription>Accès complet et fonctionnalités avancées.</CardDescription>
+                         <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle>Formule Premium</CardTitle>
+                                <CardDescription>Accès complet et fonctionnalités avancées.</CardDescription>
+                            </div>
+                             <div className="text-right">
+                                <p className="text-3xl font-bold">{PREMIUM_PLAN_PRICE_EUR.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
+                                <p className="text-xs text-muted-foreground">/ mois</p>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
                        <p className="text-sm font-medium">Fonctionnalités incluses:</p>
