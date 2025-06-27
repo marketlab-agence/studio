@@ -315,7 +315,7 @@ export default function AdminDashboardPage() {
                     </CardContent>
                     <CardFooter>
                         <Button asChild variant="outline">
-                            <Link href={`/admin/subscriptions/create?plan=${freePlan.id}`}>Gérer le plan</Link>
+                            <Link href={`/admin/subscriptions/create?plan=free`}>Gérer le plan</Link>
                         </Button>
                     </CardFooter>
                 </Card>
@@ -340,7 +340,7 @@ export default function AdminDashboardPage() {
                     </CardContent>
                     <CardFooter>
                         <Button asChild>
-                            <Link href={`/admin/subscriptions/create?plan=${premiumPlan.id}`}>Gérer le plan</Link>
+                            <Link href={`/admin/subscriptions/create?plan=premium`}>Gérer le plan</Link>
                         </Button>
                     </CardFooter>
                 </Card>
