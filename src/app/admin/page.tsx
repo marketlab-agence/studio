@@ -43,6 +43,28 @@ export default function AdminDashboardPage() {
     activeUsers: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [displayedUsers, setDisplayedUsers] = useState(MOCK_USERS);
+
+  const handleSearch = () => {
+    const lowercasedQuery = searchQuery.toLowerCase().trim();
+    if (!lowercasedQuery) {
+        setDisplayedUsers(MOCK_USERS);
+        return;
+    }
+    const filtered = MOCK_USERS.filter(user => 
+        user.name.toLowerCase().includes(lowercasedQuery) ||
+        user.email.toLowerCase().includes(lowercasedQuery) ||
+        (user.phone && user.phone.toLowerCase().includes(lowercasedQuery))
+    );
+    setDisplayedUsers(filtered);
+  };
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+        setDisplayedUsers(MOCK_USERS);
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
     // Simulate fetching data
@@ -167,8 +189,14 @@ export default function AdminDashboardPage() {
           <TabsContent value="users" className="space-y-4 pt-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Input placeholder="Rechercher un utilisateur..." className="w-full sm:max-w-xs"/>
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Input 
+                        placeholder="Rechercher un utilisateur..." 
+                        className="w-full sm:max-w-xs"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                    />
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={handleSearch}>
                         <Search className="mr-2 h-4 w-4"/>Rechercher
                     </Button>
                 </div>
@@ -196,7 +224,7 @@ export default function AdminDashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {MOCK_USERS.map(u => {
+                            {displayedUsers.map(u => {
                                 const [firstName, ...lastNameParts] = u.name.split(' ');
                                 const lastName = lastNameParts.join(' ');
                                 
