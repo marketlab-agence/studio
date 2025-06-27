@@ -33,7 +33,6 @@ import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTeste
 import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
 import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
-import { AiHelper } from '@/components/interactive/AiHelper';
 
 // Create a map from component name strings to actual components
 const componentMap: Record<string, React.ComponentType> = {
@@ -64,7 +63,6 @@ const componentMap: Record<string, React.ComponentType> = {
     AliasCreator,
     SecurityScanner,
     TrunkBasedDevelopmentVisualizer,
-    AiHelper,
 };
 
 type LessonViewProps = {

@@ -10,12 +10,10 @@ import { getGitHelp } from '@/ai/flows/git-helper-flow';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { useTutorial } from '@/contexts/TutorialContext';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function AiHelper() {
-    const { currentLesson } = useTutorial();
     const [query, setQuery] = useState('git rebase -i HEAD~3');
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +30,7 @@ export function AiHelper() {
         try {
             const result = await getGitHelp({
                 userInput: query,
-                lessonContext: currentLesson?.title || 'General Git usage',
+                lessonContext: 'Assistant IA Général',
                 responseLength: responseLength
             });
             setResponse(result.explanation);

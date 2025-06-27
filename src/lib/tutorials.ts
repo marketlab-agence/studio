@@ -572,28 +572,5 @@ Le simulateur ci-dessous représente un exemple de tableau de bord de fin de pro
         componentName: 'ProjectDashboard'
       }
     ]
-  },
-  {
-    id: 'ai-assistant',
-    title: '12. Assistance IA',
-    description: "Interagissez avec l'assistant IA pour approfondir votre compréhension.",
-    lessons: [
-      {
-        id: '12-1',
-        title: 'Playground IA',
-        objective: "Utiliser l'IA pour obtenir des réponses personnalisées à vos questions sur Git.",
-        content: `L'une des fonctionnalités les plus puissantes de cette plateforme est l'assistant IA intégré. Il a été entraîné pour être un expert de Git et un tuteur patient.
-
-Utilisez-le lorsque :
-
-- Vous ne comprenez pas une commande.
-- Vous voulez connaître la meilleure pratique pour une situation donnée.
-- Vous avez une erreur que vous n'arrivez pas à résoudre.
-- Vous voulez une explication plus courte ou plus détaillée.
-
-L'assistant est conscient de la leçon que vous êtes en train de suivre et adaptera ses réponses pour être le plus pertinent possible. Essayez-le ci-dessous !`,
-        componentName: 'AiHelper'
-      }
-    ]
   }
 ];
