@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { PLANS_DATA } from '@/lib/plans';
 
 
 export default function AdminDashboardPage() {
@@ -119,6 +120,9 @@ export default function AdminDashboardPage() {
     },
     // Future courses can be added here
   ];
+
+  const freePlan = PLANS_DATA.free;
+  const premiumPlan = PLANS_DATA.premium;
 
   return (
     <>
@@ -294,11 +298,11 @@ export default function AdminDashboardPage() {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                            <div>
-                                <CardTitle>Formule Gratuite</CardTitle>
-                                <CardDescription>Accès limité à la plateforme.</CardDescription>
+                                <CardTitle>{freePlan.name}</CardTitle>
+                                <CardDescription>{freePlan.description}</CardDescription>
                            </div>
                             <div className="text-right">
-                                <p className="text-3xl font-bold">0 €</p>
+                                <p className="text-3xl font-bold">{freePlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
                                 <p className="text-xs text-muted-foreground">/ mois</p>
                             </div>
                         </div>
@@ -306,13 +310,12 @@ export default function AdminDashboardPage() {
                     <CardContent className="space-y-2">
                        <p className="text-sm font-medium">Fonctionnalités incluses:</p>
                        <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                           <li>Accès au premier chapitre de chaque formation</li>
-                           <li>Quiz de fin de chapitre</li>
+                           {freePlan.features.map((feature, i) => <li key={i}>{feature}</li>)}
                        </ul>
                     </CardContent>
                     <CardFooter>
                         <Button asChild variant="outline">
-                            <Link href="/admin/subscriptions/create">Gérer le plan</Link>
+                            <Link href={`/admin/subscriptions/create?plan=${freePlan.id}`}>Gérer le plan</Link>
                         </Button>
                     </CardFooter>
                 </Card>
@@ -320,11 +323,11 @@ export default function AdminDashboardPage() {
                     <CardHeader>
                          <div className="flex justify-between items-start">
                             <div>
-                                <CardTitle>Formule Premium</CardTitle>
-                                <CardDescription>Accès complet et fonctionnalités avancées.</CardDescription>
+                                <CardTitle>{premiumPlan.name}</CardTitle>
+                                <CardDescription>{premiumPlan.description}</CardDescription>
                             </div>
                              <div className="text-right">
-                                <p className="text-3xl font-bold">{PREMIUM_PLAN_PRICE_EUR.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
+                                <p className="text-3xl font-bold">{premiumPlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
                                 <p className="text-xs text-muted-foreground">/ mois</p>
                             </div>
                         </div>
@@ -332,15 +335,12 @@ export default function AdminDashboardPage() {
                     <CardContent className="space-y-2">
                        <p className="text-sm font-medium">Fonctionnalités incluses:</p>
                        <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                           <li>Accès à toutes les formations</li>
-                           <li>Playground avec IA pour conseils et astuces</li>
-                           <li>Intégration GitHub pour commandes en live</li>
-                           <li>Certificat de réussite</li>
+                           {premiumPlan.features.map((feature, i) => <li key={i}>{feature}</li>)}
                        </ul>
                     </CardContent>
                     <CardFooter>
                         <Button asChild>
-                            <Link href="/admin/subscriptions/create">Gérer le plan</Link>
+                            <Link href={`/admin/subscriptions/create?plan=${premiumPlan.id}`}>Gérer le plan</Link>
                         </Button>
                     </CardFooter>
                 </Card>

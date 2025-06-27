@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, PlusCircle, Save, Trash2, Loader2, BookCopy, List } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { PLANS_DATA } from '@/lib/plans';
 
 const availableCourses = [
   { id: 'git-github-tutorial', name: 'Git & GitHub : Le Guide Complet' },
@@ -20,6 +22,10 @@ const availableCourses = [
 
 export default function CreatePlanPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get('plan');
+  const isEditing = !!planId;
+
   const [isSaving, setIsSaving] = useState(false);
   
   const [planName, setPlanName] = useState('');
@@ -28,6 +34,18 @@ export default function CreatePlanPage() {
   const [description, setDescription] = useState('');
   const [features, setFeatures] = useState(['']);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isEditing && PLANS_DATA[planId as keyof typeof PLANS_DATA]) {
+      const planData = PLANS_DATA[planId as keyof typeof PLANS_DATA];
+      setPlanName(planData.name);
+      setPrice(planData.price.toString());
+      setBillingPeriod(planData.billingPeriod);
+      setDescription(planData.description);
+      setFeatures(planData.features.length > 0 ? planData.features : ['']);
+      setSelectedCourses(planData.courses);
+    }
+  }, [planId, isEditing]);
 
   const handleAddFeature = () => {
     setFeatures([...features, '']);
@@ -40,6 +58,10 @@ export default function CreatePlanPage() {
   };
 
   const handleRemoveFeature = (index: number) => {
+    if (features.length <= 1) {
+        setFeatures(['']);
+        return;
+    }
     const newFeatures = features.filter((_, i) => i !== index);
     setFeatures(newFeatures);
   };
@@ -64,11 +86,11 @@ export default function CreatePlanPage() {
     };
     
     // Simulate API call
-    console.log('Saving new plan:', planData);
+    console.log('Saving plan:', planData);
     setTimeout(() => {
         toast({
-            title: 'Plan Sauvegardé (Simulation)',
-            description: `Le nouveau plan "${planName}" a été créé.`,
+            title: isEditing ? 'Plan Modifié (Simulation)' : 'Plan Sauvegardé (Simulation)',
+            description: `Le plan "${planName}" a été ${isEditing ? 'modifié' : 'créé'}.`,
         });
         setIsSaving(false);
     }, 1500);
@@ -85,7 +107,7 @@ export default function CreatePlanPage() {
             </Button>
             <Button onClick={handleSavePlan} disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Sauvegarder le plan
+                {isEditing ? 'Sauvegarder les modifications' : 'Sauvegarder le plan'}
             </Button>
         </div>
         
@@ -94,8 +116,12 @@ export default function CreatePlanPage() {
                 <CreditCard className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Créer un Nouveau Plan</h1>
-                <p className="text-muted-foreground">Définissez les détails, fonctionnalités et accès de votre nouveau plan d'abonnement.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                    {isEditing ? `Modifier le Plan : ${planName}` : 'Créer un Nouveau Plan'}
+                </h1>
+                <p className="text-muted-foreground">
+                    {isEditing ? 'Mettez à jour les détails de ce plan.' : 'Définissez les détails, fonctionnalités et accès de votre nouveau plan.'}
+                </p>
             </div>
         </div>
 
@@ -155,7 +181,7 @@ export default function CreatePlanPage() {
                                     value={feature}
                                     onChange={(e) => handleFeatureChange(index, e.target.value)}
                                 />
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveFeature(index)} disabled={features.length <= 1}>
+                                <Button variant="ghost" size="icon" onClick={() => handleRemoveFeature(index)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
