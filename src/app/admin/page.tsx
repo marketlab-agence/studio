@@ -29,9 +29,12 @@ import { TUTORIALS } from '@/lib/tutorials';
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 
 export default function AdminDashboardPage() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'dashboard';
   const [stats, setStats] = useState({
     totalUsers: 0,
     premiumUsers: 0,
@@ -83,7 +86,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="dashboard">
+        <Tabs defaultValue={defaultTab}>
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="courses">Formations</TabsTrigger>
@@ -171,6 +174,7 @@ export default function AdminDashboardPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Prénom</TableHead>
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Plan</TableHead>
@@ -180,16 +184,24 @@ export default function AdminDashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {MOCK_USERS.map(u => (
+                            {MOCK_USERS.map(u => {
+                                const [firstName, ...lastNameParts] = u.name.split(' ');
+                                const lastName = lastNameParts.join(' ');
+                                return (
                                 <TableRow key={u.id}>
-                                    <TableCell className="font-medium">{u.name}</TableCell>
+                                    <TableCell className="font-medium">{firstName}</TableCell>
+                                    <TableCell className="font-medium">{lastName}</TableCell>
                                     <TableCell>{u.email}</TableCell>
                                     <TableCell><Badge variant={u.plan === 'Premium' ? 'default' : 'secondary'}>{u.plan}</Badge></TableCell>
                                     <TableCell>{u.status}</TableCell>
                                     <TableCell>{u.joined}</TableCell>
-                                    <TableCell><Button variant="outline" size="sm">Gérer</Button></TableCell>
+                                    <TableCell>
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/admin/users/${u.id}`}>Gérer</Link>
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </CardContent>
