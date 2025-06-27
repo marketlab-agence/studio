@@ -26,16 +26,19 @@ import {
     BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, PlusCircle, Search, Settings, Users, Verified, Users2
 } from 'lucide-react';
 import { TUTORIALS } from '@/lib/tutorials';
-import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
+import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR, type MockUser } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 
 
 export default function AdminDashboardPage() {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'dashboard';
+  const { user: authUser } = useAuth();
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     premiumUsers: 0,
@@ -43,16 +46,18 @@ export default function AdminDashboardPage() {
     activeUsers: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
+  
+  const [allUsers, setAllUsers] = useState<MockUser[]>([]);
+  const [displayedUsers, setDisplayedUsers] = useState<MockUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [displayedUsers, setDisplayedUsers] = useState(MOCK_USERS);
 
   const handleSearch = () => {
     const lowercasedQuery = searchQuery.toLowerCase().trim();
     if (!lowercasedQuery) {
-        setDisplayedUsers(MOCK_USERS);
+        setDisplayedUsers(allUsers);
         return;
     }
-    const filtered = MOCK_USERS.filter(user => 
+    const filtered = allUsers.filter(user => 
         user.name.toLowerCase().includes(lowercasedQuery) ||
         user.email.toLowerCase().includes(lowercasedQuery) ||
         (user.phone && user.phone.toLowerCase().includes(lowercasedQuery))
@@ -62,19 +67,37 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
-        setDisplayedUsers(MOCK_USERS);
+        setDisplayedUsers(allUsers);
     }
-  }, [searchQuery]);
+  }, [searchQuery, allUsers]);
 
   useEffect(() => {
     // Simulate fetching data
     setDataLoading(true);
     setTimeout(() => {
-        if (MOCK_USERS.length > 0) {
-            const totalUsers = MOCK_USERS.length;
-            const premiumUsers = MOCK_USERS.filter(u => u.plan === 'Premium').length;
+        let initialUsers = [...MOCK_USERS];
+        // Add the currently logged-in user to the list if they aren't already there
+        if (authUser && !initialUsers.some(u => u.email === authUser.email)) {
+            const newUser: MockUser = {
+                id: authUser.uid,
+                name: authUser.displayName || 'Nouvel Utilisateur',
+                email: authUser.email || '',
+                role: 'Utilisateur',
+                plan: 'Gratuit',
+                status: 'Actif',
+                joined: format(new Date(), 'yyyy-MM-dd'),
+                phone: authUser.phoneNumber || undefined,
+            };
+            initialUsers.push(newUser);
+        }
+        setAllUsers(initialUsers);
+        setDisplayedUsers(initialUsers);
+
+        if (initialUsers.length > 0) {
+            const totalUsers = initialUsers.length;
+            const premiumUsers = initialUsers.filter(u => u.plan === 'Premium').length;
             const monthlyRevenue = premiumUsers * PREMIUM_PLAN_PRICE_EUR;
-            const activeUsers = MOCK_USERS.filter(u => u.status === 'Actif').length;
+            const activeUsers = initialUsers.filter(u => u.status === 'Actif').length;
             
             setStats({
                 totalUsers,
@@ -85,7 +108,7 @@ export default function AdminDashboardPage() {
         }
         setDataLoading(false);
     }, 800); // 0.8s delay to simulate network
-  }, []);
+  }, [authUser]);
 
   const allCourses = [
     {
