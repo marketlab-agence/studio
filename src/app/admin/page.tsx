@@ -252,10 +252,11 @@ export default function AdminDashboardPage() {
                                 const lastName = lastNameParts.join(' ');
                                 
                                 const roleVariant = {
+                                    'Super Admin': 'destructive',
                                     Admin: 'default',
                                     Modérateur: 'secondary',
                                     Utilisateur: 'outline',
-                                }[u.role] as "default" | "secondary" | "outline" | null | undefined;
+                                }[u.role] as "default" | "secondary" | "outline" | "destructive" | null | undefined;
                                 
                                 return (
                                 <TableRow key={u.id}>

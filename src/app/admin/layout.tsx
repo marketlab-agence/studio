@@ -19,7 +19,7 @@ export default function AdminLayout({
   useEffect(() => {
     if (!loading) {
       const currentUserData = user ? MOCK_USERS.find(u => u.email === user.email) : null;
-      if (!user || !currentUserData || currentUserData.role !== 'Admin') {
+      if (!user || !currentUserData || !['Super Admin', 'Admin', 'Modérateur'].includes(currentUserData.role)) {
         router.push('/login');
       } else {
         setIsAdmin(true);

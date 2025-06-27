@@ -167,6 +167,7 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
                                     <SelectValue placeholder="Sélectionner un rôle" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="Super Admin">Super Admin</SelectItem>
                                     <SelectItem value="Admin">Administrateur</SelectItem>
                                     <SelectItem value="Modérateur">Modérateur</SelectItem>
                                     <SelectItem value="Utilisateur">Utilisateur</SelectItem>

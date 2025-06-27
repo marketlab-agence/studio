@@ -1,21 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Shield, Users, BookOpen, Settings, Eye, Loader2 } from 'lucide-react';
+import { ArrowLeft, Shield, Users, BookOpen, Settings, Eye, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 const allPermissions = [
-  { id: 'manage-users', label: "Gérer les utilisateurs et leurs rôles", icon: Users },
-  { id: 'manage-courses', label: "Créer et modifier des formations", icon: BookOpen },
+  { id: 'manage-platform', label: "Gérer les paramètres critiques de la plateforme", icon: ShieldCheck },
+  { id: 'manage-roles', label: "Gérer les rôles et les permissions", icon: Shield },
   { id: 'manage-billing', label: "Gérer les abonnements et la facturation", icon: Settings },
+  { id: 'manage-users', label: "Gérer les utilisateurs", icon: Users },
+  { id: 'manage-courses', label: "Créer et modifier des formations", icon: BookOpen },
   { id: 'view-analytics', label: "Voir toutes les statistiques", icon: Eye },
 ];
 
 const rolePermissions: Record<string, string[]> = {
-  Administrateur: ['manage-users', 'manage-courses', 'manage-billing', 'view-analytics'],
+  'Super Admin': ['manage-platform', 'manage-roles', 'manage-billing', 'manage-users', 'manage-courses', 'view-analytics'],
+  Administrateur: ['manage-billing', 'manage-users', 'manage-courses', 'view-analytics'],
   Modérateur: ['manage-users', 'manage-courses'],
   Utilisateur: [],
 };
@@ -70,8 +73,9 @@ export default function ManageRolesPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <RoleCard role="Administrateur" description="Accès total à toutes les fonctionnalités d'administration." />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <RoleCard role="Super Admin" description="Contrôle total, y compris les paramètres critiques et les rôles." />
+        <RoleCard role="Administrateur" description="Accès à la plupart des fonctionnalités de gestion." />
         <RoleCard role="Modérateur" description="Peut gérer les utilisateurs et le contenu des formations." />
         <RoleCard role="Utilisateur" description="Rôle par défaut sans accès à l'administration." />
       </div>
