@@ -566,21 +566,6 @@ Par exemple, vous pouvez configurer \`git co\` pour qu'il exécute \`git checkou
 
 Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
         component: SecurityScanner
-      },
-      {
-        id: '10-5',
-        title: "Utiliser l'Assistance IA",
-        objective: "Apprendre à utiliser une aide contextuelle pour accélérer son apprentissage.",
-        content: `L'une des fonctionnalités les plus puissantes de cette plateforme est l'assistant IA intégré. Il a été entraîné pour être un expert de Git et un tuteur patient.
-
-Utilisez-le lorsque :
-
-- Vous ne comprenez pas une commande.
-- Vous voulez connaître la meilleure pratique pour une situation donnée.
-- Vous avez une erreur que vous n'arrivez pas à résoudre.
-
-L'assistant est conscient de la leçon que vous êtes en train de suivre et adaptera ses réponses pour être le plus pertinent possible. Essayez-le ci-dessous !`,
-        component: AiHelper
       }
     ]
   },
@@ -610,10 +595,33 @@ L'assistant est conscient de la leçon que vous êtes en train de suivre et adap
         objective: 'Visualiser l\'état d\'avancement d\'un projet à travers un tableau de bord.',
         content: `Un tableau de bord est un outil essentiel pour avoir une vue d'ensemble de l'état d'un projet. Sur des plateformes comme GitHub, vous trouverez des tableaux de bord sous les onglets 'Projects' ou 'Insights', qui vous aident à suivre les issues, les Pull Requests, et l'activité des contributeurs.
 
-Dans le cadre de cette application, nous avons également créé un **Tableau de Bord personnalisé** pour suivre votre propre parcours d'apprentissage. Il centralise votre progression, vos scores aux quiz et vos statistiques. Vous pouvez y accéder à tout moment en cliquant sur le lien "Tableau de bord" dans la barre de navigation en haut de la page.
+Dans le cadre de cette application, nous avons également créé un **Tableau de Bord personnalisé** pour suivre votre propre parcours d'apprentissage. Il centralise votre progression, vos scores aux quiz et vos statistiques. Vous pouvez y accorder à tout moment en cliquant sur le lien "Tableau de bord" dans la barre de navigation en haut de la page.
 
 Le simulateur ci-dessous représente un exemple de tableau de bord de fin de projet, récapitulant toutes les compétences que vous avez acquises.`,
         component: ProjectDashboard
+      }
+    ]
+  },
+  {
+    id: 'ai-assistant',
+    title: '12. Assistance IA',
+    description: "Interagissez avec l'assistant IA pour approfondir votre compréhension.",
+    lessons: [
+      {
+        id: '12-1',
+        title: 'Playground IA',
+        objective: "Utiliser l'IA pour obtenir des réponses personnalisées à vos questions sur Git.",
+        content: `L'une des fonctionnalités les plus puissantes de cette plateforme est l'assistant IA intégré. Il a été entraîné pour être un expert de Git et un tuteur patient.
+
+Utilisez-le lorsque :
+
+- Vous ne comprenez pas une commande.
+- Vous voulez connaître la meilleure pratique pour une situation donnée.
+- Vous avez une erreur que vous n'arrivez pas à résoudre.
+- Vous voulez une explication plus courte ou plus détaillée.
+
+L'assistant est conscient de la leçon que vous êtes en train de suivre et adaptera ses réponses pour être le plus pertinent possible. Essayez-le ci-dessous !`,
+        component: AiHelper
       }
     ]
   }
