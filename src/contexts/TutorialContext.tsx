@@ -6,6 +6,9 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
 
+const ALL_VALID_LESSON_IDS = new Set<string>();
+TUTORIALS.forEach(chapter => chapter.lessons.forEach(lesson => ALL_VALID_LESSON_IDS.add(lesson.id)));
+
 const initialProgress: UserProgress = {
     quizScores: {},
     quizAttempts: {},
@@ -60,10 +63,30 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     const [progress, setProgress] = useLocalStorage<UserProgress>('git-tutorial-progress', initialProgress, {
         serializer: (value) => JSON.stringify(value, replacer),
         deserializer: (value) => {
-            const parsed = JSON.parse(value, reviver);
+            let parsed = JSON.parse(value, reviver);
+            
+            // Sanitize completedLessons
+            if (parsed.completedLessons) {
+                const validCompletedLessons = new Set<string>();
+                for (const lessonId of parsed.completedLessons) {
+                    if (ALL_VALID_LESSON_IDS.has(String(lessonId))) {
+                        validCompletedLessons.add(String(lessonId));
+                    }
+                }
+                parsed.completedLessons = validCompletedLessons;
+            }
+
             if (parsed.completedLessons && !(parsed.completedLessons instanceof Set)) {
                 parsed.completedLessons = new Set(parsed.completedLessons);
             }
+            
+            // Sanitize current location
+            if (parsed.currentLessonId && !ALL_VALID_LESSON_IDS.has(parsed.currentLessonId)) {
+                parsed.currentChapterId = initialProgress.currentChapterId;
+                parsed.currentLessonId = initialProgress.currentLessonId;
+                parsed.currentView = initialProgress.currentView;
+            }
+
             return { ...initialProgress, ...parsed };
         },
     });
@@ -234,7 +257,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
         
         const totalCompleted = (p.completedLessons || new Set()).size;
-        const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
+        const overallProgress = totalLessons > 0 ? Math.min(100, (totalCompleted / totalLessons) * 100) : 0;
         
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;

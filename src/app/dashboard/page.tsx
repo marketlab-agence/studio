@@ -160,7 +160,7 @@ export default function DashboardPage() {
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{totalCompleted}/{totalLessons}</div>
+                    <div className="text-2xl font-bold">{Math.min(totalCompleted, totalLessons)}/{totalLessons}</div>
                      <p className="text-xs text-muted-foreground">sur l'ensemble des chapitres</p>
                 </CardContent>
             </Card>
