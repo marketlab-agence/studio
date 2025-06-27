@@ -60,6 +60,16 @@ export default function AdminDashboardPage() {
     }, 800); // 0.8s delay to simulate network
   }, []);
 
+  const allCourses = [
+    {
+      id: 'git-github-tutorial',
+      title: 'Git & GitHub : Le Guide Complet',
+      lessonsCount: TUTORIALS.reduce((acc, chap) => acc + chap.lessons.length, 0),
+      status: 'Publié',
+    },
+    // Future courses can be added here
+  ];
+
   return (
     <>
         <div className="flex items-center gap-4">
@@ -131,11 +141,11 @@ export default function AdminDashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {TUTORIALS.map(t => (
-                                <TableRow key={t.id}>
-                                    <TableCell className="font-medium">{t.title}</TableCell>
-                                    <TableCell>{t.lessons.length}</TableCell>
-                                    <TableCell><Badge>Publié</Badge></TableCell>
+                            {allCourses.map(course => (
+                                <TableRow key={course.id}>
+                                    <TableCell className="font-medium">{course.title}</TableCell>
+                                    <TableCell>{course.lessonsCount}</TableCell>
+                                    <TableCell><Badge>{course.status}</Badge></TableCell>
                                     <TableCell><Button variant="outline" size="sm">Modifier</Button></TableCell>
                                 </TableRow>
                             ))}
