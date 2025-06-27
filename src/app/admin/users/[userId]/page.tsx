@@ -1,4 +1,3 @@
-
 'use client';
 
 import { MOCK_USERS, MockUser } from '@/lib/users';
@@ -19,18 +18,19 @@ import { ADMIN_EMAIL } from '@/lib/config';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ManageUserPage({ params }: { params: { userId: string } }) {
+  const { userId } = params;
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const userData = MOCK_USERS.find(u => u.id === params.userId);
+    const userData = MOCK_USERS.find(u => u.id === userId);
     if (userData) {
       setUser(userData);
       setIsAdmin(userData.email === ADMIN_EMAIL);
     }
     setLoading(false);
-  }, [params.userId]);
+  }, [userId]);
 
   if (loading) {
     return (
