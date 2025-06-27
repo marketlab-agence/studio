@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -146,7 +147,11 @@ export default function AdminDashboardPage() {
                                     <TableCell className="font-medium">{course.title}</TableCell>
                                     <TableCell>{course.lessonsCount}</TableCell>
                                     <TableCell><Badge>{course.status}</Badge></TableCell>
-                                    <TableCell><Button variant="outline" size="sm">Modifier</Button></TableCell>
+                                    <TableCell>
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/admin/courses/${course.id}`}>Modifier</Link>
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
