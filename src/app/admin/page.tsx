@@ -30,20 +30,21 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TUTORIALS } from '@/lib/tutorials';
 import { ADMIN_EMAIL } from '@/lib/config';
-
-// Placeholder data - replace with actual data from your backend
-const users = [
-  { id: 'usr_1', name: 'Alice Martin', email: 'alice.m@example.com', plan: 'Premium', status: 'Actif', joined: '2023-01-15' },
-  { id: 'usr_2', name: 'Bob Durand', email: 'bob.d@example.com', plan: 'Gratuit', status: 'Actif', joined: '2023-02-20' },
-  { id: 'usr_3', name: 'Carla Dubois', email: 'carla.d@example.com', plan: 'Premium', status: 'Inactif', joined: '2023-03-10' },
-  { id: 'usr_4', name: 'David Petit', email: 'david.p@example.com', plan: 'Gratuit', status: 'Actif', joined: '2023-04-05' },
-];
+import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    premiumUsers: 0,
+    monthlyRevenue: 0,
+    activeUsers: 0,
+  });
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!loading) {
@@ -54,6 +55,27 @@ export default function AdminPage() {
       }
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    // Simulate fetching data
+    setDataLoading(true);
+    setTimeout(() => {
+        if (MOCK_USERS.length > 0) {
+            const totalUsers = MOCK_USERS.length;
+            const premiumUsers = MOCK_USERS.filter(u => u.plan === 'Premium').length;
+            const monthlyRevenue = premiumUsers * PREMIUM_PLAN_PRICE_EUR;
+            const activeUsers = MOCK_USERS.filter(u => u.status === 'Actif').length;
+            
+            setStats({
+                totalUsers,
+                premiumUsers,
+                monthlyRevenue,
+                activeUsers,
+            });
+        }
+        setDataLoading(false);
+    }, 800); // 0.8s delay to simulate network
+  }, []);
 
   if (loading || !isAdmin) {
     return (
@@ -98,10 +120,29 @@ export default function AdminPage() {
 
           <TabsContent value="dashboard" className="space-y-4 pt-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Totals</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">1,254</div></CardContent></Card>
-                <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Abonnés Premium</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">+234</div></CardContent></Card>
-                <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenus (Mensuel)</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">4,890.50€</div></CardContent></Card>
-                <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Taux d'Activité</CardTitle><LineChart className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">+15.2%</div></CardContent></Card>
+                {dataLoading ? (
+                    <>
+                        {[...Array(4)].map((_, i) => (
+                           <Card key={i}>
+                               <CardHeader className="flex-row items-center justify-between pb-2">
+                                   <Skeleton className="h-5 w-24" />
+                                   <Skeleton className="h-4 w-4" />
+                                </CardHeader>
+                               <CardContent>
+                                   <Skeleton className="h-8 w-16" />
+                                   <Skeleton className="h-3 w-28 mt-2" />
+                               </CardContent>
+                           </Card>
+                        ))}
+                    </>
+                ) : (
+                    <>
+                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Totals</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
+                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Abonnés Premium</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
+                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenus (Mensuel)</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</div></CardContent></Card>
+                        <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Actifs</CardTitle><LineChart className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.activeUsers}</div><p className="text-xs text-muted-foreground">{stats.totalUsers > 0 ? `${((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}% du total` : 'N/A'}</p></CardContent></Card>
+                    </>
+                )}
             </div>
             {/* Add charts or recent activity here */}
           </TabsContent>
@@ -157,7 +198,7 @@ export default function AdminPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map(u => (
+                            {MOCK_USERS.map(u => (
                                 <TableRow key={u.id}>
                                     <TableCell className="font-medium">{u.name}</TableCell>
                                     <TableCell>{u.email}</TableCell>
