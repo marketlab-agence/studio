@@ -283,8 +283,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="subscriptions" className="space-y-6 pt-4">
             <div className="flex justify-end">
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Créer un Plan
+                <Button asChild>
+                    <Link href="/admin/subscriptions/create">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Créer un Plan
+                    </Link>
                 </Button>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
