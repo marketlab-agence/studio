@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TUTORIALS } from '@/lib/tutorials';
+import { ADMIN_EMAIL } from '@/lib/config';
 
 // Placeholder data - replace with actual data from your backend
 const users = [
@@ -37,10 +38,6 @@ const users = [
   { id: 'usr_3', name: 'Carla Dubois', email: 'carla.d@example.com', plan: 'Premium', status: 'Inactif', joined: '2023-03-10' },
   { id: 'usr_4', name: 'David Petit', email: 'david.p@example.com', plan: 'Gratuit', status: 'Actif', joined: '2023-04-05' },
 ];
-
-// This is a placeholder for a real admin check.
-// In a real application, you'd use custom claims with Firebase Auth.
-const ADMIN_EMAIL = 'admin@katalyst.com';
 
 
 export default function AdminPage() {
