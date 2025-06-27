@@ -1,9 +1,6 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -25,19 +22,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-    AlertCircle, BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, Loader2, PlusCircle, Search, Settings, Users, Verified
+    BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, PlusCircle, Search, Settings, Users, Verified
 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TUTORIALS } from '@/lib/tutorials';
-import { ADMIN_EMAIL } from '@/lib/config';
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 
-export default function AdminPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
+export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     premiumUsers: 0,
@@ -45,16 +38,6 @@ export default function AdminPage() {
     activeUsers: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
-        router.push('/login'); // Or a generic 403 Forbidden page
-      } else {
-        setIsAdmin(true);
-      }
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     // Simulate fetching data
@@ -77,28 +60,8 @@ export default function AdminPage() {
     }, 800); // 0.8s delay to simulate network
   }, []);
 
-  if (loading || !isAdmin) {
-    return (
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="flex items-center text-muted-foreground">
-          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          <span>Vérification des accès...</span>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="flex-1 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Zone Administrateur</AlertTitle>
-            <AlertDescription>
-                Vous êtes dans la zone d'administration. Les modifications ici peuvent affecter l'ensemble de l'application.
-            </AlertDescription>
-        </Alert>
-
+    <>
         <div className="flex items-center gap-4">
           <div className="bg-primary/10 p-2 rounded-lg">
             <LayoutDashboard className="h-8 w-8 text-primary" />
@@ -149,7 +112,11 @@ export default function AdminPage() {
 
           <TabsContent value="courses" className="space-y-4 pt-4">
             <div className="flex justify-end">
-                <Button><PlusCircle className="mr-2 h-4 w-4" /> Ajouter une Formation</Button>
+                <Button asChild>
+                    <Link href="/admin/create-course">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
+                    </Link>
+                </Button>
             </div>
             <Card>
                 <CardHeader><CardTitle>Bibliothèque des formations</CardTitle></CardHeader>
@@ -272,7 +239,6 @@ export default function AdminPage() {
           </TabsContent>
 
         </Tabs>
-      </div>
-    </main>
+      </>
   );
 }
