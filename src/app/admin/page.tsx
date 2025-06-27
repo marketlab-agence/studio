@@ -165,16 +165,18 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4 pt-4">
-            <div className="flex justify-between items-center gap-2">
-              <div className="flex items-center gap-2">
-                  <Input placeholder="Rechercher un utilisateur..." className="max-w-sm"/>
-                  <Button variant="outline"><Search className="mr-2 h-4 w-4"/>Rechercher</Button>
-              </div>
-              <Button asChild variant="outline">
-                  <Link href="/admin/roles">
-                      <Users2 className="mr-2 h-4 w-4" /> Gérer les Rôles
-                  </Link>
-              </Button>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="Rechercher un utilisateur..." className="w-full sm:max-w-xs"/>
+                    <Button variant="outline" className="w-full sm:w-auto">
+                        <Search className="mr-2 h-4 w-4"/>Rechercher
+                    </Button>
+                </div>
+                <Button asChild variant="outline" className="w-full md:w-auto">
+                    <Link href="/admin/roles">
+                        <Users2 className="mr-2 h-4 w-4" /> Gérer les Rôles
+                    </Link>
+                </Button>
             </div>
              <Card>
                 <CardHeader><CardTitle>Gestion des utilisateurs</CardTitle></CardHeader>
