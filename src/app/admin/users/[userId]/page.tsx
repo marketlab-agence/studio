@@ -17,6 +17,8 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 export default function ManageUserPage({ params }: { params: { userId: string } }) {
   const { userId } = params;
@@ -25,6 +27,8 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
   const [selectedRole, setSelectedRole] = useState<MockUser['role'] | ''>('');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
+  const { overallProgress } = useTutorial();
 
   useEffect(() => {
     const userData = MOCK_USERS.find(u => u.id === userId);
@@ -80,8 +84,10 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
     return notFound();
   }
   
-  // Mocked progress, can be replaced with real data later
-  const userProgress = 75;
+  // Use real progress for the logged-in user when viewing their own profile,
+  // otherwise use a consistent mock value.
+  const isViewingSelf = authUser?.email === user.email;
+  const userProgress = isViewingSelf ? overallProgress : 17; // Using 17 to match dashboard for other users in this mock scenario.
 
   return (
     <div className="space-y-6">
@@ -195,7 +201,7 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
                     <div>
                         <p className="font-medium mb-1">Progression du tutoriel</p>
                         <Progress value={userProgress} className="h-2"/>
-                        <p className="text-xs text-muted-foreground mt-2">{userProgress}% complété</p>
+                        <p className="text-xs text-muted-foreground mt-2">{Math.round(userProgress)}% complété</p>
                     </div>
                     <Button variant="link" size="sm" className="p-0 h-auto">Voir l'historique d'activité complet</Button>
                 </CardContent>
