@@ -10,7 +10,7 @@ export interface Lesson {
   title: string;
   objective: string;
   content: string; // Markdown content
-  component?: React.ComponentType;
+  componentName?: string;
 }
 
 export interface Quiz {

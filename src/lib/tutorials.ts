@@ -1,34 +1,5 @@
 
 import type { Tutorial } from '@/types/tutorial.types';
-import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
-import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
-import { GitFlowDiagram } from '@/components/visualizations/GitGraph';
-import { ConceptExplanation } from '@/components/tutorial/ConceptExplanation';
-import { BranchCreator } from '@/components/interactive/BranchCreator';
-import { MergeSimulator } from '@/components/interactive/MergeSimulator';
-import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
-import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
-import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
-import { ConflictVisualizer } from '@/components/specialized/part-7/ConflictVisualizer';
-import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
-import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
-import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
-import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
-import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
-import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
-import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
-import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
-import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
-import { ProjectDashboard } from '@/components/specialized/part-10/ProjectDashboard';
-import { WorkflowComparisonTable } from '@/components/specialized/part-6/WorkflowComparisonTable';
-import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
-import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
-import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
-import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
-import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
-import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
-import { AiHelper } from '@/components/interactive/AiHelper';
-
 
 export const TUTORIALS: Tutorial[] = [
   {
@@ -47,7 +18,7 @@ C'est comme avoir un historique complet et détaillé de chaque changement dans 
 
 Avec un système de contrôle de version distribué (DVCS) comme **Git**, chaque développeur dispose d'une copie complète de l'historique du projet sur sa machine locale. Cela rend les opérations rapides et permet de travailler hors ligne.
         `,
-        component: ConceptExplanation,
+        componentName: 'ConceptExplanation',
       },
       {
         id: '1-2',
@@ -63,7 +34,7 @@ Utilisez la démonstration ci-dessous pour voir ce concept en action :
 3.  **Créez un commit** pour sauvegarder cette nouvelle version.
 4.  **Naviguez** entre les commits pour voir comment le contenu du fichier change.
         `,
-        component: VersioningDemo,
+        componentName: 'VersioningDemo',
       },
       {
         id: '1-3',
@@ -76,7 +47,7 @@ Utilisez la démonstration ci-dessous pour voir ce concept en action :
 3.  **Le Dépôt Local (Local Repository)** : C'est là que Git stocke de manière permanente l'historique de vos commits.
 
 Le diagramme ci-dessous illustre comment les commandes Git déplacent les changements entre ces zones et le dépôt distant.`,
-        component: GitFlowDiagram,
+        componentName: 'GitFlowDiagram',
       },
        {
         id: '1-4',
@@ -134,7 +105,7 @@ git add .
 \`\`\`
 
 > **Attention :** Utiliser \`git add .\` est pratique mais assurez-vous de ne pas inclure de fichiers non désirés. Un bon usage du fichier \`.gitignore\` est recommandé.`,
-        component: StagingAreaVisualizer
+        componentName: 'StagingAreaVisualizer'
       },
       {
         id: '2-3',
@@ -202,7 +173,7 @@ Pour lister toutes les branches de votre dépôt local, exécutez simplement \`g
 \`\`\`bash
 git branch
 \`\`\``,
-        component: BranchCreator
+        componentName: 'BranchCreator'
       },
       {
         id: '3-3',
@@ -251,7 +222,7 @@ git merge feature-nouvelle-page
 \`\`\`
 
 Git créera un nouveau "commit de fusion" qui intègre l'historique des deux branches.`,
-        component: MergeSimulator
+        componentName: 'MergeSimulator'
       }
     ],
   },
@@ -289,7 +260,7 @@ git push origin main
 \`\`\`
 
 > La première fois que vous poussez une nouvelle branche, vous devrez peut-être utiliser \`git push -u origin <nom-de-la-branche>\` pour lier votre branche locale à la branche distante.`,
-        component: PushPullAnimator
+        componentName: 'PushPullAnimator'
       },
       {
         id: '4-3',
@@ -332,7 +303,7 @@ Le flux est le suivant :
 2.  **Clone** votre fork sur votre machine locale.
 3.  Travaillez, faites des commits, et **push** vers votre fork.
 4.  Créez une **Pull Request** de votre fork vers le dépôt original.`,
-        component: ForkVsCloneDemo
+        componentName: 'ForkVsCloneDemo'
       },
       {
         id: '5-2',
@@ -346,7 +317,7 @@ C'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion
 - Discuter de l'implémentation.
 - Recevoir des commentaires et des revues de code.
 - Voir les résultats des tests automatisés.`,
-        component: PRWorkflowSimulator
+        componentName: 'PRWorkflowSimulator'
       }
     ]
   },
@@ -366,7 +337,7 @@ C'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion
 - **Trunk-Based Development**: Tous les développeurs travaillent sur une seule branche principale, favorisant une intégration très rapide.
 
 Le tableau ci-dessous les compare en détail.`,
-        component: WorkflowComparisonTable
+        componentName: 'WorkflowComparisonTable'
       },
       {
         id: '6-2',
@@ -381,7 +352,7 @@ Le tableau ci-dessous les compare en détail.`,
 - Les branches \`hotfix/*\` corrigent des bugs urgents. Elles partent de \`main\` et doivent être fusionnées à la fois dans \`main\` et dans \`develop\`.
 
 Utilisez le simulateur ci-dessous pour voir comment les branches de features et de releases interagissent.`,
-        component: WorkflowSimulator
+        componentName: 'WorkflowSimulator'
       },
       {
         id: '6-3',
@@ -396,7 +367,7 @@ Les caractéristiques clés sont :
 - **Feature Flags**: Pour les fonctionnalités plus importantes, on utilise des "feature flags" (ou "feature toggles") pour activer ou désactiver une fonctionnalité en production sans avoir besoin d'une branche séparée.
 
 Ce workflow est très populaire dans les environnements de déploiement continu.`,
-        component: TrunkBasedDevelopmentVisualizer
+        componentName: 'TrunkBasedDevelopmentVisualizer'
       }
     ]
   },
@@ -412,21 +383,21 @@ Ce workflow est très populaire dans les environnements de déploiement continu.
         content: `Un conflit de fusion survient lorsque vous essayez de fusionner deux branches qui ont modifié la même ligne dans le même fichier, et Git ne sait pas quelle version choisir.
 
 Le visualiseur ci-dessous montre un scénario typique : les deux branches (\`main\` et \`feature\`) ont modifié le même fichier, ce qui empêche une fusion automatique.`,
-        component: ConflictVisualizer
+        componentName: 'ConflictVisualizer'
       },
       {
         id: '7-2',
         title: 'Guide de résolution',
         objective: 'Apprendre le processus pour résoudre manuellement un conflit de fusion.',
         content: `La résolution d'un conflit suit un processus systématique. Git vous aide en marquant clairement les zones de conflit dans vos fichiers. Le guide ci-dessous décompose chaque étape, de l'identification à la finalisation de la fusion.`,
-        component: ResolutionGuide
+        componentName: 'ResolutionGuide'
       },
       {
         id: '7-3',
         title: 'Mise en pratique',
         objective: 'Résoudre un conflit de fusion dans un simulateur interactif.',
         content: `C'est à votre tour de jouer ! Le simulateur ci-dessous présente un fichier en état de conflit. Modifiez le code directement dans l'éditeur pour résoudre le conflit, puis vérifiez votre solution.`,
-        component: ConflictPlayground
+        componentName: 'ConflictPlayground'
       }
     ]
   },
@@ -445,7 +416,7 @@ Le visualiseur ci-dessous montre un scénario typique : les deux branches (\`mai
 - \`git reset HEAD <fichier>\` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.
 - \`git reset <commit>\` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.
 - \`git revert <commit>\` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.`,
-        component: UndoCommandComparison
+        componentName: 'UndoCommandComparison'
       },
       {
         id: '8-2',
@@ -454,7 +425,7 @@ Le visualiseur ci-dessous montre un scénario typique : les deux branches (\`mai
         content: `Parfois, il est utile de se "déplacer" dans l'historique pour voir à quoi ressemblait le projet à un commit précis, sans pour autant annuler les changements. La commande \`git checkout <hash-du-commit>\` vous place dans un état "détaché" (detached HEAD), vous permettant d'explorer le passé.
 
 Le navigateur ci-dessous simule ce voyage dans le temps. Déplacez le curseur pour voir les détails d'un commit et l'état des fichiers à ce moment-là.`,
-        component: TimelineNavigator
+        componentName: 'TimelineNavigator'
       },
       {
         id: '8-3',
@@ -468,7 +439,7 @@ Si vous avez perdu un commit, vous pouvez :
 
 1. Exécuter \`git reflog\` pour trouver le hash du commit que vous voulez restaurer.
 2. Utiliser \`git reset --hard HEAD@{2}\` pour y revenir.`,
-        component: ReflogExplorer
+        componentName: 'ReflogExplorer'
       }
     ]
   },
@@ -487,7 +458,7 @@ Si vous avez perdu un commit, vous pouvez :
 - **Pull Requests** : En plus d'être des demandes de fusion, ce sont des espaces de discussion et de revue de code.
 
 Le simulateur ci-dessous vous donne un aperçu de cette interface.`,
-        component: GitHubInterfaceSimulator
+        componentName: 'GitHubInterfaceSimulator'
       },
       {
         id: '9-2',
@@ -501,7 +472,7 @@ Une issue peut contenir :
 - Des étiquettes (labels) pour la catégorisation (ex: 'bug', 'feature', 'documentation').
 - Des personnes assignées (assignees).
 - Des jalons (milestones) pour regrouper les issues par objectif.`,
-        component: IssueTracker
+        componentName: 'IssueTracker'
       },
       {
         id: '9-3',
@@ -517,7 +488,7 @@ Vous pouvez l'utiliser pour :
 - Et bien plus encore !
 
 Les workflows sont définis dans des fichiers YAML situés dans le dossier \`.github/workflows\` de votre projet.`,
-        component: ActionsWorkflowBuilder
+        componentName: 'ActionsWorkflowBuilder'
       }
     ]
   },
@@ -536,7 +507,7 @@ Les workflows sont définis dans des fichiers YAML situés dans le dossier \`.gi
 - **Corps optionnel**: Séparé du sujet par une ligne vide, il explique le *pourquoi* et le *comment* du changement.
 
 Le linter ci-dessous vous aidera à respecter ces règles.`,
-        component: CommitMessageLinter
+        componentName: 'CommitMessageLinter'
       },
       {
         id: '10-2',
@@ -545,7 +516,7 @@ Le linter ci-dessous vous aidera à respecter ces règles.`,
         content: `Le fichier \`.gitignore\` est essentiel pour garder votre dépôt propre en évitant de versionner des fichiers inutiles (fichiers de log, dépendances, secrets, etc.).
 
 Chaque ligne du fichier est un motif qui spécifie quels fichiers ou dossiers ignorer. Utilisez le simulateur ci-dessous pour tester si un chemin de fichier serait ignoré par vos règles.`,
-        component: GitignoreTester
+        componentName: 'GitignoreTester'
       },
       {
         id: '10-3',
@@ -554,7 +525,7 @@ Chaque ligne du fichier est un motif qui spécifie quels fichiers ou dossiers ig
         content: `Si vous tapez souvent les mêmes commandes longues (comme \`git log --oneline --graph\`), les alias sont faits pour vous ! Un alias est un raccourci personnalisé que vous définissez dans votre configuration Git.
 
 Par exemple, vous pouvez configurer \`git co\` pour qu'il exécute \`git checkout\`. Utilisez l'assistant ci-dessous pour générer la commande de configuration pour vos propres alias.`,
-        component: AliasCreator
+        componentName: 'AliasCreator'
       },
       {
         id: '10-4',
@@ -565,7 +536,7 @@ Par exemple, vous pouvez configurer \`git co\` pour qu'il exécute \`git checkou
 **Règle d'or :** Ne stockez jamais de secrets directement dans votre code. Utilisez des variables d'environnement et un fichier \`.env\` qui est listé dans votre \`.gitignore\`.
 
 Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
-        component: SecurityScanner
+        componentName: 'SecurityScanner'
       }
     ]
   },
@@ -587,7 +558,7 @@ Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
 5.  **Pousser** votre branche vers votre fork.
 6.  Ouvrir une **Pull Request** vers le projet original.
 7.  Participer à la **revue de code** et apporter des modifications si nécessaire.`,
-        component: OpenSourceSimulator
+        componentName: 'OpenSourceSimulator'
       },
       {
         id: '11-2',
@@ -598,7 +569,7 @@ Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
 Dans le cadre de cette application, nous avons également créé un **Tableau de Bord personnalisé** pour suivre votre propre parcours d'apprentissage. Il centralise votre progression, vos scores aux quiz et vos statistiques. Vous pouvez y accorder à tout moment en cliquant sur le lien "Tableau de bord" dans la barre de navigation en haut de la page.
 
 Le simulateur ci-dessous représente un exemple de tableau de bord de fin de projet, récapitulant toutes les compétences que vous avez acquises.`,
-        component: ProjectDashboard
+        componentName: 'ProjectDashboard'
       }
     ]
   },
@@ -621,7 +592,7 @@ Utilisez-le lorsque :
 - Vous voulez une explication plus courte ou plus détaillée.
 
 L'assistant est conscient de la leçon que vous êtes en train de suivre et adaptera ses réponses pour être le plus pertinent possible. Essayez-le ci-dessous !`,
-        component: AiHelper
+        componentName: 'AiHelper'
       }
     ]
   }
