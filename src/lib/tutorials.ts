@@ -27,6 +27,7 @@ import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTeste
 import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
 import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
+import { AiHelper } from '@/components/interactive/AiHelper';
 
 
 export const TUTORIALS: Tutorial[] = [
@@ -565,6 +566,21 @@ Par exemple, vous pouvez configurer \`git co\` pour qu'il exécute \`git checkou
 
 Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
         component: SecurityScanner
+      },
+      {
+        id: '10-5',
+        title: "Utiliser l'Assistance IA",
+        objective: "Apprendre à utiliser une aide contextuelle pour accélérer son apprentissage.",
+        content: `L'une des fonctionnalités les plus puissantes de cette plateforme est l'assistant IA intégré. Il a été entraîné pour être un expert de Git et un tuteur patient.
+
+Utilisez-le lorsque :
+
+- Vous ne comprenez pas une commande.
+- Vous voulez connaître la meilleure pratique pour une situation donnée.
+- Vous avez une erreur que vous n'arrivez pas à résoudre.
+
+L'assistant est conscient de la leçon que vous êtes en train de suivre et adaptera ses réponses pour être le plus pertinent possible. Essayez-le ci-dessous !`,
+        component: AiHelper
       }
     ]
   },
