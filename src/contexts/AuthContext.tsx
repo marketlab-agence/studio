@@ -5,6 +5,7 @@ import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (!auth) {
@@ -24,43 +26,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        setLoading(false);
-      } else {
-        // If no user, we must check if a redirect just happened.
-        // It's possible getRedirectResult is still processing.
-        try {
-          const result = await getRedirectResult(auth);
-          if (result) {
-            // A sign-in just completed via redirect.
-            // onAuthStateChanged will fire again with the new user object.
-            toast({ title: 'Connexion réussie', description: 'Bienvenue.' });
-            // We DON'T setLoading(false) here, we wait for the state to update.
-          } else {
-            // No user and no redirect result means the user is genuinely not logged in.
-            // Now it's safe to stop loading.
-            setUser(null);
-            setLoading(false);
-          }
-        } catch (error: any) {
-          console.error("Erreur de connexion par redirection:", error);
-          toast({
-            variant: 'destructive',
-            title: 'Erreur de connexion',
-            description: "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
-          });
-          setUser(null);
-          setLoading(false);
-        }
-      }
+    // Set up the onAuthStateChanged listener. This will be our single source of truth for the user object.
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [toast]);
+    // Separately, check for a redirect result when the component mounts.
+    // This is a side-effect that happens after a successful OAuth login.
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // If a result is found, it means a login was successful.
+          // We can toast and redirect the user to the dashboard.
+          // onAuthStateChanged will have already been triggered to set the user state.
+          toast({ title: 'Connexion réussie', description: 'Bienvenue.' });
+          router.push('/dashboard');
+        }
+      })
+      .catch((error) => {
+        console.error("Erreur de connexion par redirection:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Erreur de connexion',
+          description: "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
+        });
+      });
 
-  // While loading, show a full-page loader to prevent any content flash
+    return () => unsubscribe();
+  }, [toast, router]); // Dependency array ensures this runs once.
+
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
