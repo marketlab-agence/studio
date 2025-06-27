@@ -6,7 +6,6 @@ export type FeaturePermission =
   | 'ALL_COURSES_ACCESS'
   | 'END_OF_CHAPTER_QUIZ'
   | 'AI_PLAYGROUND'
-  | 'GITHUB_INTEGRATION'
   | 'CERTIFICATE_OF_COMPLETION'
   | 'PRIORITY_SUPPORT'
   | 'ADVANCED_ANALYTICS';
@@ -16,7 +15,6 @@ export const ALL_FEATURES: { id: FeaturePermission; label: string }[] = [
     { id: 'ALL_COURSES_ACCESS', label: 'Accès à toutes les formations' },
     { id: 'END_OF_CHAPTER_QUIZ', label: 'Quiz de fin de chapitre' },
     { id: 'AI_PLAYGROUND', label: 'Playground avec IA pour conseils et astuces' },
-    { id: 'GITHUB_INTEGRATION', label: 'Intégration GitHub pour commandes en live' },
     { id: 'CERTIFICATE_OF_COMPLETION', label: 'Certificat de réussite' },
     { id: 'PRIORITY_SUPPORT', label: 'Support prioritaire par email' },
     { id: 'ADVANCED_ANALYTICS', label: 'Statistiques d\'apprentissage avancées' },
@@ -54,10 +52,9 @@ export const PLANS_DATA: Record<string, Omit<SubscriptionPlan, 'id'>> = {
     features: [
       'Accès à toutes les formations',
       'Playground avec IA pour conseils et astuces',
-      'Intégration GitHub pour commandes en live',
       'Certificat de réussite',
     ],
     courses: ['git-github-tutorial'],
-    permissions: ['ALL_COURSES_ACCESS', 'AI_PLAYGROUND', 'GITHUB_INTEGRATION', 'CERTIFICATE_OF_COMPLETION', 'END_OF_CHAPTER_QUIZ'],
+    permissions: ['ALL_COURSES_ACCESS', 'AI_PLAYGROUND', 'CERTIFICATE_OF_COMPLETION', 'END_OF_CHAPTER_QUIZ'],
   }
 };
