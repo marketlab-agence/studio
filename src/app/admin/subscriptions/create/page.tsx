@@ -10,10 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CreditCard, PlusCircle, Save, Trash2, Loader2, BookCopy, List } from 'lucide-react';
+import { ArrowLeft, CreditCard, Save, Loader2, BookCopy, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { PLANS_DATA } from '@/lib/plans';
+import { PLANS_DATA, ALL_FEATURES, type FeaturePermission } from '@/lib/plans';
 
 const availableCourses = [
   { id: 'git-github-tutorial', name: 'Git & GitHub : Le Guide Complet' },
@@ -32,38 +32,27 @@ export default function CreatePlanPage() {
   const [price, setPrice] = useState('');
   const [billingPeriod, setBillingPeriod] = useState('monthly');
   const [description, setDescription] = useState('');
-  const [features, setFeatures] = useState(['']);
+  const [selectedPermissions, setSelectedPermissions] = useState<FeaturePermission[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isEditing && PLANS_DATA[planId as keyof typeof PLANS_DATA]) {
-      const planData = PLANS_DATA[planId as keyof typeof PLANS_DATA];
+    if (isEditing && planId && PLANS_DATA[planId]) {
+      const planData = PLANS_DATA[planId];
       setPlanName(planData.name);
       setPrice(planData.price.toString());
       setBillingPeriod(planData.billingPeriod);
       setDescription(planData.description);
-      setFeatures(planData.features.length > 0 ? planData.features : ['']);
+      setSelectedPermissions(planData.permissions);
       setSelectedCourses(planData.courses);
     }
   }, [planId, isEditing]);
 
-  const handleAddFeature = () => {
-    setFeatures([...features, '']);
-  };
-
-  const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...features];
-    newFeatures[index] = value;
-    setFeatures(newFeatures);
-  };
-
-  const handleRemoveFeature = (index: number) => {
-    if (features.length <= 1) {
-        setFeatures(['']);
-        return;
-    }
-    const newFeatures = features.filter((_, i) => i !== index);
-    setFeatures(newFeatures);
+  const handlePermissionChange = (permissionId: FeaturePermission) => {
+    setSelectedPermissions(prev => 
+        prev.includes(permissionId) 
+            ? prev.filter(id => id !== permissionId)
+            : [...prev, permissionId]
+    );
   };
   
   const handleCourseSelectionChange = (courseId: string) => {
@@ -76,13 +65,18 @@ export default function CreatePlanPage() {
 
   const handleSavePlan = () => {
     setIsSaving(true);
+    const derivedFeatures = ALL_FEATURES
+        .filter(feature => selectedPermissions.includes(feature.id))
+        .map(feature => feature.label);
+    
     const planData = {
       name: planName,
       price: parseFloat(price),
       billingPeriod,
       description,
-      features: features.filter(f => f.trim() !== ''),
+      features: derivedFeatures,
       courses: selectedCourses,
+      permissions: selectedPermissions,
     };
     
     // Simulate API call
@@ -117,7 +111,7 @@ export default function CreatePlanPage() {
             </div>
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                    {isEditing ? `Modifier le Plan : ${planName}` : 'Créer un Nouveau Plan'}
+                    {isEditing && planName ? `Modifier le Plan : ${planName}` : 'Créer un Nouveau Plan'}
                 </h1>
                 <p className="text-muted-foreground">
                     {isEditing ? 'Mettez à jour les détails de ce plan.' : 'Définissez les détails, fonctionnalités et accès de votre nouveau plan.'}
@@ -163,27 +157,20 @@ export default function CreatePlanPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <div className="flex items-center gap-2"><List /> Fonctionnalités incluses</div>
-                            <Button variant="outline" size="sm" onClick={handleAddFeature}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Ajouter
-                            </Button>
-                        </CardTitle>
+                        <CardTitle className="flex items-center gap-2"><Star /> Fonctionnalités</CardTitle>
+                        <CardDescription>Cochez les fonctionnalités qui seront disponibles dans ce plan.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {features.map((feature, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                <Input 
-                                    placeholder="Décrire une fonctionnalité..."
-                                    value={feature}
-                                    onChange={(e) => handleFeatureChange(index, e.target.value)}
+                    <CardContent className="space-y-4 grid grid-cols-1 sm:grid-cols-2">
+                        {ALL_FEATURES.map(feature => (
+                            <div key={feature.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={feature.id} 
+                                    onCheckedChange={() => handlePermissionChange(feature.id)}
+                                    checked={selectedPermissions.includes(feature.id)}
                                 />
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveFeature(index)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                                <Label htmlFor={feature.id} className="cursor-pointer">{feature.label}</Label>
                             </div>
                         ))}
                     </CardContent>
