@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { GitCommitHorizontal, Bell, User, LogOut, LogIn } from 'lucide-react';
+import { GitCommitHorizontal, Bell, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,6 +17,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+
+// Placeholder for a real admin check. In a real app, this would be a custom claim.
+const ADMIN_EMAIL = 'admin@katalyst.com';
 
 export function Header() {
   const { user } = useAuth();
@@ -83,6 +86,14 @@ export function Header() {
                 <Link href="/certificate">Certificat</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {user.email === ADMIN_EMAIL && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Administration
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Déconnexion
