@@ -4,7 +4,7 @@ import { MOCK_USERS, MockUser } from '@/lib/users';
 import { notFound } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Shield, CreditCard, Activity, FileText, AlertTriangle, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Shield, CreditCard, Activity, FileText, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,23 +14,42 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { ADMIN_EMAIL } from '@/lib/config';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ManageUserPage({ params }: { params: { userId: string } }) {
   const { userId } = params;
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<MockUser['role'] | ''>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const userData = MOCK_USERS.find(u => u.id === userId);
     if (userData) {
       setUser(userData);
-      setIsAdmin(userData.email === ADMIN_EMAIL);
+      setSelectedRole(userData.role);
     }
     setLoading(false);
   }, [userId]);
+
+  const handleRoleSave = () => {
+    if (!selectedRole || !user) return;
+    setIsSaving(true);
+    // Simulate API call to save the role
+    setTimeout(() => {
+        // In a real app, you would update the data source here.
+        // For this mock, we can update the user object in state.
+        setUser(prev => prev ? {...prev, role: selectedRole} : null);
+        toast({
+            title: "Rôle mis à jour",
+            description: `Le rôle de ${user.name} est maintenant ${selectedRole}.`,
+        });
+        setIsSaving(false);
+    }, 1000);
+  };
 
   if (loading) {
     return (
@@ -140,9 +159,23 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
             <Card>
                 <CardHeader><CardTitle className="flex items-center gap-2"><Shield/> Rôle & Abonnement</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="flex items-center justify-between">
-                        <Label htmlFor="admin-role" className="font-semibold">Rôle Administrateur</Label>
-                        <Switch id="admin-role" checked={isAdmin} onCheckedChange={setIsAdmin} />
+                    <div>
+                        <Label htmlFor="role-select" className="font-semibold text-sm">Rôle de l'utilisateur</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as MockUser['role'])}>
+                                <SelectTrigger id="role-select">
+                                    <SelectValue placeholder="Sélectionner un rôle" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Admin">Administrateur</SelectItem>
+                                    <SelectItem value="Modérateur">Modérateur</SelectItem>
+                                    <SelectItem value="Utilisateur">Utilisateur</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button onClick={handleRoleSave} disabled={isSaving || selectedRole === user.role}>
+                                {isSaving ? <Loader2 className="animate-spin" /> : 'Sauver'}
+                            </Button>
+                        </div>
                     </div>
                     <Separator/>
                     <div>

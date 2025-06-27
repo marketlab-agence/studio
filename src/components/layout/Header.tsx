@@ -17,11 +17,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { ADMIN_EMAIL } from '@/lib/config';
+import { MOCK_USERS } from '@/lib/users';
 
 export function Header() {
   const { user } = useAuth();
   const router = useRouter();
+  const currentUserFromMock = user ? MOCK_USERS.find(u => u.email === user.email) : null;
+  const isAdmin = currentUserFromMock?.role === 'Admin';
 
   const handleSignOut = async () => {
     if (auth) {
@@ -84,7 +86,7 @@ export function Header() {
                 <Link href="/certificate">Certificat</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {user.email === ADMIN_EMAIL && (
+              {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin">
                     <Shield className="mr-2 h-4 w-4" />

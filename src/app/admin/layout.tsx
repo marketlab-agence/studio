@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { ADMIN_EMAIL } from '@/lib/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MOCK_USERS } from '@/lib/users';
 
 export default function AdminLayout({
   children,
@@ -18,7 +18,8 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
+      const currentUserData = user ? MOCK_USERS.find(u => u.email === user.email) : null;
+      if (!user || !currentUserData || currentUserData.role !== 'Admin') {
         router.push('/login');
       } else {
         setIsAdmin(true);

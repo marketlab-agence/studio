@@ -23,13 +23,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-    BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, PlusCircle, Search, Settings, Users, Verified
+    BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, PlusCircle, Search, Settings, Users, Verified, Users2
 } from 'lucide-react';
 import { TUTORIALS } from '@/lib/tutorials';
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 
 export default function AdminDashboardPage() {
@@ -164,9 +165,16 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4 pt-4">
-            <div className="flex items-center gap-2">
-                <Input placeholder="Rechercher un utilisateur..." className="max-w-sm"/>
-                <Button variant="outline"><Search className="mr-2 h-4 w-4"/>Rechercher</Button>
+            <div className="flex justify-between items-center gap-2">
+              <div className="flex items-center gap-2">
+                  <Input placeholder="Rechercher un utilisateur..." className="max-w-sm"/>
+                  <Button variant="outline"><Search className="mr-2 h-4 w-4"/>Rechercher</Button>
+              </div>
+              <Button asChild variant="outline">
+                  <Link href="/admin/roles">
+                      <Users2 className="mr-2 h-4 w-4" /> Gérer les Rôles
+                  </Link>
+              </Button>
             </div>
              <Card>
                 <CardHeader><CardTitle>Gestion des utilisateurs</CardTitle></CardHeader>
@@ -178,6 +186,7 @@ export default function AdminDashboardPage() {
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Mobile</TableHead>
+                                <TableHead>Rôle</TableHead>
                                 <TableHead>Plan</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead>Inscrit le</TableHead>
@@ -188,13 +197,21 @@ export default function AdminDashboardPage() {
                             {MOCK_USERS.map(u => {
                                 const [firstName, ...lastNameParts] = u.name.split(' ');
                                 const lastName = lastNameParts.join(' ');
+                                
+                                const roleVariant = {
+                                    Admin: 'default',
+                                    Modérateur: 'secondary',
+                                    Utilisateur: 'outline',
+                                }[u.role] as "default" | "secondary" | "outline" | null | undefined;
+                                
                                 return (
                                 <TableRow key={u.id}>
                                     <TableCell className="font-medium">{firstName}</TableCell>
                                     <TableCell className="font-medium">{lastName}</TableCell>
                                     <TableCell>{u.email}</TableCell>
                                     <TableCell>{u.phone || 'N/A'}</TableCell>
-                                    <TableCell><Badge variant={u.plan === 'Premium' ? 'default' : 'secondary'}>{u.plan}</Badge></TableCell>
+                                    <TableCell><Badge variant={roleVariant}>{u.role}</Badge></TableCell>
+                                    <TableCell><Badge variant={u.plan === 'Premium' ? 'destructive' : 'secondary'}>{u.plan}</Badge></TableCell>
                                     <TableCell>{u.status}</TableCell>
                                     <TableCell>{u.joined}</TableCell>
                                     <TableCell>
