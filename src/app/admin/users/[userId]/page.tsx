@@ -92,9 +92,11 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
                 <CardTitle className="flex items-center gap-2"><User/> Identité</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><p className="text-sm text-muted-foreground">Prénom</p><p className="font-medium">{user.name.split(' ')[0]}</p></div>
                     <div><p className="text-sm text-muted-foreground">Nom</p><p className="font-medium">{user.name.split(' ').slice(1).join(' ')}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium">{user.email}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Mobile</p><p className="font-medium">{user.phone || 'Non renseigné'}</p></div>
                     <div><p className="text-sm text-muted-foreground">Statut</p><p className="font-medium">{user.status}</p></div>
                     <div><p className="text-sm text-muted-foreground">Inscrit le</p><p className="font-medium">{user.joined}</p></div>
                 </div>
@@ -169,4 +171,3 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
     </div>
   );
 }
-

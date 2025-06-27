@@ -177,6 +177,7 @@ export default function AdminDashboardPage() {
                                 <TableHead>Prénom</TableHead>
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Email</TableHead>
+                                <TableHead>Mobile</TableHead>
                                 <TableHead>Plan</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead>Inscrit le</TableHead>
@@ -192,6 +193,7 @@ export default function AdminDashboardPage() {
                                     <TableCell className="font-medium">{firstName}</TableCell>
                                     <TableCell className="font-medium">{lastName}</TableCell>
                                     <TableCell>{u.email}</TableCell>
+                                    <TableCell>{u.phone || 'N/A'}</TableCell>
                                     <TableCell><Badge variant={u.plan === 'Premium' ? 'default' : 'secondary'}>{u.plan}</Badge></TableCell>
                                     <TableCell>{u.status}</TableCell>
                                     <TableCell>{u.joined}</TableCell>
