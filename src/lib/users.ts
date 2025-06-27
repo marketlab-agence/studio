@@ -20,6 +20,8 @@ export const MOCK_USERS: MockUser[] = [
   { id: 'usr_6', name: 'Frank Moreau', email: 'frank.m@example.com', plan: 'Premium', status: 'Actif', role: 'Utilisateur', joined: '2023-06-18', phone: '+44 7700 900548' },
   { id: 'usr_7', name: 'Grace Girard', email: 'grace.g@example.com', plan: 'Gratuit', status: 'Inactif', role: 'Utilisateur', joined: '2023-07-22' },
   { id: 'usr_8', name: 'Hugo Roussel', email: 'hugo.r@example.com', plan: 'Premium', status: 'Actif', role: 'Utilisateur', joined: '2023-08-30' },
+  { id: 'usr_9', name: 'Parti PUR', email: 'parti.pur@gmail.com', plan: 'Gratuit', status: 'Actif', role: 'Utilisateur', joined: '2024-07-25' },
+  { id: 'usr_10', name: 'Aboubakrine Ndiaye', email: 'aboubakrine.ndiaye@gmail.com', plan: 'Gratuit', status: 'Actif', role: 'Utilisateur', joined: '2024-07-25' },
 ];
 
 export const PREMIUM_PLAN_PRICE_EUR = 9.99;
