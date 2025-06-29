@@ -29,12 +29,14 @@ export interface SubscriptionPlan {
   features: string[];
   courses: string[];
   permissions: FeaturePermission[];
+  cta: string;
+  recommended?: boolean;
 }
 
 export const PLANS_DATA: Record<string, Omit<SubscriptionPlan, 'id'>> = {
   'free': {
     name: 'Formule Gratuite',
-    description: 'Accès limité à la plateforme.',
+    description: 'Accès limité pour découvrir la plateforme.',
     price: 0,
     billingPeriod: 'monthly',
     features: [
@@ -43,6 +45,7 @@ export const PLANS_DATA: Record<string, Omit<SubscriptionPlan, 'id'>> = {
     ],
     courses: [],
     permissions: ['FIRST_CHAPTER_ACCESS', 'END_OF_CHAPTER_QUIZ'],
+    cta: 'Vous utilisez ce plan',
   },
   'premium': {
     name: 'Formule Premium',
@@ -53,8 +56,11 @@ export const PLANS_DATA: Record<string, Omit<SubscriptionPlan, 'id'>> = {
       'Accès à toutes les formations',
       'Playground avec IA pour conseils et astuces',
       'Certificat de réussite',
+      'Support prioritaire',
     ],
     courses: ['git-github-tutorial'],
-    permissions: ['ALL_COURSES_ACCESS', 'AI_PLAYGROUND', 'CERTIFICATE_OF_COMPLETION', 'END_OF_CHAPTER_QUIZ'],
+    permissions: ['ALL_COURSES_ACCESS', 'AI_PLAYGROUND', 'CERTIFICATE_OF_COMPLETION', 'END_OF_CHAPTER_QUIZ', 'PRIORITY_SUPPORT'],
+    cta: 'Passer au Premium',
+    recommended: true,
   }
 };

@@ -6,11 +6,16 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useRequirePremium } from '@/hooks/useRequirePremium';
 
 export default function AiAssistantPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  
+  // This hook will redirect non-premium users.
+  useRequirePremium();
 
+  // This effect handles non-logged-in users.
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -22,14 +27,14 @@ export default function AiAssistantPage() {
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">
           <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          <span>Chargement...</span>
+          <span>Vérification de votre accès...</span>
         </div>
       </main>
     );
   }
 
-  // A real implementation would also check for premium subscription status here.
-
+  // A premium user will see this content.
+  // A non-premium user will see the loading screen briefly before being redirected.
   return (
     <main className="flex-1 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-4xl space-y-8">

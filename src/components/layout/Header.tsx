@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { GitCommitHorizontal, Bell, User, LogOut, LogIn, Shield, Sparkles } from 'lucide-react';
+import { GitCommitHorizontal, Bell, User, LogOut, LogIn, Shield, Sparkles, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -18,9 +18,11 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { MOCK_USERS } from '@/lib/users';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const router = useRouter();
   const currentUserFromMock = user ? MOCK_USERS.find(u => u.email === user.email) : null;
   const isAdmin = currentUserFromMock?.role === 'Admin' || currentUserFromMock?.role === 'Super Admin';
@@ -49,8 +51,13 @@ export function Header() {
           <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
             Certification
           </Link>
-          <Link href="/ai-assistant" className="text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1">
-            Assistant IA <Sparkles className="h-4 w-4 text-yellow-400" />
+          <Link href="/ai-assistant" className={cn("transition-colors hover:text-foreground flex items-center gap-2", isPremium ? "text-muted-foreground" : "text-muted-foreground/60")}>
+            Assistant IA 
+            {isPremium ? (
+              <Badge variant="secondary" className="border-yellow-400/50 text-yellow-300 py-0">Premium</Badge>
+            ) : (
+              <Lock className="h-3 w-3" />
+            )}
           </Link>
         </nav>
       )}
@@ -88,6 +95,9 @@ export function Header() {
               <DropdownMenuItem asChild>
                 <Link href="/certificate">Certificat</Link>
               </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/pricing">Abonnement</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {isAdmin && (
                 <DropdownMenuItem asChild>
@@ -104,12 +114,15 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button asChild>
-            <Link href="/login">
-              Connexion
-              <LogIn className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+           <div className="hidden sm:flex items-center gap-2">
+            <Button variant="ghost" asChild><Link href="/pricing">Tarifs</Link></Button>
+            <Button asChild>
+                <Link href="/login">
+                Connexion
+                <LogIn className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+           </div>
         )}
       </div>
     </header>

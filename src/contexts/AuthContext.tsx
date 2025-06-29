@@ -1,15 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { MOCK_USERS } from '@/lib/users';
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  plan: 'Premium' | 'Gratuit' | null;
+  isPremium: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,8 +18,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const router = useRouter();
+  const [plan, setPlan] = useState<'Premium' | 'Gratuit' | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     if (!auth) {
@@ -26,21 +27,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    console.log('AuthContext: Initializing auth listener');
-
-    // Set up the onAuthStateChanged listener. This will be our single source of truth for the user object.
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('AuthContext: onAuthStateChanged triggered', { 
-        user: user?.email || 'null',
-        pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-      });
-      
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
+        const userPlan = mockUser?.plan || 'Gratuit'; // Default to 'Gratuit' for new users
+        setPlan(userPlan);
+        setIsPremium(userPlan === 'Premium');
+      } else {
+        setPlan(null);
+        setIsPremium(false);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []); // Empty dependency array since we don't need toast and router here anymore
+  }, []);
 
   if (loading) {
     return (
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, plan, isPremium }}>
       {children}
     </AuthContext.Provider>
   );
