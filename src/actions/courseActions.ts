@@ -1,7 +1,6 @@
 
 'use server';
 
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput } from '@/ai/flows/create-course-flow';
 import { COURSES } from '@/lib/courses';
@@ -20,7 +19,7 @@ const slugify = (text: string) =>
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 
-export async function saveCoursePlanAction(plan: CreateCourseOutput) {
+export async function saveCoursePlanAction(plan: CreateCourseOutput): Promise<{ courseId: string }> {
     const courseId = slugify(plan.title);
     
     // 1. Add course to registry
@@ -81,7 +80,8 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
     });
 
     revalidatePath('/admin');
-    redirect(`/admin/courses/${courseId}`);
+    revalidatePath(`/admin/courses/${courseId}`);
+    return { courseId };
 }
 
 export async function publishCourseAction(courseId: string) {
