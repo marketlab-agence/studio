@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Award, Lock, Loader2, Skeleton } from 'lucide-react';
+import { Award, Lock, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
@@ -12,6 +13,7 @@ import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useRequirePremium } from '@/hooks/useRequirePremium';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CertificatePage() {
   const { user, loading: authLoading, isPremium } = useAuth();
