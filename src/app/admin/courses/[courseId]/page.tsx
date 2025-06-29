@@ -68,7 +68,7 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
               </TableRow>
             </TableHeader>
             <TableBody>
-              {course.chapters.map((chapter) => (
+              {course.chapters.filter(Boolean).map((chapter) => (
                   <TableRow key={chapter.id}>
                     <TableCell className="font-medium">{chapter.title}</TableCell>
                     <TableCell>{chapter.lessons.length}</TableCell>

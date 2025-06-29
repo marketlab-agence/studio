@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
     {
       id: 'git-github-tutorial',
       title: 'Git & GitHub : Le Guide Complet',
-      lessonsCount: TUTORIALS.reduce((acc, chap) => acc + chap.lessons.length, 0),
+      lessonsCount: TUTORIALS.filter(Boolean).reduce((acc, chap) => acc + chap.lessons.length, 0),
       status: 'Publié',
     },
     // Future courses can be added here
