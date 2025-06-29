@@ -158,6 +158,7 @@ export default function CreateCoursePage() {
             
             handleDeletePlan(activePlan.localId);
 
+            router.refresh();
             router.push(`/admin/courses/${courseId}`);
         } catch (e) {
             console.error(e);
