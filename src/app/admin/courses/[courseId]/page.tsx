@@ -2,7 +2,7 @@
 'use client';
 
 import { TUTORIALS } from '@/lib/tutorials';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -30,28 +30,41 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CourseChaptersPage() {
   const params = useParams() as { courseId: string };
-  const router = useRouter();
-
+  
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
   const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
-    const foundCourse = COURSES.find(c => c.id === params.courseId);
-    const foundChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
+    // This effect implements a polling mechanism to handle potential race conditions
+    // where the page navigates before the server-side in-memory data is updated.
+    let attempts = 0;
+    const intervalId = setInterval(() => {
+      const foundCourse = COURSES.find(c => c.id === params.courseId);
+      if (foundCourse) {
+        const foundChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
+        setCourseInfo(foundCourse);
+        setCourseChapters(foundChapters);
+        setIsLoading(false);
+        clearInterval(intervalId);
+      } else {
+        attempts++;
+        if (attempts > 15) { // Stop trying after ~3 seconds
+          setIsLoading(false); // This will allow the component to render and trigger notFound()
+          clearInterval(intervalId);
+        }
+      }
+    }, 200); // Check every 200ms
 
-    if (foundCourse) {
-      setCourseInfo(foundCourse);
-      setCourseChapters(foundChapters);
-    }
-    setIsLoading(false);
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, [params.courseId]);
 
   const handlePublish = async () => {
     setIsPublishing(true);
     await publishCourseAction(params.courseId);
-    router.refresh();
+    // Update local state for immediate UI feedback
+    setCourseInfo(prev => prev ? { ...prev, status: 'Publié' } : null);
     setIsPublishing(false);
   };
 
