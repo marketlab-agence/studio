@@ -12,6 +12,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 export default function PricingPage() {
@@ -30,8 +41,8 @@ export default function PricingPage() {
         if (updateUserPlan) {
             updateUserPlan('Gratuit');
             toast({
-                title: 'Changement de formule',
-                description: 'Vous êtes passé à la formule Gratuite.',
+                title: 'Changement de formule confirmé',
+                description: 'Votre abonnement a été annulé. Vous ne serez plus facturé à la prochaine échéance.',
             });
         }
     };
@@ -94,10 +105,26 @@ export default function PricingPage() {
                             Votre formule actuelle
                         </Button>
                     ) : ( // User is Premium
-                        <Button variant="outline" className="w-full" onClick={handleDowngrade}>
-                             <RefreshCw className="mr-2 h-4 w-4" />
-                            Passer à la formule Gratuite
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline" className="w-full">
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Passer à la formule Gratuite
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Voulez-vous vraiment changer de formule ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Votre abonnement Premium sera annulé. Vous ne serez plus facturé et vous perdrez l'accès aux fonctionnalités Premium à la fin de votre période de facturation actuelle. Êtes-vous sûr de vouloir continuer ?
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDowngrade}>Confirmer le passage en Gratuit</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     )
                  }
               </CardFooter>
