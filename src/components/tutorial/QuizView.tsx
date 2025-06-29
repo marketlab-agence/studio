@@ -107,10 +107,10 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                     
                     return { totalScore: acc.totalScore + questionScore, maxScore: acc.maxScore + 1 };
 
-                } else {
-                    const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
-                    const isCorrect = correctAnswers.size === userAnswersForQuestion.size && 
-                                    [...correctAnswers].every(answerId => userAnswersForQuestion.has(answerId));
+                } else { // Single choice question
+                    const correctAnswerId = q.answers.find(a => a.isCorrect)?.id;
+                    const userAnswerId = userAnswers[q.id]?.[0];
+                    const isCorrect = correctAnswerId && userAnswerId === correctAnswerId;
                     
                     return {
                         totalScore: acc.totalScore + (isCorrect ? 1 : 0),
@@ -163,32 +163,35 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         {isQuizPassed && (
                             <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
                                 <h3 className="font-semibold">Correction détaillée :</h3>
-                                {quiz.questions.map(q => (
-                                    <div key={q.id} className="text-sm p-2 rounded-md bg-muted/50">
-                                        <p className="font-medium">{q.text}</p>
-                                        <ul className="list-none pl-0 mt-2 space-y-1">
-                                            {q.answers.map(a => {
-                                                const wasSelected = !hasPassedBefore && (userAnswers[q.id] || []).includes(a.id);
-                                                const isCorrect = !!a.isCorrect;
+                                {quiz.questions.map(q => {
+                                    const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
+                                    return (
+                                        <div key={q.id} className="text-sm p-2 rounded-md bg-muted/50">
+                                            <p className="font-medium">{q.text}</p>
+                                            <ul className="list-none pl-0 mt-2 space-y-1">
+                                                {q.answers.map(a => {
+                                                    const wasSelected = userAnswersForQuestion.has(a.id);
+                                                    const isCorrect = !!a.isCorrect;
 
-                                                // Case 1: User selected a correct answer
-                                                if (isCorrect && wasSelected) {
-                                                    return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                }
-                                                // Case 2: User selected an incorrect answer
-                                                if (!isCorrect && wasSelected) {
-                                                    return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse)</span></li>;
-                                                }
-                                                // Case 3: A correct answer the user did NOT select
-                                                if (isCorrect && !wasSelected) {
-                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4 shrink-0 text-green-400/50" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte)</span></li>;
-                                                }
-                                                // Case 4: An incorrect answer the user did NOT select (neutral)
-                                                return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                            })}
-                                        </ul>
-                                    </div>
-                                ))}
+                                                    if (!isCorrect && wasSelected) { // User selected an incorrect answer
+                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse incorrecte)</span></li>;
+                                                    }
+                                                    if (isCorrect && wasSelected) { // User selected a correct answer
+                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                    }
+                                                     if (q.isMultipleChoice && isCorrect && !wasSelected) { // User did NOT select a correct answer in a multiple choice question
+                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Réponse correcte manquée)</span></li>;
+                                                    }
+                                                     if (isCorrect && !wasSelected) { // The correct answer the user did not select in single choice
+                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4 shrink-0 text-green-400" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte)</span></li>;
+                                                    }
+                                                    // Default: An incorrect answer the user did NOT select (neutral)
+                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                })}
+                                            </ul>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         )}
                     </CardContent>
