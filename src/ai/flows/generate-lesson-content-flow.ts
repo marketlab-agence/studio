@@ -25,32 +25,31 @@ const GenerateLessonContentOutputSchema = z.object({
 });
 export type GenerateLessonContentOutput = z.infer<typeof GenerateLessonContentOutputSchema>;
 
-export async function generateLessonContent(input: GenerateLessonContentInput): Promise<GenerateLessonContentOutput> {
-  const prompt = ai.definePrompt({
+const generateLessonContentPrompt = ai.definePrompt({
     name: 'generateLessonContentPrompt',
     input: { schema: GenerateLessonContentInputSchema },
     output: { schema: GenerateLessonContentOutputSchema },
-    prompt: `You are an expert instructional designer creating content for an online course. Your task is to write the content for a single lesson.
+    prompt: `You are an expert instructional designer creating content for an online course on the topic of **{{{courseTopic}}}**. Your task is to write the content for a single lesson within this course.
 
 **Course Information:**
-- Topic: {{{courseTopic}}}
+- Main Topic: {{{courseTopic}}}
 - Target Audience: {{{targetAudience}}}
 
-**Lesson Information:**
+**Lesson to Write:**
 - Title: {{{lessonTitle}}}
 - Objective: {{{lessonObjective}}}
 
-**Instructions:**
-- Write comprehensive and engaging lesson content based on the title and objective.
+**Crucial Instructions:**
+- The entire lesson MUST be written in the context of **{{{courseTopic}}}**. All examples, explanations, and concepts must be directly related to it. For example, if the topic is "Trello", a lesson on "Collaboration" should explain how to collaborate using Trello's features.
 - The content MUST be in {{#if courseLanguage}}{{{courseLanguage}}}{{else}}French{{/if}}.
 - The content MUST be in Markdown format.
 - Structure the content logically with headings, lists, and paragraphs.
-- Include relevant code blocks (using Markdown fences \`\`\`) and examples to illustrate key concepts.
-- The tone should be professional, clear, and encouraging for a student.
-- Ensure the content directly helps the student achieve the stated lesson objective.
+- If the course topic is a software tool, include examples that look like the user is interacting with that tool. Use code blocks for commands or configuration snippets where relevant.
+- Ensure the content directly helps the student achieve the stated lesson objective *within the context of the course topic*.
 `,
   });
 
-  const { output } = await prompt(input);
+export async function generateLessonContent(input: GenerateLessonContentInput): Promise<GenerateLessonContentOutput> {
+  const { output } = await generateLessonContentPrompt(input);
   return output!;
 }
