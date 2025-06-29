@@ -1,9 +1,10 @@
 
 import type { Tutorial } from '@/types/tutorial.types';
 
-export const TUTORIALS: Tutorial[] = [
+export let TUTORIALS: Tutorial[] = [
   {
     id: 'intro-to-git',
+    courseId: 'git-github-tutorial',
     title: '1. Introduction à Git',
     description: 'Apprenez les bases de Git et comment démarrer un nouveau projet.',
     lessons: [
@@ -125,6 +126,7 @@ Cette commande crée un sous-dossier caché nommé **.git**. C'est le cerveau de
   },
   {
     id: 'making-commits',
+    courseId: 'git-github-tutorial',
     title: '2. Enregistrer les modifications',
     description: 'Apprenez à sauvegarder votre travail en effectuant des "commits".',
     lessons: [
@@ -205,6 +207,7 @@ git log --graph --oneline --decorate --all
   },
   {
     id: 'branching',
+    courseId: 'git-github-tutorial',
     title: '3. La puissance des branches',
     description: "Isolez votre travail et expérimentez en toute sécurité avec les branches.",
     lessons: [
@@ -286,6 +289,7 @@ Git créera un nouveau "commit de fusion" qui intègre l'historique des deux bra
   },
   {
     id: 'remote-repositories',
+    courseId: 'git-github-tutorial',
     title: '4. Dépôts Distants',
     description: 'Apprenez à collaborer en synchronisant votre travail avec un serveur distant comme GitHub.',
     lessons: [
@@ -344,6 +348,7 @@ git pull origin main
   },
   {
     id: 'collaboration',
+    courseId: 'git-github-tutorial',
     title: '5. Collaboration sur GitHub',
     description: 'Découvrez le flux de travail standard pour contribuer à des projets sur GitHub.',
     lessons: [
@@ -381,6 +386,7 @@ C'est le cœur du travail collaboratif sur GitHub. C'est un espace de discussion
   },
   {
     id: 'workflows',
+    courseId: 'git-github-tutorial',
     title: '6. Workflows Git',
     description: 'Explorez différentes stratégies d\'organisation des branches pour des projets de toutes tailles.',
     lessons: [
@@ -431,6 +437,7 @@ Ce workflow est très populaire dans les environnements de déploiement continu.
   },
   {
     id: 'conflicts',
+    courseId: 'git-github-tutorial',
     title: '7. Gérer les Conflits',
     description: 'Apprenez à résoudre les inévitables conflits de fusion.',
     lessons: [
@@ -461,6 +468,7 @@ Le visualiseur ci-dessous montre un scénario typique : les deux branches (\`mai
   },
   {
     id: 'undoing-changes',
+    courseId: 'git-github-tutorial',
     title: '8. Annuler des Modifications',
     description: 'Découvrez comment revenir en arrière en toute sécurité avec Git.',
     lessons: [
@@ -503,6 +511,7 @@ Si vous avez perdu un commit, vous pouvez :
   },
   {
     id: 'github-features',
+    courseId: 'git-github-tutorial',
     title: '9. Fonctionnalités de GitHub',
     description: 'Explorez les outils qui font de GitHub une plateforme si puissante.',
     lessons: [
@@ -552,6 +561,7 @@ Les workflows sont définis dans des fichiers YAML situés dans le dossier \`.gi
   },
   {
     id: 'best-practices',
+    courseId: 'git-github-tutorial',
     title: '10. Bonnes Pratiques',
     description: 'Affinez vos compétences avec des astuces et des pratiques de pro.',
     lessons: [
@@ -600,6 +610,7 @@ Le scanner ci-dessous simule une recherche de secrets dans votre projet.`,
   },
   {
     id: 'final-project',
+    courseId: 'git-github-tutorial',
     title: '11. Projet Final',
     description: 'Mettez en pratique tout ce que vous avez appris en contribuant à un projet simulé.',
     lessons: [

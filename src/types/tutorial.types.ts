@@ -1,5 +1,6 @@
 export interface Tutorial {
   id: string;
+  courseId: string;
   title: string;
   description: string;
   lessons: Lesson[];

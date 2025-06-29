@@ -1,7 +1,7 @@
 
 import type { Quiz } from '@/types/tutorial.types';
 
-export const QUIZZES: Record<string, Quiz> = {
+export let QUIZZES: Record<string, Quiz> = {
   'intro-to-git': {
     id: 'intro-to-git',
     title: 'Quiz: Introduction à Git',

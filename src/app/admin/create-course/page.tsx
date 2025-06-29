@@ -16,11 +16,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { saveCoursePlanAction } from '@/actions/courseActions';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
     const [targetAudience, setTargetAudience] = useState('Débutants');
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [coursePlan, setCoursePlan] = useState<CreateCourseOutput | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -44,13 +46,22 @@ export default function CreateCoursePage() {
         }
     };
     
-    const handleSaveCourse = () => {
-        // Here you would implement logic to save the coursePlan to your database.
-        toast({
-            title: "Formation sauvegardée (Simulation)",
-            description: "Le plan de formation a été sauvegardé avec succès.",
-        });
-    }
+    const handleSaveCourse = async () => {
+        if (!coursePlan) return;
+        setIsSaving(true);
+        try {
+            await saveCoursePlanAction(coursePlan);
+            toast({
+                title: "Formation sauvegardée !",
+                description: "Redirection vers la page de la nouvelle formation...",
+            });
+            // Redirect is handled by the server action, so we don't need to setIsSaving(false) on success
+        } catch (e) {
+            console.error(e);
+            setError("Une erreur est survenue lors de la sauvegarde du plan. Veuillez réessayer.");
+            setIsSaving(false);
+        }
+    };
 
     const renderLoadingState = () => (
         <div className="space-y-4 mt-6">
@@ -156,8 +167,8 @@ export default function CreateCoursePage() {
                                 </AccordionItem>
                             ))}
                         </Accordion>
-                        <Button onClick={handleSaveCourse} size="lg" className="mt-6">
-                            <Save className="mr-2 h-4 w-4"/>
+                        <Button onClick={handleSaveCourse} size="lg" className="mt-6" disabled={isSaving}>
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
                             Sauvegarder cette formation
                         </Button>
                     </div>

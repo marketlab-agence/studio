@@ -33,6 +33,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { PLANS_DATA } from '@/lib/plans';
+import { COURSES } from '@/lib/courses';
 
 
 export default function AdminDashboardPage() {
@@ -111,15 +112,12 @@ export default function AdminDashboardPage() {
     }, 800); // 0.8s delay to simulate network
   }, [authUser]);
 
-  const allCourses = [
-    {
-      id: 'git-github-tutorial',
-      title: 'Git & GitHub : Le Guide Complet',
-      lessonsCount: TUTORIALS.filter(Boolean).reduce((acc, chap) => acc + chap.lessons.length, 0),
-      status: 'Publié',
-    },
-    // Future courses can be added here
-  ];
+  const allCourses = COURSES.map(course => ({
+    id: course.id,
+    title: course.title,
+    lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
+    status: 'Publié',
+  }));
 
   const freePlan = PLANS_DATA.free;
   const premiumPlan = PLANS_DATA.premium;

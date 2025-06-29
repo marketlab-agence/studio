@@ -19,19 +19,13 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, ChevronRight } from 'lucide-react';
-
-const COURSES_DATA: Record<string, { id: string, title: string, chapters: any[] }> = {
-    'git-github-tutorial': {
-        id: 'git-github-tutorial',
-        title: 'Git & GitHub : Le Guide Complet',
-        chapters: TUTORIALS
-    }
-}
+import { COURSES } from '@/lib/courses';
 
 export default function CourseChaptersPage({ params }: { params: { courseId: string } }) {
-  const course = COURSES_DATA[params.courseId as keyof typeof COURSES_DATA];
+  const courseInfo = COURSES.find(c => c.id === params.courseId);
+  const courseChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
 
-  if (!course) {
+  if (!courseInfo) {
     notFound();
   }
 
@@ -40,7 +34,7 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/admin" className="hover:text-primary">Admin</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-foreground">Formation: {course.title}</span>
+        <span className="font-semibold text-foreground">Formation: {courseInfo.title}</span>
       </div>
 
       <div className="flex items-center gap-4">
@@ -49,7 +43,7 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
         </div>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Chapitres de la Formation</h1>
-          <p className="text-muted-foreground">{course.title}</p>
+          <p className="text-muted-foreground">{courseInfo.title}</p>
         </div>
       </div>
 
@@ -68,7 +62,7 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
               </TableRow>
             </TableHeader>
             <TableBody>
-              {course.chapters.filter(Boolean).map((chapter) => (
+              {courseChapters.filter(Boolean).map((chapter) => (
                   <TableRow key={chapter.id}>
                     <TableCell className="font-medium">{chapter.title}</TableCell>
                     <TableCell>{chapter.lessons.length}</TableCell>
