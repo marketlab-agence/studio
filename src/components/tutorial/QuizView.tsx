@@ -92,26 +92,21 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                 const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
 
                 if (q.isMultipleChoice) {
-                    let correctDecisions = 0;
-                    const totalOptions = q.answers.length;
+                    const correctAnswersForQuestion = q.answers.filter(a => a.isCorrect);
+                    const totalCorrectAnswers = correctAnswersForQuestion.length;
+
+                    if (totalCorrectAnswers === 0) {
+                        const questionScore = userAnswersForQuestion.size === 0 ? 1 : 0;
+                        return { totalScore: acc.totalScore + questionScore, maxScore: acc.maxScore + 1 };
+                    }
                     
-                    q.answers.forEach(answer => {
-                        const userSelectedThis = userAnswersForQuestion.has(answer.id);
-                        const answerIsCorrect = !!answer.isCorrect;
-                        
-                        // A correct decision is made if the user's action matches the answer's correctness
-                        // (i.e., selecting a correct answer, or not selecting an incorrect one)
-                        if (userSelectedThis === answerIsCorrect) {
-                            correctDecisions++;
-                        }
-                    });
+                    const correctSelected = q.answers.filter(a => a.isCorrect && userAnswersForQuestion.has(a.id)).length;
+                    const incorrectSelected = q.answers.filter(a => !a.isCorrect && userAnswersForQuestion.has(a.id)).length;
+                    
+                    const questionScore = Math.max(0, (correctSelected - incorrectSelected) / totalCorrectAnswers);
+                    
+                    return { totalScore: acc.totalScore + questionScore, maxScore: acc.maxScore + 1 };
 
-                    const questionScore = totalOptions > 0 ? correctDecisions / totalOptions : 0;
-
-                    return {
-                        totalScore: acc.totalScore + questionScore,
-                        maxScore: acc.maxScore + 1
-                    };
                 } else {
                     const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
                     const isCorrect = correctAnswers.size === userAnswersForQuestion.size && 
@@ -176,35 +171,20 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                                 const wasSelected = !hasPassedBefore && (userAnswers[q.id] || []).includes(a.id);
                                                 const isCorrect = !!a.isCorrect;
 
-                                                if (q.isMultipleChoice) {
-                                                    // Logic for multiple choice
-                                                    if (isCorrect && wasSelected) {
-                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                    }
-                                                    if (isCorrect && !wasSelected) {
-                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte manquée)</span></li>;
-                                                    }
-                                                    if (!isCorrect && wasSelected) {
-                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse incorrecte)</span></li>;
-                                                    }
-                                                    // Fallthrough for !isCorrect && !wasSelected
-                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                } else {
-                                                    // Logic for single choice
-                                                    const userSingleAnswer = (userAnswers[q.id] || [])[0];
-                                                    const wasThisOptionSelected = userSingleAnswer === a.id;
-                                                    
-                                                    if (isCorrect) {
-                                                        // Always show the correct answer in green
-                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                    }
-                                                    if (wasThisOptionSelected) {
-                                                        // If this was the user's (wrong) choice, show it in red
-                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse)</span></li>;
-                                                    }
-                                                    // Otherwise, show as neutral
-                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                // Case 1: User selected a correct answer
+                                                if (isCorrect && wasSelected) {
+                                                    return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
                                                 }
+                                                // Case 2: User selected an incorrect answer
+                                                if (!isCorrect && wasSelected) {
+                                                    return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse)</span></li>;
+                                                }
+                                                // Case 3: A correct answer the user did NOT select
+                                                if (isCorrect && !wasSelected) {
+                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4 shrink-0 text-green-400/50" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte)</span></li>;
+                                                }
+                                                // Case 4: An incorrect answer the user did NOT select (neutral)
+                                                return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
                                             })}
                                         </ul>
                                     </div>
