@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,7 +37,7 @@ export default function EditLessonPage({ params }: { params: { courseId: string,
       setChapterTitle(chapter.title);
     }
     setIsLoading(false);
-  }, [params]);
+  }, [params.chapterId, params.lessonId]);
 
   const handleSave = () => {
     setIsSaving(true);

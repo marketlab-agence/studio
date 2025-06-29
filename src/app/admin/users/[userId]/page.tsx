@@ -1,4 +1,3 @@
-
 'use client';
 
 import { MOCK_USERS, MockUser } from '@/lib/users';
@@ -37,7 +36,7 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
       setSelectedRole(userData.role);
     }
     setLoading(false);
-  }, [params]);
+  }, [params.userId]);
 
   const handleRoleSave = () => {
     if (!selectedRole || !user) return;
