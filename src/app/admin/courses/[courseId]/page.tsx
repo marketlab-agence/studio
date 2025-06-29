@@ -23,19 +23,30 @@ import Link from 'next/link';
 import { BookOpen, ChevronRight, UploadCloud, Loader2 } from 'lucide-react';
 import { COURSES } from '@/lib/courses';
 import { publishCourseAction } from '@/actions/courseActions';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { CourseInfo } from '@/types/course.types';
+import type { Tutorial } from '@/types/tutorial.types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CourseChaptersPage() {
   const params = useParams() as { courseId: string };
-  const courseInfo = COURSES.find(c => c.id === params.courseId);
-  const courseChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
-  const [isPublishing, setIsPublishing] = useState(false);
   const router = useRouter();
 
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
+  const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  if (!courseInfo) {
-    notFound();
-  }
+  useEffect(() => {
+    const foundCourse = COURSES.find(c => c.id === params.courseId);
+    const foundChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
+
+    if (foundCourse) {
+      setCourseInfo(foundCourse);
+      setCourseChapters(foundChapters);
+    }
+    setIsLoading(false);
+  }, [params.courseId]);
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -43,6 +54,37 @@ export default function CourseChaptersPage() {
     router.refresh();
     setIsPublishing(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-6 w-1/3" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-60" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-40 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!courseInfo) {
+    notFound();
+  }
 
   return (
     <div className="space-y-6">
