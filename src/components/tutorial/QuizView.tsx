@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,10 +9,22 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Quiz } from '@/types/tutorial.types';
-import { CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
 import { useTutorial } from '@/contexts/TutorialContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { TUTORIALS } from '@/lib/tutorials';
 
 type QuizViewProps = {
     quiz: Quiz;
@@ -22,7 +35,7 @@ type QuizViewProps = {
 type UserAnswers = Record<string, string[]>;
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
-    const { progress } = useTutorial();
+    const { progress, resetChapter, setCurrentLocation } = useTutorial();
     const existingScore = progress.quizScores[quiz.id];
     const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
 
@@ -37,6 +50,14 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         setShowResults(false);
         setCalculatedScore(0);
     }, []);
+    
+    const handleResetChapterAndStartOver = () => {
+        resetChapter(quiz.id);
+        const chapter = TUTORIALS.find(c => c.id === quiz.id);
+        if (chapter && chapter.lessons.length > 0) {
+            setCurrentLocation(chapter.id, chapter.lessons[0].id);
+        }
+    };
 
     useEffect(() => {
         if (hasPassedBefore) {
@@ -177,20 +198,35 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                     </CardContent>
                     <CardFooter className="flex-row-reverse gap-2">
                         {isQuizPassed ? (
-                             <Button onClick={onFinishQuiz}>
+                            <Button onClick={onFinishQuiz}>
                                 Continuer
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <>
-                                <Button onClick={resetQuiz}>
-                                    Recommencer le quiz
-                                </Button>
-                                <Button variant="outline" onClick={onFinishQuiz}>
-                                    Réviser le chapitre
-                                </Button>
-                            </>
+                            <Button onClick={resetQuiz}>
+                                Réessayer le quiz
+                            </Button>
                         )}
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline">
+                                    <History className="mr-2 h-4 w-4" />
+                                    Recommencer le chapitre
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Cette action effacera votre score et votre progression pour ce chapitre. Vous devrez recommencer depuis la première leçon.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetChapterAndStartOver}>Confirmer</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </CardFooter>
                 </Card>
             </div>

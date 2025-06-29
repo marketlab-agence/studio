@@ -13,8 +13,8 @@ const initialProgress: UserProgress = {
     quizScores: {},
     quizAttempts: {},
     completedLessons: new Set(),
-    currentChapterId: TUTORIALS[0]?.id || null,
-    currentLessonId: TUTORIALS[0]?.lessons[0]?.id || null,
+    currentChapterId: null,
+    currentLessonId: null,
     currentView: 'lesson',
 };
 
