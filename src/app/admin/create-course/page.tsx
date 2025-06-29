@@ -34,6 +34,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
+import { type GenerateLessonContentOutput } from '@/types/tutorial.types';
+import { Badge } from '@/components/ui/badge';
 
 type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
 type BuildStep = {
@@ -81,7 +83,7 @@ export default function CreateCoursePage() {
     const [buildSteps, setBuildSteps] = useState<BuildStep[]>([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isBuilding, setIsBuilding] = useState(false);
-    const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+    const [generatedContent, setGeneratedContent] = useState<GenerateLessonContentOutput | { illustrativeContent: string } | null>(null);
 
     const handleGeneratePlan = async () => {
         if (!topic || !targetAudience) {
@@ -111,7 +113,6 @@ export default function CreateCoursePage() {
         try {
             const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
             await savePlanAction(activePlan, generationParams);
-            handleDeletePlan(activePlan.localId);
             toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
             router.push(`/admin/courses`);
         } catch (e) {
@@ -171,9 +172,9 @@ export default function CreateCoursePage() {
                 try {
                     if (step.type === 'lesson' && buildingCourseId) {
                         const result = await generateAndSaveLessonContent(buildingCourseId, step.chapterIndex, step.lessonIndex!);
-                        setGeneratedContent(result.content);
+                        setGeneratedContent(result);
                     } else if (step.type === 'quiz') {
-                        setGeneratedContent(`Le quiz "**${step.title}**" a été créé à partir du plan. Vous pourrez le modifier plus tard dans l'éditeur de cours.`);
+                        setGeneratedContent({ illustrativeContent: `Le quiz "**${step.title}**" a été créé à partir du plan. Vous pourrez le modifier plus tard dans l'éditeur de cours.`});
                     }
                 } catch (e) {
                     setError('Une erreur est survenue lors de la génération du contenu.');
@@ -254,10 +255,30 @@ export default function CreateCoursePage() {
                                         <p>L'IA rédige la leçon...</p>
                                     </motion.div>
                                 ) : generatedContent ? (
-                                     <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                        <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, inline, className, children, ...props}) { return !inline ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
-                                            {generatedContent}
-                                        </ReactMarkdown>
+                                     <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                                        {'illustrativeContent' in generatedContent && (
+                                            <div>
+                                                <h3 className="font-bold text-lg mb-2">Contenu Illustratif</h3>
+                                                <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, inline, className, children, ...props}) { return !inline ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
+                                                    {generatedContent.illustrativeContent}
+                                                </ReactMarkdown>
+                                            </div>
+                                        )}
+                                        {'interactiveComponentName' in generatedContent && 'visualComponentName' in generatedContent && (
+                                            <>
+                                                <Separator />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <h3 className="font-bold text-lg mb-2">Composant Interactif Suggéré</h3>
+                                                        <Badge variant="secondary">{generatedContent.interactiveComponentName}</Badge>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-lg mb-2">Composant Visuel Suggéré</h3>
+                                                        <Badge variant="secondary">{generatedContent.visualComponentName}</Badge>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                      </motion.div>
                                 ) : isBuildComplete ? (
                                      <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full text-center">

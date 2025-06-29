@@ -11,8 +11,9 @@ export interface Lesson {
   id: string;
   title: string;
   objective: string;
-  content: string; // Markdown content
-  componentName?: string;
+  content: string; // Illustrative markdown content
+  interactiveComponentName?: string;
+  visualComponentName?: string;
 }
 
 export interface Quiz {
@@ -52,4 +53,9 @@ export interface UserProgress {
   quizAnswers: Record<string, Record<string, string[]>>;
 }
 
+export type GenerateLessonContentOutput = {
+  illustrativeContent: string;
+  interactiveComponentName: string;
+  visualComponentName: string;
+};
     

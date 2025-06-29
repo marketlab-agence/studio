@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Lesson } from '@/types/tutorial.types';
 import ReactMarkdown from 'react-markdown';
@@ -33,9 +34,25 @@ import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTeste
 import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
 import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
+import { AiHelper } from '@/components/interactive/AiHelper';
+import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
+import { GitCommandSimulator } from '@/components/interactive/GitCommandSimulator';
+import { GitDoctorTool } from '@/components/interactive/GitDoctorTool';
+import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
+import { GitTimeTravel } from '@/components/interactive/GitTimeTravel';
+import { PullRequestCreator } from '@/components/interactive/PullRequestCreator';
+import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
+import { AnimatedFlow } from '@/components/visualizations/AnimatedFlow';
+import { BranchDiagram } from '@/components/visualizations/BranchDiagram';
+import { CommitTimeline } from '@/components/visualizations/CommitTimeline';
+import { ConceptDiagram } from '@/components/visualizations/ConceptDiagram';
+import { DiffViewer } from '@/components/visualizations/DiffViewer';
+import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
+import { RepoComparison } from '@/components/visualizations/RepoComparison';
+import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 
 // Create a map from component name strings to actual components
-const componentMap: Record<string, React.ComponentType> = {
+const componentMap: { [key: string]: React.ComponentType<any> } = {
     StagingAreaVisualizer,
     VersioningDemo,
     GitFlowDiagram,
@@ -63,6 +80,22 @@ const componentMap: Record<string, React.ComponentType> = {
     AliasCreator,
     SecurityScanner,
     TrunkBasedDevelopmentVisualizer,
+    AiHelper,
+    CollaborationSimulator,
+    GitCommandSimulator,
+    GitDoctorTool,
+    GitRepositoryPlayground,
+    GitTimeTravel,
+    PullRequestCreator,
+    WorkflowDesigner,
+    AnimatedFlow,
+    BranchDiagram,
+    CommitTimeline,
+    ConceptDiagram,
+    DiffViewer,
+    LanguagesChart,
+    RepoComparison,
+    StatisticsChart,
 };
 
 type LessonViewProps = {
@@ -70,7 +103,8 @@ type LessonViewProps = {
 };
 
 export function LessonView({ lesson }: LessonViewProps) {
-    const InteractiveComponent = lesson.componentName ? componentMap[lesson.componentName] : null;
+    const InteractiveComponent = lesson.interactiveComponentName ? componentMap[lesson.interactiveComponentName] : null;
+    const VisualComponent = lesson.visualComponentName ? componentMap[lesson.visualComponentName] : null;
 
     return (
         <div>
@@ -109,8 +143,16 @@ export function LessonView({ lesson }: LessonViewProps) {
             </article>
             
             {InteractiveComponent && (
-                <div className="mt-8">
+                <div className="mt-12">
+                    <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Mise en Pratique</h2>
                     <InteractiveComponent />
+                </div>
+            )}
+
+            {VisualComponent && (
+                <div className="mt-12">
+                    <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Visualisation</h2>
+                    <VisualComponent />
                 </div>
             )}
         </div>

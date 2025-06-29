@@ -6,7 +6,7 @@ import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/crea
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
-import type { Tutorial, Lesson, Quiz, Question } from '@/types/tutorial.types';
+import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 
 const slugify = (text: string) =>
@@ -76,6 +76,8 @@ export async function buildCourseFromPlanAction(courseId: string) {
             title: lessonPlan.title,
             objective: lessonPlan.objective,
             content: `Contenu en attente de génération pour "${lessonPlan.title}"...`,
+            interactiveComponentName: undefined,
+            visualComponentName: undefined,
         }));
 
         const newTutorial: Tutorial = {
@@ -129,11 +131,28 @@ export async function publishCourseAction(courseId: string) {
     }
 }
 
+const INTERACTIVE_COMPONENTS = [
+    "AiHelper", "BranchCreator", "CollaborationSimulator", "ConflictResolver", 
+    "GitCommandSimulator", "GitDoctorTool", "GitRepositoryPlayground", "GitTimeTravel", 
+    "MergeSimulator", "PullRequestCreator", "WorkflowDesigner", "VersioningDemo", 
+    "StagingAreaVisualizer", "PushPullAnimator", "ForkVsCloneDemo", "PRWorkflowSimulator", 
+    "ConflictPlayground", "UndoCommandComparison", "TimelineNavigator", "ReflogExplorer", 
+    "GitHubInterfaceSimulator", "IssueTracker", "ActionsWorkflowBuilder", "OpenSourceSimulator", 
+    "ProjectDashboard", "WorkflowComparisonTable", "WorkflowSimulator", "CommitMessageLinter", 
+    "GitignoreTester", "AliasCreator", "SecurityScanner"
+];
+
+const VISUAL_COMPONENTS = [
+    "AnimatedFlow", "BranchDiagram", "CommitTimeline", "ConceptDiagram", "DiffViewer", 
+    "GitGraph", "RepoComparison", "StatisticsChart", "LanguagesChart", 
+    "TrunkBasedDevelopmentVisualizer", "ConflictVisualizer"
+];
+
 export async function generateAndSaveLessonContent(
   courseId: string,
   chapterIndex: number,
   lessonIndex: number,
-): Promise<{ content: string }> {
+): Promise<GenerateLessonContentOutput> {
   const course = COURSES.find(c => c.id === courseId);
   if (!course || !course.plan) {
     throw new Error('Course or course plan not found.');
@@ -157,21 +176,27 @@ export async function generateAndSaveLessonContent(
     throw new Error('Lesson plan or tutorial lesson structure not found.');
   }
   
+  const chapterContext = chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n');
+
   const input: GenerateLessonContentInput = {
     lessonTitle: lessonPlan.title,
     lessonObjective: lessonPlan.objective,
     courseTopic: generationParams.topic,
     targetAudience: generationParams.targetAudience,
     courseLanguage: generationParams.courseLanguage,
+    chapterContext,
+    availableInteractiveComponents: INTERACTIVE_COMPONENTS,
+    availableVisualComponents: VISUAL_COMPONENTS,
   };
 
-  const { content } = await generateLessonContent(input);
+  const generatedLesson = await generateLessonContent(input);
 
-  // Update the in-memory data
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = content;
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = generatedLesson.illustrativeContent;
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = generatedLesson.interactiveComponentName;
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = generatedLesson.visualComponentName;
   
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
-  return { content };
+  return generatedLesson;
 }
