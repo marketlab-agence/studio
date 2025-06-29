@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle, Pencil } from 'lucide-react';
+import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle, Pencil, Puzzle, BookCopy } from 'lucide-react';
 import { createCoursePlan, type CreateCourseOutput } from '@/ai/flows/create-course-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,7 +18,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useRouter } from 'next/navigation';
-import { Puzzle } from 'lucide-react';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
