@@ -24,13 +24,14 @@ function ActionButtons({ course, onCreating }: { course: AdminCourse, onCreating
         onCreating(course.id);
         await buildCourseFromPlanAction(course.id);
         router.push(`/admin/courses/${course.id}`);
+        router.refresh();
     };
 
     if (course.status === 'Plan') {
         return (
             <div className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin?tab=create`}>Modifier Plan</Link>
+                    <Link href={`/admin/create-course?planId=${course.id}`}>Modifier Plan</Link>
                 </Button>
                 <Button onClick={handleCreateCourse} disabled={isCreating} size="sm">
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -92,7 +93,7 @@ export default function AdminCoursesListPage() {
             </div>
         </div>
         <Button asChild>
-          <Link href="/admin?tab=create">
+          <Link href="/admin/create-course">
             <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
           </Link>
         </Button>
@@ -102,7 +103,7 @@ export default function AdminCoursesListPage() {
         <CardHeader>
           <CardTitle>Toutes les formations</CardTitle>
           <CardDescription>
-            Liste de toutes les formations publiées et en brouillon.
+            Liste de toutes les formations publiées, en brouillon ou en plan.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -19,22 +19,26 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
+import { COURSES } from '@/lib/courses';
 
 export default function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
   const chapter = TUTORIALS.find(c => c.id === params.chapterId);
+  const course = COURSES.find(c => c.id === params.courseId);
 
-  if (!chapter) {
+  if (!chapter || !course) {
     notFound();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         <Link href="/admin" className="hover:text-primary">Admin</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary">Formation</Link>
+        <Link href="/admin/courses" className="hover:text-primary">Formations</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-foreground">Chapitre: {chapter.title}</span>
+        <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary max-w-xs truncate">{course.title}</Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="font-semibold text-foreground max-w-xs truncate">{chapter.title}</span>
       </div>
 
       <div className="flex justify-between items-start">

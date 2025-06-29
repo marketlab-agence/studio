@@ -46,10 +46,12 @@ export default function CourseChaptersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         <Link href="/admin" className="hover:text-primary">Admin</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-foreground">Formation: {courseInfo.title}</span>
+        <Link href="/admin/courses" className="hover:text-primary">Formations</Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="font-semibold text-foreground max-w-xs truncate">{courseInfo.title}</span>
       </div>
 
       <div className="flex items-center justify-between">
