@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FileText, ChevronRight } from 'lucide-react';
+import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
 
 export default function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
   const chapter = TUTORIALS.find(c => c.id === params.chapterId);
@@ -37,15 +37,24 @@ export default function ChapterLessonsPage({ params }: { params: { courseId: str
         <span className="font-semibold text-foreground">Chapitre: {chapter.title}</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="bg-primary/10 p-2 rounded-lg">
-          <FileText className="h-8 w-8 text-primary" />
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <FileText className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leçons du Chapitre</h1>
+            <p className="text-muted-foreground">{chapter.title}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leçons du Chapitre</h1>
-          <p className="text-muted-foreground">{chapter.title}</p>
-        </div>
+        <Button asChild variant="secondary">
+            <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/quiz`}>
+                <GraduationCap className="mr-2 h-4 w-4" />
+                Modifier le Quiz
+            </Link>
+        </Button>
       </div>
+
 
       <Card>
         <CardHeader>
