@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { savePlanAction } from '@/actions/courseActions';
+import { buildCourseFromPlanAction, savePlanAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -49,6 +49,7 @@ export default function CreateCoursePage() {
     const [feedbackTiming, setFeedbackTiming] = useState<'end' | 'immediate'>('end');
     const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
     const [isSavingPlan, setIsSavingPlan] = useState(false);
+    const [isCreatingCourse, setIsCreatingCourse] = useState(false);
 
     const [generatedPlans, setGeneratedPlans] = useLocalStorage<PlanWithId[]>('generatedCoursePlans', [], {
         deserializer: (value) => {
@@ -131,6 +132,40 @@ export default function CreateCoursePage() {
         }
     };
 
+    const handleCreateCourse = async () => {
+        if (!activePlan) return;
+        setIsCreatingCourse(true);
+        setError(null);
+        try {
+            const generationParams: CreateCourseInput = { 
+                topic, 
+                targetAudience,
+                numChapters: numChapters ? parseInt(numChapters, 10) : undefined,
+                numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined,
+                numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined,
+                courseLanguage: language || undefined,
+                allowMultipleChoice: allowMultipleChoice,
+                feedbackTiming: feedbackTiming,
+            };
+            const { courseId } = await savePlanAction(activePlan, generationParams);
+            
+            await buildCourseFromPlanAction(courseId);
+
+            toast({
+                title: "Formation créée !",
+                description: "La structure du cours, leçons et quiz ont été générés. Redirection...",
+            });
+            
+            handleDeletePlan(activePlan.localId);
+
+            router.push(`/admin/courses/${courseId}`);
+        } catch (e) {
+            console.error(e);
+            setError("Une erreur est survenue lors de la création complète de la formation. Veuillez réessayer.");
+            setIsCreatingCourse(false);
+        }
+    };
+
     const updateActivePlan = (updater: (plan: PlanWithId) => PlanWithId) => {
         if (!activePlanId) return;
         setGeneratedPlans(prevPlans =>
@@ -179,7 +214,18 @@ export default function CreateCoursePage() {
                   </AccordionItem>
               ))}
           </Accordion>
-          <Button onClick={addChapter} variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Ajouter un chapitre</Button><Separator /><Button onClick={handleSaveCourse} size="lg" disabled={isSavingPlan}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan Actif</Button>
+          <Button onClick={addChapter} variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Ajouter un chapitre</Button>
+          <Separator />
+          <div className="flex flex-wrap gap-4">
+              <Button onClick={handleSaveCourse} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse}>
+                  {isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} 
+                  Sauvegarder le Plan
+              </Button>
+              <Button onClick={handleCreateCourse} size="lg" disabled={isSavingPlan || isCreatingCourse}>
+                  {isCreatingCourse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>} 
+                  Créer la Formation
+              </Button>
+          </div>
       </div>
     );
 
