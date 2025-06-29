@@ -38,7 +38,7 @@ export default function EditLessonPage({ params }: { params: { courseId: string,
       setChapterTitle(chapter.title);
     }
     setIsLoading(false);
-  }, [params.chapterId, params.lessonId]);
+  }, [params]);
 
   const handleSave = () => {
     setIsSaving(true);

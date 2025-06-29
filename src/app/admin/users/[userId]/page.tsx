@@ -37,7 +37,7 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
       setSelectedRole(userData.role);
     }
     setLoading(false);
-  }, [params.userId]);
+  }, [params]);
 
   const handleRoleSave = () => {
     if (!selectedRole || !user) return;
