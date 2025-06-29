@@ -114,6 +114,7 @@ export default function CreateCoursePage() {
             const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
             await savePlanAction(activePlan, generationParams);
             toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
+            router.refresh();
             router.push(`/admin/courses`);
         } catch (e) {
             console.error(e);
@@ -164,6 +165,7 @@ export default function CreateCoursePage() {
             title: "Formation créée avec succès !",
             description: "Vous êtes redirigé vers la liste des formations où vous pouvez maintenant la modifier.",
         });
+        router.refresh();
         router.push(`/admin/courses`);
     };
 
