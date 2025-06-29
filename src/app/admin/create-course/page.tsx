@@ -158,6 +158,9 @@ export default function CreateCoursePage() {
 
     const handleFinishBuild = () => {
         if (activePlan) handleDeletePlan(activePlan.localId);
+        // Crucial: Refresh the client-side router cache to ensure the new
+        // course data is available on the destination page.
+        router.refresh();
         router.push(`/admin/courses/${buildingCourseId}`);
     };
 
