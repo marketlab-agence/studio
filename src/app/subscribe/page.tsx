@@ -29,9 +29,44 @@ export default function SubscribePage() {
     }
   }, [isPremium, loading, router]);
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     setIsSubscribing(true);
-    // Simulate API call to payment provider
+
+    // --- LOGIQUE DE PAIEMENT POUR LA PRODUCTION ---
+    // Le code ci-dessous est un guide pour intégrer un système de paiement réel comme Stripe.
+    // Vous auriez besoin d'un backend pour gérer la création de la session de paiement de manière sécurisée.
+
+    // ÉTAPE 1: Appeler votre backend pour créer une session de paiement.
+    // Cette fonction (à créer) communiquerait avec votre serveur.
+    // Exemple :
+    // try {
+    //   const response = await fetch('/api/create-checkout-session', { 
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ planId: 'premium' }) // Envoyez l'ID du plan ou le prix
+    //   });
+    //   const { sessionId } = await response.json();
+    //
+    //   // ÉTAPE 2: Rediriger l'utilisateur vers la page de paiement de Stripe.
+    //   // Vous utiliseriez le SDK Stripe.js pour cela.
+    //   const stripe = await getStripe(); // Fonction utilitaire pour charger Stripe.js
+    //   const { error } = await stripe.redirectToCheckout({ sessionId });
+    //
+    //   if (error) {
+    //     console.error(error);
+    //     toast({ title: 'Erreur', description: 'Impossible de rediriger vers la page de paiement.', variant: 'destructive' });
+    //     setIsSubscribing(false);
+    //   }
+    // } catch (error) {
+    //     console.error("Failed to create checkout session:", error);
+    //     toast({ title: 'Erreur de serveur', description: 'Impossible de lancer le processus de paiement.', variant: 'destructive' });
+    //     setIsSubscribing(false);
+    // }
+    //
+    // L'ÉTAPE 3 (non visible ici) serait sur votre backend : un "webhook" écoute la confirmation de paiement de Stripe
+    // pour mettre à jour le statut de l'utilisateur dans votre base de données.
+
+    // --- SIMULATION ACTUELLE (à remplacer par la logique de production) ---
     setTimeout(() => {
         if (updateUserPlan) {
             updateUserPlan('Premium');
@@ -40,9 +75,9 @@ export default function SubscribePage() {
             title: "Félicitations et bienvenue !",
             description: "Votre abonnement Premium est maintenant actif.",
         });
-        // Redirect to the AI assistant page as a reward
         router.push('/ai-assistant');
     }, 2000);
+    // --- FIN DE LA SIMULATION ---
   };
 
   if (loading || !user || isPremium) {
@@ -90,12 +125,12 @@ export default function SubscribePage() {
                 <CardFooter>
                     <Button onClick={handleSubscribe} disabled={isSubscribing} className="w-full" size="lg">
                         {isSubscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4" />}
-                        {isSubscribing ? "Traitement en cours..." : "Confirmer et Payer (Simulation)"}
+                        {isSubscribing ? "Redirection..." : "S'abonner et Payer"}
                     </Button>
                 </CardFooter>
             </Card>
             <p className="text-xs text-center text-muted-foreground">
-              Ceci est une simulation. Aucune information de paiement n'est requise.
+              Paiement sécurisé. Vous allez être redirigé vers notre partenaire de paiement.
             </p>
         </div>
     </main>
