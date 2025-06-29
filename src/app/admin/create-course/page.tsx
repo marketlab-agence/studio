@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle, Pencil, Puzzle, BookCopy } from 'lucide-react';
+import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle, Pencil, History } from 'lucide-react';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,6 +18,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
+type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
@@ -31,10 +34,13 @@ export default function CreateCoursePage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [coursePlan, setCoursePlan] = useState<CreateCourseOutput | null>(null);
+    const [generatedPlans, setGeneratedPlans] = useState<PlanWithId[]>([]);
+    const [activePlanId, setActivePlanId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+
+    const activePlan = useMemo(() => generatedPlans.find(p => p.localId === activePlanId), [generatedPlans, activePlanId]);
 
     const handleGeneratePlan = async () => {
         if (!topic) {
@@ -47,7 +53,7 @@ export default function CreateCoursePage() {
         }
         setIsLoading(true);
         setError(null);
-        setCoursePlan(null);
+        setActivePlanId(null);
         try {
             const plan = await createCoursePlan({ 
                 topic, 
@@ -59,7 +65,9 @@ export default function CreateCoursePage() {
                 allowMultipleChoice: allowMultipleChoice,
                 feedbackTiming: feedbackTiming,
             });
-            setCoursePlan(plan);
+            const newPlan: PlanWithId = { ...plan, localId: Date.now().toString(), createdAt: new Date() };
+            setGeneratedPlans(prev => [newPlan, ...prev]);
+            setActivePlanId(newPlan.localId);
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors de la génération du plan. Veuillez réessayer.");
@@ -69,7 +77,7 @@ export default function CreateCoursePage() {
     };
     
     const handleSaveCourse = async () => {
-        if (!coursePlan) return;
+        if (!activePlan) return;
         setIsSaving(true);
         try {
             const generationParams: CreateCourseInput = {
@@ -82,7 +90,7 @@ export default function CreateCoursePage() {
                 allowMultipleChoice: allowMultipleChoice,
                 feedbackTiming: feedbackTiming,
             };
-            await savePlanAction(coursePlan, generationParams);
+            const { courseId } = await savePlanAction(activePlan, generationParams);
             toast({
                 title: "Plan sauvegardé !",
                 description: "Redirection vers la liste des formations...",
@@ -95,97 +103,119 @@ export default function CreateCoursePage() {
         }
     };
 
+    const updateActivePlan = (updater: (plan: PlanWithId) => PlanWithId) => {
+        if (!activePlanId) return;
+        setGeneratedPlans(prevPlans =>
+            prevPlans.map(p => (p.localId === activePlanId ? updater(p) : p))
+        );
+    };
+
     const handlePlanChange = (field: 'title' | 'description', value: string) => {
-        setCoursePlan(prev => prev ? { ...prev, [field]: value } : null);
+        updateActivePlan(plan => ({ ...plan, [field]: value }));
     };
 
     const handleChapterChange = (chapterIndex: number, field: 'title', value: string) => {
-        if (!coursePlan) return;
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex] = { ...newChapters[chapterIndex], [field]: value };
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex] = { ...newChapters[chapterIndex], [field]: value };
+            return { ...plan, chapters: newChapters };
+        });
     };
 
     const handleLessonChange = (chapterIndex: number, lessonIndex: number, field: keyof CreateCourseOutput['chapters'][0]['lessons'][0], value: string) => {
-        if (!coursePlan) return;
-        const newChapters = [...coursePlan.chapters];
-        const newLessons = [...newChapters[chapterIndex].lessons];
-        newLessons[lessonIndex] = { ...newLessons[lessonIndex], [field]: value };
-        newChapters[chapterIndex] = { ...newChapters[chapterIndex], lessons: newLessons };
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+         updateActivePlan(plan => {
+            const newChapters = [...plan.chapters];
+            const newLessons = [...newChapters[chapterIndex].lessons];
+            newLessons[lessonIndex] = { ...newLessons[lessonIndex], [field]: value };
+            newChapters[chapterIndex] = { ...newChapters[chapterIndex], lessons: newLessons };
+            return { ...plan, chapters: newChapters };
+        });
     };
     
     const handleQuizTitleChange = (chapterIndex: number, value: string) => {
-        if (!coursePlan) return;
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].quiz.title = value;
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex].quiz.title = value;
+            return { ...plan, chapters: newChapters };
+        });
     };
 
     const handleQuestionChange = (chapterIndex: number, questionIndex: number, field: keyof CreateCourseOutput['chapters'][0]['quiz']['questions'][0], value: string | boolean) => {
-      if (!coursePlan) return;
-      const newChapters = [...coursePlan.chapters];
-      const newQuestions = [...newChapters[chapterIndex].quiz.questions];
-      (newQuestions[questionIndex] as any)[field] = value;
-      newChapters[chapterIndex].quiz.questions = newQuestions;
-      setCoursePlan({ ...coursePlan, chapters: newChapters });
+      updateActivePlan(plan => {
+          const newChapters = [...plan.chapters];
+          const newQuestions = [...newChapters[chapterIndex].quiz.questions];
+          (newQuestions[questionIndex] as any)[field] = value;
+          newChapters[chapterIndex].quiz.questions = newQuestions;
+          return { ...plan, chapters: newChapters };
+      });
     };
 
     const addChapter = () => {
-        if (!coursePlan) return;
-        const newChapter = {
-            title: 'Nouveau Chapitre',
-            lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' }],
-            quiz: { 
-                title: 'Quiz du nouveau chapitre', 
-                questions: [{ 
-                    text: 'Nouvelle question', 
-                    answers: [{text: 'Réponse correcte', isCorrect: true}, {text: 'Réponse incorrecte', isCorrect: false}],
-                    isMultipleChoice: false
-                }],
-                feedbackTiming: 'end' as 'end' | 'immediate'
-            }
-        };
-        setCoursePlan({ ...coursePlan, chapters: [...coursePlan.chapters, newChapter] });
+        updateActivePlan(plan => {
+            const newChapter = {
+                title: 'Nouveau Chapitre',
+                lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' }],
+                quiz: { 
+                    title: 'Quiz du nouveau chapitre', 
+                    questions: [{ 
+                        text: 'Nouvelle question', 
+                        answers: [{text: 'Réponse correcte', isCorrect: true}, {text: 'Réponse incorrecte', isCorrect: false}],
+                        isMultipleChoice: false
+                    }],
+                    feedbackTiming: 'end' as 'end' | 'immediate'
+                }
+            };
+            return { ...plan, chapters: [...plan.chapters, newChapter] };
+        });
     };
     
     const removeChapter = (chapterIndex: number) => {
-        if (!coursePlan) return;
-        setCoursePlan({ ...coursePlan, chapters: coursePlan.chapters.filter((_, i) => i !== chapterIndex) });
+        updateActivePlan(plan => ({ ...plan, chapters: plan.chapters.filter((_, i) => i !== chapterIndex) }));
     };
     
     const addLesson = (chapterIndex: number) => {
-        if (!coursePlan) return;
-        const newLesson = { title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' };
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].lessons.push(newLesson);
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newLesson = { title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' };
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex].lessons.push(newLesson);
+            return { ...plan, chapters: newChapters };
+        });
     };
     
     const removeLesson = (chapterIndex: number, lessonIndex: number) => {
-        if (!coursePlan) return;
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].lessons = newChapters[chapterIndex].lessons.filter((_, i) => i !== lessonIndex);
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex].lessons = newChapters[chapterIndex].lessons.filter((_, i) => i !== lessonIndex);
+            return { ...plan, chapters: newChapters };
+        });
     };
     
     const addQuizQuestion = (chapterIndex: number) => {
-        if (!coursePlan) return;
-        const newQuestion = { 
-            text: 'Nouvelle question', 
-            answers: [{text: 'Réponse A', isCorrect: true}, {text: 'Réponse B', isCorrect: false}],
-            isMultipleChoice: false
-        };
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].quiz.questions.push(newQuestion);
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newQuestion = { 
+                text: 'Nouvelle question', 
+                answers: [{text: 'Réponse A', isCorrect: true}, {text: 'Réponse B', isCorrect: false}],
+                isMultipleChoice: false
+            };
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex].quiz.questions.push(newQuestion);
+            return { ...plan, chapters: newChapters };
+        });
     };
 
     const removeQuizQuestion = (chapterIndex: number, questionIndex: number) => {
-        if (!coursePlan) return;
-        const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].quiz.questions = newChapters[chapterIndex].quiz.questions.filter((_, i) => i !== questionIndex);
-        setCoursePlan({ ...coursePlan, chapters: newChapters });
+        updateActivePlan(plan => {
+            const newChapters = [...plan.chapters];
+            newChapters[chapterIndex].quiz.questions = newChapters[chapterIndex].quiz.questions.filter((_, i) => i !== questionIndex);
+            return { ...plan, chapters: newChapters };
+        });
+    };
+
+    const handleDeletePlan = (idToDelete: string) => {
+        setGeneratedPlans(prev => prev.filter(p => p.localId !== idToDelete));
+        if (activePlanId === idToDelete) {
+            setActivePlanId(null);
+        }
     };
 
     const renderLoadingState = () => (
@@ -200,21 +230,21 @@ export default function CreateCoursePage() {
         </div>
     );
     
-    const renderEditablePlan = () => coursePlan && (
+    const renderEditablePlan = () => activePlan && (
       <div className="space-y-6">
           <div className="space-y-4 rounded-lg border bg-background p-6">
               <div className="space-y-2">
                   <Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label>
-                  <Input id="courseTitle" value={coursePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" />
+                  <Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="courseDescription" className="font-semibold">Description</Label>
-                  <Textarea id="courseDescription" value={coursePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} />
+                  <Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} />
               </div>
           </div>
 
-          <Accordion type="multiple" defaultValue={coursePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">
-              {coursePlan.chapters.map((chapter, chapterIndex) => (
+          <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">
+              {activePlan.chapters.map((chapter, chapterIndex) => (
                    <AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild>
                       <Card>
                           <div className="flex w-full items-start justify-between p-6">
@@ -251,7 +281,7 @@ export default function CreateCoursePage() {
                                                 <Button variant="ghost" size="icon" className="mt-6"><Pencil className="h-4 w-4 text-muted-foreground"/></Button>
                                                   <div className="flex-1 space-y-4">
                                                       <div className="space-y-2">
-                                                        <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label>
+                                                        <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookOpen className="h-4 w-4"/> Titre & Objectif</Label>
                                                         <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" />
                                                         <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/>
                                                       </div>
@@ -310,10 +340,10 @@ export default function CreateCoursePage() {
           
           <Button onClick={handleSaveCourse} size="lg" disabled={isSaving}>
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
-              Sauvegarder le Plan
+              Sauvegarder le Plan Actif
           </Button>
       </div>
-  );
+    );
     
   return (
     <div>
@@ -433,14 +463,45 @@ export default function CreateCoursePage() {
         </CardContent>
       </Card>
       
-      {(isLoading || coursePlan) && (
+      {generatedPlans.length > 0 && (
+          <Card className="mt-8">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle>
+                  <CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                  {generatedPlans.map((plan) => (
+                      <div key={plan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === plan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}>
+                          <div>
+                              <p className="font-semibold">{plan.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                  {plan.chapters.length} chapitres - Généré à {plan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                          </div>
+                          <div className="flex gap-2 self-end sm:self-center">
+                              <Button variant="outline" size="sm" onClick={() => setActivePlanId(plan.localId)} disabled={activePlanId === plan.localId}>
+                                  <Pencil className="mr-2 h-4 w-4"/>
+                                  Modifier
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleDeletePlan(plan.localId)}>
+                                  <Trash2 className="mr-2 h-4 w-4"/>
+                                  Supprimer
+                              </Button>
+                          </div>
+                      </div>
+                  ))}
+              </CardContent>
+          </Card>
+      )}
+
+      {(isLoading || activePlan) && (
         <Card className="mt-8">
             <CardHeader>
-                <CardTitle>2. Plan de Formation Généré</CardTitle>
+                <CardTitle>2. Plan de Formation Actif</CardTitle>
                  <CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription>
             </CardHeader>
             <CardContent>
-                {isLoading ? renderLoadingState() : coursePlan && renderEditablePlan()}
+                {isLoading ? renderLoadingState() : activePlan && renderEditablePlan()}
             </CardContent>
         </Card>
       )}
