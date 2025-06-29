@@ -30,7 +30,7 @@ function ActionButtons({ course, onCreating }: { course: AdminCourse, onCreating
         return (
             <div className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/create-course`}>Modifier Plan</Link>
+                    <Link href={`/admin?tab=create`}>Modifier Plan</Link>
                 </Button>
                 <Button onClick={handleCreateCourse} disabled={isCreating} size="sm">
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -92,7 +92,7 @@ export default function AdminCoursesListPage() {
             </div>
         </div>
         <Button asChild>
-          <Link href="/admin/create-course">
+          <Link href="/admin?tab=create">
             <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
           </Link>
         </Button>
