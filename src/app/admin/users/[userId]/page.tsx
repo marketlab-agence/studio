@@ -28,15 +28,16 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
   const { toast } = useToast();
   const { user: authUser } = useAuth();
   const { overallProgress } = useTutorial();
+  const { userId } = params;
 
   useEffect(() => {
-    const userData = MOCK_USERS.find(u => u.id === params.userId);
+    const userData = MOCK_USERS.find(u => u.id === userId);
     if (userData) {
       setUser(userData);
       setSelectedRole(userData.role);
     }
     setLoading(false);
-  }, [params.userId]);
+  }, [userId]);
 
   const handleRoleSave = () => {
     if (!selectedRole || !user) return;

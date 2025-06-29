@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditLessonPage({ params }: { params: { courseId: string, chapterId: string, lessonId: string } }) {
   const { toast } = useToast();
+  const { courseId, chapterId, lessonId } = params;
   
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [chapterTitle, setChapterTitle] = useState('');
@@ -29,15 +30,15 @@ export default function EditLessonPage({ params }: { params: { courseId: string,
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const chapter = TUTORIALS.find(c => c.id === params.chapterId);
-    const lessonData = chapter?.lessons.find(l => l.id === params.lessonId);
+    const chapter = TUTORIALS.find(c => c.id === chapterId);
+    const lessonData = chapter?.lessons.find(l => l.id === lessonId);
     
     if (lessonData && chapter) {
       setLesson(lessonData);
       setChapterTitle(chapter.title);
     }
     setIsLoading(false);
-  }, [params.chapterId, params.lessonId]);
+  }, [chapterId, lessonId]);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -96,9 +97,9 @@ export default function EditLessonPage({ params }: { params: { courseId: string,
       <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         <Link href="/admin" className="hover:text-primary">Admin</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary">Formation</Link>
+        <Link href={`/admin/courses/${courseId}`} className="hover:text-primary">Formation</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}`} className="hover:text-primary_foreground truncate max-w-xs">{chapterTitle}</Link>
+        <Link href={`/admin/courses/${courseId}/chapters/${chapterId}`} className="hover:text-primary_foreground truncate max-w-xs">{chapterTitle}</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground truncate max-w-xs">{lesson.title}</span>
       </div>
