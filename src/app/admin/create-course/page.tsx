@@ -72,12 +72,12 @@ export default function CreateCoursePage() {
         if (!coursePlan) return;
         setIsSaving(true);
         try {
-            const { courseId } = await saveCoursePlanAction(coursePlan);
+            await saveCoursePlanAction(coursePlan);
             toast({
                 title: "Formation sauvegardée !",
-                description: "Redirection vers la page de la nouvelle formation...",
+                description: "Redirection vers la liste des formations...",
             });
-            router.push(`/admin/courses/${courseId}`);
+            router.push(`/admin/courses`);
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors de la sauvegarde du plan. Veuillez réessayer.");
@@ -125,7 +125,7 @@ export default function CreateCoursePage() {
         if (!coursePlan) return;
         const newChapter = {
             title: 'Nouveau Chapitre',
-            lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.', content: 'Contenu à rédiger.', componentName: '' }],
+            lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' }],
             quiz: { 
                 title: 'Quiz du nouveau chapitre', 
                 questions: [{ 
@@ -146,7 +146,7 @@ export default function CreateCoursePage() {
     
     const addLesson = (chapterIndex: number) => {
         if (!coursePlan) return;
-        const newLesson = { title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.', content: 'Contenu à rédiger.', componentName: '' };
+        const newLesson = { title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' };
         const newChapters = [...coursePlan.chapters];
         newChapters[chapterIndex].lessons.push(newLesson);
         setCoursePlan({ ...coursePlan, chapters: newChapters });
@@ -244,14 +244,6 @@ export default function CreateCoursePage() {
                                                         <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label>
                                                         <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" />
                                                         <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/>
-                                                      </div>
-                                                      <div className="space-y-2">
-                                                        <Label htmlFor={`lesson-content-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Contenu Théorique</Label>
-                                                        <Textarea id={`lesson-content-${chapterIndex}-${lessonIndex}`} value={lesson.content} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'content', e.target.value)} placeholder="Contenu de la leçon" rows={4}/>
-                                                      </div>
-                                                      <div className="space-y-2">
-                                                        <Label htmlFor={`lesson-component-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><Puzzle className="h-4 w-4"/> Composant Interactif (Optionnel)</Label>
-                                                        <Input id={`lesson-component-${chapterIndex}-${lessonIndex}`} value={lesson.componentName || ''} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'componentName', e.target.value)} placeholder="Nom du composant (ex: StagingAreaVisualizer)" />
                                                       </div>
                                                   </div>
                                                   <Button variant="ghost" size="icon" onClick={() => removeLesson(chapterIndex, lessonIndex)}>
