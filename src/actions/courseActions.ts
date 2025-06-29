@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { type CreateCourseOutput } from '@/ai/flows/create-course-flow';
+import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
@@ -19,35 +19,64 @@ const slugify = (text: string) =>
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 
-export async function saveCoursePlanAction(plan: CreateCourseOutput): Promise<{ courseId: string }> {
+export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
     const courseId = slugify(plan.title);
     
-    // 1. Add course to registry
     if (!COURSES.find(c => c.id === courseId)) {
         COURSES.push({
             id: courseId,
             title: plan.title,
             description: plan.description,
-            status: 'Brouillon',
+            status: 'Plan',
+            plan: plan,
+            generationParams: params,
         });
+    } else {
+        const index = COURSES.findIndex(c => c.id === courseId);
+        if (index !== -1) {
+            COURSES[index] = {
+                ...COURSES[index],
+                title: plan.title,
+                description: plan.description,
+                status: 'Plan',
+                plan: plan,
+                generationParams: params,
+            };
+        }
     }
 
-    // 2. Create and add chapters, lessons, and quizzes
+    revalidatePath('/admin/courses');
+    return { courseId };
+}
+
+
+export async function buildCourseFromPlanAction(courseId: string) {
+    const courseIndex = COURSES.findIndex(c => c.id === courseId);
+    if (courseIndex === -1) {
+        console.error("Course not found for building");
+        return;
+    }
+    
+    const course = COURSES[courseIndex];
+    const plan = course.plan;
+
+    if (!plan) {
+        console.error("Plan not found for building course");
+        return;
+    }
+
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
         
-        // Ensure chapter doesn't already exist before adding
         if (TUTORIALS.find(t => t.id === chapterId)) return;
 
-        // Create lessons
         const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
             id: `${chapterId}-l${lessonIndex + 1}`,
             title: lessonPlan.title,
             objective: lessonPlan.objective,
-            content: `# ${lessonPlan.title}\n\nContenu de la leçon à rédiger...`, // Placeholder content
+            content: `# ${lessonPlan.title}\n\nContenu de la leçon à rédiger...`,
         }));
 
-        // Create tutorial (chapter)
         const newTutorial: Tutorial = {
             id: chapterId,
             courseId: courseId,
@@ -57,7 +86,6 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput): Promise<{ 
         };
         TUTORIALS.push(newTutorial);
 
-        // Create quiz
         const quizQuestions: Question[] = chapterPlan.quiz.questions.map((q, questionIndex) => ({
             id: `${chapterId}-q${questionIndex + 1}`,
             text: q.text,
@@ -79,11 +107,18 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput): Promise<{ 
         QUIZZES[chapterId] = newQuiz;
     });
 
+    COURSES[courseIndex] = {
+        ...course,
+        status: 'Brouillon',
+        plan: undefined,
+        generationParams: undefined,
+    };
+    
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
     revalidatePath(`/admin/courses/${courseId}`);
-    return { courseId };
 }
+
 
 export async function publishCourseAction(courseId: string) {
     const course = COURSES.find(c => c.id === courseId);

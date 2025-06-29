@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle, Pencil, Puzzle, BookCopy } from 'lucide-react';
-import { createCoursePlan, type CreateCourseOutput } from '@/ai/flows/create-course-flow';
+import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { saveCoursePlanAction } from '@/actions/courseActions';
+import { savePlanAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -72,9 +72,19 @@ export default function CreateCoursePage() {
         if (!coursePlan) return;
         setIsSaving(true);
         try {
-            await saveCoursePlanAction(coursePlan);
+            const generationParams: CreateCourseInput = {
+                topic, 
+                targetAudience,
+                numChapters: numChapters ? parseInt(numChapters, 10) : undefined,
+                numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined,
+                numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined,
+                courseLanguage: language || undefined,
+                allowMultipleChoice: allowMultipleChoice,
+                feedbackTiming: feedbackTiming,
+            };
+            await savePlanAction(coursePlan, generationParams);
             toast({
-                title: "Formation sauvegardée !",
+                title: "Plan sauvegardé !",
                 description: "Redirection vers la liste des formations...",
             });
             router.push(`/admin/courses`);
@@ -112,7 +122,7 @@ export default function CreateCoursePage() {
         setCoursePlan({ ...coursePlan, chapters: newChapters });
     };
 
-    const handleQuestionChange = (chapterIndex: number, questionIndex: number, field: keyof CreateCourseOutput['chapters'][0]['quiz']['questions'][0], value: string) => {
+    const handleQuestionChange = (chapterIndex: number, questionIndex: number, field: keyof CreateCourseOutput['chapters'][0]['quiz']['questions'][0], value: string | boolean) => {
       if (!coursePlan) return;
       const newChapters = [...coursePlan.chapters];
       const newQuestions = [...newChapters[chapterIndex].quiz.questions];
@@ -133,7 +143,7 @@ export default function CreateCoursePage() {
                     answers: [{text: 'Réponse correcte', isCorrect: true}, {text: 'Réponse incorrecte', isCorrect: false}],
                     isMultipleChoice: false
                 }],
-                feedbackTiming: 'end'
+                feedbackTiming: 'end' as 'end' | 'immediate'
             }
         };
         setCoursePlan({ ...coursePlan, chapters: [...coursePlan.chapters, newChapter] });
@@ -300,7 +310,7 @@ export default function CreateCoursePage() {
           
           <Button onClick={handleSaveCourse} size="lg" disabled={isSaving}>
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
-              Sauvegarder cette formation
+              Sauvegarder le Plan
           </Button>
       </div>
   );
