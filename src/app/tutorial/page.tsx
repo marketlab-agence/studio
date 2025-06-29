@@ -45,9 +45,9 @@ export default function TutorialPage() {
   const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
   const isQuizAvailable = !!chapterQuiz;
 
-  const handleQuizComplete = useCallback((score: number) => {
+  const handleQuizComplete = useCallback((score: number, answers: Record<string, string[]>) => {
     if (currentChapter) {
-      setQuizScore(currentChapter.id, score);
+      setQuizScore(currentChapter.id, score, answers);
     }
   }, [currentChapter, setQuizScore]);
   

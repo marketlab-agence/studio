@@ -16,13 +16,14 @@ const initialProgress: UserProgress = {
     currentChapterId: null,
     currentLessonId: null,
     currentView: 'lesson',
+    quizAnswers: {},
 };
 
 type TutorialContextType = {
   progress: UserProgress;
   setCurrentLocation: (chapterId: string, lessonId: string) => void;
   showQuizForChapter: (chapterId: string) => void;
-  setQuizScore: (quizId: string, score: number) => void;
+  setQuizScore: (quizId: string, score: number, answers: Record<string, string[]>) => void;
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
   resetProgress: () => void;
@@ -87,6 +88,11 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 parsed.currentView = initialProgress.currentView;
             }
 
+            // Ensure quizAnswers exists
+            if (!parsed.quizAnswers) {
+                parsed.quizAnswers = {};
+            }
+
             return { ...initialProgress, ...parsed };
         },
     });
@@ -113,7 +119,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         });
     }, [setProgress]);
 
-    const setQuizScore = useCallback((quizId: string, score: number) => {
+    const setQuizScore = useCallback((quizId: string, score: number, answers: Record<string, string[]>) => {
         setProgress(prev => {
             const quiz = QUIZZES[quizId];
             if (!quiz) return { ...prev, quizScores: { ...prev.quizScores, [quizId]: score } };
@@ -136,6 +142,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 quizScores: { ...prev.quizScores, [quizId]: score },
                 quizAttempts: newAttempts,
                 completedLessons: newCompleted,
+                quizAnswers: { ...prev.quizAnswers, [quizId]: answers },
             };
         });
     }, [setProgress]);
@@ -235,11 +242,15 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             const newQuizAttempts = { ...prev.quizAttempts };
             delete newQuizAttempts[chapterId];
 
+            const newQuizAnswers = { ...prev.quizAnswers };
+            delete newQuizAnswers[chapterId];
+
             return {
                 ...prev,
                 quizScores: newQuizScores,
                 quizAttempts: newQuizAttempts,
                 completedLessons: newCompleted,
+                quizAnswers: newQuizAnswers,
             };
         });
     }, [setProgress]);

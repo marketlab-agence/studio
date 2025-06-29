@@ -45,4 +45,6 @@ export interface UserProgress {
   currentLessonId: string | null;
   // what is currently being displayed in the main panel
   currentView: 'lesson' | 'quiz';
+  // quizId -> questionId -> answerIds[]
+  quizAnswers: Record<string, Record<string, string[]>>;
 }

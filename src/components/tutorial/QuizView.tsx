@@ -28,7 +28,7 @@ import { TUTORIALS } from '@/lib/tutorials';
 
 type QuizViewProps = {
     quiz: Quiz;
-    onQuizComplete: (score: number) => void;
+    onQuizComplete: (score: number, answers: Record<string, string[]>) => void;
     onFinishQuiz: () => void;
 };
 
@@ -38,10 +38,11 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     const { progress, resetChapter, setCurrentLocation } = useTutorial();
     const existingScore = progress.quizScores[quiz.id];
     const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
+    const existingAnswers = progress.quizAnswers?.[quiz.id];
 
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [showResults, setShowResults] = useState(hasPassedBefore);
+    const [showResults, setShowResults] = useState(false);
     const [calculatedScore, setCalculatedScore] = useState(0);
 
     const resetQuiz = useCallback(() => {
@@ -61,11 +62,12 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
 
     useEffect(() => {
         if (hasPassedBefore) {
+            setUserAnswers(existingAnswers || {});
             setShowResults(true);
         } else {
             resetQuiz();
         }
-    }, [quiz.id, hasPassedBefore, resetQuiz]);
+    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz]);
     
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
@@ -122,7 +124,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
             const finalScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
 
             setCalculatedScore(finalScore);
-            onQuizComplete(finalScore);
+            onQuizComplete(finalScore, userAnswers);
             setShowResults(true);
         }
     };
@@ -173,20 +175,16 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                                     const wasSelected = userAnswersForQuestion.has(a.id);
                                                     const isCorrect = !!a.isCorrect;
 
-                                                    if (!isCorrect && wasSelected) { // User selected an incorrect answer
-                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse incorrecte)</span></li>;
+                                                    if (q.isMultipleChoice) {
+                                                        if (isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                        if (isCorrect && !wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Réponse correcte manquée)</span></li>;
+                                                        if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse incorrecte)</span></li>;
+                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                    } else {
+                                                        if (isCorrect) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Bonne réponse)</span></li>;
+                                                        if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse)</span></li>;
+                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
                                                     }
-                                                    if (isCorrect && wasSelected) { // User selected a correct answer
-                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                    }
-                                                     if (q.isMultipleChoice && isCorrect && !wasSelected) { // User did NOT select a correct answer in a multiple choice question
-                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Réponse correcte manquée)</span></li>;
-                                                    }
-                                                     if (isCorrect && !wasSelected) { // The correct answer the user did not select in single choice
-                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4 shrink-0 text-green-400" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte)</span></li>;
-                                                    }
-                                                    // Default: An incorrect answer the user did NOT select (neutral)
-                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
                                                 })}
                                             </ul>
                                         </div>
