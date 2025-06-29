@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { saveCoursePlanAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
@@ -181,71 +182,86 @@ export default function CreateCoursePage() {
                 </div>
             </div>
 
-            {coursePlan.chapters.map((chapter, chapterIndex) => (
-                <Card key={chapterIndex}>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label>
-                            <Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" />
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeChapter(chapterIndex)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-6 pl-6">
-                        {/* Lessons */}
-                        <div>
-                            <h4 className="font-semibold flex items-center gap-2 mb-4"><BookOpen className="h-5 w-5 text-primary"/>Leçons</h4>
-                            <div className="space-y-4">
-                                {chapter.lessons.map((lesson, lessonIndex) => (
-                                    <div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2">
-                                        <div className="flex-1 space-y-2">
-                                            <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold">Leçon {lessonIndex + 1}</Label>
-                                            <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" />
-                                            <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/>
+            <Accordion type="multiple" defaultValue={coursePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">
+                {coursePlan.chapters.map((chapter, chapterIndex) => (
+                     <AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild>
+                        <Card>
+                            <div className="flex w-full items-start justify-between p-6">
+                                <div className="flex-1 space-y-2 pr-4">
+                                    <Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label>
+                                    <Input
+                                        id={`chapter-title-${chapterIndex}`}
+                                        value={chapter.title}
+                                        onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)}
+                                        className="text-lg font-bold"
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <Button variant="ghost" size="icon" onClick={() => removeChapter(chapterIndex)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                    <AccordionTrigger />
+                                </div>
+                            </div>
+
+                            <AccordionContent>
+                                <CardContent className="space-y-6 pl-6 pt-0">
+                                    {/* Lessons */}
+                                    <div>
+                                        <h4 className="font-semibold flex items-center gap-2 mb-4"><BookOpen className="h-5 w-5 text-primary"/>Leçons</h4>
+                                        <div className="space-y-4">
+                                            {chapter.lessons.map((lesson, lessonIndex) => (
+                                                <div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2">
+                                                    <div className="flex-1 space-y-2">
+                                                        <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold">Leçon {lessonIndex + 1}</Label>
+                                                        <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" />
+                                                        <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/>
+                                                    </div>
+                                                    <Button variant="ghost" size="icon" onClick={() => removeLesson(chapterIndex, lessonIndex)}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={() => removeLesson(chapterIndex, lessonIndex)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        <Button variant="outline" size="sm" className="mt-4" onClick={() => addLesson(chapterIndex)}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Ajouter une leçon
                                         </Button>
                                     </div>
-                                ))}
-                            </div>
-                            <Button variant="outline" size="sm" className="mt-4" onClick={() => addLesson(chapterIndex)}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter une leçon
-                            </Button>
-                        </div>
 
-                        <Separator />
+                                    <Separator />
 
-                        {/* Quiz */}
-                        <div>
-                            <h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4>
-                            <div className="pl-4 space-y-4">
-                               <div className="space-y-2">
-                                    <Label htmlFor={`quiz-title-${chapterIndex}`} className="text-sm font-semibold">Titre du Quiz</Label>
-                                    <Input id={`quiz-title-${chapterIndex}`} value={chapter.quiz.title} onChange={(e) => handleQuizTitleChange(chapterIndex, e.target.value)} placeholder="Titre du quiz" />
-                               </div>
-                               <div>
-                                    <Label className="text-sm font-semibold">Sujets du quiz</Label>
-                                    <div className="space-y-2 mt-2">
-                                        {chapter.quiz.topics.map((topic, topicIndex) => (
-                                            <div key={topicIndex} className="flex gap-2 items-center">
-                                                <Input value={topic} onChange={(e) => handleQuizTopicChange(chapterIndex, topicIndex, e.target.value)} placeholder="Sujet du quiz" />
-                                                <Button variant="ghost" size="icon" onClick={() => removeQuizTopic(chapterIndex, topicIndex)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    {/* Quiz */}
+                                    <div>
+                                        <h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4>
+                                        <div className="pl-4 space-y-4">
+                                           <div className="space-y-2">
+                                                <Label htmlFor={`quiz-title-${chapterIndex}`} className="text-sm font-semibold">Titre du Quiz</Label>
+                                                <Input id={`quiz-title-${chapterIndex}`} value={chapter.quiz.title} onChange={(e) => handleQuizTitleChange(chapterIndex, e.target.value)} placeholder="Titre du quiz" />
+                                           </div>
+                                           <div>
+                                                <Label className="text-sm font-semibold">Sujets du quiz</Label>
+                                                <div className="space-y-2 mt-2">
+                                                    {chapter.quiz.topics.map((topic, topicIndex) => (
+                                                        <div key={topicIndex} className="flex gap-2 items-center">
+                                                            <Input value={topic} onChange={(e) => handleQuizTopicChange(chapterIndex, topicIndex, e.target.value)} placeholder="Sujet du quiz" />
+                                                            <Button variant="ghost" size="icon" onClick={() => removeQuizTopic(chapterIndex, topicIndex)}>
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <Button variant="outline" size="sm" className="mt-2" onClick={() => addQuizTopic(chapterIndex)}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un sujet
                                                 </Button>
-                                            </div>
-                                        ))}
+                                           </div>
+                                        </div>
                                     </div>
-                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => addQuizTopic(chapterIndex)}>
-                                        <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un sujet
-                                    </Button>
-                               </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                ))}
+            </Accordion>
             
             <Button onClick={addChapter} variant="secondary">
                 <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un chapitre
