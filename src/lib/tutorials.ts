@@ -22,6 +22,64 @@ Avec un système de contrôle de version distribué (DVCS) comme **Git**, chaque
       },
       {
         id: '1-2',
+        title: 'Installer Git',
+        objective: 'Apprendre à installer Git sur les principaux systèmes d\'exploitation et à vérifier l\'installation.',
+        content: `
+Avant de pouvoir utiliser Git, vous devez l'installer sur votre ordinateur. La bonne nouvelle, c'est que c'est un processus simple.
+
+### Vérifier si Git est déjà installé
+
+Ouvrez un terminal (ou 'Git Bash' sur Windows) et tapez la commande suivante :
+
+\`\`\`bash
+git --version
+\`\`\`
+
+Si Git est installé, vous verrez s'afficher sa version (par exemple, \`git version 2.43.0\`). Si vous obtenez une erreur, vous devez l'installer.
+
+### Installation sur Windows
+
+Le moyen le plus simple d'installer Git sur Windows est de télécharger **Git for Windows** depuis le site officiel.
+
+1.  Allez sur [git-scm.com/download/win](https://git-scm.com/download/win).
+2.  Le téléchargement devrait démarrer automatiquement.
+3.  Exécutez l'installateur et suivez les instructions. Les options par défaut sont généralement suffisantes pour la plupart des utilisateurs. L'installateur inclut **Git Bash**, un terminal qui vous permet d'utiliser les commandes Git.
+
+### Installation sur macOS
+
+Si vous avez installé les outils de ligne de commande de Xcode, il y a de fortes chances que Git soit déjà là. Essayez la commande \`git --version\`.
+
+Sinon, la méthode la plus simple est d'utiliser [Homebrew](https://brew.sh/), un gestionnaire de paquets pour macOS.
+
+\`\`\`bash
+# Installer Homebrew (si vous ne l'avez pas)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Installer Git
+brew install git
+\`\`\`
+
+### Installation sur Linux (Debian/Ubuntu)
+
+Sur les distributions basées sur Debian comme Ubuntu, vous pouvez utiliser \`apt\`.
+
+\`\`\`bash
+sudo apt update
+sudo apt install git
+\`\`\`
+
+### Configuration initiale
+
+Une fois Git installé, il est important de configurer votre nom d'utilisateur et votre adresse e-mail. Ces informations seront utilisées pour identifier vos commits.
+
+\`\`\`bash
+git config --global user.name "Votre Nom Complet"
+git config --global user.email "votre.email@example.com"
+\`\`\`
+`
+      },
+      {
+        id: '1-3',
         title: 'Le versioning en action',
         objective: 'Observer de manière interactive comment les versions sont créées et comment on peut naviguer entre elles.',
         content: `
@@ -37,7 +95,7 @@ Utilisez la démonstration ci-dessous pour voir ce concept en action :
         componentName: 'VersioningDemo',
       },
       {
-        id: '1-3',
+        id: '1-4',
         title: 'Le flux de travail Git de base',
         objective: 'Comprendre les trois zones principales de Git et comment les fichiers se déplacent entre elles.',
         content: `Le flux de travail de base dans Git implique trois zones principales :
@@ -50,7 +108,7 @@ Le diagramme ci-dessous illustre comment les commandes Git déplacent les change
         componentName: 'GitFlowDiagram',
       },
        {
-        id: '1-4',
+        id: '1-5',
         title: 'Initialiser un dépôt',
         objective: 'Apprendre à créer un nouveau dépôt Git pour un projet existant ou nouveau.',
         content: `Pour commencer à utiliser Git dans un projet, vous devez l'initialiser. Cela crée un "dépôt" Git.
