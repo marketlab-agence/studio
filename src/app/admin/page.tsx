@@ -170,26 +170,46 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="courses" className="space-y-4 pt-4">
+            <div className="flex justify-end">
+                <Button asChild>
+                  <Link href="/admin/create-course">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
+                  </Link>
+                </Button>
+            </div>
             <Card>
-                <CardHeader>
-                    <CardTitle>Bibliothèque des formations</CardTitle>
-                    <CardDescription>Gérez toutes les formations de la plateforme, ajoutez-en de nouvelles ou modifiez les existantes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">Vous avez actuellement {allCourses.length} formations dans votre bibliothèque.</p>
-                </CardContent>
-                <CardFooter className="flex justify-end gap-2">
-                    <Button asChild variant="outline">
-                        <Link href="/admin/create-course">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
-                        </Link>
-                    </Button>
-                    <Button asChild>
-                        <Link href="/admin/courses">
-                            Gérer les formations
-                        </Link>
-                    </Button>
-                </CardFooter>
+              <CardHeader>
+                <CardTitle>Toutes les formations</CardTitle>
+                <CardDescription>
+                  Liste de toutes les formations publiées et en brouillon.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Titre</TableHead>
+                      <TableHead>Nombre de leçons</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allCourses.map(course => (
+                      <TableRow key={course.id}>
+                        <TableCell className="font-medium">{course.title}</TableCell>
+                        <TableCell>{course.lessonsCount}</TableCell>
+                        <TableCell><Badge variant={course.status === 'Publié' ? 'default' : 'secondary'}>{course.status}</Badge></TableCell>
+                        <TableCell>
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/admin/courses/${course.id}`}>Modifier</Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
             </Card>
           </TabsContent>
 
