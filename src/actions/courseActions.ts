@@ -29,6 +29,7 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
             id: courseId,
             title: plan.title,
             description: plan.description,
+            status: 'Brouillon',
         });
     }
 
@@ -83,4 +84,11 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
     redirect(`/admin/courses/${courseId}`);
 }
 
-    
+export async function publishCourseAction(courseId: string) {
+    const course = COURSES.find(c => c.id === courseId);
+    if (course) {
+        course.status = 'Publié';
+        revalidatePath('/admin');
+        revalidatePath(`/admin/courses/${courseId}`);
+    }
+}

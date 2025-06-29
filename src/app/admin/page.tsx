@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
                                 <TableRow key={course.id}>
                                     <TableCell className="font-medium">{course.title}</TableCell>
                                     <TableCell>{course.lessonsCount}</TableCell>
-                                    <TableCell><Badge>{course.status}</Badge></TableCell>
+                                    <TableCell><Badge variant={course.status === 'Publié' ? 'default' : 'secondary'}>{course.status}</Badge></TableCell>
                                     <TableCell>
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={`/admin/courses/${course.id}`}>Modifier</Link>

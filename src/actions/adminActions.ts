@@ -9,7 +9,7 @@ export async function getAdminCourses() {
         id: course.id,
         title: course.title,
         lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
-        status: 'Publié',
+        status: course.status,
     }));
     
     return coursesData;

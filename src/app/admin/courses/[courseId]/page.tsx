@@ -1,6 +1,8 @@
 
+'use client';
+
 import { TUTORIALS } from '@/lib/tutorials';
-import { notFound } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -18,16 +20,29 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight, UploadCloud, Loader2 } from 'lucide-react';
 import { COURSES } from '@/lib/courses';
+import { publishCourseAction } from '@/actions/courseActions';
+import { useState } from 'react';
 
-export default function CourseChaptersPage({ params }: { params: { courseId: string } }) {
+export default function CourseChaptersPage() {
+  const params = useParams() as { courseId: string };
   const courseInfo = COURSES.find(c => c.id === params.courseId);
   const courseChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const router = useRouter();
+
 
   if (!courseInfo) {
     notFound();
   }
+
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    await publishCourseAction(params.courseId);
+    router.refresh();
+    setIsPublishing(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -37,15 +52,24 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
         <span className="font-semibold text-foreground">Formation: {courseInfo.title}</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="bg-primary/10 p-2 rounded-lg">
-          <BookOpen className="h-8 w-8 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <BookOpen className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Chapitres de la Formation</h1>
+            <p className="text-muted-foreground">{courseInfo.title}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Chapitres de la Formation</h1>
-          <p className="text-muted-foreground">{courseInfo.title}</p>
-        </div>
+        {courseInfo.status === 'Brouillon' && (
+            <Button onClick={handlePublish} disabled={isPublishing}>
+                {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                Publier la formation
+            </Button>
+        )}
       </div>
+
 
       <Card>
         <CardHeader>
