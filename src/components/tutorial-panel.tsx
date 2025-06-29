@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
 import { Skeleton } from './ui/skeleton';
 import { QUIZZES } from '@/lib/quiz';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export function TutorialPanel() {
   const {
@@ -25,6 +27,8 @@ export function TutorialPanel() {
     overallProgress,
     showQuizForChapter,
   } = useTutorial();
+  const { isPremium } = useAuth();
+  const router = useRouter();
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -74,22 +78,26 @@ export function TutorialPanel() {
               const prevChapter = isFirstChapter ? null : TUTORIALS[index - 1];
               const prevChapterQuiz = prevChapter ? QUIZZES[prevChapter.id] : null;
               const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-              const isLocked = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
+              const isQuizLocked = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
+              
+              const isPremiumLocked = index > 0 && !isPremium;
+              const isChapterTotallyLocked = isQuizLocked || isPremiumLocked;
 
               const chapterQuiz = QUIZZES[tutorial.id];
               const isCompleted = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
 
               return (
-                <AccordionItem value={tutorial.id} key={tutorial.id} className="border-b-0" disabled={isLocked}>
+                <AccordionItem value={tutorial.id} key={tutorial.id} className="border-b-0">
                   <AccordionTrigger
                     className={cn(
                       'text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline',
-                      isLocked && 'cursor-not-allowed text-muted-foreground/50',
-                      !isLocked && currentChapter?.id === tutorial.id && 'text-primary'
+                      isQuizLocked && 'cursor-not-allowed text-muted-foreground/50',
+                      !isQuizLocked && currentChapter?.id === tutorial.id && 'text-primary'
                     )}
+                    disabled={isQuizLocked}
                   >
                     <div className="flex flex-1 items-center gap-3">
-                      {isLocked ? (
+                      {isChapterTotallyLocked ? (
                         <Lock className="h-4 w-4 text-muted-foreground/50" />
                       ) : isCompleted ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -109,14 +117,22 @@ export function TutorialPanel() {
                             key={lesson.id}
                             className={cn(
                               'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
-                              progress.currentView === 'lesson' && lesson.id === currentLesson?.id
+                              !isPremiumLocked && progress.currentView === 'lesson' && lesson.id === currentLesson?.id
                                 ? 'bg-primary/10 text-primary-foreground'
                                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                             )}
-                            onClick={() => handleLessonClick(tutorial.id, lesson.id)}
+                            onClick={() => {
+                              if (isPremiumLocked) {
+                                router.push('/pricing');
+                              } else {
+                                handleLessonClick(tutorial.id, lesson.id);
+                              }
+                            }}
                           >
                             <span className="font-medium">{lesson.title}</span>
-                            {isLessonMarkedAsComplete ? (
+                            {isPremiumLocked ? (
+                              <Lock className="h-4 w-4 text-yellow-500" />
+                            ) : isLessonMarkedAsComplete ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
                             ) : lesson.id === currentLesson?.id && progress.currentView === 'lesson' ? (
                               <ChevronRight className="h-4 w-4 text-primary" />
@@ -130,18 +146,26 @@ export function TutorialPanel() {
                           key={`${tutorial.id}-quiz`}
                           className={cn(
                             'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
-                            progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
+                            !isPremiumLocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
                               ? 'bg-primary/10 text-primary-foreground'
                               : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                           )}
-                          onClick={() => handleQuizClick(tutorial.id)}
-                          disabled={isLocked}
+                          onClick={() => {
+                              if (isPremiumLocked) {
+                                router.push('/pricing');
+                              } else {
+                                handleQuizClick(tutorial.id);
+                              }
+                          }}
+                          disabled={isQuizLocked}
                         >
                           <div className="flex items-center gap-2">
                             <GraduationCap className="h-4 w-4" />
                             <span>Quiz du Chapitre</span>
                           </div>
-                          {isCompleted ? (
+                          {isPremiumLocked ? (
+                            <Lock className="h-4 w-4 text-yellow-500" />
+                          ) : isCompleted ? (
                             <CheckCircle className="h-4 w-4 text-green-500" />
                           ) : progress.currentView === 'quiz' && tutorial.id === currentChapter?.id ? (
                             <ChevronRight className="h-4 w-4 text-primary" />

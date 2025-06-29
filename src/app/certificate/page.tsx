@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, Lock } from 'lucide-react';
+import { Award, Lock, Loader2, Skeleton } from 'lucide-react';
 import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
@@ -8,16 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useRequirePremium } from '@/hooks/useRequirePremium';
 
 export default function CertificatePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
   const { overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
+
+  useRequirePremium();
 
   useEffect(() => {
     setIsMounted(true);
@@ -25,7 +27,7 @@ export default function CertificatePage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.push('/login?redirect=/certificate');
     }
   }, [user, authLoading, router]);
 
@@ -69,23 +71,21 @@ export default function CertificatePage() {
   const isScoreSufficient = averageQuizScore >= 80;
 
   const renderContent = () => {
-    if (!isMounted || authLoading || !user) {
+    if (!isMounted || authLoading || !user || !isPremium) {
       return (
         <Card className="text-center py-8">
           <CardHeader>
             <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
-            <Skeleton className="h-7 w-48 mx-auto" />
-            <Skeleton className="h-4 w-80 mx-auto mt-2" />
+            <CardTitle>Vérification de l'accès</CardTitle>
+            <CardDescription>
+              Nous vérifions votre statut d'abonnement...
+            </CardDescription>
           </CardHeader>
           <CardContent className="max-w-sm mx-auto space-y-4">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 mx-auto" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-16 mx-auto" />
-            </div>
-            <Skeleton className="h-10 w-40 mx-auto" />
+             <Skeleton className="h-4 w-32 mx-auto" />
+             <Skeleton className="h-4 w-full" />
           </CardContent>
         </Card>
       );

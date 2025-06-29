@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isPremium } = useAuth();
     const router = useRouter();
     const { progress, overallProgress, totalCompleted, totalLessons, setCurrentLocation, resetProgress, resetChapter, averageQuizScore, masteryIndex } = useTutorial();
     
@@ -195,7 +195,9 @@ export default function DashboardPage() {
                     const prevChapter = isFirstChapter ? null : TUTORIALS[chapterIndex - 1];
                     const quizForPrevChapter = prevChapter ? QUIZZES[prevChapter.id] : null;
                     const scoreForPrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-                    const isLocked = !isFirstChapter && quizForPrevChapter && scoreForPrevChapter < (quizForPrevChapter.passingScore ?? 80);
+                    const isQuizLocked = !isFirstChapter && quizForPrevChapter && scoreForPrevChapter < (quizForPrevChapter.passingScore ?? 80);
+
+                    const isPremiumLocked = index > 0 && !isPremium;
 
                     const chapterQuiz = QUIZZES[chapter.id];
                     const isChapterComplete = chapterQuiz ? (progress.quizScores[chapter.id] ?? 0) >= chapterQuiz.passingScore : false;
@@ -212,13 +214,13 @@ export default function DashboardPage() {
                             <CardHeader>
                                 <div className="flex justify-between items-start gap-4">
                                     <div className="flex items-start gap-4">
-                                        {isLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : isChapterComplete ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
+                                        {isQuizLocked || isPremiumLocked ? <Lock className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" /> : isChapterComplete ? <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" /> : <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />}
                                         <div>
                                             <CardTitle className="text-lg leading-tight">{chapter.title}</CardTitle>
                                             <CardDescription className="mt-2 text-xs">{chapter.description}</CardDescription>
                                         </div>
                                     </div>
-                                     {chapterProgress > 0 && !isLocked && (
+                                     {chapterProgress > 0 && !isQuizLocked && !isPremiumLocked && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" aria-label={`Réinitialiser le chapitre ${chapter.title}`}>
@@ -246,11 +248,18 @@ export default function DashboardPage() {
                                 <p className="text-xs text-muted-foreground">{completedLessonsInChapter.length} / {chapterLessons.length} leçons terminées</p>
                             </CardContent>
                             <CardFooter className="pt-4">
-                                <Button asChild className="w-full" disabled={isLocked}>
-                                    <Link href="/tutorial" onClick={() => handleContinue(chapter.id, lessonToNavigateTo.id)}>
-                                        {isChapterComplete ? "Revoir le chapitre" : "Continuer"}
-                                        <ChevronRight className="ml-2 h-4 w-4" />
-                                    </Link>
+                                <Button asChild className="w-full" disabled={isQuizLocked}>
+                                    {isPremiumLocked ? (
+                                        <Link href="/pricing">
+                                            <Lock className="mr-2 h-4 w-4" />
+                                            Passer au Premium
+                                        </Link>
+                                    ) : (
+                                        <Link href="/tutorial" onClick={() => handleContinue(chapter.id, lessonToNavigateTo.id)}>
+                                            {isChapterComplete ? "Revoir le chapitre" : "Continuer"}
+                                            <ChevronRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    )}
                                 </Button>
                             </CardFooter>
                         </Card>
