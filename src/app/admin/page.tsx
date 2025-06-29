@@ -25,7 +25,6 @@ import {
 import {
     BookCopy, CreditCard, DollarSign, LayoutDashboard, LineChart, PlusCircle, Search, Settings, Users, Verified, Users2
 } from 'lucide-react';
-import { TUTORIALS } from '@/lib/tutorials';
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR, type MockUser } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -33,7 +32,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { PLANS_DATA } from '@/lib/plans';
-import { COURSES } from '@/lib/courses';
+import { getAdminCourses } from '@/actions/adminActions';
 
 
 export default function AdminDashboardPage() {
@@ -75,11 +74,13 @@ export default function AdminDashboardPage() {
   }, [searchQuery, allUsers]);
 
   useEffect(() => {
-    // Simulate fetching data
-    setDataLoading(true);
-    setTimeout(() => {
+    async function loadAdminData() {
+        setDataLoading(true);
+        
+        const coursesData = await getAdminCourses();
+        setAllCourses(coursesData);
+
         let initialUsers = [...MOCK_USERS];
-        // Add the currently logged-in user to the list if they aren't already there
         if (authUser && !initialUsers.some(u => u.email === authUser.email)) {
             const newUser: MockUser = {
                 id: authUser.uid,
@@ -96,14 +97,6 @@ export default function AdminDashboardPage() {
         setAllUsers(initialUsers);
         setDisplayedUsers(initialUsers);
 
-        const coursesData = COURSES.map(course => ({
-            id: course.id,
-            title: course.title,
-            lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
-            status: 'Publié',
-        }));
-        setAllCourses(coursesData);
-
         if (initialUsers.length > 0) {
             const totalUsers = initialUsers.length;
             const premiumUsers = initialUsers.filter(u => u.plan === 'Premium').length;
@@ -117,8 +110,10 @@ export default function AdminDashboardPage() {
                 activeUsers,
             });
         }
+        
         setDataLoading(false);
-    }, 800); // 0.8s delay to simulate network
+    }
+    loadAdminData();
   }, [authUser, searchParams]);
 
   const freePlan = PLANS_DATA.free;
