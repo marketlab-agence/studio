@@ -15,6 +15,8 @@ import { saveCoursePlanAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
@@ -23,6 +25,8 @@ export default function CreateCoursePage() {
     const [numLessons, setNumLessons] = useState('');
     const [numQuestions, setNumQuestions] = useState('');
     const [language, setLanguage] = useState('Français');
+    const [allowMultipleChoice, setAllowMultipleChoice] = useState(true);
+    const [feedbackTiming, setFeedbackTiming] = useState<'end' | 'immediate'>('end');
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +54,8 @@ export default function CreateCoursePage() {
                 numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined,
                 numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined,
                 courseLanguage: language || undefined,
+                allowMultipleChoice: allowMultipleChoice,
+                feedbackTiming: feedbackTiming,
             });
             setCoursePlan(plan);
         } catch (e) {
@@ -118,7 +124,15 @@ export default function CreateCoursePage() {
         const newChapter = {
             title: 'Nouveau Chapitre',
             lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' }],
-            quiz: { title: 'Quiz du nouveau chapitre', topics: ['Sujet 1'] }
+            quiz: { 
+                title: 'Quiz du nouveau chapitre', 
+                questions: [{ 
+                    text: 'Nouvelle question', 
+                    answers: [{text: 'Réponse correcte', isCorrect: true}, {text: 'Réponse incorrecte', isCorrect: false}],
+                    isMultipleChoice: false
+                }],
+                feedbackTiming: 'end'
+            }
         };
         setCoursePlan({ ...coursePlan, chapters: [...coursePlan.chapters, newChapter] });
     };
@@ -143,17 +157,22 @@ export default function CreateCoursePage() {
         setCoursePlan({ ...coursePlan, chapters: newChapters });
     };
     
-    const addQuizTopic = (chapterIndex: number) => {
+    const addQuizQuestion = (chapterIndex: number) => {
         if (!coursePlan) return;
+        const newQuestion = { 
+            text: 'Nouvelle question', 
+            answers: [{text: 'Réponse A', isCorrect: true}, {text: 'Réponse B', isCorrect: false}],
+            isMultipleChoice: false
+        };
         const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].quiz.topics.push('Nouveau sujet');
+        newChapters[chapterIndex].quiz.questions.push(newQuestion);
         setCoursePlan({ ...coursePlan, chapters: newChapters });
     };
 
-    const removeQuizTopic = (chapterIndex: number, topicIndex: number) => {
+    const removeQuizQuestion = (chapterIndex: number, questionIndex: number) => {
         if (!coursePlan) return;
         const newChapters = [...coursePlan.chapters];
-        newChapters[chapterIndex].quiz.topics = newChapters[chapterIndex].quiz.topics.filter((_, i) => i !== topicIndex);
+        newChapters[chapterIndex].quiz.questions = newChapters[chapterIndex].quiz.questions.filter((_, i) => i !== questionIndex);
         setCoursePlan({ ...coursePlan, chapters: newChapters });
     };
 
@@ -239,19 +258,23 @@ export default function CreateCoursePage() {
                                                 <Input id={`quiz-title-${chapterIndex}`} value={chapter.quiz.title} onChange={(e) => handleQuizTitleChange(chapterIndex, e.target.value)} placeholder="Titre du quiz" />
                                            </div>
                                            <div>
-                                                <Label className="text-sm font-semibold">Sujets du quiz</Label>
+                                                <Label className="text-sm font-semibold">Questions du quiz</Label>
                                                 <div className="space-y-2 mt-2">
-                                                    {chapter.quiz.topics.map((topic, topicIndex) => (
-                                                        <div key={topicIndex} className="flex gap-2 items-center">
-                                                            <Input value={topic} onChange={(e) => handleQuizTopicChange(chapterIndex, topicIndex, e.target.value)} placeholder="Sujet du quiz" />
-                                                            <Button variant="ghost" size="icon" onClick={() => removeQuizTopic(chapterIndex, topicIndex)}>
+                                                    {chapter.quiz.questions.map((question, questionIndex) => (
+                                                        <div key={questionIndex} className="flex gap-2 items-center">
+                                                            <Textarea value={question.text} onChange={(e) => {
+                                                                const newChapters = [...coursePlan.chapters];
+                                                                newChapters[chapterIndex].quiz.questions[questionIndex].text = e.target.value;
+                                                                setCoursePlan({ ...coursePlan, chapters: newChapters });
+                                                            }} placeholder="Texte de la question" />
+                                                            <Button variant="ghost" size="icon" onClick={() => removeQuizQuestion(chapterIndex, questionIndex)}>
                                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                                             </Button>
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <Button variant="outline" size="sm" className="mt-2" onClick={() => addQuizTopic(chapterIndex)}>
-                                                    <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un sujet
+                                                <Button variant="outline" size="sm" className="mt-2" onClick={() => addQuizQuestion(chapterIndex)}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Ajouter une question
                                                 </Button>
                                            </div>
                                         </div>
@@ -347,7 +370,7 @@ export default function CreateCoursePage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="numQuestions">Sujets par quiz</Label>
+                        <Label htmlFor="numQuestions">Questions par quiz</Label>
                         <Input 
                             id="numQuestions"
                             type="number"
@@ -355,6 +378,27 @@ export default function CreateCoursePage() {
                             value={numQuestions}
                             onChange={(e) => setNumQuestions(e.target.value)}
                         />
+                    </div>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-4 border-t">
+                    <div className="flex items-center space-x-2">
+                        <Switch id="multiple-choice" checked={allowMultipleChoice} onCheckedChange={setAllowMultipleChoice} />
+                        <Label htmlFor="multiple-choice" className="cursor-pointer">
+                            Inclure des questions à choix multiples (QCM)
+                        </Label>
+                    </div>
+                    <div>
+                        <Label>Affichage des réponses du quiz</Label>
+                        <RadioGroup value={feedbackTiming} onValueChange={(value) => setFeedbackTiming(value as 'end' | 'immediate')} className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="end" id="r-end" />
+                                <Label htmlFor="r-end">À la fin</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="immediate" id="r-immediate" />
+                                <Label htmlFor="r-immediate">Après chaque question</Label>
+                            </div>
+                        </RadioGroup>
                     </div>
                 </div>
             </Card>
@@ -387,3 +431,5 @@ export default function CreateCoursePage() {
     </div>
   );
 }
+
+    

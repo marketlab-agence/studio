@@ -1,3 +1,4 @@
+
 export interface Tutorial {
   id: string;
   courseId: string;
@@ -19,6 +20,7 @@ export interface Quiz {
     title: string;
     questions: Question[];
     passingScore: number;
+    feedbackTiming?: 'immediate' | 'end';
 }
 
 export interface Question {
@@ -49,3 +51,5 @@ export interface UserProgress {
   // quizId -> questionId -> answerIds[]
   quizAnswers: Record<string, Record<string, string[]>>;
 }
+
+    

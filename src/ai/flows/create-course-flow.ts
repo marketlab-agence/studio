@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow for generating structured course plans.
@@ -15,14 +16,28 @@ const CreateCourseInputSchema = z.object({
   targetAudience: z.string().describe('The intended audience for the course (e.g., beginners, experts).'),
   numChapters: z.number().optional().describe('The desired number of chapters.'),
   numLessonsPerChapter: z.number().optional().describe('The desired number of lessons per chapter.'),
-  numQuestionsPerQuiz: z.number().optional().describe('The desired number of questions per quiz topic list.'),
+  numQuestionsPerQuiz: z.number().optional().describe('The desired number of questions per quiz.'),
   courseLanguage: z.string().optional().describe('The language the course should be written in.'),
+  allowMultipleChoice: z.boolean().optional().describe('Whether to allow generating multiple choice questions in quizzes.'),
+  feedbackTiming: z.enum(['immediate', 'end']).optional().describe("The timing for showing correct answers in quizzes. 'immediate' shows feedback after each question, 'end' shows it after the quiz is complete."),
 });
 export type CreateCourseInput = z.infer<typeof CreateCourseInputSchema>;
 
+const AnswerPlanSchema = z.object({
+  text: z.string().describe("The text for a possible answer."),
+  isCorrect: z.boolean().describe("Whether this answer is the correct one."),
+});
+
+const QuestionPlanSchema = z.object({
+  text: z.string().describe("The full text of the quiz question."),
+  answers: z.array(AnswerPlanSchema).min(3).max(4).describe("A list of 3-4 possible answers for the question."),
+  isMultipleChoice: z.boolean().describe("Whether this is a multiple-choice question (can have multiple correct answers)."),
+});
+
 const QuizPlanSchema = z.object({
     title: z.string().describe("The title of the chapter's quiz."),
-    topics: z.array(z.string()).describe('A list of 3-5 key topics the quiz should cover to validate understanding of the chapter.')
+    questions: z.array(QuestionPlanSchema).describe("A list of questions for this chapter's quiz."),
+    feedbackTiming: z.enum(['immediate', 'end']).default('end').describe("The timing for showing correct answers in this quiz."),
 });
 
 const LessonPlanSchema = z.object({
@@ -53,7 +68,7 @@ const prompt = ai.definePrompt({
   output: {schema: CreateCourseOutputSchema},
   prompt: `You are an expert instructional designer tasked with creating a comprehensive and engaging online course plan. The user will provide a topic and a target audience.
 
-Your task is to generate a complete course structure, including a course title, a description, a list of chapters, and for each chapter, a list of lessons and a quiz plan.
+Your task is to generate a complete course structure, including a course title, a description, a list of chapters, and for each chapter, a list of lessons and a detailed quiz plan with questions and answers.
 
 **Base Information:**
 Course Topic: {{{topic}}}
@@ -71,11 +86,13 @@ Each chapter must have exactly {{{numLessonsPerChapter}}} lessons.
 {{else}}
 Each chapter must have between 3 and 5 lessons.
 {{/if}}
-{{#if numQuestionsPerQuiz}}
-Each chapter's quiz plan must cover exactly {{{numQuestionsPerQuiz}}} topics.
-{{else}}
-Each chapter's quiz plan must cover between 3 and 5 topics.
-{{/if}}
+
+**Quiz Generation Rules:**
+For each chapter, generate a quiz to validate the chapter's content.
+- {{#if numQuestionsPerQuiz}}Generate exactly {{{numQuestionsPerQuiz}}} questions per quiz.{{else}}Generate between 3 and 5 questions per quiz.{{/if}}
+- Each question must have between 3 and 4 possible answers.
+- {{#if allowMultipleChoice}}You can create a mix of single-choice and multiple-choice questions. For single-choice questions, exactly one answer must be correct. For multiple-choice questions, one or more answers can be correct.{{else}}All questions must be single-choice, meaning only one answer can be correct (\`isMultipleChoice\` must be false).{{/if}}
+- The quiz \`feedbackTiming\` property should be set to '{{{feedbackTiming}}}' if provided, otherwise default to 'end'.
 
 Please generate the course plan according to the specified output schema. Ensure the content is logical, well-structured, and appropriate for the target audience. The tone should be professional and encouraging.
 `,
@@ -92,3 +109,5 @@ const createCoursePlanFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

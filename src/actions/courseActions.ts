@@ -1,3 +1,4 @@
+
 'use server';
 
 import { redirect } from 'next/navigation';
@@ -57,15 +58,15 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
         TUTORIALS.push(newTutorial);
 
         // Create quiz
-        const quizQuestions: Question[] = chapterPlan.quiz.topics.map((topic, questionIndex) => ({
+        const quizQuestions: Question[] = chapterPlan.quiz.questions.map((q, questionIndex) => ({
             id: `${chapterId}-q${questionIndex + 1}`,
-            text: `Question sur : ${topic}`,
-            answers: [
-                { id: 'a1', text: 'Option A (à configurer)', isCorrect: true },
-                { id: 'a2', text: 'Option B (à configurer)' },
-                { id: 'a3', text: 'Option C (à configurer)' },
-            ],
-            isMultipleChoice: false,
+            text: q.text,
+            answers: q.answers.map((a, answerIndex) => ({
+                id: `${chapterId}-q${questionIndex + 1}-a${answerIndex + 1}`,
+                text: a.text,
+                isCorrect: a.isCorrect,
+            })),
+            isMultipleChoice: q.isMultipleChoice,
         }));
 
         const newQuiz: Quiz = {
@@ -73,6 +74,7 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
             title: chapterPlan.quiz.title,
             questions: quizQuestions,
             passingScore: 80,
+            feedbackTiming: chapterPlan.quiz.feedbackTiming || 'end',
         };
         QUIZZES[chapterId] = newQuiz;
     });
@@ -80,3 +82,5 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput) {
     revalidatePath('/admin');
     redirect(`/admin/courses/${courseId}`);
 }
+
+    
