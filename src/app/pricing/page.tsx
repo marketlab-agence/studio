@@ -1,3 +1,4 @@
+
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +101,7 @@ export default function PricingPage() {
               </CardContent>
               <CardFooter>
                  <Button className="w-full" size="lg" asChild>
-                    <Link href="/login">
+                    <Link href="/subscribe">
                         <Sparkles className="mr-2 h-5 w-5"/>
                         {premiumPlan.cta}
                     </Link>

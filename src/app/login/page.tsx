@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { 
     GoogleAuthProvider, 
@@ -25,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
@@ -34,30 +36,12 @@ export default function LoginPage() {
 
   // Redirect if user is already logged in
   useEffect(() => {
-    console.log('LoginPage: useEffect triggered', { 
-      authLoading, 
-      user: user?.email || 'null',
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
-    
     if (!authLoading && user) {
-      console.log('LoginPage: User is logged in, redirecting to dashboard');
-      router.push('/dashboard');
+      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      router.push(redirectUrl);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, searchParams]);
 
-  // Additional effect to handle OAuth redirects more aggressively
-  useEffect(() => {
-    // Small delay to ensure auth state is properly set after OAuth redirect
-    const timer = setTimeout(() => {
-      if (!authLoading && user && typeof window !== 'undefined' && window.location.pathname === '/login') {
-        console.log('LoginPage: Delayed redirect check - redirecting to dashboard');
-        router.push('/dashboard');
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [user, authLoading, router]);
 
   const handleAuthError = (error: any, title: string) => {
     let description = error.message;
@@ -77,19 +61,9 @@ export default function LoginPage() {
     
     setIsSubmitting(true);
     try {
-      console.log('LoginPage: Starting OAuth popup signin', { 
-        provider: provider.providerId,
-        authDomain: auth.config.authDomain 
-      });
-      
-      const result = await signInWithPopup(auth, provider);
-      console.log('LoginPage: OAuth signin successful', { 
-        user: result.user.email,
-        uid: result.user.uid 
-      });
-      
+      await signInWithPopup(auth, provider);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
-      router.push('/dashboard');
+      // Redirection is handled by the useEffect hook
     } catch (error: any) {
       console.error('LoginPage: OAuth signin error', {
         code: error.code,
@@ -107,7 +81,6 @@ export default function LoginPage() {
       } else if (error.code === 'auth/unauthorized-domain') {
         errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
       } else if (error.code === 'auth/cancelled-popup-request') {
-        // Don't show error for cancelled popup requests
         shouldShowError = false;
       }
       
@@ -124,7 +97,7 @@ export default function LoginPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
-      router.push('/dashboard');
+      // Redirection is handled by the useEffect hook
     } catch (error: any) {
       handleAuthError(error, 'Erreur d\'inscription');
     }
@@ -137,7 +110,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
-      router.push('/dashboard');
+      // Redirection is handled by the useEffect hook
     } catch (error: any) {
       handleAuthError(error, 'Erreur de connexion');
     }
