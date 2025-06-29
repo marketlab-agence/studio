@@ -28,6 +28,7 @@ type TutorialContextType = {
   goToPreviousLesson: () => void;
   resetProgress: () => void;
   resetChapter: (chapterId: string) => void;
+  areAllLessonsInChapterCompleted: (chapterId: string) => boolean;
   currentChapter: typeof TUTORIALS[0] | undefined;
   currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
   currentView: 'lesson' | 'quiz';
@@ -254,6 +255,16 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             };
         });
     }, [setProgress]);
+    
+    const areAllLessonsInChapterCompleted = useCallback((chapterId: string): boolean => {
+      const chapter = TUTORIALS.find(c => c.id === chapterId);
+      if (!chapter) return false;
+
+      const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
+      const completed = p.completedLessons || new Set();
+
+      return chapter.lessons.every(lesson => completed.has(lesson.id));
+    }, [progress]);
 
     const value = useMemo(() => {
         const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
@@ -299,6 +310,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             goToPreviousLesson,
             resetProgress,
             resetChapter,
+            areAllLessonsInChapterCompleted,
             currentChapter,
             currentLesson,
             currentView,
@@ -310,7 +322,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress, resetChapter]);
+    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress, resetChapter, areAllLessonsInChapterCompleted]);
 
 
     return (

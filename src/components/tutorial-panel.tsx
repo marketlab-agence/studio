@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,6 +27,7 @@ export function TutorialPanel() {
     currentLesson,
     overallProgress,
     showQuizForChapter,
+    areAllLessonsInChapterCompleted,
   } = useTutorial();
   const { isPremium } = useAuth();
   const router = useRouter();
@@ -78,28 +80,30 @@ export function TutorialPanel() {
               const prevChapter = isFirstChapter ? null : TUTORIALS[index - 1];
               const prevChapterQuiz = prevChapter ? QUIZZES[prevChapter.id] : null;
               const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-              const isQuizLocked = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
+              const isChapterLockedByPreviousQuiz = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
               
               const isPremiumLocked = index > 0 && !isPremium;
-              const isChapterTotallyLocked = isQuizLocked || isPremiumLocked;
+              const isChapterTotallyLocked = isChapterLockedByPreviousQuiz || isPremiumLocked;
 
               const chapterQuiz = QUIZZES[tutorial.id];
-              const isCompleted = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
+              const isQuizPassed = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
+
+              const areLessonsCompletedForQuiz = areAllLessonsInChapterCompleted(tutorial.id);
 
               return (
                 <AccordionItem value={tutorial.id} key={tutorial.id} className="border-b-0">
                   <AccordionTrigger
                     className={cn(
                       'text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline',
-                      isQuizLocked && 'cursor-not-allowed text-muted-foreground/50',
-                      !isQuizLocked && currentChapter?.id === tutorial.id && 'text-primary'
+                      isChapterTotallyLocked && 'cursor-not-allowed text-muted-foreground/50',
+                      !isChapterTotallyLocked && currentChapter?.id === tutorial.id && 'text-primary'
                     )}
-                    disabled={isQuizLocked}
+                    disabled={isChapterTotallyLocked}
                   >
                     <div className="flex flex-1 items-center gap-3">
                       {isChapterTotallyLocked ? (
                         <Lock className="h-4 w-4 text-muted-foreground/50" />
-                      ) : isCompleted ? (
+                      ) : isQuizPassed ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <span className="font-bold text-primary">{index + 1}</span>
@@ -148,30 +152,29 @@ export function TutorialPanel() {
                             'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
                             !isPremiumLocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
                               ? 'bg-primary/10 text-primary-foreground'
-                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                            (isChapterLockedByPreviousQuiz || isPremiumLocked || !areLessonsCompletedForQuiz) && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
                           )}
                           onClick={() => {
                               if (isPremiumLocked) {
                                 router.push('/pricing');
-                              } else {
+                              } else if (areLessonsCompletedForQuiz) {
                                 handleQuizClick(tutorial.id);
                               }
                           }}
-                          disabled={isQuizLocked}
+                          disabled={isChapterLockedByPreviousQuiz || isPremiumLocked || !areLessonsCompletedForQuiz}
                         >
                           <div className="flex items-center gap-2">
                             <GraduationCap className="h-4 w-4" />
                             <span>Quiz du Chapitre</span>
                           </div>
-                          {isPremiumLocked ? (
-                            <Lock className="h-4 w-4 text-yellow-500" />
-                          ) : isCompleted ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          ) : progress.currentView === 'quiz' && tutorial.id === currentChapter?.id ? (
-                            <ChevronRight className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Circle className="h-4 w-4 text-border" />
-                          )}
+                          {(() => {
+                            if (isPremiumLocked) return <Lock className="h-4 w-4 text-yellow-500" />;
+                            if (isChapterLockedByPreviousQuiz || !areLessonsCompletedForQuiz) return <Lock className="h-4 w-4" />;
+                            if (isQuizPassed) return <CheckCircle className="h-4 w-4 text-green-500" />;
+                            if (progress.currentView === 'quiz' && tutorial.id === currentChapter?.id) return <ChevronRight className="h-4 w-4 text-primary" />;
+                            return <ChevronRight className="h-4 w-4" />;
+                          })()}
                         </button>
                     </div>
                   </AccordionContent>
