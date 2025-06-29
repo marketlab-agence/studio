@@ -1,7 +1,7 @@
 'use client';
 
 import { MOCK_USERS, MockUser } from '@/lib/users';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, User, Shield, CreditCard, Activity, FileText, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
@@ -20,7 +20,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 
-export default function ManageUserPage({ params }: { params: { userId: string } }) {
+export default function ManageUserPage() {
+  const params = useParams();
+  const { userId } = params as { userId: string };
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<MockUser['role'] | ''>('');
@@ -28,7 +30,6 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
   const { toast } = useToast();
   const { user: authUser } = useAuth();
   const { overallProgress } = useTutorial();
-  const { userId } = params;
 
   useEffect(() => {
     const userData = MOCK_USERS.find(u => u.id === userId);

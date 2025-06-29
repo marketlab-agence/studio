@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TUTORIALS } from '@/lib/tutorials';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -20,9 +20,10 @@ import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/types/tutorial.types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function EditLessonPage({ params }: { params: { courseId: string, chapterId: string, lessonId: string } }) {
+export default function EditLessonPage() {
+  const params = useParams();
+  const { courseId, chapterId, lessonId } = params as { courseId: string; chapterId: string; lessonId: string; };
   const { toast } = useToast();
-  const { courseId, chapterId, lessonId } = params;
   
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [chapterTitle, setChapterTitle] = useState('');
