@@ -1,21 +1,51 @@
 
-import { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLANS_DATA } from '@/lib/plans';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
-export const metadata: Metadata = {
-  title: 'Tarifs - Katalyst',
-  description: 'Choisissez le plan qui correspond à vos ambitions. Passez au Premium pour un accès illimité.',
-};
 
 export default function PricingPage() {
+    const { user, loading, plan, updateUserPlan } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        document.title = 'Tarifs - Katalyst';
+    }, []);
+
     const freePlan = PLANS_DATA.free;
     const premiumPlan = PLANS_DATA.premium;
+    
+    const handleDowngrade = () => {
+        if (updateUserPlan) {
+            updateUserPlan('Gratuit');
+            toast({
+                title: 'Changement de formule',
+                description: 'Vous êtes passé à la formule Gratuite.',
+            });
+        }
+    };
+    
+    if (loading) {
+        return (
+            <main className="flex-1 flex flex-col items-center justify-center p-4">
+                <div className="flex items-center text-muted-foreground">
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    <span>Chargement...</span>
+                </div>
+            </main>
+        );
+    }
 
   return (
     <main className="flex-1 bg-muted/20">
@@ -54,9 +84,22 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/login">Commencer gratuitement</Link>
-                  </Button>
+                 {
+                    !user ? (
+                        <Button variant="outline" className="w-full" asChild>
+                            <Link href="/login">Commencer gratuitement</Link>
+                        </Button>
+                    ) : plan === 'Gratuit' ? (
+                        <Button variant="outline" className="w-full" disabled>
+                            Votre formule actuelle
+                        </Button>
+                    ) : ( // User is Premium
+                        <Button variant="outline" className="w-full" onClick={handleDowngrade}>
+                             <RefreshCw className="mr-2 h-4 w-4" />
+                            Passer à la formule Gratuite
+                        </Button>
+                    )
+                 }
               </CardFooter>
             </Card>
 
@@ -100,12 +143,27 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                 <Button className="w-full" size="lg" asChild>
-                    <Link href="/subscribe">
-                        <Sparkles className="mr-2 h-5 w-5"/>
-                        {premiumPlan.cta}
-                    </Link>
-                </Button>
+                 {
+                    !user ? (
+                        <Button className="w-full" size="lg" asChild>
+                            <Link href="/login?redirect=/subscribe">
+                                <Sparkles className="mr-2 h-5 w-5"/>
+                                Passer au Premium
+                            </Link>
+                        </Button>
+                    ) : plan === 'Premium' ? (
+                        <Button className="w-full" size="lg" disabled>
+                            Votre formule actuelle
+                        </Button>
+                    ) : ( // User is Free
+                        <Button className="w-full" size="lg" asChild>
+                             <Link href="/subscribe">
+                                <Sparkles className="mr-2 h-5 w-5"/>
+                                Mettre à niveau
+                            </Link>
+                        </Button>
+                    )
+                 }
               </CardFooter>
             </Card>
 
