@@ -13,7 +13,7 @@ import {z} from 'genkit';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 
 
-export const GenerateLessonContentInputSchema = z.object({
+const GenerateLessonContentInputSchema = z.object({
   lessonTitle: z.string().describe("The title of the lesson to generate."),
   lessonObjective: z.string().describe("The learning objective for the lesson."),
   courseTopic: z.string().describe("The main topic of the entire course for context."),
