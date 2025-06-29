@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,19 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { BrainCircuit, Wand2, Loader2, BookCopy, GraduationCap, Target, Save, AlertTriangle } from 'lucide-react';
+import { BrainCircuit, Wand2, Loader2, BookOpen, GraduationCap, Save, AlertTriangle, Trash2, PlusCircle } from 'lucide-react';
 import { createCoursePlan, type CreateCourseOutput } from '@/ai/flows/create-course-flow';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { saveCoursePlanAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
@@ -80,6 +76,86 @@ export default function CreateCoursePage() {
         }
     };
 
+    const handlePlanChange = (field: 'title' | 'description', value: string) => {
+        setCoursePlan(prev => prev ? { ...prev, [field]: value } : null);
+    };
+
+    const handleChapterChange = (chapterIndex: number, field: 'title', value: string) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex] = { ...newChapters[chapterIndex], [field]: value };
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+
+    const handleLessonChange = (chapterIndex: number, lessonIndex: number, field: 'title' | 'objective', value: string) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        const newLessons = [...newChapters[chapterIndex].lessons];
+        newLessons[lessonIndex] = { ...newLessons[lessonIndex], [field]: value };
+        newChapters[chapterIndex] = { ...newChapters[chapterIndex], lessons: newLessons };
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+    
+    const handleQuizTitleChange = (chapterIndex: number, value: string) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex].quiz.title = value;
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+
+    const handleQuizTopicChange = (chapterIndex: number, topicIndex: number, value: string) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        const newTopics = [...newChapters[chapterIndex].quiz.topics];
+        newTopics[topicIndex] = value;
+        newChapters[chapterIndex].quiz.topics = newTopics;
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+    
+    const addChapter = () => {
+        if (!coursePlan) return;
+        const newChapter = {
+            title: 'Nouveau Chapitre',
+            lessons: [{ title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' }],
+            quiz: { title: 'Quiz du nouveau chapitre', topics: ['Sujet 1'] }
+        };
+        setCoursePlan({ ...coursePlan, chapters: [...coursePlan.chapters, newChapter] });
+    };
+    
+    const removeChapter = (chapterIndex: number) => {
+        if (!coursePlan) return;
+        setCoursePlan({ ...coursePlan, chapters: coursePlan.chapters.filter((_, i) => i !== chapterIndex) });
+    };
+    
+    const addLesson = (chapterIndex: number) => {
+        if (!coursePlan) return;
+        const newLesson = { title: 'Nouvelle Leçon', objective: 'Objectif de la nouvelle leçon.' };
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex].lessons.push(newLesson);
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+    
+    const removeLesson = (chapterIndex: number, lessonIndex: number) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex].lessons = newChapters[chapterIndex].lessons.filter((_, i) => i !== lessonIndex);
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+    
+    const addQuizTopic = (chapterIndex: number) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex].quiz.topics.push('Nouveau sujet');
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+
+    const removeQuizTopic = (chapterIndex: number, topicIndex: number) => {
+        if (!coursePlan) return;
+        const newChapters = [...coursePlan.chapters];
+        newChapters[chapterIndex].quiz.topics = newChapters[chapterIndex].quiz.topics.filter((_, i) => i !== topicIndex);
+        setCoursePlan({ ...coursePlan, chapters: newChapters });
+    };
+
     const renderLoadingState = () => (
         <div className="space-y-4 mt-6">
             <Skeleton className="h-8 w-1/2" />
@@ -90,7 +166,99 @@ export default function CreateCoursePage() {
                 <Skeleton className="h-12 w-full" />
             </div>
         </div>
-    )
+    );
+    
+    const renderEditablePlan = () => coursePlan && (
+        <div className="space-y-6">
+            <div className="space-y-4 rounded-lg border bg-background p-6">
+                <div className="space-y-2">
+                    <Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label>
+                    <Input id="courseTitle" value={coursePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="courseDescription" className="font-semibold">Description</Label>
+                    <Textarea id="courseDescription" value={coursePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} />
+                </div>
+            </div>
+
+            {coursePlan.chapters.map((chapter, chapterIndex) => (
+                <Card key={chapterIndex}>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label>
+                            <Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" />
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeChapter(chapterIndex)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pl-6">
+                        {/* Lessons */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 mb-4"><BookOpen className="h-5 w-5 text-primary"/>Leçons</h4>
+                            <div className="space-y-4">
+                                {chapter.lessons.map((lesson, lessonIndex) => (
+                                    <div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2">
+                                        <div className="flex-1 space-y-2">
+                                            <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold">Leçon {lessonIndex + 1}</Label>
+                                            <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" />
+                                            <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => removeLesson(chapterIndex, lessonIndex)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <Button variant="outline" size="sm" className="mt-4" onClick={() => addLesson(chapterIndex)}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter une leçon
+                            </Button>
+                        </div>
+
+                        <Separator />
+
+                        {/* Quiz */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4>
+                            <div className="pl-4 space-y-4">
+                               <div className="space-y-2">
+                                    <Label htmlFor={`quiz-title-${chapterIndex}`} className="text-sm font-semibold">Titre du Quiz</Label>
+                                    <Input id={`quiz-title-${chapterIndex}`} value={chapter.quiz.title} onChange={(e) => handleQuizTitleChange(chapterIndex, e.target.value)} placeholder="Titre du quiz" />
+                               </div>
+                               <div>
+                                    <Label className="text-sm font-semibold">Sujets du quiz</Label>
+                                    <div className="space-y-2 mt-2">
+                                        {chapter.quiz.topics.map((topic, topicIndex) => (
+                                            <div key={topicIndex} className="flex gap-2 items-center">
+                                                <Input value={topic} onChange={(e) => handleQuizTopicChange(chapterIndex, topicIndex, e.target.value)} placeholder="Sujet du quiz" />
+                                                <Button variant="ghost" size="icon" onClick={() => removeQuizTopic(chapterIndex, topicIndex)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => addQuizTopic(chapterIndex)}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un sujet
+                                    </Button>
+                               </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+            
+            <Button onClick={addChapter} variant="secondary">
+                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un chapitre
+            </Button>
+
+            <Separator />
+            
+            <Button onClick={handleSaveCourse} size="lg" disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
+                Sauvegarder cette formation
+            </Button>
+        </div>
+    );
     
   return (
     <div>
@@ -163,7 +331,7 @@ export default function CreateCoursePage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="numQuestions">Questions par quiz</Label>
+                        <Label htmlFor="numQuestions">Sujets par quiz</Label>
                         <Input 
                             id="numQuestions"
                             type="number"
@@ -193,49 +361,10 @@ export default function CreateCoursePage() {
         <Card className="mt-8">
             <CardHeader>
                 <CardTitle>2. Plan de Formation Généré</CardTitle>
-                 <CardDescription>Voici le plan de formation suggéré par l'IA. Vous pouvez le modifier avant de le sauvegarder.</CardDescription>
+                 <CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription>
             </CardHeader>
             <CardContent>
-                {isLoading ? renderLoadingState() : coursePlan && (
-                    <div className="space-y-6">
-                        <div>
-                            <h2 className="text-2xl font-bold">{coursePlan.title}</h2>
-                            <p className="text-muted-foreground mt-2">{coursePlan.description}</p>
-                        </div>
-                        <Accordion type="multiple" defaultValue={coursePlan.chapters.length > 0 ? [coursePlan.chapters[0].title] : []} className="w-full">
-                            {coursePlan.chapters.map((chapter, index) => (
-                                <AccordionItem value={chapter.title} key={index}>
-                                    <AccordionTrigger className="text-lg">{index + 1}. {chapter.title}</AccordionTrigger>
-                                    <AccordionContent className="pl-2 space-y-4">
-                                        <div className="space-y-2">
-                                            <h4 className="font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4 text-primary"/>Leçons</h4>
-                                            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                                                {chapter.lessons.map((lesson, lessonIndex) => (
-                                                    <li key={lessonIndex}>
-                                                        <strong className="text-foreground">{lesson.title}:</strong> {lesson.objective}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h4 className="font-semibold flex items-center gap-2"><GraduationCap className="h-4 w-4 text-primary"/>Quiz</h4>
-                                            <p className="text-sm">Le quiz portera sur :</p>
-                                            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                                                {chapter.quiz.topics.map((topic, topicIndex) => (
-                                                     <li key={topicIndex}>{topic}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                        <Button onClick={handleSaveCourse} size="lg" className="mt-6" disabled={isSaving}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
-                            Sauvegarder cette formation
-                        </Button>
-                    </div>
-                )}
+                {isLoading ? renderLoadingState() : coursePlan && renderEditablePlan()}
             </CardContent>
         </Card>
       )}
