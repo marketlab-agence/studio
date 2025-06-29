@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MOCK_USERS, MockUser } from '@/lib/users';
@@ -21,7 +22,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 
 export default function ManageUserPage({ params }: { params: { userId: string } }) {
-  const { userId } = params;
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<MockUser['role'] | ''>('');
@@ -31,13 +31,13 @@ export default function ManageUserPage({ params }: { params: { userId: string } 
   const { overallProgress } = useTutorial();
 
   useEffect(() => {
-    const userData = MOCK_USERS.find(u => u.id === userId);
+    const userData = MOCK_USERS.find(u => u.id === params.userId);
     if (userData) {
       setUser(userData);
       setSelectedRole(userData.role);
     }
     setLoading(false);
-  }, [userId]);
+  }, [params.userId]);
 
   const handleRoleSave = () => {
     if (!selectedRole || !user) return;

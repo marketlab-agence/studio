@@ -21,8 +21,7 @@ import Link from 'next/link';
 import { FileText, ChevronRight } from 'lucide-react';
 
 export default function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
-  const { courseId, chapterId } = params;
-  const chapter = TUTORIALS.find(c => c.id === chapterId);
+  const chapter = TUTORIALS.find(c => c.id === params.chapterId);
 
   if (!chapter) {
     notFound();
@@ -33,7 +32,7 @@ export default function ChapterLessonsPage({ params }: { params: { courseId: str
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/admin" className="hover:text-primary">Admin</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${courseId}`} className="hover:text-primary">Formation</Link>
+        <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary">Formation</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground">Chapitre: {chapter.title}</span>
       </div>
@@ -69,7 +68,7 @@ export default function ChapterLessonsPage({ params }: { params: { courseId: str
                     <TableCell className="text-muted-foreground">{lesson.objective}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`}>Modifier</Link>
+                        <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/lessons/${lesson.id}`}>Modifier</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

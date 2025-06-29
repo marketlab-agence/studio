@@ -29,8 +29,7 @@ const COURSES_DATA: Record<string, { id: string, title: string, chapters: any[] 
 }
 
 export default function CourseChaptersPage({ params }: { params: { courseId: string } }) {
-  const { courseId } = params;
-  const course = COURSES_DATA[courseId as keyof typeof COURSES_DATA];
+  const course = COURSES_DATA[params.courseId as keyof typeof COURSES_DATA];
 
   if (!course) {
     notFound();
@@ -75,7 +74,7 @@ export default function CourseChaptersPage({ params }: { params: { courseId: str
                     <TableCell>{chapter.lessons.length}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${courseId}/chapters/${chapter.id}`}>Modifier</Link>
+                        <Link href={`/admin/courses/${params.courseId}/chapters/${chapter.id}`}>Modifier</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
