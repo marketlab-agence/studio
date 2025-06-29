@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Quiz } from '@/types/tutorial.types';
-import { CheckCircle, XCircle, ChevronRight, History } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, History, AlertCircle, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -95,7 +95,6 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                 if (q.isMultipleChoice) {
                     // Pour les questions à choix multiples, on utilise un système de crédit partiel
                     const totalCorrectAnswers = correctAnswers.size;
-                    const totalIncorrectAnswers = q.answers.length - totalCorrectAnswers;
                     
                     let score = 0;
                     
@@ -176,19 +175,44 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                 {quiz.questions.map(q => (
                                     <div key={q.id} className="text-sm p-2 rounded-md bg-muted/50">
                                         <p className="font-medium">{q.text}</p>
-                                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                                        <ul className="list-none pl-0 mt-2 space-y-1">
                                             {q.answers.map(a => {
-                                                const isUserAnswer = !hasPassedBefore && userAnswers[q.id]?.includes(a.id);
+                                                const wasSelected = !hasPassedBefore && (userAnswers[q.id] || []).includes(a.id);
+                                                const isCorrect = !!a.isCorrect;
+
+                                                if (isCorrect && wasSelected) {
+                                                    return (
+                                                        <li key={a.id} className="flex items-center gap-2 text-green-400">
+                                                            <CheckCircle className="h-4 w-4 shrink-0" />
+                                                            <span>{a.text}</span>
+                                                        </li>
+                                                    );
+                                                }
+                                                if (isCorrect && !wasSelected) {
+                                                    return (
+                                                        <li key={a.id} className="flex items-center gap-2 text-red-400">
+                                                            <AlertCircle className="h-4 w-4 shrink-0" />
+                                                            <span>{a.text}</span>
+                                                            <span className="text-xs font-bold">(Réponse correcte manquée)</span>
+                                                        </li>
+                                                    );
+                                                }
+                                                if (!isCorrect && wasSelected) {
+                                                    return (
+                                                        <li key={a.id} className="flex items-center gap-2 text-red-400">
+                                                            <XCircle className="h-4 w-4 shrink-0" />
+                                                            <span>{a.text}</span>
+                                                            <span className="text-xs font-bold">(Votre réponse incorrecte)</span>
+                                                        </li>
+                                                    );
+                                                }
+                                                // !isCorrect && !wasSelected
                                                 return (
-                                                    <li key={a.id} className={cn(
-                                                        'flex items-center gap-2',
-                                                        a.isCorrect ? 'text-green-400' : (isUserAnswer ? 'text-red-400' : 'text-muted-foreground')
-                                                    )}>
-                                                        {a.isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                                                    <li key={a.id} className="flex items-center gap-2 text-muted-foreground">
+                                                        <Circle className="h-4 w-4 shrink-0" />
                                                         <span>{a.text}</span>
-                                                        {isUserAnswer && !a.isCorrect && <span className="text-xs font-bold">(Votre réponse)</span>}
                                                     </li>
-                                                )
+                                                );
                                             })}
                                         </ul>
                                     </div>
