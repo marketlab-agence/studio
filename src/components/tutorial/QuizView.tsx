@@ -89,35 +89,31 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
             const { totalScore, maxScore } = quiz.questions.reduce((acc, q) => {
-                const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
                 const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
 
                 if (q.isMultipleChoice) {
-                    // Pour les questions à choix multiples, on utilise un système de crédit partiel
-                    const totalCorrectAnswers = correctAnswers.size;
+                    let correctDecisions = 0;
+                    const totalOptions = q.answers.length;
                     
-                    let score = 0;
-                    
-                    // Points positifs pour les bonnes réponses sélectionnées
-                    const correctSelected = [...userAnswersForQuestion].filter(id => correctAnswers.has(id)).length;
-                    score += correctSelected;
-                    
-                    // Points négatifs pour les mauvaises réponses sélectionnées
-                    const incorrectSelected = [...userAnswersForQuestion].filter(id => !correctAnswers.has(id)).length;
-                    score -= incorrectSelected;
-                    
-                    // Le score ne peut pas être négatif
-                    score = Math.max(0, score);
-                    
-                    // Normaliser le score sur la base du nombre de bonnes réponses
-                    const questionScore = totalCorrectAnswers > 0 ? score / totalCorrectAnswers : 0;
-                    
+                    q.answers.forEach(answer => {
+                        const userSelectedThis = userAnswersForQuestion.has(answer.id);
+                        const answerIsCorrect = !!answer.isCorrect;
+                        
+                        // A correct decision is made if the user's action matches the answer's correctness
+                        // (i.e., selecting a correct answer, or not selecting an incorrect one)
+                        if (userSelectedThis === answerIsCorrect) {
+                            correctDecisions++;
+                        }
+                    });
+
+                    const questionScore = totalOptions > 0 ? correctDecisions / totalOptions : 0;
+
                     return {
                         totalScore: acc.totalScore + questionScore,
                         maxScore: acc.maxScore + 1
                     };
                 } else {
-                    // Pour les questions à choix unique, logique existante
+                    const correctAnswers = new Set(q.answers.filter(a => a.isCorrect).map(a => a.id));
                     const isCorrect = correctAnswers.size === userAnswersForQuestion.size && 
                                     [...correctAnswers].every(answerId => userAnswersForQuestion.has(answerId));
                     
