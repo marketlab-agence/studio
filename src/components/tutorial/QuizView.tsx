@@ -180,39 +180,35 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                                 const wasSelected = !hasPassedBefore && (userAnswers[q.id] || []).includes(a.id);
                                                 const isCorrect = !!a.isCorrect;
 
-                                                if (isCorrect && wasSelected) {
-                                                    return (
-                                                        <li key={a.id} className="flex items-center gap-2 text-green-400">
-                                                            <CheckCircle className="h-4 w-4 shrink-0" />
-                                                            <span>{a.text}</span>
-                                                        </li>
-                                                    );
+                                                if (q.isMultipleChoice) {
+                                                    // Logic for multiple choice
+                                                    if (isCorrect && wasSelected) {
+                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                    }
+                                                    if (isCorrect && !wasSelected) {
+                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Réponse correcte manquée)</span></li>;
+                                                    }
+                                                    if (!isCorrect && wasSelected) {
+                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse incorrecte)</span></li>;
+                                                    }
+                                                    // Fallthrough for !isCorrect && !wasSelected
+                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                } else {
+                                                    // Logic for single choice
+                                                    const userSingleAnswer = (userAnswers[q.id] || [])[0];
+                                                    const wasThisOptionSelected = userSingleAnswer === a.id;
+                                                    
+                                                    if (isCorrect) {
+                                                        // Always show the correct answer in green
+                                                        return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                    }
+                                                    if (wasThisOptionSelected) {
+                                                        // If this was the user's (wrong) choice, show it in red
+                                                        return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span><span className="text-xs font-bold">(Votre réponse)</span></li>;
+                                                    }
+                                                    // Otherwise, show as neutral
+                                                    return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
                                                 }
-                                                if (isCorrect && !wasSelected) {
-                                                    return (
-                                                        <li key={a.id} className="flex items-center gap-2 text-red-400">
-                                                            <AlertCircle className="h-4 w-4 shrink-0" />
-                                                            <span>{a.text}</span>
-                                                            <span className="text-xs font-bold">(Réponse correcte manquée)</span>
-                                                        </li>
-                                                    );
-                                                }
-                                                if (!isCorrect && wasSelected) {
-                                                    return (
-                                                        <li key={a.id} className="flex items-center gap-2 text-red-400">
-                                                            <XCircle className="h-4 w-4 shrink-0" />
-                                                            <span>{a.text}</span>
-                                                            <span className="text-xs font-bold">(Votre réponse incorrecte)</span>
-                                                        </li>
-                                                    );
-                                                }
-                                                // !isCorrect && !wasSelected
-                                                return (
-                                                    <li key={a.id} className="flex items-center gap-2 text-muted-foreground">
-                                                        <Circle className="h-4 w-4 shrink-0" />
-                                                        <span>{a.text}</span>
-                                                    </li>
-                                                );
                                             })}
                                         </ul>
                                     </div>
