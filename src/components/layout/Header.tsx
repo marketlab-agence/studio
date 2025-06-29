@@ -115,6 +115,7 @@ export function Header() {
           </DropdownMenu>
         ) : (
            <div className="hidden sm:flex items-center gap-2">
+            <Button variant="ghost" asChild><Link href="/blog">Blog</Link></Button>
             <Button variant="ghost" asChild><Link href="/pricing">Tarifs</Link></Button>
             <Button asChild>
                 <Link href="/login">
