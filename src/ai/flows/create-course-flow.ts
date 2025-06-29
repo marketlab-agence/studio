@@ -13,6 +13,10 @@ import {z} from 'genkit';
 const CreateCourseInputSchema = z.object({
   topic: z.string().describe('The main topic or subject of the course.'),
   targetAudience: z.string().describe('The intended audience for the course (e.g., beginners, experts).'),
+  numChapters: z.number().optional().describe('The desired number of chapters.'),
+  numLessonsPerChapter: z.number().optional().describe('The desired number of lessons per chapter.'),
+  numQuestionsPerQuiz: z.number().optional().describe('The desired number of questions per quiz topic list.'),
+  courseLanguage: z.string().optional().describe('The language the course should be written in.'),
 });
 export type CreateCourseInput = z.infer<typeof CreateCourseInputSchema>;
 
@@ -51,8 +55,27 @@ const prompt = ai.definePrompt({
 
 Your task is to generate a complete course structure, including a course title, a description, a list of chapters, and for each chapter, a list of lessons and a quiz plan.
 
+**Base Information:**
 Course Topic: {{{topic}}}
 Target Audience: {{{targetAudience}}}
+
+**Constraints:**
+{{#if courseLanguage}}The entire course plan, including titles and descriptions, MUST be in {{{courseLanguage}}}.{{else}}The entire course plan MUST be in French.{{/if}}
+{{#if numChapters}}
+The course must have exactly {{{numChapters}}} chapters.
+{{else}}
+The course must have between 5 and 10 chapters.
+{{/if}}
+{{#if numLessonsPerChapter}}
+Each chapter must have exactly {{{numLessonsPerChapter}}} lessons.
+{{else}}
+Each chapter must have between 3 and 5 lessons.
+{{/if}}
+{{#if numQuestionsPerQuiz}}
+Each chapter's quiz plan must cover exactly {{{numQuestionsPerQuiz}}} topics.
+{{else}}
+Each chapter's quiz plan must cover between 3 and 5 topics.
+{{/if}}
 
 Please generate the course plan according to the specified output schema. Ensure the content is logical, well-structured, and appropriate for the target audience. The tone should be professional and encouraging.
 `,

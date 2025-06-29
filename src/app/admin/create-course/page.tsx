@@ -17,10 +17,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { saveCoursePlanAction } from '@/actions/courseActions';
+import { Label } from '@/components/ui/label';
 
 export default function CreateCoursePage() {
     const [topic, setTopic] = useState('');
     const [targetAudience, setTargetAudience] = useState('Débutants');
+    const [numChapters, setNumChapters] = useState('');
+    const [numLessons, setNumLessons] = useState('');
+    const [numQuestions, setNumQuestions] = useState('');
+    const [language, setLanguage] = useState('Français');
+
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [coursePlan, setCoursePlan] = useState<CreateCourseOutput | null>(null);
@@ -32,11 +38,22 @@ export default function CreateCoursePage() {
             setError("Veuillez entrer un sujet pour la formation.");
             return;
         }
+        if (!targetAudience) {
+            setError("Veuillez préciser le public cible.");
+            return;
+        }
         setIsLoading(true);
         setError(null);
         setCoursePlan(null);
         try {
-            const plan = await createCoursePlan({ topic, targetAudience });
+            const plan = await createCoursePlan({ 
+                topic, 
+                targetAudience,
+                numChapters: numChapters ? parseInt(numChapters, 10) : undefined,
+                numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined,
+                numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined,
+                courseLanguage: language || undefined,
+            });
             setCoursePlan(plan);
         } catch (e) {
             console.error(e);
@@ -91,27 +108,73 @@ export default function CreateCoursePage() {
         <CardHeader>
             <CardTitle>1. Décrivez votre formation</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-            <div>
-                <label htmlFor="topic" className="font-medium text-sm">Sujet de la formation</label>
+        <CardContent className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="topic">Sujet de la formation (obligatoire)</Label>
                 <Textarea 
                     id="topic"
                     placeholder="Ex: Une introduction à Docker pour les développeurs web" 
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    className="mt-1"
                 />
             </div>
-             <div>
-                <label htmlFor="audience" className="font-medium text-sm">Public Cible</label>
-                <Input 
-                    id="audience"
-                    placeholder="Ex: Débutants, Développeurs expérimentés" 
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    className="mt-1"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="audience">Public Cible (obligatoire)</Label>
+                    <Input 
+                        id="audience"
+                        placeholder="Ex: Débutants, Développeurs expérimentés" 
+                        value={targetAudience}
+                        onChange={(e) => setTargetAudience(e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="language">Langue de la formation (facultatif)</Label>
+                    <Input 
+                        id="language"
+                        placeholder="Ex: Français, English" 
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                    />
+                </div>
             </div>
+
+            <Card className="bg-muted/50 p-4">
+                <CardDescription className="mb-4">Options avancées (facultatif)</CardDescription>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="numChapters">Nombre de chapitres</Label>
+                        <Input 
+                            id="numChapters"
+                            type="number"
+                            placeholder="Ex: 8"
+                            value={numChapters}
+                            onChange={(e) => setNumChapters(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="numLessons">Leçons par chapitre</Label>
+                        <Input 
+                            id="numLessons"
+                            type="number"
+                            placeholder="Ex: 5"
+                            value={numLessons}
+                            onChange={(e) => setNumLessons(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="numQuestions">Questions par quiz</Label>
+                        <Input 
+                            id="numQuestions"
+                            type="number"
+                            placeholder="Ex: 4"
+                            value={numQuestions}
+                            onChange={(e) => setNumQuestions(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </Card>
+
             <Button onClick={handleGeneratePlan} disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                 Générer le plan de formation
