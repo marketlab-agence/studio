@@ -80,6 +80,7 @@ export async function saveCoursePlanAction(plan: CreateCourseOutput): Promise<{ 
     });
 
     revalidatePath('/admin');
+    revalidatePath('/admin/courses');
     revalidatePath(`/admin/courses/${courseId}`);
     return { courseId };
 }
@@ -89,6 +90,7 @@ export async function publishCourseAction(courseId: string) {
     if (course) {
         course.status = 'Publié';
         revalidatePath('/admin');
+        revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
     }
 }
