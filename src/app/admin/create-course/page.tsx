@@ -157,11 +157,14 @@ export default function CreateCoursePage() {
     };
 
     const handleFinishBuild = () => {
-        if (activePlan) handleDeletePlan(activePlan.localId);
-        // Crucial: Refresh the client-side router cache to ensure the new
-        // course data is available on the destination page.
-        router.refresh();
-        router.push(`/admin/courses/${buildingCourseId}`);
+        if (activePlan) {
+            handleDeletePlan(activePlan.localId);
+        }
+        toast({
+            title: "Formation créée avec succès !",
+            description: "Vous êtes redirigé vers la liste des formations où vous pouvez maintenant la modifier.",
+        });
+        router.push(`/admin/courses`);
     };
 
     // Auto-trigger generation when step changes
