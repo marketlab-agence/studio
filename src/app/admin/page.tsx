@@ -52,6 +52,7 @@ export default function AdminDashboardPage() {
   const [allUsers, setAllUsers] = useState<MockUser[]>([]);
   const [displayedUsers, setDisplayedUsers] = useState<MockUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [allCourses, setAllCourses] = useState<any[]>([]);
 
   const handleSearch = () => {
     const lowercasedQuery = searchQuery.toLowerCase().trim();
@@ -95,6 +96,14 @@ export default function AdminDashboardPage() {
         setAllUsers(initialUsers);
         setDisplayedUsers(initialUsers);
 
+        const coursesData = COURSES.map(course => ({
+            id: course.id,
+            title: course.title,
+            lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
+            status: 'Publié',
+        }));
+        setAllCourses(coursesData);
+
         if (initialUsers.length > 0) {
             const totalUsers = initialUsers.length;
             const premiumUsers = initialUsers.filter(u => u.plan === 'Premium').length;
@@ -110,14 +119,7 @@ export default function AdminDashboardPage() {
         }
         setDataLoading(false);
     }, 800); // 0.8s delay to simulate network
-  }, [authUser]);
-
-  const allCourses = COURSES.map(course => ({
-    id: course.id,
-    title: course.title,
-    lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
-    status: 'Publié',
-  }));
+  }, [authUser, searchParams]);
 
   const freePlan = PLANS_DATA.free;
   const premiumPlan = PLANS_DATA.premium;
