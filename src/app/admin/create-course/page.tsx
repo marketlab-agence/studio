@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
 export default function CreateCoursePage() {
     const router = useRouter();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
 
     // State for Create Course Tab
     const [topic, setTopic] = useState('');
@@ -122,9 +123,6 @@ export default function CreateCoursePage() {
                 title: "Plan sauvegardé !",
                 description: "Redirection vers la liste des formations...",
             });
-            // Clear history after successful save
-            setGeneratedPlans([]);
-            setActivePlanId(null);
             router.push(`/admin/courses`);
         } catch (e) {
             console.error(e);
