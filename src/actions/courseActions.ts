@@ -7,6 +7,7 @@ import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
+import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 
 const slugify = (text: string) =>
@@ -199,4 +200,13 @@ export async function generateAndSaveLessonContent(
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
   return generatedLesson;
+}
+
+export async function getCourseAndChapters(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
+    const course = COURSES.find(c => c.id === courseId);
+    if (!course) {
+        return { course: null, chapters: [] };
+    }
+    const chapters = TUTORIALS.filter(t => t.courseId === courseId);
+    return { course, chapters };
 }

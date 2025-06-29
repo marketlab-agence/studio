@@ -1,7 +1,6 @@
 
 'use client';
 
-import { TUTORIALS } from '@/lib/tutorials';
 import { notFound, useParams } from 'next/navigation';
 import {
   Card,
@@ -21,8 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, ChevronRight, UploadCloud, Loader2 } from 'lucide-react';
-import { COURSES } from '@/lib/courses';
-import { publishCourseAction } from '@/actions/courseActions';
+import { publishCourseAction, getCourseAndChapters } from '@/actions/courseActions';
 import { useState, useEffect } from 'react';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
@@ -37,24 +35,28 @@ export default function CourseChaptersPage() {
   const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
-    // This effect implements a polling mechanism to handle potential race conditions
-    // where the page navigates before the server-side in-memory data is updated.
+    // This effect now fetches data from the server, ensuring it's up-to-date,
+    // and polls to handle potential race conditions where the page navigates 
+    // before the server-side in-memory data is updated.
     let attempts = 0;
     const intervalId = setInterval(() => {
-      const foundCourse = COURSES.find(c => c.id === params.courseId);
-      if (foundCourse) {
-        const foundChapters = TUTORIALS.filter(t => t.courseId === params.courseId);
-        setCourseInfo(foundCourse);
-        setCourseChapters(foundChapters);
-        setIsLoading(false);
-        clearInterval(intervalId);
-      } else {
-        attempts++;
-        if (attempts > 15) { // Stop trying after ~3 seconds
-          setIsLoading(false); // This will allow the component to render and trigger notFound()
+      async function fetchCourseData() {
+        const { course, chapters } = await getCourseAndChapters(params.courseId);
+        
+        if (course) {
+          setCourseInfo(course);
+          setCourseChapters(chapters);
+          setIsLoading(false);
           clearInterval(intervalId);
+        } else {
+          attempts++;
+          if (attempts > 10) { // Stop trying after ~2 seconds
+            setIsLoading(false); // This will allow the component to render and trigger notFound()
+            clearInterval(intervalId);
+          }
         }
       }
+      fetchCourseData();
     }, 200); // Check every 200ms
 
     return () => clearInterval(intervalId); // Cleanup on unmount
