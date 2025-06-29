@@ -28,6 +28,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
 
@@ -47,8 +48,23 @@ export default function CreateCoursePage() {
     const [feedbackTiming, setFeedbackTiming] = useState<'end' | 'immediate'>('end');
     const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
     const [isSavingPlan, setIsSavingPlan] = useState(false);
-    const [generatedPlans, setGeneratedPlans] = useState<PlanWithId[]>([]);
-    const [activePlanId, setActivePlanId] = useState<string | null>(null);
+
+    const [generatedPlans, setGeneratedPlans] = useLocalStorage<PlanWithId[]>('generatedCoursePlans', [], {
+        deserializer: (value) => {
+            try {
+                const parsed = JSON.parse(value) as PlanWithId[];
+                // Re-hydrate Date objects
+                return parsed.map(plan => ({
+                    ...plan,
+                    createdAt: new Date(plan.createdAt),
+                }));
+            } catch {
+                return [];
+            }
+        }
+    });
+    const [activePlanId, setActivePlanId] = useLocalStorage<string | null>('activeCoursePlanId', null);
+
     const [error, setError] = useState<string | null>(null);
 
     const activePlan = useMemo(() => generatedPlans.find(p => p.localId === activePlanId), [generatedPlans, activePlanId]);
@@ -106,6 +122,9 @@ export default function CreateCoursePage() {
                 title: "Plan sauvegardé !",
                 description: "Redirection vers la liste des formations...",
             });
+            // Clear history after successful save
+            setGeneratedPlans([]);
+            setActivePlanId(null);
             router.push(`/admin/courses`);
         } catch (e) {
             console.error(e);
