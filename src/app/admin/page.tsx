@@ -28,7 +28,7 @@ import {
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR, type MockUser } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { PLANS_DATA } from '@/lib/plans';
@@ -37,7 +37,9 @@ import { getAdminCourses } from '@/actions/adminActions';
 
 export default function AdminDashboardPage() {
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'dashboard';
+  const router = useRouter();
+  const pathname = usePathname();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const { user: authUser } = useAuth();
 
   const [stats, setStats] = useState({
@@ -52,6 +54,10 @@ export default function AdminDashboardPage() {
   const [displayedUsers, setDisplayedUsers] = useState<MockUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [allCourses, setAllCourses] = useState<any[]>([]);
+
+  const handleTabChange = (value: string) => {
+    router.push(`${pathname}?tab=${value}`);
+  };
 
   const handleSearch = () => {
     const lowercasedQuery = searchQuery.toLowerCase().trim();
@@ -131,7 +137,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <Tabs defaultValue={defaultTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="courses">Formations</TabsTrigger>
