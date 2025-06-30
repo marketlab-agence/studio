@@ -21,6 +21,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const accountFormSchema = z.object({
   firstName: z.string().min(2, { message: 'Le prénom doit contenir au moins 2 caractères.' }),
@@ -71,16 +73,31 @@ export default function AccountPage() {
   }, [user, form]);
 
   async function onSubmit(data: AccountFormValues) {
+    if (!user || !auth?.currentUser) return;
     setIsSaving(true);
-    // Here you would typically save the data to your backend/database
-    console.log('Données du compte sauvegardées (simulation):', data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    toast({
-      title: 'Profil mis à jour',
-      description: 'Vos informations ont été sauvegardées avec succès.',
-    });
-    setIsSaving(false);
+    try {
+        await updateProfile(auth.currentUser, {
+            displayName: `${data.firstName} ${data.lastName}`.trim(),
+        });
+
+        toast({
+            title: 'Profil mis à jour',
+            description: 'Vos informations ont été sauvegardées avec succès.',
+        });
+        
+        router.refresh();
+
+    } catch (error) {
+        console.error("Erreur de mise à jour du profil:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Erreur',
+            description: 'La mise à jour de votre profil a échoué.',
+        });
+    } finally {
+        setIsSaving(false);
+    }
   }
   
   if (loading || !user) {

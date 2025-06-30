@@ -1,5 +1,6 @@
+
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'l
 import { AnimatePresence, motion } from 'framer-motion';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getSettings } from '@/actions/adminActions';
 
 export function CertificateGenerator({ averageQuizScore, masteryIndex }: { averageQuizScore: number, masteryIndex: number }) {
     const [name, setName] = useState('');
@@ -15,6 +17,21 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
     const [certificateId, setCertificateId] = useState('');
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [instructorName, setInstructorName] = useState('Alex Dubois');
+
+    useEffect(() => {
+        async function fetchInstructorName() {
+            try {
+                const settings = await getSettings();
+                if (settings?.instructorName) {
+                    setInstructorName(settings.instructorName);
+                }
+            } catch (error) {
+                console.error("Failed to fetch instructor name:", error);
+            }
+        }
+        fetchInstructorName();
+    }, []);
 
     const handleGenerate = () => {
         if (name.trim()) {
@@ -137,7 +154,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                             </div>
 
                             <div className="text-center">
-                                <p className="font-signature text-4xl text-foreground/80">Alex Dubois</p>
+                                <p className="font-signature text-4xl text-foreground/80">{instructorName}</p>
                                 <div className="h-px w-full bg-foreground my-1 max-w-[200px] mx-auto"></div>
                                 <p className="text-sm font-semibold">L'Instructeur</p>
                             </div>
