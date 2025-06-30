@@ -51,9 +51,8 @@ export function DeleteCourseButton({ courseId, courseTitle }: DeleteCourseButton
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer
+                <Button variant="destructive" size="icon" aria-label="Supprimer la formation">
+                    <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

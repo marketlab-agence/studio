@@ -30,7 +30,7 @@ export function ActionButtons({ course }: { course: AdminCourse }) {
 
     if (course.status === 'Plan') {
         return (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-4">
                 <Button asChild variant="outline" size="sm">
                     <Link href={`/admin/create-course?planId=${course.id}`}>Modifier le Plan</Link>
                 </Button>
@@ -44,7 +44,7 @@ export function ActionButtons({ course }: { course: AdminCourse }) {
     
     if (course.status === 'Brouillon' || course.status === 'Publié') {
         return (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-4">
                 {editButton}
                 {deleteButton}
             </div>
