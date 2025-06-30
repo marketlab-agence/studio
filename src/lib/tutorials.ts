@@ -1,31 +1,22 @@
+
 import type { Tutorial } from '@/types/tutorial.types';
-import fs from 'fs';
-import path from 'path';
+import tutorialsData from '@/data/tutorials.json';
 
-const dataDirectory = path.join(process.cwd(), 'src/data');
-const tutorialsFilePath = path.join(dataDirectory, 'tutorials.json');
+// Initialize with data from the JSON file. This is client-safe.
+export let TUTORIALS: Tutorial[] = tutorialsData as Tutorial[];
 
-function readTutorialsFromFile(): Tutorial[] {
+// The save function now uses dynamic imports for fs and path, making it server-side only at runtime.
+export async function saveTutorials() {
   try {
-    const fileContents = fs.readFileSync(tutorialsFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch (error) {
-    console.error('Error reading tutorials.json, returning initial data:', error);
-    // Fallback to initial data
-    return [];
-  }
-}
+    const fs = await import('fs');
+    const path = await import('path');
+    const dataDirectory = path.join(process.cwd(), 'src/data');
+    const tutorialsFilePath = path.join(dataDirectory, 'tutorials.json');
 
-export let TUTORIALS: Tutorial[] = readTutorialsFromFile();
-
-export function saveTutorials() {
-  try {
     if (!fs.existsSync(dataDirectory)) {
       fs.mkdirSync(dataDirectory, { recursive: true });
     }
     fs.writeFileSync(tutorialsFilePath, JSON.stringify(TUTORIALS, null, 2));
-    // Re-read to ensure the in-memory export is up-to-date
-    TUTORIALS = readTutorialsFromFile();
   } catch (error) {
     console.error('Error saving tutorials.json:', error);
   }

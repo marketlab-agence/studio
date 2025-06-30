@@ -47,7 +47,7 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
         }
     }
 
-    saveCourses();
+    await saveCourses();
     revalidatePath('/admin/courses');
     return { courseId };
 }
@@ -117,9 +117,9 @@ export async function buildCourseFromPlanAction(courseId: string) {
         status: 'Brouillon',
     };
     
-    saveCourses();
-    saveTutorials();
-    saveQuizzes();
+    await saveCourses();
+    await saveTutorials();
+    await saveQuizzes();
 
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
@@ -131,7 +131,7 @@ export async function publishCourseAction(courseId: string) {
     const course = COURSES.find(c => c.id === courseId);
     if (course) {
         course.status = 'Publié';
-        saveCourses();
+        await saveCourses();
         revalidatePath('/admin');
         revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
@@ -209,7 +209,7 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = generatedLesson.interactiveComponentName;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = generatedLesson.visualComponentName;
   
-  saveTutorials();
+  await saveTutorials();
 
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
