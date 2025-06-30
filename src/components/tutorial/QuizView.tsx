@@ -67,13 +67,21 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     };
 
     useEffect(() => {
+        // This effect decides whether to show a fresh quiz or past results.
+        // It should not interfere if the user has just completed the quiz in the current session.
+        if (showResults) {
+            return;
+        }
+
         if (hasPassedBefore && isPremium) {
+            // For premium users, show previous results automatically.
             setUserAnswers(existingAnswers || {});
             setShowResults(true);
         } else {
+            // For free users or first-time takers, always start fresh.
             resetQuiz();
         }
-    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz, isPremium]);
+    }, [quiz.id, hasPassedBefore, isPremium, existingAnswers, resetQuiz, showResults]);
     
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
