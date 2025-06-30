@@ -122,20 +122,22 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                             key={lesson.id}
                             className={cn(
                               'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
-                              !isPremiumLocked && progress.currentView === 'lesson' && lesson.id === currentLesson?.id
+                              !isChapterTotallyLocked && progress.currentView === 'lesson' && lesson.id === currentLesson?.id
                                 ? 'bg-primary/10 text-primary-foreground'
-                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                                isChapterTotallyLocked && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
                             )}
-                            onClick={() => {
-                              if (isPremiumLocked) {
+                             onClick={() => {
+                              if (isChapterTotallyLocked) {
                                 router.push('/pricing');
                               } else {
                                 handleLessonClick(tutorial.id, lesson.id);
                               }
                             }}
+                            disabled={isChapterTotallyLocked}
                           >
                             <span className="font-medium">{lesson.title}</span>
-                            {isPremiumLocked ? (
+                            {isChapterTotallyLocked ? (
                               <Lock className="h-4 w-4 text-yellow-500" />
                             ) : isLessonMarkedAsComplete ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -151,27 +153,27 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                           key={`${tutorial.id}-quiz`}
                           className={cn(
                             'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
-                            !isPremiumLocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
+                            !isChapterTotallyLocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
                               ? 'bg-primary/10 text-primary-foreground'
                               : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                            (isChapterLockedByPreviousQuiz || isPremiumLocked || !areLessonsCompletedForQuiz) && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
+                            (isChapterTotallyLocked || !areLessonsCompletedForQuiz) && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
                           )}
                           onClick={() => {
-                              if (isPremiumLocked) {
+                              if (isChapterTotallyLocked) {
                                 router.push('/pricing');
                               } else if (areLessonsCompletedForQuiz) {
                                 handleQuizClick(tutorial.id);
                               }
                           }}
-                          disabled={isChapterLockedByPreviousQuiz || isPremiumLocked || !areLessonsCompletedForQuiz}
+                          disabled={isChapterTotallyLocked || !areLessonsCompletedForQuiz}
                         >
                           <div className="flex items-center gap-2">
                             <GraduationCap className="h-4 w-4" />
                             <span>Quiz du Chapitre</span>
                           </div>
                           {(() => {
-                            if (isPremiumLocked) return <Lock className="h-4 w-4 text-yellow-500" />;
-                            if (isChapterLockedByPreviousQuiz || !areLessonsCompletedForQuiz) return <Lock className="h-4 w-4" />;
+                            if (isChapterTotallyLocked) return <Lock className="h-4 w-4 text-yellow-500" />;
+                            if (!areLessonsCompletedForQuiz) return <Lock className="h-4 w-4" />;
                             if (isQuizPassed) return <CheckCircle className="h-4 w-4 text-green-500" />;
                             if (progress.currentView === 'quiz' && tutorial.id === currentChapter?.id) return <ChevronRight className="h-4 w-4 text-primary" />;
                             return <ChevronRight className="h-4 w-4" />;

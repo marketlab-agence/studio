@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Quiz } from '@/types/tutorial.types';
-import { CheckCircle, XCircle, ChevronRight, History, AlertCircle, Circle } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, History, AlertCircle, Circle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -25,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TUTORIALS } from '@/lib/tutorials';
+import { useAuth } from '@/contexts/AuthContext';
 
 type QuizViewProps = {
     quiz: Quiz;
@@ -35,7 +37,8 @@ type QuizViewProps = {
 type UserAnswers = Record<string, string[]>;
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
-    const { progress, resetChapter, setCurrentLocation } = useTutorial();
+    const { progress, resetChapter, setCurrentLocation, courseChapters } = useTutorial();
+    const { isPremium } = useAuth();
     const existingScore = progress.quizScores[quiz.id];
     const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
     const existingAnswers = progress.quizAnswers?.[quiz.id];
@@ -61,13 +64,13 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     };
 
     useEffect(() => {
-        if (hasPassedBefore) {
+        if (hasPassedBefore && isPremium) {
             setUserAnswers(existingAnswers || {});
             setShowResults(true);
         } else {
             resetQuiz();
         }
-    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz]);
+    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz, isPremium]);
     
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
@@ -129,8 +132,10 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         }
     };
     
-    const finalScore = hasPassedBefore ? existingScore : calculatedScore;
+    const finalScore = (hasPassedBefore && isPremium) ? existingScore : calculatedScore;
     const isQuizPassed = finalScore >= quiz.passingScore;
+    const isFirstChapterQuiz = courseChapters[0]?.id === quiz.id;
+    const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
 
     if (showResults) {
         return (
@@ -144,7 +149,15 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         </p>
                     </CardHeader>
                     <CardContent>
-                        {isQuizPassed ? (
+                        {showUpgradePrompt ? (
+                             <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-foreground">
+                                <Sparkles className="h-4 w-4 text-yellow-400" />
+                                <AlertTitle className="text-green-400">Félicitations et Prochaine Étape !</AlertTitle>
+                                <AlertDescription>
+                                    Vous avez brillamment réussi le premier chapitre ! Pour débloquer la suite du cours et toutes nos formations, passez à la formule Premium.
+                                </AlertDescription>
+                            </Alert>
+                        ) : isQuizPassed ? (
                             <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-green-500">
                                 <CheckCircle className="h-4 w-4 !text-green-500" />
                                 <AlertTitle>Félicitations !</AlertTitle>
@@ -162,7 +175,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                             </Alert>
                         )}
 
-                        {isQuizPassed && (
+                        {isQuizPassed && !showUpgradePrompt && (
                             <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
                                 <h3 className="font-semibold">Correction détaillée :</h3>
                                 {quiz.questions.map(q => {
@@ -194,7 +207,14 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                         )}
                     </CardContent>
                     <CardFooter className="flex-row-reverse gap-2">
-                        {isQuizPassed ? (
+                        {showUpgradePrompt ? (
+                             <Button asChild>
+                                <Link href="/pricing">
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    Mettre à niveau vers Premium
+                                </Link>
+                             </Button>
+                        ) : isQuizPassed ? (
                             <Button onClick={onFinishQuiz}>
                                 Continuer
                                 <ChevronRight className="ml-2 h-4 w-4" />
