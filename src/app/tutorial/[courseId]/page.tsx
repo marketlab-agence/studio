@@ -147,7 +147,8 @@ export default function TutorialCoursePage() {
             skeletonView
         ) : (
           <>
-            <div className={cn("flex flex-col h-full", currentView !== 'lesson' && 'hidden')}>
+            {currentView === 'lesson' ? (
+              <div className="flex flex-col h-full">
                 {currentLesson && currentChapter ? (
                     <>
                         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
@@ -169,11 +170,12 @@ export default function TutorialCoursePage() {
                     </Button>
                   </div>
                 )}
-            </div>
+              </div>
+            ) : null}
 
-            <div className={cn("h-full", currentView !== 'quiz' && 'hidden')}>
-                {chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
-            </div>
+            {currentView === 'quiz' && chapterQuiz ? (
+              <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />
+            ) : null}
           </>
         )}
 
