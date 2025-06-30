@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -48,17 +47,17 @@ export function Header() {
           <Link href="/tutorial" className="text-muted-foreground transition-colors hover:text-foreground">
             Tutoriel
           </Link>
-          <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
-            Certification
-          </Link>
-          <Link href="/ai-assistant" className={cn("transition-colors hover:text-foreground flex items-center gap-2", isPremium ? "text-muted-foreground" : "text-muted-foreground/60")}>
-            Assistant IA 
-            {isPremium ? (
-              <Badge variant="secondary" className="border-yellow-400/50 text-yellow-300 py-0">Premium</Badge>
-            ) : (
-              <Lock className="h-3 w-3" />
-            )}
-          </Link>
+          {isPremium && (
+            <>
+                <Link href="/certificate" className="text-muted-foreground transition-colors hover:text-foreground">
+                    Certification
+                </Link>
+                <Link href="/ai-assistant" className="text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2">
+                    Assistant IA 
+                    <Badge variant="secondary" className="border-yellow-400/50 text-yellow-300 py-0">Premium</Badge>
+                </Link>
+            </>
+          )}
         </nav>
       )}
       <div className="flex items-center gap-4 ml-auto">
@@ -92,9 +91,11 @@ export function Header() {
               <DropdownMenuItem asChild>
                 <Link href="/account">Mon compte</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/certificate">Certificat</Link>
-              </DropdownMenuItem>
+              {isPremium && (
+                <DropdownMenuItem asChild>
+                    <Link href="/certificate">Certificat</Link>
+                </DropdownMenuItem>
+              )}
                <DropdownMenuItem asChild>
                 <Link href="/pricing">Abonnement</Link>
               </DropdownMenuItem>
