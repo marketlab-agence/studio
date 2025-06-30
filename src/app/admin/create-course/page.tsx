@@ -53,7 +53,7 @@ export default function CreateCoursePage() {
     const searchParams = useSearchParams();
 
     // === View State ===
-    const [view, setView] = useState<'planner' | 'builder'>('planner');
+    const [isBuildingMode, setIsBuildingMode] = useState(false);
     const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
     const [isSavingPlan, setIsSavingPlan] = useState(false);
     const [isCreatingCourse, setIsCreatingCourse] = useState(false);
@@ -172,7 +172,7 @@ export default function CreateCoursePage() {
             setBuildSteps(steps);
             setCurrentStepIndex(0);
             setGeneratedContent(null);
-            setView('builder');
+            setIsBuildingMode(true);
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors du lancement de la création. Veuillez réessayer.");
@@ -200,7 +200,7 @@ export default function CreateCoursePage() {
 
     // Auto-trigger generation when step changes
     useEffect(() => {
-        if (view === 'builder' && currentStepIndex < buildSteps.length) {
+        if (isBuildingMode && currentStepIndex < buildSteps.length) {
             const step = buildSteps[currentStepIndex];
             
             const generateStepContent = async () => {
@@ -222,7 +222,7 @@ export default function CreateCoursePage() {
             };
             generateStepContent();
         }
-    }, [view, currentStepIndex, buildSteps, buildingCourseId]);
+    }, [isBuildingMode, currentStepIndex, buildSteps, buildingCourseId]);
 
 
     // Planner View helpers
@@ -234,119 +234,17 @@ export default function CreateCoursePage() {
     const renderPlanLoadingState = () => <div className="space-y-4 mt-6"><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-3/4" /><div className="space-y-2 pt-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div></div>;
     const renderEditablePlan = () => activePlan && (
       <div className="space-y-6">
-          <div className="space-y-4 rounded-lg border bg-background p-6"><div className="space-y-2"><Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label><Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" /></div><div className="space-y-2"><Label htmlFor="courseDescription" className="font-semibold">Description</Label><Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} /></div></div>
-          <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">{activePlan.chapters.map((chapter, chapterIndex) => (<AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild><Card><div className="flex w-full items-start justify-between p-6"><div className="flex-1 space-y-2 pr-4"><Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label><div className="flex items-center gap-2"><Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" /></div></div><AccordionTrigger /></div><AccordionContent><CardContent className="space-y-6 pl-6 pt-0"><div><h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4><div className="space-y-4">{chapter.lessons.map((lesson, lessonIndex) => (<div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2"><div className="flex-1 space-y-4"><div className="space-y-2"><Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label><Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" /><Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2}/></div></div></div>))}</div></div><Separator /><div><h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4><div className="pl-4 space-y-4"><div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div><div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div></div></div></CardContent></AccordionContent></Card></AccordionItem>))}</Accordion>
+          <div className="space-y-4 rounded-lg border bg-background p-6"><div className="space-y-2"><Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label><Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" disabled={isBuildingMode} /></div><div className="space-y-2"><Label htmlFor="courseDescription" className="font-semibold">Description</Label><Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} disabled={isBuildingMode} /></div></div>
+          <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">{activePlan.chapters.map((chapter, chapterIndex) => (<AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild><Card><div className="flex w-full items-start justify-between p-6"><div className="flex-1 space-y-2 pr-4"><Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label><div className="flex items-center gap-2"><Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" disabled={isBuildingMode} /></div></div><AccordionTrigger disabled={isBuildingMode} /></div><AccordionContent><CardContent className="space-y-6 pl-6 pt-0"><div><h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4><div className="space-y-4">{chapter.lessons.map((lesson, lessonIndex) => (<div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2"><div className="flex-1 space-y-4"><div className="space-y-2"><Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label><Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" disabled={isBuildingMode}/><Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2} disabled={isBuildingMode}/></div></div></div>))}</div></div><Separator /><div><h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4><div className="pl-4 space-y-4"><div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div><div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div></div></div></CardContent></AccordionContent></Card></AccordionItem>))}</Accordion>
           <Separator />
           <div className="flex flex-wrap gap-4">
-              <Button onClick={handleSavePlanAndRedirect} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan</Button>
-              <Button onClick={handleStartCourseBuild} size="lg" disabled={isSavingPlan || isCreatingCourse}>{isCreatingCourse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>} Lancer la Création Détaillée</Button>
+              <Button onClick={handleSavePlanAndRedirect} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan</Button>
+              <Button onClick={handleStartCourseBuild} size="lg" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isCreatingCourse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>} Lancer la Création Détaillée</Button>
           </div>
       </div>
     );
     
     // === Main Render ===
-
-    if (view === 'builder') {
-        const isBuildComplete = currentStepIndex >= buildSteps.length;
-        return (
-             <div className="space-y-8">
-                 <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-2 rounded-lg"><Rocket className="h-8 w-8 text-primary" /></div>
-                    <div><h1 className="text-2xl md:text-3xl font-bold tracking-tight">Atelier de Construction du Cours</h1><p className="text-muted-foreground">{activePlan?.title}</p></div>
-                </div>
-                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
-                    {/* Timeline */}
-                    <Card><CardHeader><CardTitle>Progression</CardTitle></CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[500px] pr-4">
-                            <div className="relative flex flex-col items-start">
-                                <div className="absolute left-3 top-2 h-full w-0.5 bg-border -translate-x-1/2"></div>
-                                {buildSteps.map((step, index) => {
-                                    const isCompleted = index < currentStepIndex;
-                                    const isCurrent = index === currentStepIndex;
-                                    const Icon = isCompleted ? CheckCircle : (isCurrent ? (isBuilding ? Loader2 : CircleDashed) : CircleDashed);
-                                    const color = isCompleted ? 'text-green-500' : (isCurrent ? 'text-primary' : 'text-muted-foreground');
-
-                                    return (
-                                        <div key={index} className="relative flex items-center gap-4 mb-4 w-full">
-                                            <div className={cn("z-10 flex h-6 w-6 items-center justify-center rounded-full", isCompleted ? 'bg-green-500' : 'bg-background')}>
-                                                <Icon className={cn("h-4 w-4", isCompleted ? 'text-white' : color, isBuilding && 'animate-spin')} />
-                                            </div>
-                                            <div className={cn('font-medium text-sm', color)}>{step.title}</div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            </ScrollArea>
-                        </CardContent>
-                    </Card>
-
-                    {/* Content Preview & Controls */}
-                    <Card className="flex flex-col"><CardHeader><CardTitle>Génération de Contenu IA</CardTitle><CardDescription>Validez chaque étape du processus.</CardDescription></CardHeader>
-                        <CardContent className="flex-1">
-                            <ScrollArea className="h-[450px] p-4 bg-muted/50 rounded-lg border">
-                                <AnimatePresence mode="wait">
-                                {isBuilding ? (
-                                    <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                        <Loader2 className="h-8 w-8 animate-spin mb-4" />
-                                        <p>L'IA rédige la leçon...</p>
-                                    </motion.div>
-                                ) : generatedContent ? (
-                                     <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                                        {'illustrativeContent' in generatedContent && (
-                                            <div>
-                                                <h3 className="font-bold text-lg mb-2">Contenu Illustratif</h3>
-                                                <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, inline, className, children, ...props}) { return !inline ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
-                                                    {generatedContent.illustrativeContent}
-                                                </ReactMarkdown>
-                                            </div>
-                                        )}
-                                        {'interactiveComponentName' in generatedContent && 'visualComponentName' in generatedContent && (
-                                            <>
-                                                <Separator />
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <h3 className="font-bold text-lg mb-2">Composant Interactif Suggéré</h3>
-                                                        <Badge variant="secondary">{generatedContent.interactiveComponentName}</Badge>
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-bold text-lg mb-2">Composant Visuel Suggéré</h3>
-                                                        <Badge variant="secondary">{generatedContent.visualComponentName}</Badge>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                     </motion.div>
-                                ) : isBuildComplete ? (
-                                     <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full text-center">
-                                        <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                                        <h3 className="text-xl font-bold">Génération Terminée !</h3>
-                                        <p className="text-muted-foreground mt-2">La structure de votre cours et le contenu des leçons sont prêts.</p>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center h-full text-muted-foreground">
-                                        <p>En attente de la prochaine étape...</p>
-                                    </motion.div>
-                                )}
-                                </AnimatePresence>
-                            </ScrollArea>
-                        </CardContent>
-                        <CardFooter>
-                            {isBuildComplete ? (
-                                <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller à l'éditeur <Eye className="ml-2"/></Button>
-                            ) : (
-                                <Button onClick={handleBuildContinue} disabled={isBuilding} size="lg" className="w-full">
-                                    {isBuilding ? <Loader2 className="animate-spin" /> : 'Continuer'}
-                                    {!isBuilding && <ChevronRight />}
-                                </Button>
-                            )}
-                        </CardFooter>
-                    </Card>
-                </div>
-             </div>
-        );
-    }
-
     return (
         <div className="space-y-8">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -363,15 +261,125 @@ export default function CreateCoursePage() {
             <Card>
                 <CardHeader><CardTitle>1. Décrivez votre formation</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2"><Label htmlFor="topic">Sujet de la formation (obligatoire)</Label><Textarea id="topic" placeholder="Ex: Une introduction à Docker pour les développeurs web" value={topic} onChange={(e) => setTopic(e.target.value)}/></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="audience">Public Cible (obligatoire)</Label><Input id="audience" placeholder="Ex: Débutants, Développeurs expérimentés" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)}/></div><div className="space-y-2"><Label htmlFor="language">Langue de la formation (facultatif)</Label><Input id="language" placeholder="Ex: Français, English" value={language} onChange={(e) => setLanguage(e.target.value)}/></div></div>
-                    <Card className="bg-muted/50 p-4"><CardDescription className="mb-4">Options avancées (facultatif)</CardDescription><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="space-y-2"><Label htmlFor="numChapters">Nombre de chapitres</Label><Input id="numChapters" type="number" placeholder="Ex: 8" value={numChapters} onChange={(e) => setNumChapters(e.target.value)}/></div><div className="space-y-2"><Label htmlFor="numLessons">Leçons par chapitre</Label><Input id="numLessons" type="number" placeholder="Ex: 5" value={numLessons} onChange={(e) => setNumLessons(e.target.value)}/></div><div className="space-y-2"><Label htmlFor="numQuestions">Questions par quiz</Label><Input id="numQuestions" type="number" placeholder="Ex: 4" value={numQuestions} onChange={(e) => setNumQuestions(e.target.value)}/></div></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-4 border-t"><div className="flex items-center space-x-2"><Switch id="multiple-choice" checked={allowMultipleChoice} onCheckedChange={setAllowMultipleChoice} /><Label htmlFor="multiple-choice" className="cursor-pointer">Inclure des questions à choix multiples (QCM)</Label></div><div><Label>Affichage des réponses du quiz</Label><RadioGroup value={feedbackTiming} onValueChange={(value) => setFeedbackTiming(value as 'end' | 'immediate')} className="flex items-center gap-4 mt-2"><div className="flex items-center space-x-2"><RadioGroupItem value="end" id="r-end" /><Label htmlFor="r-end">À la fin</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="immediate" id="r-immediate" /><Label htmlFor="r-immediate">Après chaque question</Label></div></RadioGroup></div></div></Card>
-                    <Button onClick={handleGeneratePlan} disabled={isGeneratingPlan}>{isGeneratingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />} Générer le plan de formation</Button>
+                    <div className="space-y-2"><Label htmlFor="topic">Sujet de la formation (obligatoire)</Label><Textarea id="topic" placeholder="Ex: Une introduction à Docker pour les développeurs web" value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isBuildingMode}/></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="audience">Public Cible (obligatoire)</Label><Input id="audience" placeholder="Ex: Débutants, Développeurs expérimentés" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="language">Langue de la formation (facultatif)</Label><Input id="language" placeholder="Ex: Français, English" value={language} onChange={(e) => setLanguage(e.target.value)} disabled={isBuildingMode}/></div></div>
+                    <Card className="bg-muted/50 p-4"><CardDescription className="mb-4">Options avancées (facultatif)</CardDescription><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="space-y-2"><Label htmlFor="numChapters">Nombre de chapitres</Label><Input id="numChapters" type="number" placeholder="Ex: 8" value={numChapters} onChange={(e) => setNumChapters(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="numLessons">Leçons par chapitre</Label><Input id="numLessons" type="number" placeholder="Ex: 5" value={numLessons} onChange={(e) => setNumLessons(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="numQuestions">Questions par quiz</Label><Input id="numQuestions" type="number" placeholder="Ex: 4" value={numQuestions} onChange={(e) => setNumQuestions(e.target.value)} disabled={isBuildingMode}/></div></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-4 border-t"><div className="flex items-center space-x-2"><Switch id="multiple-choice" checked={allowMultipleChoice} onCheckedChange={setAllowMultipleChoice} disabled={isBuildingMode}/><Label htmlFor="multiple-choice" className="cursor-pointer">Inclure des questions à choix multiples (QCM)</Label></div><div><Label>Affichage des réponses du quiz</Label><RadioGroup value={feedbackTiming} onValueChange={(value) => setFeedbackTiming(value as 'end' | 'immediate')} className="flex items-center gap-4 mt-2"><div className="flex items-center space-x-2"><RadioGroupItem value="end" id="r-end" disabled={isBuildingMode}/><Label htmlFor="r-end">À la fin</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="immediate" id="r-immediate" disabled={isBuildingMode}/><Label htmlFor="r-immediate">Après chaque question</Label></div></RadioGroup></div></div></Card>
+                    <Button onClick={handleGeneratePlan} disabled={isGeneratingPlan || isBuildingMode}>{isGeneratingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />} Générer le plan de formation</Button>
                     {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Erreur</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
                 </CardContent>
             </Card>
-            {generatedPlans.length > 0 && (<Card className="mt-8"><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle><CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription></CardHeader><CardContent className="space-y-2">{generatedPlans.map((plan) => (<div key={plan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === plan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}><div><p className="font-semibold">{plan.title}</p><p className="text-sm text-muted-foreground">{plan.chapters.length} chapitres - Généré à {plan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div><div className="flex gap-2 self-end sm:self-center"><Button variant="outline" size="sm" onClick={() => setActivePlanId(plan.localId)} disabled={activePlanId === plan.localId}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button><Button variant="destructive" size="sm" onClick={() => handleDeletePlan(plan.localId)}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button></div></div>))}</CardContent></Card>)}
-            {(isGeneratingPlan || activePlan) && (<Card className="mt-8"><CardHeader><CardTitle>2. Plan de Formation Actif</CardTitle><CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription></CardHeader><CardContent>{isGeneratingPlan ? renderPlanLoadingState() : activePlan && renderEditablePlan()}</CardContent></Card>)}
+            {generatedPlans.length > 0 && (<Card className="mt-8"><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle><CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription></CardHeader><CardContent className="space-y-2">{generatedPlans.map((plan) => (<div key={plan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === plan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}><div><p className="font-semibold">{plan.title}</p><p className="text-sm text-muted-foreground">{plan.chapters.length} chapitres - Généré à {plan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div><div className="flex gap-2 self-end sm:self-center"><Button variant="outline" size="sm" onClick={() => setActivePlanId(plan.localId)} disabled={activePlanId === plan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button><Button variant="destructive" size="sm" onClick={() => handleDeletePlan(plan.localId)} disabled={isBuildingMode}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button></div></div>))}</CardContent></Card>)}
+            {(isGeneratingPlan || activePlan) && !isBuildingMode && (<Card className="mt-8"><CardHeader><CardTitle>2. Plan de Formation Actif</CardTitle><CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription></CardHeader><CardContent>{isGeneratingPlan ? renderPlanLoadingState() : activePlan && renderEditablePlan()}</CardContent></Card>)}
+            
+            {isBuildingMode && (() => {
+                const isBuildComplete = currentStepIndex >= buildSteps.length;
+                return (
+                    <Card className="mt-8">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Rocket className="h-6 w-6 text-primary" />
+                                3. Atelier de Construction du Cours
+                            </CardTitle>
+                            <CardDescription>
+                                {isBuildComplete 
+                                    ? "Génération terminée ! La structure de votre cours et le contenu des leçons sont prêts."
+                                    : "Suivez la génération du contenu, étape par étape. Les sections précédentes sont désactivées pendant ce processus."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
+                                {/* Timeline */}
+                                <Card><CardHeader><CardTitle>Progression</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <ScrollArea className="h-[500px] pr-4">
+                                        <div className="relative flex flex-col items-start">
+                                            <div className="absolute left-3 top-2 h-full w-0.5 bg-border -translate-x-1/2"></div>
+                                            {buildSteps.map((step, index) => {
+                                                const isCompleted = index < currentStepIndex;
+                                                const isCurrent = index === currentStepIndex;
+                                                const Icon = isCompleted ? CheckCircle : (isCurrent ? (isBuilding ? Loader2 : CircleDashed) : CircleDashed);
+                                                const color = isCompleted ? 'text-green-500' : (isCurrent ? 'text-primary' : 'text-muted-foreground');
+
+                                                return (
+                                                    <div key={index} className="relative flex items-center gap-4 mb-4 w-full">
+                                                        <div className={cn("z-10 flex h-6 w-6 items-center justify-center rounded-full", isCompleted ? 'bg-green-500' : 'bg-background')}>
+                                                            <Icon className={cn("h-4 w-4", isCompleted ? 'text-white' : color, isBuilding && 'animate-spin')} />
+                                                        </div>
+                                                        <div className={cn('font-medium text-sm', color)}>{step.title}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        </ScrollArea>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Content Preview & Controls */}
+                                <Card className="flex flex-col"><CardHeader><CardTitle>Génération de Contenu IA</CardTitle><CardDescription>Validez chaque étape du processus.</CardDescription></CardHeader>
+                                    <CardContent className="flex-1">
+                                        <ScrollArea className="h-[450px] p-4 bg-muted/50 rounded-lg border">
+                                            <AnimatePresence mode="wait">
+                                            {isBuilding ? (
+                                                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                    <Loader2 className="h-8 w-8 animate-spin mb-4" />
+                                                    <p>L'IA rédige la leçon...</p>
+                                                </motion.div>
+                                            ) : generatedContent ? (
+                                                 <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                                                    {'illustrativeContent' in generatedContent && (
+                                                        <div>
+                                                            <h3 className="font-bold text-lg mb-2">Contenu Illustratif</h3>
+                                                            <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, inline, className, children, ...props}) { return !inline ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
+                                                                {generatedContent.illustrativeContent}
+                                                            </ReactMarkdown>
+                                                        </div>
+                                                    )}
+                                                    {'interactiveComponentName' in generatedContent && 'visualComponentName' in generatedContent && (
+                                                        <>
+                                                            <Separator />
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <h3 className="font-bold text-lg mb-2">Composant Interactif Suggéré</h3>
+                                                                    <Badge variant="secondary">{generatedContent.interactiveComponentName}</Badge>
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="font-bold text-lg mb-2">Composant Visuel Suggéré</h3>
+                                                                    <Badge variant="secondary">{generatedContent.visualComponentName}</Badge>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                 </motion.div>
+                                            ) : isBuildComplete ? (
+                                                 <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full text-center">
+                                                    <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                                                    <h3 className="text-xl font-bold">Génération Terminée !</h3>
+                                                    <p className="text-muted-foreground mt-2">La structure de votre cours et le contenu des leçons sont prêts.</p>
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center h-full text-muted-foreground">
+                                                    <p>En attente de la prochaine étape...</p>
+                                                </motion.div>
+                                            )}
+                                            </AnimatePresence>
+                                        </ScrollArea>
+                                    </CardContent>
+                                    <CardFooter>
+                                        {isBuildComplete ? (
+                                            <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller aux formations <Eye className="ml-2"/></Button>
+                                        ) : (
+                                            <Button onClick={handleBuildContinue} disabled={isBuilding} size="lg" className="w-full">
+                                                {isBuilding ? <Loader2 className="animate-spin" /> : 'Continuer'}
+                                                {!isBuilding && <ChevronRight />}
+                                            </Button>
+                                        )}
+                                    </CardFooter>
+                                </Card>
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
         </div>
     )
 }
