@@ -289,3 +289,5 @@ export async function deleteCourseAction(courseId: string) {
 
     revalidatePath('/admin/courses');
 }
+
+    
