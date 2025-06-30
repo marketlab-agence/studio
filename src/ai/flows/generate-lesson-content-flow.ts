@@ -84,5 +84,3 @@ export async function generateLessonContent(input: GenerateLessonContentInput): 
   const { output } = await generateLessonContentPrompt(input);
   return output!;
 }
-
-    

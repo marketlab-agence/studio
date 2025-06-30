@@ -55,6 +55,3 @@ export type GenerateLessonContentOutput = {
   interactiveComponentName: string;
   visualComponentName: string;
 };
-    
-
-    
