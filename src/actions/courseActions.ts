@@ -3,9 +3,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { COURSES } from '@/lib/courses';
-import { TUTORIALS } from '@/lib/tutorials';
-import { QUIZZES } from '@/lib/quiz';
+import { COURSES, saveCourses } from '@/lib/courses';
+import { TUTORIALS, saveTutorials } from '@/lib/tutorials';
+import { QUIZZES, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
@@ -47,6 +47,7 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
         }
     }
 
+    saveCourses();
     revalidatePath('/admin/courses');
     return { courseId };
 }
@@ -116,6 +117,10 @@ export async function buildCourseFromPlanAction(courseId: string) {
         status: 'Brouillon',
     };
     
+    saveCourses();
+    saveTutorials();
+    saveQuizzes();
+
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
     revalidatePath(`/admin/courses/${courseId}`);
@@ -126,6 +131,7 @@ export async function publishCourseAction(courseId: string) {
     const course = COURSES.find(c => c.id === courseId);
     if (course) {
         course.status = 'Publié';
+        saveCourses();
         revalidatePath('/admin');
         revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
@@ -203,6 +209,8 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = generatedLesson.interactiveComponentName;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = generatedLesson.visualComponentName;
   
+  saveTutorials();
+
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 

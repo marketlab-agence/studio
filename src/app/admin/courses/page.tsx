@@ -1,6 +1,3 @@
-
-'use client';
-
 import { getAdminCourses } from '@/actions/adminActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,8 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { PlusCircle, BookCopy, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
 
@@ -39,18 +34,8 @@ function ActionButtons({ course }: { course: AdminCourse }) {
 }
 
 
-export default function AdminCoursesListPage() {
-  const [allCourses, setAllCourses] = useState<AdminCourse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchCourses() {
-        const courses = (await getAdminCourses()) as AdminCourse[];
-        setAllCourses(courses);
-        setIsLoading(false);
-    }
-    fetchCourses();
-  }, []);
+export default async function AdminCoursesListPage() {
+  const allCourses = (await getAdminCourses()) as AdminCourse[];
   
   const badgeVariants: { [key: string]: "default" | "secondary" | "outline" } = {
     'Publié': 'default',
@@ -91,28 +76,6 @@ export default function AdminCoursesListPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Titre</TableHead>
-                    <TableHead>Nombre de leçons</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {[...Array(3)].map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                            <TableCell><Skeleton className="h-8 w-24" /></TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -143,7 +106,6 @@ export default function AdminCoursesListPage() {
               )}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,4 @@
-
-'use client';
-
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -19,87 +16,21 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ChevronRight, UploadCloud, Loader2 } from 'lucide-react';
+import { BookOpen, ChevronRight, UploadCloud } from 'lucide-react';
 import { publishCourseAction, getCourseAndChapters } from '@/actions/courseActions';
-import { useState, useEffect } from 'react';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PublishCourseButton } from './PublishCourseButton';
 
-export default function CourseChaptersPage() {
-  const params = useParams() as { courseId: string };
-  
-  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
-  const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPublishing, setIsPublishing] = useState(false);
 
-  useEffect(() => {
-    // This effect now fetches data from the server, ensuring it's up-to-date,
-    // and polls to handle potential race conditions where the page navigates 
-    // before the server-side in-memory data is updated.
-    let attempts = 0;
-    const intervalId = setInterval(() => {
-      async function fetchCourseData() {
-        const { course, chapters } = await getCourseAndChapters(params.courseId);
-        
-        if (course) {
-          setCourseInfo(course);
-          setCourseChapters(chapters);
-          setIsLoading(false);
-          clearInterval(intervalId);
-        } else {
-          attempts++;
-          if (attempts > 10) { // Stop trying after ~2 seconds
-            setIsLoading(false); // This will allow the component to render and trigger notFound()
-            clearInterval(intervalId);
-          }
-        }
-      }
-      fetchCourseData();
-    }, 200); // Check every 200ms
+export default async function CourseChaptersPage({ params }: { params: { courseId: string } }) {
+  const { course, chapters } = await getCourseAndChapters(params.courseId);
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [params.courseId]);
-
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    await publishCourseAction(params.courseId);
-    // Update local state for immediate UI feedback
-    setCourseInfo(prev => prev ? { ...prev, status: 'Publié' } : null);
-    setIsPublishing(false);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-1/3" />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-lg" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-60" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-40 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!courseInfo) {
+  if (!course) {
     notFound();
   }
+  const courseInfo = course as CourseInfo;
+  const courseChapters = chapters as Tutorial[];
 
   return (
     <div className="space-y-6">
@@ -122,10 +53,7 @@ export default function CourseChaptersPage() {
           </div>
         </div>
         {courseInfo.status === 'Brouillon' && (
-            <Button onClick={handlePublish} disabled={isPublishing}>
-                {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Publier la formation
-            </Button>
+           <PublishCourseButton courseId={params.courseId} />
         )}
       </div>
 

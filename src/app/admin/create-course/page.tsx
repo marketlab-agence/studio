@@ -143,7 +143,6 @@ export default function CreateCoursePage() {
             const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
             await savePlanAction(activePlan, generationParams);
             toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
-            router.refresh();
             router.push(`/admin/courses`);
         } catch (e) {
             console.error(e);
@@ -194,7 +193,6 @@ export default function CreateCoursePage() {
             title: "Formation créée avec succès !",
             description: "Vous êtes redirigé vers la page d'édition de la formation.",
         });
-        router.refresh();
         router.push(`/admin/courses/${buildingCourseId}`);
     };
 
@@ -366,7 +364,7 @@ export default function CreateCoursePage() {
                                     </CardContent>
                                     <CardFooter>
                                         {isBuildComplete ? (
-                                            <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller à la formation <Eye className="ml-2"/></Button>
+                                            <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller à l'éditeur <Eye className="ml-2"/></Button>
                                         ) : (
                                             <Button onClick={handleBuildContinue} disabled={isBuilding} size="lg" className="w-full">
                                                 {isBuilding ? <Loader2 className="animate-spin" /> : 'Continuer'}
