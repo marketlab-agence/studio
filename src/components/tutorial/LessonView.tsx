@@ -10,7 +10,7 @@ import { useTutorial } from '@/contexts/TutorialContext';
 // Import all possible interactive components
 import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
 import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
-import { GitFlowDiagram } from '@/components/visualizations/GitGraph';
+import { GitGraph } from '@/components/visualizations/GitGraph';
 import { ConceptExplanation } from '@/components/tutorial/ConceptExplanation';
 import { BranchCreator } from '@/components/interactive/BranchCreator';
 import { MergeSimulator } from '@/components/interactive/MergeSimulator';
@@ -59,7 +59,7 @@ import { ConflictResolver } from '@/components/interactive/ConflictResolver';
 const componentMap: { [key: string]: React.ComponentType<any> } = {
     StagingAreaVisualizer,
     VersioningDemo,
-    GitFlowDiagram,
+    GitGraph,
     ConceptExplanation,
     BranchCreator,
     MergeSimulator,

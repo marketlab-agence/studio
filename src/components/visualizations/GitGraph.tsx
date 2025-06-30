@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GitMerge, GitPullRequest, GitCommit, ArrowRight, CornerDownRight, Users } from 'lucide-react';
 
-export function GitFlowDiagram() {
+export function GitGraph() {
   return (
     <div className="my-8">
       <h3 className="text-xl font-bold mb-4">Illustration du Flux Git</h3>
