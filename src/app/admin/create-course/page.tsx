@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-    Wand2, BrainCircuit, Loader2, Save, AlertTriangle, Trash2, Pencil, History, ChevronRight, BookCopy, GraduationCap, PlusCircle, CircleDashed, CheckCircle, Rocket, Eye
+    Wand2, BrainCircuit, Loader2, Save, AlertTriangle, Trash2, Pencil, History, ChevronRight, BookCopy, GraduationCap, PlusCircle, CircleDashed, CheckCircle, Rocket, Eye, Info
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
@@ -38,7 +38,7 @@ import { type GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
 import { COURSES } from '@/lib/courses';
 
-type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
+type StoredPlan = { plan: CreateCourseOutput; params: CreateCourseInput; localId: string; createdAt: Date };
 type BuildStep = {
     type: 'lesson' | 'quiz' | 'complete';
     chapterIndex: number;
@@ -69,16 +69,18 @@ export default function CreateCoursePage() {
     const [lessonLength, setLessonLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
     const [allowMultipleChoice, setAllowMultipleChoice] = useState(true);
     const [feedbackTiming, setFeedbackTiming] = useState<'end' | 'immediate'>('end');
-    const [generatedPlans, setGeneratedPlans] = useLocalStorage<PlanWithId[]>('generatedCoursePlans', [], {
+    const [generatedPlans, setGeneratedPlans] = useLocalStorage<StoredPlan[]>('generatedCoursePlans', [], {
         deserializer: (value) => {
             try {
-                const parsed = JSON.parse(value) as PlanWithId[];
+                const parsed = JSON.parse(value) as StoredPlan[];
                 return parsed.map(plan => ({ ...plan, createdAt: new Date(plan.createdAt) }));
             } catch { return []; }
         }
     });
     const [activePlanId, setActivePlanId] = useLocalStorage<string | null>('activeCoursePlanId', null);
-    const activePlan = useMemo(() => generatedPlans.find(p => p.localId === activePlanId), [generatedPlans, activePlanId]);
+    
+    const activeStoredPlan = useMemo(() => generatedPlans.find(p => p.localId === activePlanId), [generatedPlans, activePlanId]);
+    const activePlan = activeStoredPlan?.plan;
 
     // === Builder State ===
     const [buildingCourseId, setBuildingCourseId] = useState<string | null>(null);
@@ -93,34 +95,41 @@ export default function CreateCoursePage() {
         setIsMounted(true);
     }, []);
 
-
+    // Effect to load a plan from URL param on initial load
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad && planIdToLoad !== activePlanId) {
             const courseToLoad = COURSES.find(c => c.id === planIdToLoad);
             if (courseToLoad?.plan && courseToLoad?.generationParams) {
-                const planFromCourse: PlanWithId = {
-                    ...courseToLoad.plan,
+                const storedPlanFromCourse: StoredPlan = {
+                    plan: courseToLoad.plan,
+                    params: courseToLoad.generationParams,
                     localId: courseToLoad.id,
                     createdAt: new Date(),
                 };
                 
-                const params = courseToLoad.generationParams;
-                setTopic(params.topic);
-                setTargetAudience(params.targetAudience);
-                setNumChapters(params.numChapters?.toString() || '');
-                setNumLessons(params.numLessonsPerChapter?.toString() || '');
-                setNumQuestions(params.numQuestionsPerQuiz?.toString() || '');
-                setLanguage(params.courseLanguage || 'Français');
-                setLessonLength(params.lessonLength || 'Moyen');
-                setAllowMultipleChoice(params.allowMultipleChoice ?? true);
-                setFeedbackTiming(params.feedbackTiming ?? 'end');
-                
-                setGeneratedPlans(prev => [planFromCourse, ...prev.filter(p => p.localId !== planFromCourse.localId)]);
-                setActivePlanId(planFromCourse.localId);
+                setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
+                setActivePlanId(storedPlanFromCourse.localId);
             }
         }
-    }, [searchParams, activePlanId, generatedPlans, setActivePlanId, setGeneratedPlans]);
+    }, [searchParams]);
+
+    // Effect to sync the form state whenever the active plan changes
+    useEffect(() => {
+        if (activeStoredPlan) {
+            const { params } = activeStoredPlan;
+            setTopic(params.topic);
+            setTargetAudience(params.targetAudience);
+            setNumChapters(params.numChapters?.toString() || '');
+            setNumLessons(params.numLessonsPerChapter?.toString() || '');
+            setNumQuestions(params.numQuestionsPerQuiz?.toString() || '');
+            setLanguage(params.courseLanguage || 'Français');
+            setLessonLength(params.lessonLength || 'Moyen');
+            setAllowMultipleChoice(params.allowMultipleChoice ?? true);
+            setFeedbackTiming(params.feedbackTiming ?? 'end');
+        }
+    }, [activeStoredPlan]);
+
 
     const handleGeneratePlan = async () => {
         if (!topic || !targetAudience) {
@@ -131,11 +140,18 @@ export default function CreateCoursePage() {
         setError(null);
         setActivePlanId(null);
         try {
-            const params = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
+            const params: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
             const plan = await createCoursePlan(params);
-            const newPlan: PlanWithId = { ...plan, localId: Date.now().toString(), createdAt: new Date() };
-            setGeneratedPlans(prev => [newPlan, ...prev]);
-            setActivePlanId(newPlan.localId);
+            
+            const newStoredPlan: StoredPlan = { 
+                plan, 
+                params, 
+                localId: Date.now().toString(), 
+                createdAt: new Date() 
+            };
+
+            setGeneratedPlans(prev => [newStoredPlan, ...prev]);
+            setActivePlanId(newStoredPlan.localId);
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors de la génération du plan. Veuillez réessayer.");
@@ -194,8 +210,8 @@ export default function CreateCoursePage() {
     };
 
     const handleFinishBuild = () => {
-        if (activePlan) {
-            handleDeletePlan(activePlan.localId);
+        if (activeStoredPlan) {
+            handleDeletePlan(activeStoredPlan.localId);
         }
         toast({
             title: "Formation créée avec succès !",
@@ -233,13 +249,44 @@ export default function CreateCoursePage() {
 
     // Planner View helpers
     const handleDeletePlan = (idToDelete: string) => { setGeneratedPlans(prev => prev.filter(p => p.localId !== idToDelete)); if (activePlanId === idToDelete) { setActivePlanId(null); } };
-    const updateActivePlan = (updater: (plan: PlanWithId) => PlanWithId) => { if (!activePlanId) return; setGeneratedPlans(prevPlans => prevPlans.map(p => (p.localId === activePlanId ? updater(p) : p))); };
+    const updateActivePlan = (updater: (plan: CreateCourseOutput) => CreateCourseOutput) => {
+        if (!activePlanId) return;
+        setGeneratedPlans(prevPlans => prevPlans.map(p => {
+            if (p.localId === activePlanId) {
+                return { ...p, plan: updater(p.plan) };
+            }
+            return p;
+        }));
+    };
     const handlePlanChange = (field: 'title' | 'description', value: string) => updateActivePlan(plan => ({ ...plan, [field]: value }));
     const handleChapterChange = (chapterIndex: number, field: 'title', value: string) => { updateActivePlan(plan => { const newChapters = [...plan.chapters]; newChapters[chapterIndex] = { ...newChapters[chapterIndex], [field]: value }; return { ...plan, chapters: newChapters }; }); };
     const handleLessonChange = (chapterIndex: number, lessonIndex: number, field: keyof CreateCourseOutput['chapters'][0]['lessons'][0], value: string) => { updateActivePlan(plan => { const newChapters = [...plan.chapters]; const newLessons = [...newChapters[chapterIndex].lessons]; newLessons[lessonIndex] = { ...newLessons[lessonIndex], [field]: value }; newChapters[chapterIndex] = { ...newChapters[chapterIndex], lessons: newLessons }; return { ...plan, chapters: newChapters }; }); };
     const renderPlanLoadingState = () => <div className="space-y-4 mt-6"><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-3/4" /><div className="space-y-2 pt-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div></div>;
-    const renderEditablePlan = () => activePlan && (
+    const renderEditablePlan = () => activePlan && activeStoredPlan && (
       <div className="space-y-6">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="generation-params">
+                <AccordionTrigger className="text-base font-semibold hover:no-underline px-4 py-3 bg-muted/50 rounded-md">
+                    <div className="flex items-center gap-2">
+                        <Info className="h-5 w-5 text-primary" />
+                        Voir les paramètres de génération utilisés
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-4 border-t-0 border rounded-b-md bg-muted/20">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Sujet</p><p>{activeStoredPlan.params.topic}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Public Cible</p><p>{activeStoredPlan.params.targetAudience}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Langue</p><p>{activeStoredPlan.params.courseLanguage || 'Français'}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Longueur des leçons</p><p>{activeStoredPlan.params.lessonLength || 'Moyen'}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Chapitres</p><p>{activeStoredPlan.params.numChapters || 'Auto'}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Leçons / Chapitre</p><p>{activeStoredPlan.params.numLessonsPerChapter || 'Auto'}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Questions / Quiz</p><p>{activeStoredPlan.params.numQuestionsPerQuiz || 'Auto'}</p></div>
+                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Type de Quiz</p><p>{activeStoredPlan.params.allowMultipleChoice ? 'Choix multiples permis' : 'Choix unique uniquement'}</p></div>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
           <div className="space-y-4 rounded-lg border bg-background p-6"><div className="space-y-2"><Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label><Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" disabled={isBuildingMode} /></div><div className="space-y-2"><Label htmlFor="courseDescription" className="font-semibold">Description</Label><Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} disabled={isBuildingMode} /></div></div>
           <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">{activePlan.chapters.map((chapter, chapterIndex) => (<AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild><Card><div className="flex w-full items-start justify-between p-6"><div className="flex-1 space-y-2 pr-4"><Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label><div className="flex items-center gap-2"><Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" disabled={isBuildingMode} /></div></div><AccordionTrigger disabled={isBuildingMode} /></div><AccordionContent><CardContent className="space-y-6 pl-6 pt-0"><div><h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4><div className="space-y-4">{chapter.lessons.map((lesson, lessonIndex) => (<div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2"><div className="flex-1 space-y-4"><div className="space-y-2"><Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label><Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" disabled={isBuildingMode}/><Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2} disabled={isBuildingMode}/></div></div></div>))}</div></div><Separator /><div><h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4><div className="pl-4 space-y-4"><div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div><div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div></div></div></CardContent></AccordionContent></Card></AccordionItem>))}</Accordion>
           <Separator />
@@ -323,7 +370,7 @@ export default function CreateCoursePage() {
                     {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Erreur</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
                 </CardContent>
             </Card>
-            {generatedPlans.length > 0 && (<Card className="mt-8"><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle><CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription></CardHeader><CardContent className="space-y-2">{generatedPlans.map((plan) => (<div key={plan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === plan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}><div><p className="font-semibold">{plan.title}</p><p className="text-sm text-muted-foreground">{plan.chapters.length} chapitres - Généré à {plan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div><div className="flex gap-2 self-end sm:self-center"><Button variant="outline" size="sm" onClick={() => setActivePlanId(plan.localId)} disabled={activePlanId === plan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button><Button variant="destructive" size="sm" onClick={() => handleDeletePlan(plan.localId)} disabled={isBuildingMode}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button></div></div>))}</CardContent></Card>)}
+            {generatedPlans.length > 0 && (<Card className="mt-8"><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle><CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription></CardHeader><CardContent className="space-y-2">{generatedPlans.map((storedPlan) => (<div key={storedPlan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === storedPlan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}><div><p className="font-semibold">{storedPlan.plan.title}</p><p className="text-sm text-muted-foreground">{storedPlan.plan.chapters.length} chapitres - Généré à {storedPlan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div><div className="flex gap-2 self-end sm:self-center"><Button variant="outline" size="sm" onClick={() => setActivePlanId(storedPlan.localId)} disabled={activePlanId === storedPlan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button><Button variant="destructive" size="sm" onClick={() => handleDeletePlan(storedPlan.localId)} disabled={isBuildingMode}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button></div></div>))}</CardContent></Card>)}
             {(isGeneratingPlan || activePlan) && !isBuildingMode && (<Card className="mt-8"><CardHeader><CardTitle>2. Plan de Formation Actif</CardTitle><CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription></CardHeader><CardContent>{isGeneratingPlan ? renderPlanLoadingState() : activePlan && renderEditablePlan()}</CardContent></Card>)}
             
             {isBuildingMode && (() => {
