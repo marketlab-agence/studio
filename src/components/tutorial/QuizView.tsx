@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,7 +24,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,7 @@ type QuizViewProps = {
 type UserAnswers = Record<string, string[]>;
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
+    const router = useRouter();
     const { progress, resetChapter, setCurrentLocation, courseChapters } = useTutorial();
     const { isPremium } = useAuth();
     const existingScore = progress.quizScores[quiz.id];
@@ -47,6 +48,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [showResults, setShowResults] = useState(false);
     const [calculatedScore, setCalculatedScore] = useState(0);
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
     const resetQuiz = useCallback(() => {
         setUserAnswers({});
@@ -137,116 +139,128 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     const isFirstChapterQuiz = courseChapters[0]?.id === quiz.id;
     const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
 
+     useEffect(() => {
+        if (showResults && showUpgradePrompt) {
+            setShowUpgradeDialog(true);
+        }
+    }, [showResults, showUpgradePrompt]);
+
     if (showResults) {
         return (
-            <div className="flex h-full items-center justify-center p-8 bg-muted/30">
-                <Card className="w-full max-w-2xl">
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Résultats du Quiz</CardTitle>
-                        <CardDescription>Votre score :</CardDescription>
-                         <p className={cn("text-5xl font-bold", isQuizPassed ? 'text-green-500' : 'text-destructive')}>
-                            {finalScore.toFixed(0)}%
-                        </p>
-                    </CardHeader>
-                    <CardContent>
-                        {showUpgradePrompt ? (
-                             <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-foreground">
-                                <Sparkles className="h-4 w-4 text-yellow-400" />
-                                <AlertTitle className="text-green-400">Félicitations et Prochaine Étape !</AlertTitle>
-                                <AlertDescription>
-                                    Vous avez brillamment réussi le premier chapitre ! Pour débloquer la suite du cours et toutes nos formations, passez à la formule Premium.
-                                </AlertDescription>
-                            </Alert>
-                        ) : isQuizPassed ? (
-                            <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-green-500">
-                                <CheckCircle className="h-4 w-4 !text-green-500" />
-                                <AlertTitle>Félicitations !</AlertTitle>
-                                <AlertDescription>
-                                    Vous avez réussi le quiz. Vous pouvez passer au chapitre suivant.
-                                </AlertDescription>
-                            </Alert>
-                        ) : (
-                            <Alert variant="destructive">
-                                <XCircle className="h-4 w-4" />
-                                <AlertTitle>Oups ! Score insuffisant</AlertTitle>
-                                <AlertDescription>
-                                    Vous n'avez pas atteint le score de {quiz.passingScore}%. Veuillez réviser le chapitre et réessayer le quiz.
-                                </AlertDescription>
-                            </Alert>
-                        )}
+            <>
+                <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-yellow-400" /> 
+                                Félicitations !
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Vous avez brillamment réussi le premier chapitre ! Pour débloquer la suite du cours et toutes nos formations, passez à la formule Premium.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                             <AlertDialogCancel>Plus tard</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => router.push('/pricing')}>
+                                Voir les abonnements
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <div className="flex h-full items-center justify-center p-8 bg-muted/30">
+                    <Card className="w-full max-w-2xl">
+                        <CardHeader className="text-center">
+                            <CardTitle className="text-2xl">Résultats du Quiz</CardTitle>
+                            <CardDescription>Votre score :</CardDescription>
+                            <p className={cn("text-5xl font-bold", isQuizPassed ? 'text-green-500' : 'text-destructive')}>
+                                {finalScore.toFixed(0)}%
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            {isQuizPassed ? (
+                                <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-green-500">
+                                    <CheckCircle className="h-4 w-4 !text-green-500" />
+                                    <AlertTitle>Félicitations !</AlertTitle>
+                                    <AlertDescription>
+                                        Vous avez réussi le quiz.
+                                    </AlertDescription>
+                                </Alert>
+                            ) : (
+                                <Alert variant="destructive">
+                                    <XCircle className="h-4 w-4" />
+                                    <AlertTitle>Oups ! Score insuffisant</AlertTitle>
+                                    <AlertDescription>
+                                        Vous n'avez pas atteint le score de {quiz.passingScore}%. Veuillez réviser le chapitre et réessayer le quiz.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
 
-                        {isQuizPassed && !showUpgradePrompt && (
-                            <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
-                                <h3 className="font-semibold">Correction détaillée :</h3>
-                                {quiz.questions.map(q => {
-                                    const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
-                                    return (
-                                        <div key={q.id} className="text-sm p-2 rounded-md bg-muted/50">
-                                            <p className="font-medium">{q.text}</p>
-                                            <ul className="list-none pl-0 mt-2 space-y-1">
-                                                {q.answers.map(a => {
-                                                    const wasSelected = userAnswersForQuestion.has(a.id);
-                                                    const isCorrect = !!a.isCorrect;
+                            {isQuizPassed && (
+                                <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
+                                    <h3 className="font-semibold">Correction détaillée :</h3>
+                                    {quiz.questions.map(q => {
+                                        const userAnswersForQuestion = new Set(userAnswers[q.id] || []);
+                                        return (
+                                            <div key={q.id} className="text-sm p-2 rounded-md bg-muted/50">
+                                                <p className="font-medium">{q.text}</p>
+                                                <ul className="list-none pl-0 mt-2 space-y-1">
+                                                    {q.answers.map(a => {
+                                                        const wasSelected = userAnswersForQuestion.has(a.id);
+                                                        const isCorrect = !!a.isCorrect;
 
-                                                    if (q.isMultipleChoice) {
-                                                        if (isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                        if (isCorrect && !wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Réponse correcte manquée)</span></li>;
-                                                        if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse incorrecte)</span></li>;
-                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                    } else {
-                                                        if (isCorrect) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Bonne réponse)</span></li>;
-                                                        if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse)</span></li>;
-                                                        return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
-                                                    }
-                                                })}
-                                            </ul>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </CardContent>
-                    <CardFooter className="flex-row-reverse gap-2">
-                        {showUpgradePrompt ? (
-                             <Button asChild>
-                                <Link href="/pricing">
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    Mettre à niveau vers Premium
-                                </Link>
-                             </Button>
-                        ) : isQuizPassed ? (
-                            <Button onClick={onFinishQuiz}>
-                                Continuer
-                                <ChevronRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        ) : (
-                            <Button onClick={resetQuiz}>
-                                Réessayer le quiz
-                            </Button>
-                        )}
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="outline">
-                                    <History className="mr-2 h-4 w-4" />
-                                    Recommencer le chapitre
+                                                        if (q.isMultipleChoice) {
+                                                            if (isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                            if (isCorrect && !wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Réponse correcte manquée)</span></li>;
+                                                            if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse incorrecte)</span></li>;
+                                                            return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                        } else {
+                                                            if (isCorrect) return <li key={a.id} className="flex items-center gap-2 text-green-400"><CheckCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Bonne réponse)</span></li>;
+                                                            if (!isCorrect && wasSelected) return <li key={a.id} className="flex items-center gap-2 text-red-400"><XCircle className="h-4 w-4 shrink-0" /><span>{a.text}</span> <span className='text-xs font-bold'>(Votre réponse)</span></li>;
+                                                            return <li key={a.id} className="flex items-center gap-2 text-muted-foreground"><Circle className="h-4 w-4 shrink-0" /><span>{a.text}</span></li>;
+                                                        }
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                        <CardFooter className="flex-row-reverse gap-2">
+                            {isQuizPassed ? (
+                                <Button onClick={onFinishQuiz} disabled={showUpgradePrompt}>
+                                    Continuer
+                                    <ChevronRight className="ml-2 h-4 w-4" />
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Cette action effacera votre score et votre progression pour ce chapitre. Vous devrez recommencer depuis la première leçon.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetChapterAndStartOver}>Confirmer</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </CardFooter>
-                </Card>
-            </div>
+                            ) : (
+                                <Button onClick={resetQuiz}>
+                                    Réessayer le quiz
+                                </Button>
+                            )}
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <History className="mr-2 h-4 w-4" />
+                                        Recommencer le chapitre
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Cette action effacera votre score et votre progression pour ce chapitre. Vous devrez recommencer depuis la première leçon.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleResetChapterAndStartOver}>Confirmer</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </>
         );
     }
     
