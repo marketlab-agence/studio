@@ -435,7 +435,7 @@
     "id": "ingenierie-des-prompts-pour-debutants",
     "title": "Ingénierie des Prompts pour Débutants",
     "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
-    "status": "Brouillon",
+    "status": "Publié",
     "plan": {
       "chapters": [
         {
@@ -501,7 +501,7 @@
       "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
       "title": "Ingénierie des Prompts pour Débutants",
       "localId": "ingenierie-des-prompts-pour-debutants",
-      "createdAt": "2025-06-30T04:38:16.012Z"
+      "createdAt": "2025-06-30T04:44:01.570Z"
     },
     "generationParams": {
       "topic": "",
