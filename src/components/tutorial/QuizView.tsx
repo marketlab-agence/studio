@@ -24,6 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
