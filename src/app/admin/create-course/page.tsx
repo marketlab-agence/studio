@@ -116,7 +116,7 @@ export default function CreateCoursePage() {
 
     // Effect to sync the form state whenever the active plan changes
     useEffect(() => {
-        if (activeStoredPlan) {
+        if (activeStoredPlan && activeStoredPlan.params) {
             const { params } = activeStoredPlan;
             setTopic(params.topic);
             setTargetAudience(params.targetAudience);
@@ -264,28 +264,30 @@ export default function CreateCoursePage() {
     const renderPlanLoadingState = () => <div className="space-y-4 mt-6"><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-3/4" /><div className="space-y-2 pt-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div></div>;
     const renderEditablePlan = () => activePlan && activeStoredPlan && (
       <div className="space-y-6">
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="generation-params">
-                <AccordionTrigger className="text-base font-semibold hover:no-underline px-4 py-3 bg-muted/50 rounded-md">
-                    <div className="flex items-center gap-2">
-                        <Info className="h-5 w-5 text-primary" />
-                        Voir les paramètres de génération utilisés
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-4 border-t-0 border rounded-b-md bg-muted/20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Sujet</p><p>{activeStoredPlan.params.topic}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Public Cible</p><p>{activeStoredPlan.params.targetAudience}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Langue</p><p>{activeStoredPlan.params.courseLanguage || 'Français'}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Longueur des leçons</p><p>{activeStoredPlan.params.lessonLength || 'Moyen'}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Chapitres</p><p>{activeStoredPlan.params.numChapters || 'Auto'}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Leçons / Chapitre</p><p>{activeStoredPlan.params.numLessonsPerChapter || 'Auto'}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Questions / Quiz</p><p>{activeStoredPlan.params.numQuestionsPerQuiz || 'Auto'}</p></div>
-                        <div className="space-y-1"><p className="font-semibold text-muted-foreground">Type de Quiz</p><p>{activeStoredPlan.params.allowMultipleChoice ? 'Choix multiples permis' : 'Choix unique uniquement'}</p></div>
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {activeStoredPlan.params && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="generation-params">
+                  <AccordionTrigger className="text-base font-semibold hover:no-underline px-4 py-3 bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                          <Info className="h-5 w-5 text-primary" />
+                          Voir les paramètres de génération utilisés
+                      </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4 border-t-0 border rounded-b-md bg-muted/20">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Sujet</p><p>{activeStoredPlan.params.topic}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Public Cible</p><p>{activeStoredPlan.params.targetAudience}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Langue</p><p>{activeStoredPlan.params.courseLanguage || 'Français'}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Longueur des leçons</p><p>{activeStoredPlan.params.lessonLength || 'Moyen'}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Chapitres</p><p>{activeStoredPlan.params.numChapters || 'Auto'}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Leçons / Chapitre</p><p>{activeStoredPlan.params.numLessonsPerChapter || 'Auto'}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Questions / Quiz</p><p>{activeStoredPlan.params.numQuestionsPerQuiz || 'Auto'}</p></div>
+                          <div className="space-y-1"><p className="font-semibold text-muted-foreground">Type de Quiz</p><p>{activeStoredPlan.params.allowMultipleChoice ? 'Choix multiples permis' : 'Choix unique uniquement'}</p></div>
+                      </div>
+                  </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
           <div className="space-y-4 rounded-lg border bg-background p-6"><div className="space-y-2"><Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label><Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" disabled={isBuildingMode} /></div><div className="space-y-2"><Label htmlFor="courseDescription" className="font-semibold">Description</Label><Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} disabled={isBuildingMode} /></div></div>
           <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">{activePlan.chapters.map((chapter, chapterIndex) => (<AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild><Card><div className="flex w-full items-start justify-between p-6"><div className="flex-1 space-y-2 pr-4"><Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label><div className="flex items-center gap-2"><Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" disabled={isBuildingMode} /></div></div><AccordionTrigger disabled={isBuildingMode} /></div><AccordionContent><CardContent className="space-y-6 pl-6 pt-0"><div><h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4><div className="space-y-4">{chapter.lessons.map((lesson, lessonIndex) => (<div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2"><div className="flex-1 space-y-4"><div className="space-y-2"><Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label><Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" disabled={isBuildingMode}/><Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2} disabled={isBuildingMode}/></div></div></div>))}</div></div><Separator /><div><h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4><div className="pl-4 space-y-4"><div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div><div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div></div></div></CardContent></AccordionContent></Card></AccordionItem>))}</Accordion>
