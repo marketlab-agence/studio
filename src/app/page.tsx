@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Layers, MessageSquare, MousePointerClick, Rocket, Users, BookMarked } from 'lucide-react';
+import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { COURSES } from '@/lib/courses';
+import { TUTORIALS } from '@/lib/tutorials';
 
 const tools = [
   { name: 'Jira', icon: KanbanSquare },
@@ -13,7 +15,30 @@ const tools = [
   { name: 'AWS', icon: Database },
 ];
 
+const courseDetails: Record<string, { icon: React.ElementType; href: string; features: string[] }> = {
+  'git-github-tutorial': {
+    icon: GitCommitHorizontal,
+    href: '/tutorial',
+    features: [
+      'Apprenez les commandes fondamentales et avancées de Git.',
+      'Maîtrisez les workflows professionnels comme GitFlow.',
+      'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
+    ]
+  },
+  'le-closing-pour-debutants-de-prospect-a-client': {
+    icon: Handshake,
+    href: '/tutorial',
+    features: [
+      'Comprendre les concepts clés et le profil du closer performant.',
+      'Apprendre et appliquer des techniques de closing avancées.',
+      'Savoir gérer les objections pour transformer les prospects en clients fidèles.',
+    ]
+  }
+};
+
 export default function Home() {
+  const publishedCourses = COURSES.filter(c => c.status === 'Publié');
+
   return (
     <main className="flex-1 bg-background">
       {/* Hero Section */}
@@ -99,37 +124,48 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
-            <Card className="flex flex-col h-full shadow-lg border-primary/20">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-full">
-                    <GitCommitHorizontal className="h-8 w-8 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">Git & GitHub : Le Guide Complet</CardTitle>
-                    <CardDescription>La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-                    <li>Apprenez les commandes fondamentales et avancées de Git.</li>
-                    <li>Maîtrisez les workflows professionnels comme GitFlow.</li>
-                    <li>Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.</li>
-                </ul>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-4">
-                 <div className="flex flex-wrap gap-2">
-                    <Badge>Inclus</Badge>
-                    <Badge variant="secondary">11 Chapitres</Badge>
-                    <Badge variant="secondary">Quiz Interactifs</Badge>
-                </div>
-                <Link href="/tutorial" className="w-full">
-                  <Button className="w-full" size="lg">Commencer la formation</Button>
-                </Link>
-              </CardFooter>
-            </Card>
+          <div className="mx-auto grid max-w-5xl items-stretch gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
+             {publishedCourses.map(course => {
+                const details = courseDetails[course.id] || {
+                    icon: Rocket,
+                    href: '/courses',
+                    features: [course.description]
+                };
+                const chapterCount = TUTORIALS.filter(t => t.courseId === course.id).length;
+
+                return (
+                    <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
+                      <CardHeader>
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-primary/10 rounded-full">
+                            <details.icon className="h-8 w-8 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-2xl">{course.title}</CardTitle>
+                            <CardDescription>{course.description}</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                            {details.features.map((feature, index) => (
+                                <li key={index}>{feature}</li>
+                            ))}
+                        </ul>
+                      </CardContent>
+                      <CardFooter className="flex-col items-start gap-4">
+                         <div className="flex flex-wrap gap-2">
+                            <Badge>Inclus</Badge>
+                            {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
+                            <Badge variant="secondary">Quiz Interactifs</Badge>
+                        </div>
+                        <Link href={details.href} className="w-full">
+                          <Button className="w-full" size="lg">Commencer la formation</Button>
+                        </Link>
+                      </CardFooter>
+                    </Card>
+                )
+            })}
           </div>
           <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 md:grid-cols-3 lg:grid-cols-5">
              {tools.map(tool => (
