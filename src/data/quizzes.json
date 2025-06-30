@@ -1881,5 +1881,390 @@
     ],
     "passingScore": 80,
     "feedbackTiming": "end"
+  },
+  "jira-de-zero-a-heros-ch1": {
+    "id": "jira-de-zero-a-heros-ch1",
+    "title": "Quiz: Introduction à Jira",
+    "questions": [
+      {
+        "id": "jira-de-zero-a-heros-ch1-q1",
+        "text": "Qu'est-ce que Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch1-q1-a1",
+            "text": "Un outil de gestion de projet.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q1-a2",
+            "text": "Un langage de programmation.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q1-a3",
+            "text": "Un système d'exploitation.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch1-q2",
+        "text": "Où pouvez-vous voir un aperçu de tous vos projets dans Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch1-q2-a1",
+            "text": "Tableau de bord.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q2-a2",
+            "text": "Calendrier.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q2-a3",
+            "text": "Paramètres.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch1-q3",
+        "text": "Comment créer un nouveau projet dans Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch1-q3-a1",
+            "text": "En cliquant sur 'Créer un projet'.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q3-a2",
+            "text": "En allant dans les paramètres du compte.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch1-q3-a3",
+            "text": "En utilisant la ligne de commande.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "jira-de-zero-a-heros-ch2": {
+    "id": "jira-de-zero-a-heros-ch2",
+    "title": "Quiz: Gestion des Problèmes",
+    "questions": [
+      {
+        "id": "jira-de-zero-a-heros-ch2-q1",
+        "text": "Quels sont des types de problèmes courants dans Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch2-q1-a1",
+            "text": "Tâche",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q1-a2",
+            "text": "Bug",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q1-a3",
+            "text": "Épique",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q1-a4",
+            "text": "Projet",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch2-q2",
+        "text": "Quelles sont les actions importantes lors de la création d'un problème ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch2-q2-a1",
+            "text": "Assigner un responsable.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q2-a2",
+            "text": "Définir une priorité.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q2-a3",
+            "text": "Ajouter une description détaillée.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q2-a4",
+            "text": "Supprimer le problème.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch2-q3",
+        "text": "Comment organiser efficacement les problèmes dans Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch2-q3-a1",
+            "text": "Utiliser des étiquettes.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q3-a2",
+            "text": "Créer des liens entre les problèmes.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch2-q3-a3",
+            "text": "Ignorer les problèmes.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "jira-de-zero-a-heros-ch3": {
+    "id": "jira-de-zero-a-heros-ch3",
+    "title": "Quiz: Tableaux Kanban",
+    "questions": [
+      {
+        "id": "jira-de-zero-a-heros-ch3-q1",
+        "text": "Quel est l'objectif principal d'un tableau Kanban ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch3-q1-a1",
+            "text": "Visualiser le flux de travail.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q1-a2",
+            "text": "Automatiser les tests.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q1-a3",
+            "text": "Générer des rapports financiers.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch3-q2",
+        "text": "Quels sont les éléments clés d'un tableau Kanban ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch3-q2-a1",
+            "text": "Colonnes",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q2-a2",
+            "text": "Cartes",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q2-a3",
+            "text": "Lignes",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch3-q3",
+        "text": "Quelle est une pratique importante pour gérer le flux de travail avec Kanban ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch3-q3-a1",
+            "text": "Limiter le travail en cours.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q3-a2",
+            "text": "Ignorer les blocages.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch3-q3-a3",
+            "text": "Ajouter autant de tâches que possible.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "jira-de-zero-a-heros-ch4": {
+    "id": "jira-de-zero-a-heros-ch4",
+    "title": "Quiz: Tableaux Scrum",
+    "questions": [
+      {
+        "id": "jira-de-zero-a-heros-ch4-q1",
+        "text": "Comment le travail est-il organisé dans un tableau Scrum ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch4-q1-a1",
+            "text": "Sprints",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q1-a2",
+            "text": "Flux continu",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q1-a3",
+            "text": "Aucun délai",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch4-q2",
+        "text": "Quels sont les rôles clés dans Scrum ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch4-q2-a1",
+            "text": "Product Owner",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q2-a2",
+            "text": "Scrum Master",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q2-a3",
+            "text": "Équipe de développement",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q2-a4",
+            "text": "Chef de projet",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch4-q3",
+        "text": "Quel type de réunion est couramment utilisé dans Scrum ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch4-q3-a1",
+            "text": "Réunion quotidienne (Daily Scrum).",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q3-a2",
+            "text": "Réunion hebdomadaire.",
+            "isCorrect": false
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch4-q3-a3",
+            "text": "Pas de réunion.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "jira-de-zero-a-heros-ch5": {
+    "id": "jira-de-zero-a-heros-ch5",
+    "title": "Quiz: Rapports et Analyse",
+    "questions": [
+      {
+        "id": "jira-de-zero-a-heros-ch5-q1",
+        "text": "Pourquoi les rapports sont-ils importants dans Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch5-q1-a1",
+            "text": "Pour suivre l'avancement du projet.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q1-a2",
+            "text": "Pour identifier les blocages.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q1-a3",
+            "text": "Pour prendre des décisions éclairées.",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch5-q2",
+        "text": "Quels sont des exemples de filtres couramment utilisés dans les rapports Jira ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch5-q2-a1",
+            "text": "Par statut",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q2-a2",
+            "text": "Par responsable",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q2-a3",
+            "text": "Par priorité",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "jira-de-zero-a-heros-ch5-q3",
+        "text": "Comment les rapports peuvent-ils aider à améliorer la performance de l'équipe ?",
+        "answers": [
+          {
+            "id": "jira-de-zero-a-heros-ch5-q3-a1",
+            "text": "Identifier les goulots d'étranglement.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q3-a2",
+            "text": "Ajuster les priorités.",
+            "isCorrect": true
+          },
+          {
+            "id": "jira-de-zero-a-heros-ch5-q3-a3",
+            "text": "Ignorer les problèmes.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
   }
 }

@@ -516,7 +516,7 @@
     "id": "jira-de-zero-a-heros",
     "title": "Jira : De Zéro à Héros",
     "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
-    "status": "Plan",
+    "status": "Publié",
     "plan": {
       "chapters": [
         {
@@ -919,8 +919,8 @@
       ],
       "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
       "title": "Jira : De Zéro à Héros",
-      "localId": "1751262058265",
-      "createdAt": "2025-06-30T05:40:58.265Z"
+      "localId": "jira-de-zero-a-heros",
+      "createdAt": "2025-06-30T05:53:57.226Z"
     },
     "generationParams": {
       "topic": "Jira : De Zéro à Héros\nOrganisez, suivez et gérez le travail de votre équipe avec le leader de la gestion de projet Agile.",
