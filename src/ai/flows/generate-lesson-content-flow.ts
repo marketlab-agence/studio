@@ -69,6 +69,7 @@ Generate a complete package for this single lesson. You MUST provide three disti
 **Crucial Rules:**
 - Focus ONLY on generating content for the lesson titled "{{{lessonTitle}}}". Do not generate content for any other lesson.
 - Your component selections MUST come from the exact lists provided. Do not invent new components.
+- **The choice of components MUST be directly relevant to the course topic: \`{{{courseTopic}}}\` and the lesson title: \`{{{lessonTitle}}}\`. For example, if the course topic is 'Sales Closing', DO NOT select a component related to Git like \`GitCommandSimulator\` or \`IssueTracker\`. Choose something more generic or relevant like \`AiHelper\` or \`ConceptDiagram\`.**
 `,
   });
 
