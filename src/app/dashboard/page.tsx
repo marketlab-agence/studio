@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -30,7 +30,7 @@ import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isPremium } = useAuth();
     const router = useRouter();
     const { setActiveCourse, overallProgress, totalCompleted, totalLessons, resetActiveCourseProgress, averageQuizScore, masteryIndex } = useTutorial();
     
@@ -220,7 +220,8 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <Card>
+          {isPremium ? (
+            <Card>
               <CardHeader>
                   <CardTitle>Statistiques Git</CardTitle>
                   <CardDescription>Analyse de votre activité et des tendances sur ce projet.</CardDescription>
@@ -321,7 +322,34 @@ export default function DashboardPage() {
                     </TabsContent>
                 </Tabs>
               </CardContent>
-          </Card>
+            </Card>
+          ) : (
+            <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="h-6 w-6 text-yellow-400" />
+                            <h3 className="text-xl font-bold">Passez au niveau supérieur avec Premium</h3>
+                        </div>
+                        <p className="text-muted-foreground mb-4">Débloquez l'accès à toutes les formations, aux statistiques avancées et à l'assistant IA.</p>
+                        <ul className="space-y-2 text-sm">
+                            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Accès complet à tous les cours</li>
+                            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Statistiques d'apprentissage détaillées</li>
+                            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Assistant IA pour vous aider</li>
+                            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Certificats de réussite</li>
+                        </ul>
+                    </div>
+                    <div className='flex-shrink-0'>
+                        <Button asChild size="lg">
+                            <Link href="/pricing">
+                                Mettre à niveau
+                                <ChevronRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+          )}
 
       </div>
     </main>

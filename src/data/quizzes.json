@@ -1622,5 +1622,207 @@
     ],
     "passingScore": 80,
     "feedbackTiming": "end"
+  },
+  "introduction-au-marketing-digital-ch1": {
+    "id": "introduction-au-marketing-digital-ch1",
+    "title": "Quiz: Introduction au Marketing Digital",
+    "questions": [
+      {
+        "id": "introduction-au-marketing-digital-ch1-q1",
+        "text": "Qu'est-ce que le marketing digital ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch1-q1-a1",
+            "text": "L'ensemble des techniques marketing utilisées sur internet.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q1-a2",
+            "text": "La publicité à la télévision.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q1-a3",
+            "text": "Le marketing direct par courrier.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch1-q2",
+        "text": "Quels sont les canaux du marketing digital ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch1-q2-a1",
+            "text": "SEO",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q2-a2",
+            "text": "Email Marketing",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q2-a3",
+            "text": "Le télémarketing",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q2-a4",
+            "text": "Les réseaux sociaux",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch1-q3",
+        "text": "Quel est l'objectif principal du marketing digital ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch1-q3-a1",
+            "text": "Augmenter les ventes immédiatement.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q3-a2",
+            "text": "Améliorer la visibilité en ligne.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q3-a3",
+            "text": "Fidéliser les clients.",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch1-q4",
+        "text": "Quelle est l'importance de l'analyse des données en marketing digital ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch1-q4-a1",
+            "text": "D'imprimer des flyers.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q4-a2",
+            "text": "De mesurer et d'analyser les résultats des campagnes.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch1-q4-a3",
+            "text": "De ne pas utiliser d'outils.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "introduction-au-marketing-digital-ch2": {
+    "id": "introduction-au-marketing-digital-ch2",
+    "title": "Quiz: Création de Contenu et SEO",
+    "questions": [
+      {
+        "id": "introduction-au-marketing-digital-ch2-q1",
+        "text": "Qu'est-ce qu'un contenu digital efficace ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch2-q1-a1",
+            "text": "Un contenu qui attire, engage et convertit l'audience cible.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q1-a2",
+            "text": "Un contenu long et compliqué.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q1-a3",
+            "text": "Un contenu uniquement axé sur la promotion des produits.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch2-q2",
+        "text": "Quelles sont les techniques d'optimisation SEO ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch2-q2-a1",
+            "text": "Recherche de mots-clés",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q2-a2",
+            "text": "Optimisation des balises méta",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q2-a3",
+            "text": "La publicité à la télévision",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q2-a4",
+            "text": "Création de liens de qualité",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch2-q3",
+        "text": "Comment engager son audience sur les réseaux sociaux ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch2-q3-a1",
+            "text": "Ignorer les commentaires et avis.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q3-a2",
+            "text": "Répondre aux commentaires et interagir avec la communauté.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q3-a3",
+            "text": "Encourager les conversations et les partages.",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "introduction-au-marketing-digital-ch2-q4",
+        "text": "Comment améliorer le taux de conversion d'un site web ?",
+        "answers": [
+          {
+            "id": "introduction-au-marketing-digital-ch2-q4-a1",
+            "text": "Augmenter le prix des produits.",
+            "isCorrect": false
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q4-a2",
+            "text": "Améliorer l'expérience utilisateur sur le site web.",
+            "isCorrect": true
+          },
+          {
+            "id": "introduction-au-marketing-digital-ch2-q4-a3",
+            "text": "Faire de la publicité mensongère.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
   }
 }
