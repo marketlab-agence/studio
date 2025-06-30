@@ -20,6 +20,7 @@ const initialCourseProgress: CourseProgress = {
 
 type TutorialContextType = {
   progress: CourseProgress;
+  globalProgress: GlobalProgress;
   course: CourseInfo | undefined;
   courseChapters: Tutorial[];
   setActiveCourse: (courseId: string) => void;
@@ -252,7 +253,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const masteryIndex = attemptsForPassedQuizzes.length > 0 ? attemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / attemptsForPassedQuizzes.length : 0;
 
         return { 
-            progress, 
+            progress,
+            globalProgress,
             course,
             courseChapters,
             setActiveCourse,
@@ -275,7 +277,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, course, courseChapters, setActiveCourse, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetActiveCourseProgress, resetChapter, areAllLessonsInChapterCompleted]);
+    }, [progress, globalProgress, course, courseChapters, setActiveCourse, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetActiveCourseProgress, resetChapter, areAllLessonsInChapterCompleted]);
 
     return (
         <TutorialContext.Provider value={value}>

@@ -91,7 +91,12 @@ export default function DashboardPage() {
 
     const startedCourses = useMemo(() => {
         if (!globalProgress) return [];
-        return COURSES.filter(course => globalProgress[course.id] && course.status === 'Publié');
+        return COURSES.filter(course => {
+            const progress = globalProgress[course.id];
+            // A course is considered "started" if a progress object exists for it
+            // and it has at least one completed lesson OR a "current" lesson is tracked.
+            return progress && (progress.completedLessons.size > 0 || progress.currentLessonId) && course.status === 'Publié';
+        });
     }, [globalProgress]);
 
     const handleContinue = (courseId: string) => {
