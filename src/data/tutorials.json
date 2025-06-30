@@ -37,7 +37,8 @@
         "id": "1-5",
         "title": "Initialiser un dépôt",
         "objective": "Apprendre à créer un nouveau dépôt Git pour un projet existant ou nouveau.",
-        "content": "Pour commencer à utiliser Git dans un projet, vous devez l'initialiser. Cela crée un \"dépôt\" Git.\n\nOuvrez un terminal, naviguez jusqu'au dossier de votre projet, et exécutez :\n\n```bash\ngit init\n```\n\nCette commande crée un sous-dossier caché nommé **.git**. C'est le cerveau de votre dépôt ; il contient toute la base de données de l'historique, les branches, et les configurations. Ne le supprimez jamais !"
+        "content": "Pour commencer à utiliser Git dans un projet, vous devez l'initialiser. Cela crée un \"dépôt\" Git.\n\nOuvrez un terminal, naviguez jusqu'au dossier de votre projet, et exécutez :\n\n```bash\ngit init\n```\n\nCette commande crée un sous-dossier caché nommé **.git**. C'est le cerveau de votre dépôt ; il contient toute la base de données de l'historique, les branches, et les configurations. Ne le supprimez jamais !\n\nUtilisez le simulateur ci-dessous pour tester cette commande et voir le résultat.",
+        "interactiveComponentName": "GitCommandSimulator"
       }
     ]
   },
@@ -51,7 +52,8 @@
         "id": "2-1",
         "title": "Vérifier le statut du projet",
         "objective": "Utiliser `git status` pour comprendre l'état actuel de votre répertoire de travail et de la zone de staging.",
-        "content": "La commande `git status` est votre meilleure amie. Elle est essentielle pour savoir où vous en êtes. Elle vous montre :\n\n- Les fichiers qui ont été modifiés.\n- Les nouveaux fichiers que Git ne suit pas encore (untracked).\n- Les changements qui sont dans la zone de staging, prêts à être validés.\n\nUtilisez-la tout le temps !\n\n```bash\ngit status\n```"
+        "content": "La commande `git status` est votre meilleure amie. Elle est essentielle pour savoir où vous en êtes. Elle vous montre :\n\n- Les fichiers qui ont été modifiés.\n- Les nouveaux fichiers que Git ne suit pas encore (untracked).\n- Les changements qui sont dans la zone de staging, prêts à être validés.\n\nUtilisez-la tout le temps !\n\n```bash\ngit status\n```\n\nL'explorateur de fichiers ci-dessous vous montre une représentation de votre projet, vous aidant à visualiser les fichiers modifiés ou non suivis.",
+        "visualComponentName": "FileTreeViewer"
       },
       {
         "id": "2-2",
@@ -70,7 +72,7 @@
         "id": "2-4",
         "title": "Consulter l'historique",
         "objective": "Apprendre à utiliser `git log` pour visualiser la liste des commits passés.",
-        "content": "Pour voir l'historique de tous vos commits, utilisez la commande `git log`. Elle affiche la liste des commits du plus récent au plus ancien.\n\n```bash\ngit log\n```\n\nPour une vue plus compacte et lisible, essayez ces options populaires :\n\n```bash\n# Affiche chaque commit sur une seule ligne\ngit log --oneline\n\n# Affiche un graphe des branches et des fusions\ngit log --oneline --graph --decorate --all\n```",
+        "content": "Pour voir l'historique de tous vos commits, utilisez la commande `git log`. Elle affiche la liste des commits du plus récent au plus ancien.\n\n```bash\ngit log\n```\n\nPour une vue plus compacte et lisible, essayez ces options populaires :\n\n```bash\n# Affiche chaque commit sur une seule ligne\ngit log --oneline\n\n# Affiche un graphe des branches et des fusions\ngit log --oneline --graph --decorate --all\n```\n\nSouvent, il est utile de voir précisément ce qui a changé dans un commit. C'est le rôle de la commande `git diff` ou `git show`. Le visualiseur ci-dessous simule la sortie d'une telle commande.",
         "visualComponentName": "CommitTimeline"
       }
     ]
@@ -126,7 +128,8 @@
         "id": "4-1",
         "title": "Cloner un dépôt existant",
         "objective": "Apprendre à obtenir une copie locale d'un projet distant existant.",
-        "content": "Jusqu'à présent, nous avons travaillé uniquement en local. Pour collaborer, vous devez interagir avec des dépôts hébergés sur un serveur (comme GitHub, GitLab, etc.).\n\nLa première étape est souvent de \"cloner\" un dépôt existant. Cela crée une copie complète du projet, y compris tout l'historique, sur votre machine.\n\n```bash\n# Syntaxe: git clone <URL_DU_DÉPÔT>\ngit clone https://github.com/facebook/react.git\n```\n\nLorsque vous clonez un dépôt, Git configure automatiquement une connexion au dépôt d'origine, qu'il nomme par défaut **origin**. C'est votre \"dépôt distant\"."
+        "content": "Jusqu'à présent, nous avons travaillé uniquement en local. Pour collaborer, vous devez interagir avec des dépôts hébergés sur un serveur (comme GitHub, GitLab, etc.).\n\nLa première étape est souvent de \"cloner\" un dépôt existant. Cela crée une copie complète du projet, y compris tout l'historique, sur votre machine.\n\n```bash\n# Syntaxe: git clone <URL_DU_DÉPÔT>\ngit clone https://github.com/facebook/react.git\n```\n\nLorsque vous clonez un dépôt, Git configure automatiquement une connexion au dépôt d'origine, qu'il nomme par défaut **origin**. Le visualiseur ci-dessous illustre l'état de votre dépôt local par rapport au distant juste après le clonage.",
+        "visualComponentName": "RepoComparison"
       },
       {
         "id": "4-2",
@@ -139,7 +142,8 @@
         "id": "4-3",
         "title": "Récupérer les changements (Pull & Fetch)",
         "objective": "Comprendre comment mettre à jour votre dépôt local avec les changements provenant du distant.",
-        "content": "Si des collaborateurs ont poussé des changements, votre copie locale sera en retard. Vous devez la mettre à jour.\n\nIl y a deux commandes principales pour cela :\n\n- `git fetch`: Récupère toutes les nouveautés du distant mais **ne les fusionne pas** dans votre branche de travail. C'est une façon sûre de voir ce qui a changé.\n- `git pull`: Est une combinaison de `git fetch` suivi d'un `git merge`. Il récupère les changements et les fusionne immédiatement dans votre branche actuelle.\n\n```bash\n# Option 1: Récupérer et fusionner manuellement (plus de contrôle)\ngit fetch origin\ngit merge origin/main\n\n# Option 2: Récupérer et fusionner automatiquement (plus simple)\ngit pull origin main\n```"
+        "content": "Si des collaborateurs ont poussé des changements, votre copie locale sera en retard. Vous devez la mettre à jour.\n\nIl y a deux commandes principales pour cela :\n\n- `git fetch`: Récupère toutes les nouveautés du distant mais **ne les fusionne pas** dans votre branche de travail. C'est une façon sûre de voir ce qui a changé.\n- `git pull`: Est une combinaison de `git fetch` suivi d'un `git merge`. Il récupère les changements et les fusionne immédiatement dans votre branche actuelle.\n\n```bash\n# Option 1: Récupérer et fusionner manuellement (plus de contrôle)\ngit fetch origin\ngit merge origin/main\n\n# Option 2: Récupérer et fusionner automatiquement (plus simple)\ngit pull origin main\n```\n\nLe simulateur ci-dessous vous permet de voir comment plusieurs contributeurs peuvent interagir avec un dépôt distant.",
+        "interactiveComponentName": "CollaborationSimulator"
       }
     ]
   },
@@ -175,8 +179,8 @@
         "id": "6-1",
         "title": "Comparer les Workflows",
         "objective": "Comprendre les avantages et inconvénients des principaux workflows Git.",
-        "content": "Il n'y a pas une seule \"bonne\" façon d'utiliser Git. Différents workflows conviennent à différents types de projets et d'équipes. Les plus connus sont :\n\n- **GitFlow**: Très structuré, idéal pour les projets avec des cycles de release planifiés.\n- **GitHub Flow**: Simple et basé sur les Pull Requests, parfait pour le déploiement continu.\n- **Trunk-Based Development**: Tous les développeurs travaillent sur une seule branche principale, favorisant une intégration très rapide.\n\nLe tableau ci-dessous les compare en détail.",
-        "interactiveComponentName": "WorkflowComparisonTable"
+        "content": "Il n'y a pas une seule \"bonne\" façon d'utiliser Git. Différents workflows conviennent à différents types de projets et d'équipes. Les plus connus sont :\n\n- **GitFlow**: Très structuré, idéal pour les projets avec des cycles de release planifiés.\n- **GitHub Flow**: Simple et basé sur les Pull Requests, parfait pour le déploiement continu.\n- **Trunk-Based Development**: Tous les développeurs travaillent sur une seule branche principale, favorisant une intégration très rapide.\n\nUtilisez le constructeur de diagrammes ci-dessous pour assembler votre propre flux de travail simple et visualiser comment les différentes étapes (feature, release, hotfix) peuvent s'enchaîner.",
+        "interactiveComponentName": "FlowDiagramBuilder"
       },
       {
         "id": "6-2",
@@ -218,8 +222,8 @@
         "id": "7-3",
         "title": "Mise en pratique",
         "objective": "Résoudre un conflit de fusion dans un simulateur interactif.",
-        "content": "C'est à votre tour de jouer ! Le simulateur ci-dessous présente un fichier en état de conflit. Modifiez le code directement dans l'éditeur pour résoudre le conflit, puis vérifiez votre solution.",
-        "interactiveComponentName": "ConflictPlayground"
+        "content": "C'est à votre tour de jouer ! Le simulateur ci-dessous présente un fichier en état de conflit. Choisissez quelle version conserver pour résoudre le conflit.",
+        "interactiveComponentName": "ConflictResolver"
       }
     ]
   },
@@ -233,8 +237,9 @@
         "id": "8-1",
         "title": "Annuler des modifications",
         "objective": "Comparer les différentes stratégies pour annuler des changements : `reset`, `revert` et `restore`.",
-        "content": "Git offre plusieurs outils pour revenir en arrière, chacun ayant un usage spécifique. Il est crucial de comprendre leurs différences pour ne pas perdre de travail.\n\n- `git checkout -- <fichier>` : Annule les modifications dans le répertoire de travail qui n'ont pas encore été stagées.\n- `git reset HEAD <fichier>` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.\n- `git reset <commit>` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.\n- `git revert <commit>` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.",
-        "interactiveComponentName": "UndoCommandComparison"
+        "content": "Git offre plusieurs outils pour revenir en arrière, chacun ayant un usage spécifique. Il est crucial de comprendre leurs différences pour ne pas perdre de travail.\n\n- `git checkout -- <fichier>` : Annule les modifications dans le répertoire de travail qui n'ont pas encore été stagées.\n- `git reset HEAD <fichier>` : Retire un fichier de la zone de staging, mais conserve les modifications dans le répertoire de travail.\n- `git reset <commit>` : Déplace le pointeur de la branche actuelle vers un commit précédent, modifiant ainsi l'historique. C'est puissant mais potentiellement dangereux, surtout si les commits ont déjà été partagés.\n- `git revert <commit>` : Crée un *nouveau* commit qui annule les changements introduits par un commit spécifique. C'est la manière la plus sûre d'annuler des changements dans un historique partagé, car elle ne réécrit pas le passé.\n\nLe visualiseur de différences ci-dessous montre comment Git perçoit les suppressions (en rouge) et les ajouts (en vert).",
+        "interactiveComponentName": "UndoCommandComparison",
+        "visualComponentName": "DiffViewer"
       },
       {
         "id": "8-2",
@@ -247,8 +252,9 @@
         "id": "8-3",
         "title": "Reflog : Votre filet de sécurité",
         "objective": "Découvrir la commande `reflog` pour retrouver des commits perdus.",
-        "content": "Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un `git reset` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande `git reflog` (référence log) affiche un journal de tous les endroits où votre `HEAD` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable.\n\nSi vous avez perdu un commit, vous pouvez :\n\n1. Exécuter `git reflog` pour trouver le hash du commit que vous voulez restaurer.\n2. Utiliser `git reset --hard HEAD@{2}` pour y revenir.",
-        "interactiveComponentName": "ReflogExplorer"
+        "content": "Avez-vous déjà pensé avoir perdu un commit pour toujours, par exemple après un `git reset` trop agressif ? Pas de panique ! Git garde une trace de presque tout ce que vous faites.\n\nLa commande `git reflog` (référence log) affiche un journal de tous les endroits où votre `HEAD` (le pointeur de votre état actuel) a été. C'est un outil de récupération incroyable. Le visualiseur ci-dessous montre un exemple de sortie de `reflog`.\n\nPour des problèmes courants, vous pouvez aussi utiliser l'outil **Git Doctor** pour obtenir un diagnostic et des suggestions de commandes de réparation.",
+        "interactiveComponentName": "GitDoctorTool",
+        "visualComponentName": "ReflogExplorer"
       }
     ]
   },
@@ -639,5 +645,3 @@
     ]
   }
 ]
-
-    

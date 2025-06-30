@@ -51,6 +51,9 @@ import { DiffViewer } from '@/components/visualizations/DiffViewer';
 import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
 import { RepoComparison } from '@/components/visualizations/RepoComparison';
 import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
+import { FileTreeViewer } from '@/components/file-explorer';
+import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
+import { ConflictResolver } from '@/components/interactive/ConflictResolver';
 
 // Create a map from component name strings to actual components
 const componentMap: { [key: string]: React.ComponentType<any> } = {
@@ -97,6 +100,9 @@ const componentMap: { [key: string]: React.ComponentType<any> } = {
     LanguagesChart,
     RepoComparison,
     StatisticsChart,
+    FileTreeViewer,
+    FlowDiagramBuilder,
+    ConflictResolver,
 };
 
 type LessonViewProps = {
@@ -165,5 +171,3 @@ export function LessonView({ lesson }: LessonViewProps) {
         </div>
     );
 }
-
-    

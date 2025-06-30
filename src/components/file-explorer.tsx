@@ -1,4 +1,5 @@
 import { Folder, FileText, FileCode } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
 const fileTree = [
   { name: '.git', type: 'folder', children: [{ name: 'config', type: 'file' }, { name: 'HEAD', type: 'file' }] },
@@ -38,10 +39,16 @@ function renderTree(nodes: FileNode[], level = 0) {
   );
 }
 
-export function FileExplorer() {
+export function FileTreeViewer() {
   return (
-    <div className="p-4">
-      {renderTree(fileTree)}
-    </div>
+    <Card className="my-6">
+        <CardHeader>
+            <CardTitle>Explorateur de Fichiers</CardTitle>
+            <CardDescription>Visualisez la structure de votre projet.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {renderTree(fileTree)}
+        </CardContent>
+    </Card>
   );
 }
