@@ -198,6 +198,7 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
     courseTopic: generationParams.topic,
     targetAudience: generationParams.targetAudience,
     courseLanguage: generationParams.courseLanguage,
+    lessonLength: generationParams.lessonLength || 'Moyen',
     chapterContext,
     availableInteractiveComponents: INTERACTIVE_COMPONENTS,
     availableVisualComponents: VISUAL_COMPONENTS,

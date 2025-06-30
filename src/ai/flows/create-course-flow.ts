@@ -18,6 +18,7 @@ const CreateCourseInputSchema = z.object({
   numLessonsPerChapter: z.number().optional().describe('The desired number of lessons per chapter.'),
   numQuestionsPerQuiz: z.number().optional().describe('The desired number of questions per quiz.'),
   courseLanguage: z.string().optional().describe('The language the course should be written in.'),
+  lessonLength: z.enum(['Court', 'Moyen', 'Long']).optional().describe("The desired length for each lesson's content."),
   allowMultipleChoice: z.boolean().optional().describe('Whether to allow generating multiple choice questions in quizzes.'),
   feedbackTiming: z.enum(['immediate', 'end']).optional().describe("The timing for showing correct answers in quizzes. 'immediate' shows feedback after each question, 'end' shows it after the quiz is complete."),
 });

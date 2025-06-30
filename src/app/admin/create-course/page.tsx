@@ -66,6 +66,7 @@ export default function CreateCoursePage() {
     const [numLessons, setNumLessons] = useState('');
     const [numQuestions, setNumQuestions] = useState('');
     const [language, setLanguage] = useState('Français');
+    const [lessonLength, setLessonLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
     const [allowMultipleChoice, setAllowMultipleChoice] = useState(true);
     const [feedbackTiming, setFeedbackTiming] = useState<'end' | 'immediate'>('end');
     const [generatedPlans, setGeneratedPlans] = useLocalStorage<PlanWithId[]>('generatedCoursePlans', [], {
@@ -105,6 +106,7 @@ export default function CreateCoursePage() {
                 setNumLessons(params.numLessonsPerChapter?.toString() || '');
                 setNumQuestions(params.numQuestionsPerQuiz?.toString() || '');
                 setLanguage(params.courseLanguage || 'Français');
+                setLessonLength(params.lessonLength || 'Moyen');
                 setAllowMultipleChoice(params.allowMultipleChoice ?? true);
                 setFeedbackTiming(params.feedbackTiming ?? 'end');
                 
@@ -123,7 +125,7 @@ export default function CreateCoursePage() {
         setError(null);
         setActivePlanId(null);
         try {
-            const params = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
+            const params = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
             const plan = await createCoursePlan(params);
             const newPlan: PlanWithId = { ...plan, localId: Date.now().toString(), createdAt: new Date() };
             setGeneratedPlans(prev => [newPlan, ...prev]);
@@ -140,7 +142,7 @@ export default function CreateCoursePage() {
         if (!activePlan) return;
         setIsSavingPlan(true);
         try {
-            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
+            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
             await savePlanAction(activePlan, generationParams);
             toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
             router.push(`/admin/courses`);
@@ -156,7 +158,7 @@ export default function CreateCoursePage() {
         setIsCreatingCourse(true);
         setError(null);
         try {
-            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, allowMultipleChoice, feedbackTiming };
+            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
             const { courseId } = await savePlanAction(activePlan, generationParams);
             await buildCourseFromPlanAction(courseId);
             setBuildingCourseId(courseId);
@@ -261,7 +263,31 @@ export default function CreateCoursePage() {
                 <CardContent className="space-y-6">
                     <div className="space-y-2"><Label htmlFor="topic">Sujet de la formation (obligatoire)</Label><Textarea id="topic" placeholder="Ex: Une introduction à Docker pour les développeurs web" value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isBuildingMode}/></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="audience">Public Cible (obligatoire)</Label><Input id="audience" placeholder="Ex: Débutants, Développeurs expérimentés" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="language">Langue de la formation (facultatif)</Label><Input id="language" placeholder="Ex: Français, English" value={language} onChange={(e) => setLanguage(e.target.value)} disabled={isBuildingMode}/></div></div>
-                    <Card className="bg-muted/50 p-4"><CardDescription className="mb-4">Options avancées (facultatif)</CardDescription><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="space-y-2"><Label htmlFor="numChapters">Nombre de chapitres</Label><Input id="numChapters" type="number" placeholder="Ex: 8" value={numChapters} onChange={(e) => setNumChapters(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="numLessons">Leçons par chapitre</Label><Input id="numLessons" type="number" placeholder="Ex: 5" value={numLessons} onChange={(e) => setNumLessons(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="numQuestions">Questions par quiz</Label><Input id="numQuestions" type="number" placeholder="Ex: 4" value={numQuestions} onChange={(e) => setNumQuestions(e.target.value)} disabled={isBuildingMode}/></div></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-4 border-t"><div className="flex items-center space-x-2"><Switch id="multiple-choice" checked={allowMultipleChoice} onCheckedChange={setAllowMultipleChoice} disabled={isBuildingMode}/><Label htmlFor="multiple-choice" className="cursor-pointer">Inclure des questions à choix multiples (QCM)</Label></div><div><Label>Affichage des réponses du quiz</Label><RadioGroup value={feedbackTiming} onValueChange={(value) => setFeedbackTiming(value as 'end' | 'immediate')} className="flex items-center gap-4 mt-2"><div className="flex items-center space-x-2"><RadioGroupItem value="end" id="r-end" disabled={isBuildingMode}/><Label htmlFor="r-end">À la fin</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="immediate" id="r-immediate" disabled={isBuildingMode}/><Label htmlFor="r-immediate">Après chaque question</Label></div></RadioGroup></div></div></Card>
+                    <Card className="bg-muted/50 p-4"><CardDescription className="mb-4">Options avancées (facultatif)</CardDescription>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="space-y-2"><Label htmlFor="numChapters">Nombre de chapitres</Label><Input id="numChapters" type="number" placeholder="Ex: 8" value={numChapters} onChange={(e) => setNumChapters(e.target.value)} disabled={isBuildingMode}/></div>
+                            <div className="space-y-2"><Label htmlFor="numLessons">Leçons par chapitre</Label><Input id="numLessons" type="number" placeholder="Ex: 5" value={numLessons} onChange={(e) => setNumLessons(e.target.value)} disabled={isBuildingMode}/></div>
+                            <div className="space-y-2"><Label htmlFor="numQuestions">Questions par quiz</Label><Input id="numQuestions" type="number" placeholder="Ex: 4" value={numQuestions} onChange={(e) => setNumQuestions(e.target.value)} disabled={isBuildingMode}/></div>
+                            <div className="space-y-2">
+                                <Label>Longueur des leçons</Label>
+                                <RadioGroup value={lessonLength} onValueChange={(v) => setLessonLength(v as any)} className="flex items-center gap-4 pt-2">
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Court" id="r-court" disabled={isBuildingMode}/><Label htmlFor="r-court">Courte</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Moyen" id="r-moyen" disabled={isBuildingMode}/><Label htmlFor="r-moyen">Moyenne</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Long" id="r-long" disabled={isBuildingMode}/><Label htmlFor="r-long">Longue</Label></div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-4 border-t">
+                            <div className="flex items-center space-x-2"><Switch id="multiple-choice" checked={allowMultipleChoice} onCheckedChange={setAllowMultipleChoice} disabled={isBuildingMode}/><Label htmlFor="multiple-choice" className="cursor-pointer">Inclure des questions à choix multiples (QCM)</Label></div>
+                            <div>
+                                <Label>Affichage des réponses du quiz</Label>
+                                <RadioGroup value={feedbackTiming} onValueChange={(value) => setFeedbackTiming(value as 'end' | 'immediate')} className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="end" id="r-end" disabled={isBuildingMode}/><Label htmlFor="r-end">À la fin</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="immediate" id="r-immediate" disabled={isBuildingMode}/><Label htmlFor="r-immediate">Après chaque question</Label></div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    </Card>
                     <Button onClick={handleGeneratePlan} disabled={isGeneratingPlan || isBuildingMode}>{isGeneratingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />} Générer le plan de formation</Button>
                     {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Erreur</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
                 </CardContent>

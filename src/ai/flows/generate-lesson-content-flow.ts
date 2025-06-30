@@ -20,6 +20,7 @@ const GenerateLessonContentInputSchema = z.object({
   targetAudience: z.string().describe("The target audience for the course."),
   courseLanguage: z.string().optional().describe("The language for the lesson content."),
   chapterContext: z.string().describe("The titles and objectives of other lessons in the same chapter to provide context and the full course plan to give global context."),
+  lessonLength: z.enum(['Court', 'Moyen', 'Long']).optional().describe("The desired length for the lesson content. 'Court' for a summary, 'Moyen' for standard detail, 'Long' for an in-depth explanation."),
   availableInteractiveComponents: z.array(z.string()).describe("A list of available interactive React components to choose from."),
   availableVisualComponents: z.array(z.string()).describe("A list of available data visualization React components to choose from.")
 });
@@ -45,6 +46,7 @@ const generateLessonContentPrompt = ai.definePrompt({
 **Current Lesson Details:**
 - Lesson Title: {{{lessonTitle}}}
 - Lesson Objective: {{{lessonObjective}}}
+- Desired Content Length: {{{lessonLength}}}
 - Chapter Context & Course Plan:
 {{{chapterContext}}}
 
@@ -52,9 +54,14 @@ const generateLessonContentPrompt = ai.definePrompt({
 Generate a complete package for this single lesson. You MUST provide three distinct parts in your response, following the output schema:
 
 1.  **Illustrative Content (\`illustrativeContent\`):**
-    - Write detailed, educational content in well-formatted Markdown.
+    - Write detailed, high-quality educational content in well-formatted Markdown. The length should correspond to the 'Desired Content Length' specified (Court: a few paragraphs, Moyen: standard length, Long: very detailed with multiple sections and examples).
     - The content MUST be directly related to the course topic: **{{{courseTopic}}}**. All examples must use this topic. For example, if the topic is "Trello", a lesson on "Collaboration" MUST explain how to collaborate using Trello's features.
-    - Structure the content logically with headings, lists, bold text, and code blocks for clarity and readability.
+    - The structure MUST be professional and clear:
+        - Use Markdown headings (#, ##, ###) to create a clear hierarchy.
+        - Use **bold** text for key terms.
+        - Use numbered or bulleted lists for enumerations.
+        - Ensure proper punctuation and paragraph breaks for readability.
+    - Write in a didactic and engaging tone. Avoid generic concluding paragraphs; focus on delivering rich, informative content from start to finish.
 
 2.  **Interactive Component (\`interactiveComponentName\`):**
     - From the list below, select ONE component that is MOST relevant to the lesson's objective to provide a hands-on experience.
