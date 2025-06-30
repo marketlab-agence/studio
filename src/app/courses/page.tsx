@@ -1,27 +1,44 @@
+
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight } from 'lucide-react';
+import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket } from 'lucide-react';
+import { COURSES } from '@/lib/courses';
+import { TUTORIALS } from '@/lib/tutorials';
 
 export const metadata: Metadata = {
   title: 'Formations - Katalyst',
   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
 };
 
-const mainCourse = {
-  title: 'Git & GitHub : Le Guide Complet',
-  description: 'La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.',
-  icon: GitCommitHorizontal,
-  tags: ['Inclus', '11 Chapitres', 'Quiz Interactifs'],
-  features: [
-    'Apprenez les commandes fondamentales et avancées de Git.',
-    'Maîtrisez les workflows professionnels comme GitFlow.',
-    'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
-    'Entraînez-vous avec plus de 20 simulateurs et composants interactifs.',
-  ],
-  href: '/tutorial/git-github-tutorial'
+const courseDetails: Record<string, { icon: React.ElementType; features: string[] }> = {
+  'git-github-tutorial': {
+    icon: GitCommitHorizontal,
+    features: [
+      'Apprenez les commandes fondamentales et avancées de Git.',
+      'Maîtrisez les workflows professionnels comme GitFlow.',
+      'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
+      'Entraînez-vous avec plus de 20 simulateurs et composants interactifs.',
+    ]
+  },
+  'le-closing-pour-debutants-de-prospect-a-client': {
+    icon: Handshake,
+    features: [
+      'Comprendre les concepts clés et le profil du closer performant.',
+      'Apprendre et appliquer des techniques de closing avancées.',
+      'Savoir gérer les objections pour transformer les prospects en clients fidèles.',
+    ]
+  },
+  'introduction-au-marketing-digital': {
+      icon: Sparkles,
+      features: [
+        "Comprendre les bases du marketing digital.",
+        "Apprendre à créer du contenu engageant.",
+        "Découvrir les stratégies de référencement (SEO).",
+      ]
+  }
 };
 
 const futureCourses = [
@@ -58,6 +75,8 @@ const futureCourses = [
 ];
 
 export default function CoursesPage() {
+  const publishedCourses = COURSES.filter(c => c.status === 'Publié');
+
   return (
     <main className="flex-1 bg-background">
       <section className="w-full py-12 md:py-20 lg:py-24">
@@ -71,38 +90,49 @@ export default function CoursesPage() {
             </div>
           </div>
           <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
-            <Card className="flex flex-col h-full shadow-lg border-primary/20">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-full">
-                    <mainCourse.icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">{mainCourse.title}</CardTitle>
-                    <CardDescription>{mainCourse.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-                  {mainCourse.features.map((feature, index) => (
-                    <li key={index}>{feature}</li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-4">
-                 <div className="flex flex-wrap gap-2">
-                    {mainCourse.tags.map((tag, index) => (
-                        <Badge key={index} variant={index === 0 ? 'default' : 'secondary'}>{tag}</Badge>
-                    ))}
-                </div>
-                <Link href={mainCourse.href} className="w-full">
-                  <Button className="w-full" size="lg">
-                    Commencer la formation <ArrowRight className="ml-2" />
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
+            {publishedCourses.map((course) => {
+              const details = courseDetails[course.id] || {
+                icon: Rocket,
+                features: [course.description]
+              };
+              const href = `/tutorial/${course.id}`;
+              const chapterCount = TUTORIALS.filter(t => t.courseId === course.id).length;
+
+              return (
+                <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <details.icon className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl">{course.title}</CardTitle>
+                        <CardDescription>{course.description}</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                      {details.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter className="flex-col items-start gap-4">
+                    <div className="flex flex-wrap gap-2">
+                        <Badge>Inclus</Badge>
+                        {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
+                        <Badge variant="secondary">Quiz Interactifs</Badge>
+                    </div>
+                    <Link href={href} className="w-full">
+                      <Button className="w-full" size="lg">
+                        Commencer la formation <ArrowRight className="ml-2" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              )
+            })}
           </div>
 
           <div className="mt-16">
