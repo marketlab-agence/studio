@@ -44,8 +44,8 @@ export function Header() {
           <Link href="/dashboard" className="text-muted-foreground transition-colors hover:text-foreground">
             Tableau de bord
           </Link>
-          <Link href="/tutorial" className="text-muted-foreground transition-colors hover:text-foreground">
-            Tutoriel
+          <Link href="/courses" className="text-muted-foreground transition-colors hover:text-foreground">
+            Formations
           </Link>
           {isPremium && (
             <>
