@@ -233,24 +233,44 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }, [progress.completedLessons, courseChapters]);
 
     const value = useMemo(() => {
+        // --- Global Stats Calculation ---
+        let globalTotalLessons = 0;
+        let globalTotalCompleted = 0;
+        const allPassedScores: number[] = [];
+        const allAttemptsForPassedQuizzes: number[] = [];
+
+        Object.keys(globalProgress).forEach(courseId => {
+            const courseProgressData = globalProgress[courseId];
+            if (!courseProgressData) return;
+            
+            const chaptersForThisCourse = TUTORIALS.filter(t => t.courseId === courseId);
+            const lessonsForThisCourse = chaptersForThisCourse.reduce((acc, chap) => acc + chap.lessons.length, 0);
+            
+            globalTotalLessons += lessonsForThisCourse;
+            globalTotalCompleted += courseProgressData.completedLessons.size;
+    
+            const { quizScores, quizAttempts } = courseProgressData;
+            const passedQuizIds = Object.keys(quizScores).filter(quizId => (QUIZZES[quizId] && quizScores[quizId] >= QUIZZES[quizId].passingScore));
+            
+            const passedScores = passedQuizIds.map(id => quizScores[id]);
+            allPassedScores.push(...passedScores);
+    
+            const attempts = passedQuizIds.map(id => quizAttempts[id] || 1);
+            allAttemptsForPassedQuizzes.push(...attempts);
+        });
+    
+        const globalOverallProgress = globalTotalLessons > 0 ? (globalTotalCompleted / globalTotalLessons) * 100 : 0;
+        const globalAverageQuizScore = allPassedScores.length > 0 ? allPassedScores.reduce((a, b) => a + b, 0) / allPassedScores.length : 0;
+        const globalMasteryIndex = allAttemptsForPassedQuizzes.length > 0 ? allAttemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / allAttemptsForPassedQuizzes.length : 0;
+
+        // --- Active Course Specifics ---
         const currentChapter = courseChapters.find(t => t.id === progress.currentChapterId);
         const currentLesson = currentChapter?.lessons.find(l => l.id === progress.currentLessonId);
-        
-        const totalLessons = courseChapters.reduce((acc, curr) => acc + curr.lessons.length, 0);
-        const totalCompleted = progress.completedLessons.size;
-        const overallProgress = totalLessons > 0 ? Math.min(100, (totalCompleted / totalLessons) * 100) : 0;
         
         const chapterIndex = courseChapters.findIndex(c => c.id === progress.currentChapterId);
         const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === progress.currentLessonId);
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
         const isLastLessonInTutorial = chapterIndex === courseChapters.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
-
-        const { quizScores, quizAttempts } = progress;
-        const passedQuizIds = Object.keys(quizScores).filter(quizId => (QUIZZES[quizId] && quizScores[quizId] >= QUIZZES[quizId].passingScore));
-        const passedScores = passedQuizIds.map(id => quizScores[id]);
-        const averageQuizScore = passedScores.length > 0 ? passedScores.reduce((a, b) => a + b, 0) / passedScores.length : 0;
-        const attemptsForPassedQuizzes = passedQuizIds.map(id => quizAttempts[id] || 1);
-        const masteryIndex = attemptsForPassedQuizzes.length > 0 ? attemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / attemptsForPassedQuizzes.length : 0;
 
         return { 
             progress,
@@ -269,11 +289,11 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             currentChapter,
             currentLesson,
             currentView: progress.currentView,
-            totalLessons,
-            totalCompleted,
-            overallProgress,
-            averageQuizScore,
-            masteryIndex,
+            totalLessons: globalTotalLessons,
+            totalCompleted: globalTotalCompleted,
+            overallProgress: globalOverallProgress,
+            averageQuizScore: globalAverageQuizScore,
+            masteryIndex: globalMasteryIndex,
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
