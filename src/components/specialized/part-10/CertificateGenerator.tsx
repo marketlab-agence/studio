@@ -1,16 +1,20 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GitCommitHorizontal, ShieldCheck } from 'lucide-react';
+import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export function CertificateGenerator({ averageQuizScore, masteryIndex }: { averageQuizScore: number, masteryIndex: number }) {
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
     const [certificateId, setCertificateId] = useState('');
+    const certificateRef = useRef<HTMLDivElement>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const handleGenerate = () => {
         if (name.trim()) {
@@ -34,6 +38,43 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
         return "pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.";
     };
 
+    const handleDownloadPdf = () => {
+        if (!certificateRef.current || isDownloading) return;
+        setIsDownloading(true);
+
+        const element = certificateRef.current;
+        const scale = 2; // Augmenter l'échelle pour une meilleure qualité
+
+        html2canvas(element, { 
+            scale: scale,
+            useCORS: true,
+            backgroundColor: '#0f172a' // Correspond au fond sombre
+        }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`certificat-katalyst-${name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+            setIsDownloading(false);
+        }).catch(err => {
+            console.error("Erreur lors de la génération du PDF : ", err);
+            setIsDownloading(false);
+        });
+    };
+
+    const handleShareLinkedIn = () => {
+        const courseTitle = "Git & GitHub : Le Guide Complet";
+        const text = `Fier d'avoir obtenu ma certification "${courseTitle}" sur la plateforme d'apprentissage interactif Katalyst ! J'ai approfondi mes compétences en contrôle de version et collaboration. #Git #GitHub #Developpement #FormationContinue`;
+        const url = window.location.origin;
+        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`;
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    };
+
   return (
     <Card className="my-6">
       <CardHeader>
@@ -47,6 +88,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                     placeholder="Votre nom complet" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                 />
                 <Button onClick={handleGenerate} disabled={!name.trim()}>Générer mon certificat</Button>
             </div>
@@ -57,7 +99,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className="w-full max-w-3xl mx-auto border-4 border-primary/20 bg-card p-2 rounded-lg shadow-2xl">
+                    <div ref={certificateRef} className="w-full max-w-3xl mx-auto border-4 border-primary/20 bg-card p-2 rounded-lg shadow-2xl">
                       <div className="border-2 border-primary/30 p-8 text-center relative flex flex-col items-center space-y-6 bg-background/50">
                         <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-primary/30 rounded-tl-md"></div>
                         <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-primary/30 rounded-tr-md"></div>
@@ -102,8 +144,16 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
                         </div>
                       </div>
                     </div>
-                    <div className="text-center mt-6">
+                    <div className="text-center mt-8 flex flex-wrap justify-center gap-4">
                         <Button variant="outline" onClick={() => setGenerated(false)}>Générer un autre certificat</Button>
+                        <Button onClick={handleDownloadPdf} disabled={isDownloading}>
+                            {isDownloading ? <Loader2 className="mr-2 animate-spin"/> : <Download className="mr-2"/>}
+                            {isDownloading ? 'Génération...' : 'Télécharger en PDF'}
+                        </Button>
+                        <Button onClick={handleShareLinkedIn}>
+                            <Linkedin className="mr-2" />
+                            Partager sur LinkedIn
+                        </Button>
                     </div>
                 </motion.div>
             </AnimatePresence>
