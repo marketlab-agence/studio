@@ -192,10 +192,10 @@ export default function CreateCoursePage() {
         }
         toast({
             title: "Formation créée avec succès !",
-            description: "Vous êtes redirigé vers la liste des formations où vous pouvez maintenant la modifier.",
+            description: "Vous êtes redirigé vers la page d'édition de la formation.",
         });
         router.refresh();
-        router.push(`/admin/courses`);
+        router.push(`/admin/courses/${buildingCourseId}`);
     };
 
     // Auto-trigger generation when step changes
@@ -366,7 +366,7 @@ export default function CreateCoursePage() {
                                     </CardContent>
                                     <CardFooter>
                                         {isBuildComplete ? (
-                                            <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller aux formations <Eye className="ml-2"/></Button>
+                                            <Button onClick={handleFinishBuild} size="lg" className="w-full">Terminer et aller à la formation <Eye className="ml-2"/></Button>
                                         ) : (
                                             <Button onClick={handleBuildContinue} disabled={isBuilding} size="lg" className="w-full">
                                                 {isBuilding ? <Loader2 className="animate-spin" /> : 'Continuer'}
