@@ -3,12 +3,50 @@
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { COURSES, saveCourses } from '@/lib/courses';
-import { TUTORIALS, saveTutorials } from '@/lib/tutorials';
-import { QUIZZES, saveQuizzes } from '@/lib/quiz';
+import { COURSES } from '@/lib/courses';
+import { TUTORIALS } from '@/lib/tutorials';
+import { QUIZZES } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
+
+// Server-only file writing functions
+async function saveCourses() {
+  const fs = await import('fs');
+  const path = await import('path');
+  const dataDirectory = path.join(process.cwd(), 'src/data');
+  const coursesFilePath = path.join(dataDirectory, 'courses.json');
+
+  if (!fs.existsSync(dataDirectory)) {
+    fs.mkdirSync(dataDirectory, { recursive: true });
+  }
+  fs.writeFileSync(coursesFilePath, JSON.stringify(COURSES, null, 2));
+}
+
+async function saveTutorials() {
+  const fs = await import('fs');
+  const path = await import('path');
+  const dataDirectory = path.join(process.cwd(), 'src/data');
+  const tutorialsFilePath = path.join(dataDirectory, 'tutorials.json');
+
+  if (!fs.existsSync(dataDirectory)) {
+    fs.mkdirSync(dataDirectory, { recursive: true });
+  }
+  fs.writeFileSync(tutorialsFilePath, JSON.stringify(TUTORIALS, null, 2));
+}
+
+async function saveQuizzes() {
+  const fs = await import('fs');
+  const path = await import('path');
+  const dataDirectory = path.join(process.cwd(), 'src/data');
+  const quizzesFilePath = path.join(dataDirectory, 'quizzes.json');
+
+  if (!fs.existsSync(dataDirectory)) {
+    fs.mkdirSync(dataDirectory, { recursive: true });
+  }
+  fs.writeFileSync(quizzesFilePath, JSON.stringify(QUIZZES, null, 2));
+}
+
 
 const slugify = (text: string) =>
   text
