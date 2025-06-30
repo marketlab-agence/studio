@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { getAdminCourses } from '@/actions/adminActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,32 +9,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { PlusCircle, BookCopy, ChevronRight, Loader2 } from 'lucide-react';
-import { buildCourseFromPlanAction } from '@/actions/courseActions';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
 
-function ActionButtons({ course, onCreating }: { course: AdminCourse, onCreating: (id: string | null) => void }) {
-    const router = useRouter();
-    const [isCreating, setIsCreating] = useState(false);
-
-    const handleCreateCourse = async () => {
-        setIsCreating(true);
-        onCreating(course.id);
-        await buildCourseFromPlanAction(course.id);
-        router.push(`/admin/courses/${course.id}`);
-        router.refresh();
-    };
-
+function ActionButtons({ course }: { course: AdminCourse }) {
     if (course.status === 'Plan') {
         return (
             <div className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/create-course?planId=${course.id}`}>Modifier Plan</Link>
+                    <Link href={`/admin/create-course?planId=${course.id}`}>Modifier le Plan</Link>
                 </Button>
-                <Button onClick={handleCreateCourse} disabled={isCreating} size="sm">
-                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Créer Formation
+                <Button asChild size="sm">
+                    <Link href={`/admin/create-course?planId=${course.id}`}>Démarrer la Création</Link>
                 </Button>
             </div>
         );
@@ -56,7 +41,6 @@ function ActionButtons({ course, onCreating }: { course: AdminCourse, onCreating
 export default function AdminCoursesListPage() {
   const [allCourses, setAllCourses] = useState<AdminCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [creatingCourseId, setCreatingCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCourses() {
@@ -125,12 +109,12 @@ export default function AdminCoursesListPage() {
                 </TableRow>
               ) : (
                 allCourses.map(course => (
-                    <TableRow key={course.id} className={creatingCourseId === course.id ? "opacity-50" : ""}>
+                    <TableRow key={course.id}>
                     <TableCell className="font-medium">{course.title}</TableCell>
                     <TableCell>{course.lessonsCount}</TableCell>
                     <TableCell><Badge variant={badgeVariants[course.status] || 'secondary'}>{course.status}</Badge></TableCell>
                     <TableCell>
-                      <ActionButtons course={course} onCreating={setCreatingCourseId} />
+                      <ActionButtons course={course} />
                     </TableCell>
                     </TableRow>
                 ))

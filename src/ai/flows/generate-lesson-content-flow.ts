@@ -19,16 +19,16 @@ const GenerateLessonContentInputSchema = z.object({
   courseTopic: z.string().describe("The main topic of the entire course for context."),
   targetAudience: z.string().describe("The target audience for the course."),
   courseLanguage: z.string().optional().describe("The language for the lesson content."),
-  chapterContext: z.string().describe("The titles and objectives of other lessons in the same chapter to provide context."),
+  chapterContext: z.string().describe("The titles and objectives of other lessons in the same chapter to provide context and the full course plan to give global context."),
   availableInteractiveComponents: z.array(z.string()).describe("A list of available interactive React components to choose from."),
   availableVisualComponents: z.array(z.string()).describe("A list of available data visualization React components to choose from.")
 });
 export type GenerateLessonContentInput = z.infer<typeof GenerateLessonContentInputSchema>;
 
 const GenerateLessonContentOutputSchema = z.object({
-  illustrativeContent: z.string().describe("The main educational content for the lesson in Markdown format. This should be well-structured with headings, lists, and code blocks."),
-  interactiveComponentName: z.string().describe("The name of a single, most relevant interactive component selected from the provided list."),
-  visualComponentName: z.string().describe("The name of a single, most relevant visualization component selected from the provided list.")
+  illustrativeContent: z.string().describe("The main educational content for the lesson in well-structured Markdown format. It should include headings, lists, code blocks, and bold text to explain the concepts clearly."),
+  interactiveComponentName: z.string().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience."),
+  visualComponentName: z.string().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept.")
 });
 
 const generateLessonContentPrompt = ai.definePrompt({
@@ -45,7 +45,7 @@ const generateLessonContentPrompt = ai.definePrompt({
 **Current Lesson Details:**
 - Lesson Title: {{{lessonTitle}}}
 - Lesson Objective: {{{lessonObjective}}}
-- Chapter Context: This lesson is part of a chapter covering:
+- Chapter Context & Course Plan:
 {{{chapterContext}}}
 
 **Your Task:**
@@ -53,24 +53,22 @@ Generate a complete package for this single lesson. You MUST provide three disti
 
 1.  **Illustrative Content (\`illustrativeContent\`):**
     - Write detailed, educational content in well-formatted Markdown.
-    - Use headings, lists, bold text, and code blocks for clarity.
-    - All examples MUST be directly related to the course topic: **{{{courseTopic}}}**. For example, if the topic is "Trello", a lesson on "Collaboration" must explain how to collaborate using Trello's features.
+    - The content MUST be directly related to the course topic: **{{{courseTopic}}}**. All examples must use this topic. For example, if the topic is "Trello", a lesson on "Collaboration" MUST explain how to collaborate using Trello's features.
+    - Structure the content logically with headings, lists, bold text, and code blocks for clarity and readability.
 
 2.  **Interactive Component (\`interactiveComponentName\`):**
-    - Select ONE component from the provided list of available interactive components that is MOST relevant to the lesson's objective.
-    - Your choice should provide a hands-on experience for the student.
+    - From the list below, select ONE component that is MOST relevant to the lesson's objective to provide a hands-on experience.
     - Available Interactive Components: {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
     - You must output only the name of the chosen component.
 
 3.  **Visual Component (\`visualComponentName\`):**
-    - Select ONE component from the provided list of available visualization components that BEST illustrates a key concept from the lesson.
-    - This should help the student visualize an abstract idea.
+    - From the list below, select ONE component that BEST illustrates a key concept from the lesson.
     - Available Visualization Components: {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
     - You must output only the name of the chosen component.
 
 **Crucial Rules:**
 - Focus ONLY on generating content for the lesson titled "{{{lessonTitle}}}". Do not generate content for any other lesson.
-- Ensure your component selections are from the exact lists provided.
+- Your component selections MUST come from the exact lists provided. Do not invent new components.
 `,
   });
 

@@ -36,6 +36,7 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import { type GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
+import { COURSES } from '@/lib/courses';
 
 type PlanWithId = CreateCourseOutput & { localId: string; createdAt: Date };
 type BuildStep = {
@@ -84,6 +85,34 @@ export default function CreateCoursePage() {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isBuilding, setIsBuilding] = useState(false);
     const [generatedContent, setGeneratedContent] = useState<GenerateLessonContentOutput | { illustrativeContent: string } | null>(null);
+
+
+    useEffect(() => {
+        const planIdToLoad = searchParams.get('planId');
+        if (planIdToLoad && planIdToLoad !== activePlanId) {
+            const courseToLoad = COURSES.find(c => c.id === planIdToLoad);
+            if (courseToLoad?.plan && courseToLoad?.generationParams) {
+                const planFromCourse: PlanWithId = {
+                    ...courseToLoad.plan,
+                    localId: courseToLoad.id,
+                    createdAt: new Date(),
+                };
+                
+                const params = courseToLoad.generationParams;
+                setTopic(params.topic);
+                setTargetAudience(params.targetAudience);
+                setNumChapters(params.numChapters?.toString() || '');
+                setNumLessons(params.numLessonsPerChapter?.toString() || '');
+                setNumQuestions(params.numQuestionsPerQuiz?.toString() || '');
+                setLanguage(params.courseLanguage || 'Français');
+                setAllowMultipleChoice(params.allowMultipleChoice ?? true);
+                setFeedbackTiming(params.feedbackTiming ?? 'end');
+                
+                setGeneratedPlans(prev => [planFromCourse, ...prev.filter(p => p.localId !== planFromCourse.localId)]);
+                setActivePlanId(planFromCourse.localId);
+            }
+        }
+    }, [searchParams, activePlanId, generatedPlans, setActivePlanId, setGeneratedPlans]);
 
     const handleGeneratePlan = async () => {
         if (!topic || !targetAudience) {

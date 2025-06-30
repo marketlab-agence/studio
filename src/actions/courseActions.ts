@@ -177,7 +177,14 @@ export async function generateAndSaveLessonContent(
     throw new Error('Lesson plan or tutorial lesson structure not found.');
   }
   
-  const chapterContext = chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n');
+  const chapterContext = `Contexte du cours:
+Titre du cours: ${course.plan.title}
+Description: ${course.plan.description}
+Plan complet des chapitres:
+${course.plan.chapters.map(c => `- ${c.title}`).join('\n')}
+
+Leçons de ce chapitre:
+${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
   const input: GenerateLessonContentInput = {
     lessonTitle: lessonPlan.title,
