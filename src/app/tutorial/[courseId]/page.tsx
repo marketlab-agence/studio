@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
@@ -18,11 +18,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { COURSES } from '@/lib/courses';
 import { notFound } from 'next/navigation';
 
-export default function TutorialCoursePage({ params }: { params: { courseId: string } }) {
+export default function TutorialCoursePage() {
   const router = useRouter();
+  const params = useParams();
   const { user, loading: authLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
-  const { courseId } = params;
+  const courseId = params.courseId as string;
 
   const {
     progress,
