@@ -73,15 +73,15 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
             return;
         }
 
-        if (hasPassedBefore && isPremium) {
-            // For premium users, show previous results automatically.
+        // If the user has passed this quiz before, just show them the results.
+        if (hasPassedBefore) {
             setUserAnswers(existingAnswers || {});
             setShowResults(true);
         } else {
-            // For free users or first-time takers, always start fresh.
+            // Otherwise, start a fresh quiz.
             resetQuiz();
         }
-    }, [quiz.id, hasPassedBefore, isPremium, existingAnswers, resetQuiz, showResults]);
+    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz, showResults]);
     
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
@@ -143,7 +143,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         }
     };
     
-    const finalScore = (hasPassedBefore && isPremium) ? existingScore : calculatedScore;
+    const finalScore = hasPassedBefore ? (existingScore ?? 0) : calculatedScore;
     const isQuizPassed = finalScore >= quiz.passingScore;
     const isFirstChapterQuiz = courseChapters[0]?.id === quiz.id;
     const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
@@ -204,7 +204,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                 </Alert>
                             )}
 
-                            {isQuizPassed && (
+                            {isPremium && isQuizPassed && (
                                 <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
                                     <h3 className="font-semibold">Correction détaillée :</h3>
                                     {quiz.questions.map(q => {
