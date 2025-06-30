@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,31 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-export function AiHelper() {
-    const [query, setQuery] = useState('git rebase -i HEAD~3');
+type AiHelperProps = {
+    lessonContext?: string;
+    courseTopic?: string;
+};
+
+export function AiHelper({ lessonContext = "Assistant IA Général", courseTopic = "Git et GitHub" }: AiHelperProps) {
+    // Determine the default query based on the course topic.
+    const getDefaultQuery = (topic: string) => topic.toLowerCase().includes('git') ? 'git rebase -i HEAD~3' : '';
+    
+    const [query, setQuery] = useState(getDefaultQuery(courseTopic));
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [responseLength, setResponseLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
+    
+    // Update the query if the course topic changes.
+    useEffect(() => {
+        setQuery(getDefaultQuery(courseTopic));
+    }, [courseTopic]);
 
 
+    const placeholderQuery = courseTopic.toLowerCase().includes('git') 
+        ? 'Quelle est la différence entre `git merge` et `git rebase` ?'
+        : `Donnez-moi un exemple de ${courseTopic}.`;
+        
     const handleSubmit = async () => {
         if (!query.trim()) return;
         setIsLoading(true);
@@ -30,8 +47,9 @@ export function AiHelper() {
         try {
             const result = await getGitHelp({
                 userInput: query,
-                lessonContext: 'Assistant IA Général',
-                responseLength: responseLength
+                lessonContext,
+                courseTopic,
+                responseLength
             });
             setResponse(result.explanation);
         } catch (e) {
@@ -50,7 +68,7 @@ export function AiHelper() {
                     Playground IA Katalyst
                 </CardTitle>
                 <CardDescription>
-                    Posez une question sur Git, demandez une explication sur une commande, ou demandez à corriger une erreur.
+                    Posez une question sur {courseTopic}, demandez une explication sur un concept, ou demandez à corriger une erreur.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -75,7 +93,7 @@ export function AiHelper() {
                   <Label htmlFor="ai-query">Votre question</Label>
                   <Textarea
                       id="ai-query"
-                      placeholder="Ex: Quelle est la différence entre `git merge` et `git rebase` ?"
+                      placeholder={placeholderQuery}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       className="font-code"

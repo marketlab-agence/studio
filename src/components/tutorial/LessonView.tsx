@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Lightbulb } from 'lucide-react';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 // Import all possible interactive components
 import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
@@ -103,8 +104,14 @@ type LessonViewProps = {
 };
 
 export function LessonView({ lesson }: LessonViewProps) {
+    const { course } = useTutorial();
     const InteractiveComponent = lesson.interactiveComponentName ? componentMap[lesson.interactiveComponentName] : null;
     const VisualComponent = lesson.visualComponentName ? componentMap[lesson.visualComponentName] : null;
+
+    const componentProps = {
+        lessonContext: lesson.title,
+        courseTopic: course?.title || 'le sujet actuel',
+    };
 
     return (
         <div>
@@ -145,14 +152,14 @@ export function LessonView({ lesson }: LessonViewProps) {
             {InteractiveComponent && (
                 <div className="mt-12">
                     <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Mise en Pratique</h2>
-                    <InteractiveComponent />
+                    <InteractiveComponent {...componentProps} />
                 </div>
             )}
 
             {VisualComponent && (
                 <div className="mt-12">
                     <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Visualisation</h2>
-                    <VisualComponent />
+                    <VisualComponent {...componentProps} />
                 </div>
             )}
         </div>
