@@ -18,14 +18,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CertificatePage() {
   const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
-  const { overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex } = useTutorial();
+  const { setActiveCourse, overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex, courseChapters } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
 
   useRequirePremium();
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Hardcode to git course for now, this page should be dynamic later
+    setActiveCourse('git-github-tutorial');
+  }, [setActiveCourse]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -35,9 +37,11 @@ export default function CertificatePage() {
 
 
   const handleContinue = () => {
+    if (!courseChapters) return;
+    
     // Start searching from the user's last known chapter.
     let startChapterIndex = progress.currentChapterId 
-        ? TUTORIALS.findIndex(c => c.id === progress.currentChapterId) 
+        ? courseChapters.findIndex(c => c.id === progress.currentChapterId) 
         : 0;
 
     if (startChapterIndex === -1) {
@@ -46,7 +50,7 @@ export default function CertificatePage() {
     }
     
     // Create a reordered list of chapters to search, starting from the current one and wrapping around.
-    const chaptersToSearch = [...TUTORIALS.slice(startChapterIndex), ...TUTORIALS.slice(0, startChapterIndex)];
+    const chaptersToSearch = [...courseChapters.slice(startChapterIndex), ...courseChapters.slice(0, startChapterIndex)];
     
     let nextLesson = null;
     let chapterOfNextLesson = null;
@@ -63,6 +67,7 @@ export default function CertificatePage() {
     
     if (nextLesson && chapterOfNextLesson) {
         setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
+        router.push(`/tutorial/${chapterOfNextLesson.courseId}`)
     } else if (progress.currentChapterId && progress.currentLessonId) {
       // Fallback to last known position if for some reason we can't find the next one
       setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
@@ -115,9 +120,7 @@ export default function CertificatePage() {
                 <Progress value={overallProgress} />
                 <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
               </div>
-              <Button asChild>
-                <Link href="/tutorial" onClick={handleContinue}>Continuer le Tutoriel</Link>
-              </Button>
+              <Button onClick={handleContinue}>Continuer le Tutoriel</Button>
             </CardContent>
           </Card>
         );

@@ -1,15 +1,14 @@
 
 'use client';
-import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
-import type { UserProgress } from '@/types/tutorial.types';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState } from 'react';
+import type { CourseProgress, GlobalProgress } from '@/types/tutorial.types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
+import type { CourseInfo } from '@/types/course.types';
+import { COURSES } from '@/lib/courses';
 
-const ALL_VALID_LESSON_IDS = new Set<string>();
-TUTORIALS.forEach(chapter => chapter.lessons.forEach(lesson => ALL_VALID_LESSON_IDS.add(lesson.id)));
-
-const initialProgress: UserProgress = {
+const initialCourseProgress: CourseProgress = {
     quizScores: {},
     quizAttempts: {},
     completedLessons: new Set(),
@@ -20,13 +19,16 @@ const initialProgress: UserProgress = {
 };
 
 type TutorialContextType = {
-  progress: UserProgress;
+  progress: CourseProgress;
+  course: CourseInfo | undefined;
+  courseChapters: Tutorial[];
+  setActiveCourse: (courseId: string) => void;
   setCurrentLocation: (chapterId: string, lessonId: string) => void;
   showQuizForChapter: (chapterId: string) => void;
   setQuizScore: (quizId: string, score: number, answers: Record<string, string[]>) => void;
   goToNextLesson: () => void;
   goToPreviousLesson: () => void;
-  resetProgress: () => void;
+  resetActiveCourseProgress: () => void;
   resetChapter: (chapterId: string) => void;
   areAllLessonsInChapterCompleted: (chapterId: string) => boolean;
   currentChapter: typeof TUTORIALS[0] | undefined;
@@ -43,7 +45,6 @@ type TutorialContextType = {
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
-// Helper to handle Set serialization for localStorage
 const replacer = (key: string, value: any) => {
     if (value instanceof Set) {
         return { __dataType: 'Set', value: [...value] };
@@ -60,68 +61,59 @@ const reviver = (key: string, value: any) => {
     return value;
 };
 
-
 export function TutorialProvider({ children }: { children: ReactNode }) {
-    const [progress, setProgress] = useLocalStorage<UserProgress>('git-tutorial-progress', initialProgress, {
+    const [globalProgress, setGlobalProgress] = useLocalStorage<GlobalProgress>('tutorial-progress', {}, {
         serializer: (value) => JSON.stringify(value, replacer),
         deserializer: (value) => {
-            let parsed = JSON.parse(value, reviver);
-            
-            // Sanitize completedLessons
-            if (parsed.completedLessons) {
-                const validCompletedLessons = new Set<string>();
-                for (const lessonId of parsed.completedLessons) {
-                    if (ALL_VALID_LESSON_IDS.has(String(lessonId))) {
-                        validCompletedLessons.add(String(lessonId));
-                    }
+            const parsed = JSON.parse(value);
+            for (const courseId in parsed) {
+                if (parsed[courseId].completedLessons) {
+                    parsed[courseId].completedLessons = new Set(parsed[courseId].completedLessons);
                 }
-                parsed.completedLessons = validCompletedLessons;
             }
-
-            if (parsed.completedLessons && !(parsed.completedLessons instanceof Set)) {
-                parsed.completedLessons = new Set(parsed.completedLessons);
-            }
-            
-            // Sanitize current location
-            if (parsed.currentLessonId && !ALL_VALID_LESSON_IDS.has(parsed.currentLessonId)) {
-                parsed.currentChapterId = initialProgress.currentChapterId;
-                parsed.currentLessonId = initialProgress.currentLessonId;
-                parsed.currentView = initialProgress.currentView;
-            }
-
-            // Ensure quizAnswers exists
-            if (!parsed.quizAnswers) {
-                parsed.quizAnswers = {};
-            }
-
-            return { ...initialProgress, ...parsed };
+            return parsed;
         },
     });
+    const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+
+    const setActiveCourse = useCallback((courseId: string) => {
+        setActiveCourseId(courseId);
+    }, []);
+
+    const course = useMemo(() => activeCourseId ? COURSES.find(c => c.id === activeCourseId) : undefined, [activeCourseId]);
+    const courseChapters = useMemo(() => activeCourseId ? TUTORIALS.filter(t => t.courseId === activeCourseId) : [], [activeCourseId]);
+    const progress = useMemo(() => activeCourseId ? (globalProgress[activeCourseId] || initialCourseProgress) : initialCourseProgress, [globalProgress, activeCourseId]);
+
+    const updateActiveCourseProgress = useCallback((progressUpdater: (prev: CourseProgress) => CourseProgress) => {
+        if (!activeCourseId) return;
+        setGlobalProgress(prev => ({
+            ...prev,
+            [activeCourseId]: progressUpdater(prev[activeCourseId] || initialCourseProgress),
+        }));
+    }, [activeCourseId, setGlobalProgress]);
 
     const setCurrentLocation = useCallback((chapterId: string, lessonId: string) => {
-        setProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId, currentView: 'lesson' }));
-    }, [setProgress]);
+        updateActiveCourseProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId, currentView: 'lesson' }));
+    }, [updateActiveCourseProgress]);
 
     const showQuizForChapter = useCallback((chapterId: string) => {
-        const chapter = TUTORIALS.find(c => c.id === chapterId);
-        if (!chapter) return;
-        setProgress(prev => {
+        updateActiveCourseProgress(prev => {
             const newCompleted = new Set(prev.completedLessons);
             if (prev.currentLessonId) {
                 newCompleted.add(prev.currentLessonId);
             }
-            return { 
-                ...prev, 
-                currentChapterId: chapterId, 
+            return {
+                ...prev,
+                currentChapterId: chapterId,
                 currentLessonId: prev.currentLessonId,
                 currentView: 'quiz',
                 completedLessons: newCompleted,
             };
         });
-    }, [setProgress]);
+    }, [updateActiveCourseProgress]);
 
     const setQuizScore = useCallback((quizId: string, score: number, answers: Record<string, string[]>) => {
-        setProgress(prev => {
+        updateActiveCourseProgress(prev => {
             const quiz = QUIZZES[quizId];
             if (!quiz) return { ...prev, quizScores: { ...prev.quizScores, [quizId]: score } };
 
@@ -130,9 +122,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             
             const newAttempts = { ...prev.quizAttempts, [quizId]: (prev.quizAttempts?.[quizId] || 0) + 1 };
 
-            // If the user passes the quiz, mark all lessons in that chapter as complete.
             if (passed) {
-                const chapter = TUTORIALS.find(c => c.id === quizId);
+                const chapter = courseChapters.find(c => c.id === quizId);
                 if (chapter) {
                     chapter.lessons.forEach(lesson => newCompleted.add(lesson.id));
                 }
@@ -146,105 +137,83 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 quizAnswers: { ...prev.quizAnswers, [quizId]: answers },
             };
         });
-    }, [setProgress]);
+    }, [updateActiveCourseProgress, courseChapters]);
 
     const goToNextLesson = useCallback(() => {
-        setProgress(prev => {
+        if (!activeCourseId || !courseChapters.length) return;
+        updateActiveCourseProgress(prev => {
             if (!prev.currentChapterId || !prev.currentLessonId) return prev;
     
             const newCompleted = new Set(prev.completedLessons);
             newCompleted.add(prev.currentLessonId);
     
-            const chapterIndex = TUTORIALS.findIndex(c => c.id === prev.currentChapterId);
+            const chapterIndex = courseChapters.findIndex(c => c.id === prev.currentChapterId);
             if (chapterIndex === -1) return prev;
             
-            const currentChapter = TUTORIALS[chapterIndex];
+            const currentChapter = courseChapters[chapterIndex];
             const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
             if (lessonIndex === -1) return prev;
     
             const isLastLesson = lessonIndex === currentChapter.lessons.length - 1;
     
-            let nextChapterId = prev.currentChapterId;
-            let nextLessonId = prev.currentLessonId;
-    
             if (!isLastLesson) {
-                nextLessonId = currentChapter.lessons[lessonIndex + 1].id;
-            } else {
-                const quiz = QUIZZES[currentChapter.id];
-                const score = prev.quizScores[currentChapter.id] ?? 0;
-                const passed = score >= (quiz?.passingScore ?? 80);
-                if (chapterIndex < TUTORIALS.length - 1 && passed) {
-                    const nextChapter = TUTORIALS[chapterIndex + 1];
-                    nextChapterId = nextChapter.id;
-                    nextLessonId = nextChapter.lessons[0].id;
-                }
+                return { ...prev, currentLessonId: currentChapter.lessons[lessonIndex + 1].id, completedLessons: newCompleted, currentView: 'lesson' };
             }
             
-            return {
-                ...prev,
-                completedLessons: newCompleted,
-                currentChapterId: nextChapterId,
-                currentLessonId: nextLessonId,
-                currentView: 'lesson',
-            };
+            const quiz = QUIZZES[currentChapter.id];
+            const score = prev.quizScores[currentChapter.id] ?? 0;
+            const passed = score >= (quiz?.passingScore ?? 80);
+            
+            if (chapterIndex < courseChapters.length - 1 && passed) {
+                const nextChapter = courseChapters[chapterIndex + 1];
+                return { ...prev, currentChapterId: nextChapter.id, currentLessonId: nextChapter.lessons[0].id, completedLessons: newCompleted, currentView: 'lesson' };
+            }
+            
+            return { ...prev, completedLessons: newCompleted }; // Stay on last lesson if quiz not passed or it's the last chapter
         });
-    }, [setProgress]);
+    }, [activeCourseId, courseChapters, updateActiveCourseProgress]);
 
     const goToPreviousLesson = useCallback(() => {
-        setProgress(prev => {
+        if (!activeCourseId || !courseChapters.length) return;
+        updateActiveCourseProgress(prev => {
             if (!prev.currentChapterId || !prev.currentLessonId) return prev;
 
-            const chapterIndex = TUTORIALS.findIndex(c => c.id === prev.currentChapterId);
+            const chapterIndex = courseChapters.findIndex(c => c.id === prev.currentChapterId);
             if (chapterIndex === -1) return prev;
             
-            const currentChapter = TUTORIALS[chapterIndex];
+            const currentChapter = courseChapters[chapterIndex];
             const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
             if (lessonIndex === -1) return prev;
 
-            let prevChapterId = prev.currentChapterId;
-            let prevLessonId = prev.currentLessonId;
-
             if (lessonIndex > 0) {
-                prevLessonId = currentChapter.lessons[lessonIndex - 1].id;
-            } else {
-                if (chapterIndex > 0) {
-                    const prevChapter = TUTORIALS[chapterIndex - 1];
-                    prevChapterId = prevChapter.id;
-                    prevLessonId = prevChapter.lessons[prevChapter.lessons.length - 1].id;
-                }
+                return { ...prev, currentLessonId: currentChapter.lessons[lessonIndex - 1].id, currentView: 'lesson' };
             }
             
-            return {
-                ...prev,
-                currentChapterId: prevChapterId,
-                currentLessonId: prevLessonId,
-                currentView: 'lesson',
-            };
+            if (chapterIndex > 0) {
+                const prevChapter = courseChapters[chapterIndex - 1];
+                return { ...prev, currentChapterId: prevChapter.id, currentLessonId: prevChapter.lessons[prevChapter.lessons.length - 1].id, currentView: 'lesson' };
+            }
+            
+            return prev;
         });
-    }, [setProgress]);
+    }, [activeCourseId, courseChapters, updateActiveCourseProgress]);
 
-    const resetProgress = useCallback(() => {
-        setProgress(initialProgress);
-    }, [setProgress]);
+    const resetActiveCourseProgress = useCallback(() => {
+        if (!activeCourseId) return;
+        updateActiveCourseProgress(() => initialCourseProgress);
+    }, [activeCourseId, updateActiveCourseProgress]);
 
     const resetChapter = useCallback((chapterId: string) => {
-        setProgress(prev => {
-            const chapterToReset = TUTORIALS.find(c => c.id === chapterId);
+        updateActiveCourseProgress(prev => {
+            const chapterToReset = courseChapters.find(c => c.id === chapterId);
             if (!chapterToReset) return prev;
 
             const newCompleted = new Set(prev.completedLessons);
-            chapterToReset.lessons.forEach(lesson => {
-                newCompleted.delete(lesson.id);
-            });
+            chapterToReset.lessons.forEach(lesson => newCompleted.delete(lesson.id));
             
-            const newQuizScores = { ...prev.quizScores };
-            delete newQuizScores[chapterId];
-
-            const newQuizAttempts = { ...prev.quizAttempts };
-            delete newQuizAttempts[chapterId];
-
-            const newQuizAnswers = { ...prev.quizAnswers };
-            delete newQuizAnswers[chapterId];
+            const { [chapterId]: _, ...newQuizScores } = prev.quizScores;
+            const { [chapterId]: __, ...newQuizAttempts } = prev.quizAttempts;
+            const { [chapterId]: ___, ...newQuizAnswers } = prev.quizAnswers;
 
             return {
                 ...prev,
@@ -254,66 +223,50 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
                 quizAnswers: newQuizAnswers,
             };
         });
-    }, [setProgress]);
+    }, [updateActiveCourseProgress, courseChapters]);
     
     const areAllLessonsInChapterCompleted = useCallback((chapterId: string): boolean => {
-      const chapter = TUTORIALS.find(c => c.id === chapterId);
-      if (!chapter) return false;
-
-      const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
-      const completed = p.completedLessons || new Set();
-
-      return chapter.lessons.every(lesson => completed.has(lesson.id));
-    }, [progress]);
+        const chapter = courseChapters.find(c => c.id === chapterId);
+        if (!chapter) return false;
+        return chapter.lessons.every(lesson => progress.completedLessons.has(lesson.id));
+    }, [progress.completedLessons, courseChapters]);
 
     const value = useMemo(() => {
-        const p = (typeof progress === 'object' && progress !== null) ? progress : initialProgress;
-
-        const currentChapter = TUTORIALS.find(t => t.id === p.currentChapterId);
-        const currentLesson = currentChapter?.lessons.find(l => l.id === p.currentLessonId);
-        const currentView = p.currentView || 'lesson';
-
-        const chapterIndex = TUTORIALS.findIndex(c => c.id === p.currentChapterId);
-        const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === p.currentLessonId);
-
-        const totalLessons = TUTORIALS.reduce((acc, curr) => acc + curr.lessons.length, 0);
+        const currentChapter = courseChapters.find(t => t.id === progress.currentChapterId);
+        const currentLesson = currentChapter?.lessons.find(l => l.id === progress.currentLessonId);
         
-        const totalCompleted = (p.completedLessons || new Set()).size;
+        const totalLessons = courseChapters.reduce((acc, curr) => acc + curr.lessons.length, 0);
+        const totalCompleted = progress.completedLessons.size;
         const overallProgress = totalLessons > 0 ? Math.min(100, (totalCompleted / totalLessons) * 100) : 0;
         
+        const chapterIndex = courseChapters.findIndex(c => c.id === progress.currentChapterId);
+        const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === progress.currentLessonId);
         const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
-        const isLastLessonInTutorial = chapterIndex === TUTORIALS.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
+        const isLastLessonInTutorial = chapterIndex === courseChapters.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;
 
-        const { quizScores = {}, quizAttempts = {} } = p;
-        const passedQuizIds = Object.keys(quizScores).filter(quizId => {
-            const quiz = QUIZZES[quizId];
-            if (!quiz) return false;
-            return quizScores[quizId] >= quiz.passingScore;
-        });
-
+        const { quizScores, quizAttempts } = progress;
+        const passedQuizIds = Object.keys(quizScores).filter(quizId => (QUIZZES[quizId] && quizScores[quizId] >= QUIZZES[quizId].passingScore));
         const passedScores = passedQuizIds.map(id => quizScores[id]);
-        const averageQuizScore = passedScores.length > 0
-            ? passedScores.reduce((a, b) => a + b, 0) / passedScores.length
-            : 0;
-
+        const averageQuizScore = passedScores.length > 0 ? passedScores.reduce((a, b) => a + b, 0) / passedScores.length : 0;
         const attemptsForPassedQuizzes = passedQuizIds.map(id => quizAttempts[id] || 1);
-        const masteryIndex = attemptsForPassedQuizzes.length > 0
-            ? attemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / attemptsForPassedQuizzes.length
-            : 0;
+        const masteryIndex = attemptsForPassedQuizzes.length > 0 ? attemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / attemptsForPassedQuizzes.length : 0;
 
         return { 
-            progress: p, 
+            progress, 
+            course,
+            courseChapters,
+            setActiveCourse,
             setCurrentLocation,
             showQuizForChapter,
             setQuizScore,
             goToNextLesson,
             goToPreviousLesson,
-            resetProgress,
+            resetActiveCourseProgress,
             resetChapter,
             areAllLessonsInChapterCompleted,
             currentChapter,
             currentLesson,
-            currentView,
+            currentView: progress.currentView,
             totalLessons,
             totalCompleted,
             overallProgress,
@@ -322,8 +275,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             isFirstLessonInTutorial,
             isLastLessonInTutorial,
         };
-    }, [progress, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetProgress, resetChapter, areAllLessonsInChapterCompleted]);
-
+    }, [progress, course, courseChapters, setActiveCourse, setCurrentLocation, showQuizForChapter, setQuizScore, goToNextLesson, goToPreviousLesson, resetActiveCourseProgress, resetChapter, areAllLessonsInChapterCompleted]);
 
     return (
         <TutorialContext.Provider value={value}>

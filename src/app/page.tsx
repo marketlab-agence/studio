@@ -15,10 +15,9 @@ const tools = [
   { name: 'AWS', icon: Database },
 ];
 
-const courseDetails: Record<string, { icon: React.ElementType; href: string; features: string[] }> = {
+const courseDetails: Record<string, { icon: React.ElementType; features: string[] }> = {
   'git-github-tutorial': {
     icon: GitCommitHorizontal,
-    href: '/tutorial',
     features: [
       'Apprenez les commandes fondamentales et avancées de Git.',
       'Maîtrisez les workflows professionnels comme GitFlow.',
@@ -27,7 +26,6 @@ const courseDetails: Record<string, { icon: React.ElementType; href: string; fea
   },
   'le-closing-pour-debutants-de-prospect-a-client': {
     icon: Handshake,
-    href: '/tutorial',
     features: [
       'Comprendre les concepts clés et le profil du closer performant.',
       'Apprendre et appliquer des techniques de closing avancées.',
@@ -128,9 +126,9 @@ export default function Home() {
              {publishedCourses.map(course => {
                 const details = courseDetails[course.id] || {
                     icon: Rocket,
-                    href: '/courses',
                     features: [course.description]
                 };
+                const href = `/tutorial/${course.id}`;
                 const chapterCount = TUTORIALS.filter(t => t.courseId === course.id).length;
 
                 return (
@@ -159,7 +157,7 @@ export default function Home() {
                             {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
                             <Badge variant="secondary">Quiz Interactifs</Badge>
                         </div>
-                        <Link href={details.href} className="w-full">
+                        <Link href={href} className="w-full">
                           <Button className="w-full" size="lg">Commencer la formation</Button>
                         </Link>
                       </CardFooter>

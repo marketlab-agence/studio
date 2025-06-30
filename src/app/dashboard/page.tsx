@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 export default function DashboardPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const { overallProgress, totalCompleted, totalLessons, resetProgress, averageQuizScore, masteryIndex } = useTutorial();
+    const { setActiveCourse, overallProgress, totalCompleted, totalLessons, resetActiveCourseProgress, averageQuizScore, masteryIndex } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
@@ -45,6 +45,8 @@ export default function DashboardPage() {
     }, [user, authLoading, router]);
 
     useEffect(() => {
+        // Set the active course for the dashboard view.
+        setActiveCourse('git-github-tutorial');
         setIsMounted(true);
         setCommitData([
             { name: 'Jan', commits: Math.floor(Math.random() * 50) + 10 },
@@ -60,14 +62,14 @@ export default function DashboardPage() {
             { name: 'HTML', value: 20, fill: 'hsl(var(--chart-2))' },
             { name: 'CSS', value: 15, fill: 'hsl(var(--chart-3))' },
         ]);
-    }, []);
+    }, [setActiveCourse]);
 
     const mainCourse = {
         id: 'git-github-tutorial',
         title: 'Git & GitHub : Le Guide Complet',
         description: 'La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.',
         icon: GitCommitHorizontal,
-        href: '/tutorial'
+        href: '/tutorial/git-github-tutorial'
     };
 
     const getButtonText = () => {
@@ -139,7 +141,7 @@ export default function DashboardPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Annuler</AlertDialogCancel>
-                              <AlertDialogAction onClick={resetProgress}>Confirmer</AlertDialogAction>
+                              <AlertDialogAction onClick={resetActiveCourseProgress}>Confirmer</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

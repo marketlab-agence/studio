@@ -21,7 +21,7 @@ const mainCourse = {
     'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
     'Entraînez-vous avec plus de 20 simulateurs et composants interactifs.',
   ],
-  href: '/tutorial'
+  href: '/tutorial/git-github-tutorial'
 };
 
 const futureCourses = [

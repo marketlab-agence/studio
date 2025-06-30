@@ -1,160 +1,171 @@
 'use client';
 
-import { useMemo, useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { TutorialPanel } from '@/components/tutorial-panel';
-import { LessonView } from '@/components/tutorial/LessonView';
-import { QuizView } from '@/components/tutorial/QuizView';
-import { NavigationControls } from '@/components/tutorial/NavigationControls';
+import { Award, Lock, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { useTutorial } from '@/contexts/TutorialContext';
-import { QUIZZES } from '@/lib/quiz';
-import { TUTORIALS } from '@/lib/tutorials';
-import { cn } from '@/lib/utils';
+import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { useEffect, useState } from 'react';
+import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useRequirePremium } from '@/hooks/useRequirePremium';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function TutorialPage() {
+export default function CertificatePage() {
+  const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { setActiveCourse, overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex, courseChapters } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
-  
-  const {
-    progress,
-    currentChapter,
-    currentLesson,
-    setQuizScore,
-    setCurrentLocation,
-    showQuizForChapter,
-    currentView
-  } = useTutorial();
+
+  useRequirePremium();
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Hardcode to git course for now, this page should be dynamic later
+    setActiveCourse('git-github-tutorial');
+  }, [setActiveCourse]);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.push('/login?redirect=/certificate');
     }
   }, [user, authLoading, router]);
 
-  const chapterQuiz = useMemo(() => currentChapter ? QUIZZES[currentChapter.id] : undefined, [currentChapter]);
-  
-  const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
-  const isQuizAvailable = !!chapterQuiz;
 
-  const handleQuizComplete = useCallback((score: number, answers: Record<string, string[]>) => {
-    if (currentChapter) {
-      setQuizScore(currentChapter.id, score, answers);
+  const handleContinue = () => {
+    if (!courseChapters) return;
+    
+    // Start searching from the user's last known chapter.
+    let startChapterIndex = progress.currentChapterId 
+        ? courseChapters.findIndex(c => c.id === progress.currentChapterId) 
+        : 0;
+
+    if (startChapterIndex === -1) {
+        // Fallback if currentChapterId is invalid for some reason
+        startChapterIndex = 0;
     }
-  }, [currentChapter, setQuizScore]);
-  
-  const handleStartQuiz = () => {
-    if (currentChapter) {
-      showQuizForChapter(currentChapter.id);
-    }
-  }
+    
+    // Create a reordered list of chapters to search, starting from the current one and wrapping around.
+    const chaptersToSearch = [...courseChapters.slice(startChapterIndex), ...courseChapters.slice(0, startChapterIndex)];
+    
+    let nextLesson = null;
+    let chapterOfNextLesson = null;
 
-  const handleFinishQuiz = useCallback(() => {
-    if (!currentChapter) return;
-
-    const score = progress.quizScores[currentChapter.id] ?? 0;
-    const quiz = QUIZZES[currentChapter.id];
-    const passed = score >= (quiz?.passingScore ?? 80);
-
-    if (passed) {
-      // Find the first uncompleted lesson anywhere in the tutorial.
-      // This is the most robust way to find the "next" place to go.
-      let nextUncompletedChapter = null;
-      let nextUncompletedLesson = null;
-
-      for (const chapter of TUTORIALS) {
-        const lesson = chapter.lessons.find(
-          (l) => !progress.completedLessons.has(l.id)
-        );
-        if (lesson) {
-          nextUncompletedChapter = chapter;
-          nextUncompletedLesson = lesson;
-          break; // Found the very first one, stop searching.
-        }
+    for (const chapter of chaptersToSearch) {
+      // Find the first uncompleted lesson in this chapter
+      const lesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
+      if (lesson) {
+          nextLesson = lesson;
+          chapterOfNextLesson = chapter;
+          break; // Found the first uncompleted lesson, stop searching.
       }
-
-      if (nextUncompletedChapter && nextUncompletedLesson) {
-        setCurrentLocation(
-          nextUncompletedChapter.id,
-          nextUncompletedLesson.id
-        );
-      } else {
-        // All lessons are complete, congratulations!
-        router.push('/certificate');
-      }
-    } else {
-      // User failed and clicked "Réviser le chapitre"
-      setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
     }
-  }, [currentChapter, progress.quizScores, progress.completedLessons, setCurrentLocation, router]);
+    
+    if (nextLesson && chapterOfNextLesson) {
+        setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
+        router.push(`/tutorial/${chapterOfNextLesson.courseId}`)
+    } else if (progress.currentChapterId && progress.currentLessonId) {
+      // Fallback to last known position if for some reason we can't find the next one
+      setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
+    }
+  };
 
-  const skeletonView = (
-    <div className="flex flex-col h-full">
-       <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-           <Skeleton className="h-6 w-1/4 mb-2" />
-           <Skeleton className="h-10 w-3/4 mb-4" />
-           <Skeleton className="h-6 w-full mb-8" />
-           <Skeleton className="h-4 w-full mb-4" />
-           <Skeleton className="h-4 w-full mb-4" />
-           <Skeleton className="h-4 w-5/6 mb-4" />
-       </div>
-        <div className="flex justify-between items-center p-4 border-t bg-card">
-           <Skeleton className="h-9 w-28" />
-           <Skeleton className="h-9 w-36" />
-       </div>
-   </div>
- );
+  const isTutorialComplete = overallProgress >= 100;
+  const isScoreSufficient = averageQuizScore >= 80;
+
+  const renderContent = () => {
+    if (!isMounted || authLoading || !user || !isPremium) {
+      return (
+        <Card className="text-center py-8">
+          <CardHeader>
+            <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+            <CardTitle>Vérification de l'accès</CardTitle>
+            <CardDescription>
+              Nous vérifions votre statut d'abonnement...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="max-w-sm mx-auto space-y-4">
+             <Skeleton className="h-4 w-32 mx-auto" />
+             <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (isTutorialComplete && isScoreSufficient) {
+      return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} />;
+    }
+
+    if (!isTutorialComplete) {
+        return (
+          <Card className="text-center py-8">
+            <CardHeader>
+              <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+                <Lock className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <CardTitle>Certificat Verrouillé</CardTitle>
+              <CardDescription>
+                Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="max-w-sm mx-auto space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
+                <Progress value={overallProgress} />
+                <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
+              </div>
+              <Button onClick={handleContinue}>Continuer le Tutoriel</Button>
+            </CardContent>
+          </Card>
+        );
+    }
+    
+    // Case: tutorial complete but score not sufficient
+    return (
+        <Card className="text-center py-8">
+            <CardHeader>
+                <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+                <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <CardTitle>Certificat Presque Débloqué</CardTitle>
+                <CardDescription>
+                Vous devez obtenir un score moyen d'au moins 80% aux quiz pour générer votre certificat.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="max-w-sm mx-auto space-y-4">
+                <div>
+                <p className="text-sm font-medium mb-2">Votre score moyen actuel :</p>
+                <div className="text-4xl font-bold text-destructive">{averageQuizScore.toFixed(0)}%</div>
+                <p className="text-sm text-muted-foreground mt-2">Objectif : 80%</p>
+                </div>
+                <Button asChild>
+                <Link href="/dashboard">Améliorer mon score</Link>
+                </Button>
+            </CardContent>
+        </Card>
+    );
+  };
 
   return (
-    <div className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr] gap-6 p-4 md:p-6">
-      <aside className="hidden md:flex md:flex-col">
-        <TutorialPanel />
-      </aside>
-      <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
-        
-        {!isMounted || authLoading || !user ? (
-            skeletonView
-        ) : (
-          <>
-            <div className={cn("flex flex-col h-full", currentView !== 'lesson' && 'hidden')}>
-                {currentLesson && currentChapter ? (
-                    <>
-                        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                            <LessonView lesson={currentLesson} />
-                        </div>
-                        <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
-                    </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div className="p-4 bg-primary/10 rounded-full mb-4">
-                      <BookOpen className="h-10 w-10 text-primary" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">Bienvenue dans le tutoriel interactif</h2>
-                    <p className="max-w-md text-muted-foreground mb-6">
-                      Sélectionnez un chapitre dans le panneau de gauche, ou cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
-                    </p>
-                    <Button size="lg" onClick={() => setCurrentLocation(TUTORIALS[0].id, TUTORIALS[0].lessons[0].id)}>
-                        Commencer le tutoriel
-                    </Button>
-                  </div>
-                )}
-            </div>
+    <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-4xl space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-3 rounded-lg">
+            <Award className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Votre Certificat de Réussite</h1>
+            <p className="text-muted-foreground">Validez la complétion de votre apprentissage sur Git & GitHub.</p>
+          </div>
+        </div>
 
-            <div className={cn("h-full", currentView !== 'quiz' && 'hidden')}>
-                {chapterQuiz && <QuizView quiz={chapterQuiz} onQuizComplete={handleQuizComplete} onFinishQuiz={handleFinishQuiz} />}
-            </div>
-          </>
-        )}
-
-      </main>
-    </div>
+        {renderContent()}
+      </div>
+    </main>
   );
 }

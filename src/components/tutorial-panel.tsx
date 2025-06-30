@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TUTORIALS } from '@/lib/tutorials';
 import {
   Accordion,
   AccordionContent,
@@ -18,8 +17,10 @@ import { Skeleton } from './ui/skeleton';
 import { QUIZZES } from '@/lib/quiz';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import type { CourseInfo } from '@/types/course.types';
+import type { Tutorial } from '@/types/tutorial.types';
 
-export function TutorialPanel() {
+export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapters: Tutorial[] }) {
   const {
     progress,
     setCurrentLocation,
@@ -51,7 +52,7 @@ export function TutorialPanel() {
   return (
     <aside className="hidden md:flex md:flex-col bg-card/50 border-0 md:border md:rounded-lg">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Tutoriel GitHub</h2>
+        <h2 className="text-lg font-semibold">{course.title}</h2>
         <p className="text-sm text-muted-foreground">Votre guide interactif</p>
       </div>
 
@@ -75,9 +76,9 @@ export function TutorialPanel() {
       <ScrollArea className="flex-1">
         {isMounted ? (
           <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full p-2">
-            {TUTORIALS.map((tutorial, index) => {
+            {chapters.map((tutorial, index) => {
               const isFirstChapter = index === 0;
-              const prevChapter = isFirstChapter ? null : TUTORIALS[index - 1];
+              const prevChapter = isFirstChapter ? null : chapters[index - 1];
               const prevChapterQuiz = prevChapter ? QUIZZES[prevChapter.id] : null;
               const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
               const isChapterLockedByPreviousQuiz = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
@@ -146,7 +147,7 @@ export function TutorialPanel() {
                           </button>
                         );
                       })}
-                       <button
+                       {chapterQuiz && <button
                           key={`${tutorial.id}-quiz`}
                           className={cn(
                             'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
@@ -175,7 +176,7 @@ export function TutorialPanel() {
                             if (progress.currentView === 'quiz' && tutorial.id === currentChapter?.id) return <ChevronRight className="h-4 w-4 text-primary" />;
                             return <ChevronRight className="h-4 w-4" />;
                           })()}
-                        </button>
+                        </button>}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
