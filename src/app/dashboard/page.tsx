@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles, Handshake } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
 import { ChartContainer } from '@/components/ui/chart';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -23,16 +23,43 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { COURSES } from '@/lib/courses';
+import { TUTORIALS } from '@/lib/tutorials';
+import { QUIZZES } from '@/lib/quiz';
+
+
+// This map is to associate an icon with a courseId
+const courseDetails: Record<string, { icon: React.ElementType }> = {
+  'git-github-tutorial': {
+    icon: GitCommitHorizontal,
+  },
+  'le-closing-pour-debutants-de-prospect-a-client': {
+    icon: Handshake,
+  },
+   'introduction-au-marketing-digital': {
+    icon: Sparkles,
+  }
+};
 
 
 export default function DashboardPage() {
     const { user, loading: authLoading, isPremium } = useAuth();
     const router = useRouter();
-    const { setActiveCourse, overallProgress, totalCompleted, totalLessons, resetActiveCourseProgress, averageQuizScore, masteryIndex } = useTutorial();
+    const { 
+        globalProgress,
+        setActiveCourse, 
+        setCurrentLocation,
+        showQuizForChapter,
+        overallProgress, 
+        totalCompleted, 
+        totalLessons, 
+        resetActiveCourseProgress, 
+        averageQuizScore, 
+        masteryIndex 
+    } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
     const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
@@ -45,8 +72,6 @@ export default function DashboardPage() {
     }, [user, authLoading, router]);
 
     useEffect(() => {
-        // Set the active course for the dashboard view.
-        setActiveCourse('git-github-tutorial');
         setIsMounted(true);
         setCommitData([
             { name: 'Jan', commits: Math.floor(Math.random() * 50) + 10 },
@@ -62,20 +87,39 @@ export default function DashboardPage() {
             { name: 'HTML', value: 20, fill: 'hsl(var(--chart-2))' },
             { name: 'CSS', value: 15, fill: 'hsl(var(--chart-3))' },
         ]);
-    }, [setActiveCourse]);
+    }, []);
 
-    const mainCourse = {
-        id: 'git-github-tutorial',
-        title: 'Git & GitHub : Le Guide Complet',
-        description: 'La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.',
-        icon: GitCommitHorizontal,
-        href: '/tutorial/git-github-tutorial'
-    };
+    const startedCourses = useMemo(() => {
+        if (!globalProgress) return [];
+        return COURSES.filter(course => globalProgress[course.id] && course.status === 'Publié');
+    }, [globalProgress]);
 
-    const getButtonText = () => {
-        if (overallProgress >= 100) return 'Revoir la formation';
-        if (overallProgress > 0) return 'Continuer';
-        return 'Commencer';
+    const handleContinue = (courseId: string) => {
+        const progress = globalProgress[courseId];
+        if (!progress) return;
+
+        const chapters = TUTORIALS.filter(t => t.courseId === courseId).sort((a,b) => a.title.localeCompare(b.title));
+        if (chapters.length === 0) return;
+        
+        const firstChapter = chapters[0];
+        const firstChapterQuiz = QUIZZES[firstChapter.id];
+        const firstChapterQuizScore = progress.quizScores[firstChapter.id] ?? 0;
+
+        if (!isPremium && firstChapterQuiz && firstChapterQuizScore >= firstChapterQuiz.passingScore) {
+            setActiveCourse(courseId);
+            showQuizForChapter(firstChapter.id);
+            router.push(`/tutorial/${courseId}`);
+            return;
+        }
+
+        const lastKnownChapterId = progress.currentChapterId || chapters[0]?.id;
+        const lastKnownLessonId = progress.currentLessonId || chapters[0]?.lessons[0]?.id;
+
+        if (lastKnownChapterId && lastKnownLessonId) {
+            setActiveCourse(courseId);
+            setCurrentLocation(lastKnownChapterId, lastKnownLessonId);
+            router.push(`/tutorial/${courseId}`);
+        }
     };
 
 
@@ -157,7 +201,7 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Progression</CardTitle>
+                    <CardTitle className="text-sm font-medium">Progression (Actif)</CardTitle>
                     <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -198,26 +242,47 @@ export default function DashboardPage() {
           </div>
           
            <div className="space-y-4">
-            <h2 className="text-xl font-bold">Ma Formation en cours</h2>
-             <Card className="flex flex-col md:flex-row md:items-center gap-6 p-6 border-primary/20 hover:border-primary/50 transition-colors">
-                <div className="p-4 bg-primary/10 rounded-lg w-fit self-start">
-                    <mainCourse.icon className="h-10 w-10 text-primary" />
+            <h2 className="text-xl font-bold">Formation(s) en cours</h2>
+             {startedCourses.length > 0 ? (
+                <div className="space-y-4">
+                    {startedCourses.map(course => {
+                        const courseProgress = globalProgress[course.id];
+                        const courseChapters = TUTORIALS.filter(t => t.courseId === course.id);
+                        const totalLessonsForCourse = courseChapters.reduce((acc, chap) => acc + chap.lessons.length, 0);
+                        const completedLessonsForCourse = courseProgress?.completedLessons.size || 0;
+                        const overallProgressForCourse = totalLessonsForCourse > 0 ? (completedLessonsForCourse / totalLessonsForCourse) * 100 : 0;
+                        const Icon = courseDetails[course.id]?.icon || BookOpen;
+
+                        return (
+                            <Card key={course.id} className="flex flex-col md:flex-row md:items-center gap-6 p-6 border-primary/20 hover:border-primary/50 transition-colors">
+                                <div className="p-4 bg-primary/10 rounded-lg w-fit self-start">
+                                    <Icon className="h-10 w-10 text-primary" />
+                                </div>
+                                <div className="flex-1">
+                                    <CardTitle className="text-xl">{course.title}</CardTitle>
+                                    <CardDescription className="mt-2">{course.description}</CardDescription>
+                                    <div className="flex items-center gap-4 mt-4">
+                                        <Progress value={overallProgressForCourse} className="h-2 flex-1" />
+                                        <span className="text-sm font-medium text-muted-foreground">{completedLessonsForCourse} / {totalLessonsForCourse} leçons</span>
+                                    </div>
+                                </div>
+                                <Button onClick={() => handleContinue(course.id)} size="lg" className="w-full md:w-auto self-center md:self-end">
+                                    Continuer
+                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </Card>
+                        );
+                    })}
                 </div>
-                <div className="flex-1">
-                    <CardTitle className="text-xl">{mainCourse.title}</CardTitle>
-                    <CardDescription className="mt-2">{mainCourse.description}</CardDescription>
-                    <div className="flex items-center gap-4 mt-4">
-                        <Progress value={overallProgress} className="h-2 flex-1" />
-                        <span className="text-sm font-medium text-muted-foreground">{totalCompleted} / {totalLessons} leçons</span>
-                    </div>
-                </div>
-                <Button asChild size="lg" className="w-full md:w-auto self-center md:self-end">
-                    <Link href={mainCourse.href}>
-                        {getButtonText()}
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
-            </Card>
+            ) : (
+                <Card className="flex flex-col items-center justify-center p-6 text-center border-dashed">
+                    <CardTitle className="text-lg">Commencez votre apprentissage !</CardTitle>
+                    <CardDescription className="mt-2">Vous n'avez commencé aucune formation.</CardDescription>
+                    <Button asChild variant="secondary" className="mt-4">
+                        <Link href="/courses">Explorer les formations</Link>
+                    </Button>
+                </Card>
+            )}
           </div>
 
           {isPremium ? (
