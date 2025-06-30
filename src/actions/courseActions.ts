@@ -257,3 +257,35 @@ export async function updateQuiz(courseId: string, chapterId: string, updatedQui
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
 }
+
+export async function deleteCourseAction(courseId: string) {
+    const courseIndex = COURSES.findIndex(c => c.id === courseId);
+    if (courseIndex === -1) {
+        throw new Error('Course not found for deletion');
+    }
+
+    // Identify associated tutorials and their IDs before modifying arrays
+    const tutorialsForCourse = TUTORIALS.filter(t => t.courseId === courseId);
+    const tutorialIdsToDelete = new Set(tutorialsForCourse.map(t => t.id));
+
+    // Remove the course
+    COURSES.splice(courseIndex, 1);
+
+    // Remove associated tutorials
+    const updatedTutorials = TUTORIALS.filter(t => t.courseId !== courseId);
+    TUTORIALS.length = 0; // Clear original array
+    Array.prototype.push.apply(TUTORIALS, updatedTutorials); // Push new content
+
+    // Remove associated quizzes
+    tutorialIdsToDelete.forEach(id => {
+        if (QUIZZES[id]) {
+            delete QUIZZES[id];
+        }
+    });
+
+    await saveCourses();
+    await saveTutorials();
+    await saveQuizzes();
+
+    revalidatePath('/admin/courses');
+}

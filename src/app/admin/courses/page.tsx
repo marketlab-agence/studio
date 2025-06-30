@@ -5,34 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { PlusCircle, BookCopy, ChevronRight } from 'lucide-react';
+import { ActionButtons } from './ActionButtons';
 
 type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
-
-function ActionButtons({ course }: { course: AdminCourse }) {
-    if (course.status === 'Plan') {
-        return (
-            <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/create-course?planId=${course.id}`}>Modifier le Plan</Link>
-                </Button>
-                <Button asChild size="sm">
-                    <Link href={`/admin/create-course?planId=${course.id}`}>Démarrer la Création</Link>
-                </Button>
-            </div>
-        );
-    }
-    
-    if (course.status === 'Brouillon' || course.status === 'Publié') {
-        return (
-            <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/courses/${course.id}`}>Modifier</Link>
-            </Button>
-        );
-    }
-
-    return null;
-}
-
 
 export default async function AdminCoursesListPage() {
   const allCourses = (await getAdminCourses()) as AdminCourse[];
