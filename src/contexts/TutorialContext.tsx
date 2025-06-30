@@ -239,7 +239,16 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         const allPassedScores: number[] = [];
         const allAttemptsForPassedQuizzes: number[] = [];
 
-        Object.keys(globalProgress).forEach(courseId => {
+        // Only calculate stats for courses that have been started
+        const startedCourseIds = Object.keys(globalProgress).filter(courseId => {
+            const courseProgressData = globalProgress[courseId];
+            const course = COURSES.find(c => c.id === courseId);
+            // A course is considered "started" if a progress object exists for it
+            // and it has at least one completed lesson OR a "current" lesson is tracked.
+            return courseProgressData && course && course.status === 'Publié' && (courseProgressData.completedLessons.size > 0 || courseProgressData.currentLessonId);
+        });
+
+        startedCourseIds.forEach(courseId => {
             const courseProgressData = globalProgress[courseId];
             if (!courseProgressData) return;
             
