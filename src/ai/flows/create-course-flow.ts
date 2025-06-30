@@ -67,35 +67,28 @@ const prompt = ai.definePrompt({
   name: 'createCoursePrompt',
   input: {schema: CreateCourseInputSchema},
   output: {schema: CreateCourseOutputSchema},
-  prompt: `You are an expert instructional designer tasked with creating a comprehensive and engaging online course plan. The user will provide a topic and a target audience.
+  prompt: `You are an expert instructional designer tasked with creating a comprehensive and engaging online course plan based on user-provided parameters.
 
-Your task is to generate a complete course structure, including a course title, a description, a list of chapters, and for each chapter, a list of lessons and a detailed quiz plan with questions and answers.
+Your task is to generate a complete course structure. You MUST adhere strictly to all the parameters provided below.
 
-**Base Information:**
-Course Topic: {{{topic}}}
-Target Audience: {{{targetAudience}}}
+**1. Core Content Parameters**
+*   **Topic:** {{{topic}}}
+*   **Target Audience:** {{{targetAudience}}}
+*   **Language:** The entire course plan, including all titles, descriptions, and questions, MUST be in **{{#if courseLanguage}}{{{courseLanguage}}}{{else}}French{{/if}}**.
 
-**Constraints:**
-{{#if courseLanguage}}The entire course plan, including titles and descriptions, MUST be in {{{courseLanguage}}}.{{else}}The entire course plan MUST be in French.{{/if}}
-{{#if numChapters}}
-The course must have exactly {{{numChapters}}} chapters.
-{{else}}
-The course must have between 5 and 10 chapters.
-{{/if}}
-{{#if numLessonsPerChapter}}
-Each chapter must have exactly {{{numLessonsPerChapter}}} lessons.
-{{else}}
-Each chapter must have between 3 and 5 lessons.
-{{/if}}
+**2. Structural Parameters**
+*   **Number of Chapters:** {{#if numChapters}}Exactly **{{{numChapters}}}** chapters.{{else}}Between **5 and 10** chapters.{{/if}}
+*   **Lessons per Chapter:** {{#if numLessonsPerChapter}}Exactly **{{{numLessonsPerChapter}}}** lessons per chapter.{{else}}Between **3 and 5** lessons per chapter.{{/if}}
+*   **Desired Lesson Length:** While you will not write the full lesson content now, keep the desired lesson length of **'{{#if lessonLength}}{{{lessonLength}}}{{else}}Moyen{{/if}}'** in mind when defining lesson objectives. A 'Long' lesson should have a more specific and in-depth objective.
 
-**Quiz Generation Rules:**
-For each chapter, generate a quiz to validate the chapter's content.
-- {{#if numQuestionsPerQuiz}}Generate exactly {{{numQuestionsPerQuiz}}} questions per quiz.{{else}}Generate between 3 and 5 questions per quiz.{{/if}}
-- Each question must have between 3 and 4 possible answers.
-- {{#if allowMultipleChoice}}You can create a mix of single-choice and multiple-choice questions. For single-choice questions, exactly one answer must be correct. For multiple-choice questions, one or more answers can be correct.{{else}}All questions must be single-choice, meaning only one answer can be correct (\`isMultipleChoice\` must be false).{{/if}}
-- The quiz \`feedbackTiming\` property should be set to '{{{feedbackTiming}}}' if provided, otherwise default to 'end'.
+**3. Quiz Parameters**
+For each chapter, generate a quiz to validate learning.
+*   **Number of Questions:** {{#if numQuestionsPerQuiz}}Exactly **{{{numQuestionsPerQuiz}}}** questions per quiz.{{else}}Between **3 and 5** questions per quiz.{{/if}}
+*   **Answer Format:** Each question must have between 3 and 4 possible answers.
+*   **Question Type:** {{#if allowMultipleChoice}}You can create a mix of single-choice and multiple-choice questions. For single-choice questions, exactly one answer must be \`isCorrect: true\`. For multiple-choice questions, one or more answers can be \`isCorrect: true\`.{{else}}All questions MUST be single-choice, meaning only ONE answer can be \`isCorrect: true\` and \`isMultipleChoice\` must be \`false\`.{{/if}}
+*   **Feedback Timing:** The \`feedbackTiming\` property for each quiz must be set to **'{{#if feedbackTiming}}{{{feedbackTiming}}}{{else}}end{{/if}}'**.
 
-Please generate the course plan according to the specified output schema. Ensure the content is logical, well-structured, and appropriate for the target audience. The tone should be professional and encouraging.
+Generate the course plan according to the output schema. Ensure all content is logical, well-structured, and perfectly aligned with the target audience and all specified parameters. The tone should be professional and encouraging.
 `,
 });
 

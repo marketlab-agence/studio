@@ -511,5 +511,424 @@
       "allowMultipleChoice": true,
       "feedbackTiming": "end"
     }
+  },
+  {
+    "id": "jira-de-zero-a-heros",
+    "title": "Jira : De Zéro à Héros",
+    "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
+    "status": "Plan",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre les bases de Jira.",
+              "title": "Introduction à Jira"
+            },
+            {
+              "objective": "Apprendre à naviguer dans l'interface Jira.",
+              "title": "Navigation dans Jira"
+            },
+            {
+              "objective": "Créer et configurer votre premier projet dans Jira.",
+              "title": "Création de Projet"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Un outil de gestion de projet."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un langage de programmation."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un système d'exploitation."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Tableau de bord."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Calendrier."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Paramètres."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Où pouvez-vous voir un aperçu de tous vos projets dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "En cliquant sur 'Créer un projet'."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En allant dans les paramètres du compte."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En utilisant la ligne de commande."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment créer un nouveau projet dans Jira ?"
+              }
+            ],
+            "title": "Quiz: Introduction à Jira",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à Jira"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre ce que sont les types de problèmes.",
+              "title": "Types de Problèmes"
+            },
+            {
+              "objective": "Créer différents types de problèmes (Tâches, Bugs, Épiques).",
+              "title": "Création de Problèmes"
+            },
+            {
+              "objective": "Décrire et organiser les problèmes efficacement.",
+              "title": "Gestion des Problèmes"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Tâche"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Bug"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Épique"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Projet"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont des types de problèmes courants dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Assigner un responsable."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Définir une priorité."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Ajouter une description détaillée."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Supprimer le problème."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les actions importantes lors de la création d'un problème ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Utiliser des étiquettes."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Créer des liens entre les problèmes."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les problèmes."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment organiser efficacement les problèmes dans Jira ?"
+              }
+            ],
+            "title": "Quiz: Gestion des Problèmes",
+            "feedbackTiming": "end"
+          },
+          "title": "Problèmes et Tâches"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à utiliser les tableaux Kanban.",
+              "title": "Introduction aux Tableaux Kanban"
+            },
+            {
+              "objective": "Configurer et personnaliser un tableau Kanban.",
+              "title": "Configuration de Tableaux Kanban"
+            },
+            {
+              "objective": "Gérer le flux de travail avec Kanban.",
+              "title": "Gestion du Flux de Travail Kanban"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Visualiser le flux de travail."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Automatiser les tests."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Générer des rapports financiers."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel est l'objectif principal d'un tableau Kanban ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Colonnes"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Cartes"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Lignes"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les éléments clés d'un tableau Kanban ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Limiter le travail en cours."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les blocages."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ajouter autant de tâches que possible."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quelle est une pratique importante pour gérer le flux de travail avec Kanban ?"
+              }
+            ],
+            "title": "Quiz: Tableaux Kanban",
+            "feedbackTiming": "end"
+          },
+          "title": "Tableaux Kanban"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre le fonctionnement des tableaux Scrum.",
+              "title": "Introduction aux Tableaux Scrum"
+            },
+            {
+              "objective": "Planifier un sprint dans un tableau Scrum.",
+              "title": "Planification de Sprint"
+            },
+            {
+              "objective": "Suivre l'avancement du sprint et des tâches.",
+              "title": "Suivi de Sprint"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Sprints"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Flux continu"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Aucun délai"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment le travail est-il organisé dans un tableau Scrum ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Product Owner"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Scrum Master"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Équipe de développement"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Chef de projet"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les rôles clés dans Scrum ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Réunion quotidienne (Daily Scrum)."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Réunion hebdomadaire."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pas de réunion."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel type de réunion est couramment utilisé dans Scrum ?"
+              }
+            ],
+            "title": "Quiz: Tableaux Scrum",
+            "feedbackTiming": "end"
+          },
+          "title": "Tableaux Scrum"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à créer des rapports personnalisés.",
+              "title": "Création de Rapports Personnalisés"
+            },
+            {
+              "objective": "Analyser les données avec des filtres.",
+              "title": "Analyse de Données avec Filtres"
+            },
+            {
+              "objective": "Utiliser les rapports pour améliorer la performance de l'équipe.",
+              "title": "Amélioration de la Performance avec les Rapports"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour suivre l'avancement du projet."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Pour identifier les blocages."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Pour prendre des décisions éclairées."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Pourquoi les rapports sont-ils importants dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Par statut"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Par responsable"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Par priorité"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont des exemples de filtres couramment utilisés dans les rapports Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Identifier les goulots d'étranglement."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Ajuster les priorités."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les problèmes."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment les rapports peuvent-ils aider à améliorer la performance de l'équipe ?"
+              }
+            ],
+            "title": "Quiz: Rapports et Analyse",
+            "feedbackTiming": "end"
+          },
+          "title": "Rapports et Analyse"
+        }
+      ],
+      "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
+      "title": "Jira : De Zéro à Héros",
+      "localId": "1751262058265",
+      "createdAt": "2025-06-30T05:40:58.265Z"
+    },
+    "generationParams": {
+      "topic": "Jira : De Zéro à Héros\nOrganisez, suivez et gérez le travail de votre équipe avec le leader de la gestion de projet Agile.",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Court",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
   }
 ]
