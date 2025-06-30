@@ -1,14 +1,11 @@
 
-'use client';
-
-import { useEffect, useState } from 'react';
 import { getAdminCourses } from '@/actions/adminActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { PlusCircle, BookCopy, ChevronRight, Loader2 } from 'lucide-react';
+import { PlusCircle, BookCopy, ChevronRight } from 'lucide-react';
 
 type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
 
@@ -38,19 +35,8 @@ function ActionButtons({ course }: { course: AdminCourse }) {
 }
 
 
-export default function AdminCoursesListPage() {
-  const [allCourses, setAllCourses] = useState<AdminCourse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchCourses() {
-        setIsLoading(true);
-        const courses = await getAdminCourses() as AdminCourse[];
-        setAllCourses(courses);
-        setIsLoading(false);
-    }
-    fetchCourses();
-  }, []);
+export default async function AdminCoursesListPage() {
+  const allCourses = (await getAdminCourses()) as AdminCourse[];
   
   const badgeVariants: { [key: string]: "default" | "secondary" | "outline" } = {
     'Publié': 'default',
@@ -101,10 +87,10 @@ export default function AdminCoursesListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {allCourses.length === 0 ? (
                  <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                        <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                        Aucune formation planifiée ou en brouillon.
                     </TableCell>
                 </TableRow>
               ) : (
