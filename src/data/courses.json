@@ -430,5 +430,86 @@
       "allowMultipleChoice": true,
       "feedbackTiming": "end"
     }
+  },
+  {
+    "id": "ingenierie-des-prompts-pour-debutants",
+    "title": "Ingénierie des Prompts pour Débutants",
+    "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
+    "status": "Brouillon",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à définir l'ingénierie des prompts et son importance.",
+              "title": "Introduction à l'ingénierie des prompts"
+            },
+            {
+              "objective": "Comprendre comment concevoir des prompts efficaces pour différents modèles de langage.",
+              "title": "Principes de base de la conception de prompts"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "L'art de poser des questions à un moteur de recherche."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "La discipline de conception et d'optimisation des prompts pour les modèles de langage."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Uniquement utile pour les tâches créatives."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que l'ingénierie des prompts ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Clarté et concision."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ambiguïté."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Spécificité du contexte."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Longueur excessive."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les principes clés d'un prompt efficace ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 1: Introduction à l'ingénierie des prompts",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à l'ingénierie des prompts"
+        }
+      ],
+      "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
+      "title": "Ingénierie des Prompts pour Débutants",
+      "localId": "ingenierie-des-prompts-pour-debutants",
+      "createdAt": "2025-06-30T04:38:16.012Z"
+    },
+    "generationParams": {
+      "topic": "",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Moyen",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
   }
 ]

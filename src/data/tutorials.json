@@ -433,5 +433,25 @@
         "visualComponentName": "ConceptDiagram"
       }
     ]
+  },
+  {
+    "id": "ingenierie-des-prompts-pour-debutants-ch1",
+    "courseId": "ingenierie-des-prompts-pour-debutants",
+    "title": "Introduction à l'ingénierie des prompts",
+    "description": "Un chapitre sur Introduction à l'ingénierie des prompts.",
+    "lessons": [
+      {
+        "id": "ingenierie-des-prompts-pour-debutants-ch1-l1",
+        "title": "Introduction à l'ingénierie des prompts",
+        "objective": "Apprendre à définir l'ingénierie des prompts et son importance.",
+        "content": "Contenu en attente de génération pour \"Introduction à l'ingénierie des prompts\"..."
+      },
+      {
+        "id": "ingenierie-des-prompts-pour-debutants-ch1-l2",
+        "title": "Principes de base de la conception de prompts",
+        "objective": "Comprendre comment concevoir des prompts efficaces pour différents modèles de langage.",
+        "content": "Contenu en attente de génération pour \"Principes de base de la conception de prompts\"..."
+      }
+    ]
   }
 ]

@@ -1824,5 +1824,62 @@
     ],
     "passingScore": 80,
     "feedbackTiming": "end"
+  },
+  "ingenierie-des-prompts-pour-debutants-ch1": {
+    "id": "ingenierie-des-prompts-pour-debutants-ch1",
+    "title": "Quiz du Chapitre 1: Introduction à l'ingénierie des prompts",
+    "questions": [
+      {
+        "id": "ingenierie-des-prompts-pour-debutants-ch1-q1",
+        "text": "Qu'est-ce que l'ingénierie des prompts ?",
+        "answers": [
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q1-a1",
+            "text": "L'art de poser des questions à un moteur de recherche.",
+            "isCorrect": false
+          },
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q1-a2",
+            "text": "La discipline de conception et d'optimisation des prompts pour les modèles de langage.",
+            "isCorrect": true
+          },
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q1-a3",
+            "text": "Uniquement utile pour les tâches créatives.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "ingenierie-des-prompts-pour-debutants-ch1-q2",
+        "text": "Quels sont les principes clés d'un prompt efficace ?",
+        "answers": [
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q2-a1",
+            "text": "Clarté et concision.",
+            "isCorrect": true
+          },
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q2-a2",
+            "text": "Ambiguïté.",
+            "isCorrect": false
+          },
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q2-a3",
+            "text": "Spécificité du contexte.",
+            "isCorrect": true
+          },
+          {
+            "id": "ingenierie-des-prompts-pour-debutants-ch1-q2-a4",
+            "text": "Longueur excessive.",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
   }
 }

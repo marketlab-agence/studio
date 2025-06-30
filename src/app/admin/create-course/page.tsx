@@ -86,6 +86,12 @@ export default function CreateCoursePage() {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isBuilding, setIsBuilding] = useState(false);
     const [generatedContent, setGeneratedContent] = useState<GenerateLessonContentOutput | { illustrativeContent: string } | null>(null);
+    
+    // Mount state to prevent hydration errors
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
 
     useEffect(() => {
@@ -244,7 +250,32 @@ export default function CreateCoursePage() {
       </div>
     );
     
-    // === Main Render ===
+    // === Render logic ===
+    if (!isMounted) {
+        return (
+            <div className="space-y-8">
+                 <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-lg" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-80" />
+                        <Skeleton className="h-4 w-96" />
+                    </div>
+                </div>
+                <Card>
+                    <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                    <CardContent className="space-y-6">
+                        <Skeleton className="h-20 w-full" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <Skeleton className="h-10 w-full" />
+                           <Skeleton className="h-10 w-full" />
+                        </div>
+                        <Skeleton className="h-10 w-48" />
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+    
     return (
         <div className="space-y-8">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
