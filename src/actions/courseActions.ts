@@ -225,3 +225,34 @@ export async function getCourseAndChapters(courseId: string): Promise<{ course: 
     const chapters = TUTORIALS.filter(t => t.courseId === courseId);
     return { course, chapters };
 }
+
+export async function updateLessonContent(courseId: string, chapterId: string, lesson: Lesson) {
+    const chapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
+    if (chapterIndex === -1) {
+        throw new Error('Chapter not found');
+    }
+
+    const lessonIndex = TUTORIALS[chapterIndex].lessons.findIndex(l => l.id === lesson.id);
+    if (lessonIndex === -1) {
+        throw new Error('Lesson not found');
+    }
+
+    TUTORIALS[chapterIndex].lessons[lessonIndex] = lesson;
+
+    await saveTutorials();
+    
+    // Revalidate paths to reflect changes
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
+}
+
+export async function updateQuiz(courseId: string, chapterId: string, updatedQuiz: Quiz) {
+    if (!QUIZZES[chapterId]) {
+        throw new Error('Quiz not found');
+    }
+    QUIZZES[chapterId] = updatedQuiz;
+    await saveQuizzes();
+
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
+}

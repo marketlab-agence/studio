@@ -4,5 +4,216 @@
     "title": "Git & GitHub : Le Guide Complet",
     "description": "La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.",
     "status": "Publié"
+  },
+  {
+    "id": "le-closing-pour-debutants-de-prospect-a-client",
+    "title": "Le Closing pour Débutants : De Prospect à Client",
+    "description": "Ce cours est conçu pour les débutants souhaitant maîtriser l'art du closing. Vous apprendrez les bases, les techniques avancées, et comment gérer les objections pour transformer les prospects en clients fidèles. Développez vos compétences et atteignez vos objectifs de vente !",
+    "status": "Brouillon",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre les bases du closing.",
+              "title": "Introduction au Closing : Définitions et Concepts Clés"
+            },
+            {
+              "objective": "Identifier les qualités essentielles d'un bon closer.",
+              "title": "Le Profil du Closer Performant : Compétences et Aptitudes"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "L'art de conclure une vente en transformant un prospect en client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Une technique de marketing agressif."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un processus de négociation complexe."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que le closing ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "L'écoute active"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "La persévérance"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "L'agressivité"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "L'empathie"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les qualités essentielles d'un bon closer ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les objections du client."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Écouter attentivement et comprendre les préoccupations du client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Forcer le client à acheter."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment un closer doit-il gérer les objections ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Construire une relation de confiance avec le client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Manipuler le client pour conclure la vente."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Comprendre les besoins et les désirs du client."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quel est l'objectif principal d'un closer ?"
+              }
+            ],
+            "title": "Quiz : Les Fondamentaux du Closing",
+            "feedbackTiming": "end"
+          },
+          "title": "Les Bases du Closing"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre les techniques de closing les plus efficaces.",
+              "title": "Techniques de Closing Avancées : Conclusion Efficace"
+            },
+            {
+              "objective": "Savoir gérer les objections et les refus.",
+              "title": "Gérer les Objections et les Refus : Transformer les 'Non' en 'Oui'"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "La technique du résumé et de la question directe."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La technique de l'intimidation."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La technique de la désinformation."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quelle technique de closing est la plus éthique et efficace ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "L'ignorer complètement."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "L'accepter et chercher à comprendre les raisons."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Proposer des solutions alternatives."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Se fâcher et insister."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment doit-on gérer un refus ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Poser des questions ouvertes pour identifier les besoins réels."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Parler sans cesse pour convaincre."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les signaux d'achat du client."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Que doit faire un closer pour mieux comprendre les besoins du client ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "En renforçant la valeur du produit ou service offert."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En baissant le prix de manière excessive."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "En proposant des garanties supplémentaires."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment peut-on atténuer la résistance d'un client face au prix ?"
+              }
+            ],
+            "title": "Quiz : Maîtriser l'Art du Closing",
+            "feedbackTiming": "end"
+          },
+          "title": "Techniques Avancées et Gestion des Objections"
+        }
+      ],
+      "description": "Ce cours est conçu pour les débutants souhaitant maîtriser l'art du closing. Vous apprendrez les bases, les techniques avancées, et comment gérer les objections pour transformer les prospects en clients fidèles. Développez vos compétences et atteignez vos objectifs de vente !",
+      "title": "Le Closing pour Débutants : De Prospect à Client",
+      "localId": "1751244165121",
+      "createdAt": "2025-06-30T00:42:45.121Z"
+    },
+    "generationParams": {
+      "topic": "",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
   }
 ]
