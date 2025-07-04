@@ -162,11 +162,10 @@ export default function CreateCoursePage() {
     };
     
     const handleSavePlanAndRedirect = async () => {
-        if (!activePlan) return;
+        if (!activePlan || !activeStoredPlan) return;
         setIsSavingPlan(true);
         try {
-            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
-            await savePlanAction(activePlan, generationParams);
+            await savePlanAction(activePlan, activeStoredPlan.params);
             toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
             router.push(`/admin/courses`);
         } catch (e) {
@@ -177,12 +176,11 @@ export default function CreateCoursePage() {
     };
 
     const handleStartCourseBuild = async () => {
-        if (!activePlan) return;
+        if (!activePlan || !activeStoredPlan) return;
         setIsCreatingCourse(true);
         setError(null);
         try {
-            const generationParams: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
-            const { courseId } = await savePlanAction(activePlan, generationParams);
+            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
             await buildCourseFromPlanAction(courseId);
             setBuildingCourseId(courseId);
 
@@ -218,7 +216,9 @@ export default function CreateCoursePage() {
             title: "Formation créée avec succès !",
             description: "Vous êtes redirigé vers la page d'édition de la formation.",
         });
-        router.push(`/admin/courses/${buildingCourseId}`);
+        if (buildingCourseId) {
+            router.push(`/admin/courses/${buildingCourseId}`);
+        }
     };
 
     // Auto-trigger generation when step changes
@@ -292,7 +292,56 @@ export default function CreateCoursePage() {
           )}
 
           <div className="space-y-4 rounded-lg border bg-background p-6"><div className="space-y-2"><Label htmlFor="courseTitle" className="text-lg font-semibold">Titre de la Formation</Label><Input id="courseTitle" value={activePlan.title} onChange={(e) => handlePlanChange('title', e.target.value)} className="text-2xl h-auto p-2 font-bold" disabled={isBuildingMode} /></div><div className="space-y-2"><Label htmlFor="courseDescription" className="font-semibold">Description</Label><Textarea id="courseDescription" value={activePlan.description} onChange={(e) => handlePlanChange('description', e.target.value)} disabled={isBuildingMode} /></div></div>
-          <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">{activePlan.chapters.map((chapter, chapterIndex) => (<AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} asChild><Card><div className="flex w-full items-start justify-between p-6"><div className="flex-1 space-y-2 pr-4"><Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold">Titre du Chapitre {chapterIndex + 1}</Label><div className="flex items-center gap-2"><Input id={`chapter-title-${chapterIndex}`} value={chapter.title} onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)} className="text-lg font-bold" disabled={isBuildingMode} /></div></div><AccordionTrigger disabled={isBuildingMode} /></div><AccordionContent><CardContent className="space-y-6 pl-6 pt-0"><div><h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4><div className="space-y-4">{chapter.lessons.map((lesson, lessonIndex) => (<div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2"><div className="flex-1 space-y-4"><div className="space-y-2"><Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label><Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" disabled={isBuildingMode}/><Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2} disabled={isBuildingMode}/></div></div></div>))}</div></div><Separator /><div><h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4><div className="pl-4 space-y-4"><div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div><div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div></div></div></CardContent></AccordionContent></Card></AccordionItem>))}</Accordion>
+          <Accordion type="multiple" defaultValue={activePlan.chapters.map((_, i) => `item-${i}`)} className="w-full space-y-4">
+            {activePlan.chapters.map((chapter, chapterIndex) => (
+                <AccordionItem value={`item-${chapterIndex}`} key={chapterIndex} className="border-none">
+                    <Card className="shadow-sm">
+                        <AccordionTrigger className="p-6 text-left hover:no-underline w-full">
+                            <div className="flex-1 space-y-2 pr-4">
+                                <Label htmlFor={`chapter-title-${chapterIndex}`} className="text-base font-semibold cursor-pointer">Titre du Chapitre {chapterIndex + 1}</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id={`chapter-title-${chapterIndex}`}
+                                        value={chapter.title}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => handleChapterChange(chapterIndex, 'title', e.target.value)}
+                                        className="text-lg font-bold" disabled={isBuildingMode}
+                                    />
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <CardContent className="space-y-6 pl-6 pt-0">
+                                <div>
+                                    <h4 className="font-semibold flex items-center gap-2 mb-4"><BookCopy className="h-5 w-5 text-primary"/>Leçons</h4>
+                                    <div className="space-y-4">
+                                        {chapter.lessons.map((lesson, lessonIndex) => (
+                                            <div key={lessonIndex} className="flex gap-4 items-start pl-4 border-l-2 ml-2">
+                                                <div className="flex-1 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor={`lesson-title-${chapterIndex}-${lessonIndex}`} className="text-sm font-semibold flex items-center gap-2"><BookCopy className="h-4 w-4"/> Titre & Objectif</Label>
+                                                        <Input id={`lesson-title-${chapterIndex}-${lessonIndex}`} value={lesson.title} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'title', e.target.value)} placeholder="Titre de la leçon" disabled={isBuildingMode}/>
+                                                        <Textarea value={lesson.objective} onChange={(e) => handleLessonChange(chapterIndex, lessonIndex, 'objective', e.target.value)} placeholder="Objectif de la leçon" rows={2} disabled={isBuildingMode}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <h4 className="font-semibold flex items-center gap-2 mb-4"><GraduationCap className="h-5 w-5 text-primary"/>Quiz</h4>
+                                    <div className="pl-4 space-y-4">
+                                        <div className="space-y-2"><Label>Titre du Quiz: {chapter.quiz.title}</Label></div>
+                                        <div><Label className="text-sm font-semibold">Questions du quiz: {chapter.quiz.questions.length}</Label></div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+            ))}
+          </Accordion>
           <Separator />
           <div className="flex flex-wrap gap-4">
               <Button onClick={handleSavePlanAndRedirect} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan</Button>
@@ -374,7 +423,28 @@ export default function CreateCoursePage() {
                     {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Erreur</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
                 </CardContent>
             </Card>
-            {generatedPlans.length > 0 && (<Card className="mt-8"><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle><CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription></CardHeader><CardContent className="space-y-2">{generatedPlans.filter(p => p && p.plan).map((storedPlan) => (<div key={storedPlan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === storedPlan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}><div><p className="font-semibold">{storedPlan.plan.title}</p><p className="text-sm text-muted-foreground">{storedPlan.plan.chapters.length} chapitres - Généré à {storedPlan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div><div className="flex gap-2 self-end sm:self-center"><Button variant="outline" size="sm" onClick={() => setActivePlanId(storedPlan.localId)} disabled={activePlanId === storedPlan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button><Button variant="destructive" size="sm" onClick={() => handleDeletePlan(storedPlan.localId)} disabled={isBuildingMode}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button></div></div>))}</CardContent></Card>)}
+            {generatedPlans.length > 0 && (
+                <Card className="mt-8">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><History className="h-6 w-6"/> Historique des Générations</CardTitle>
+                        <CardDescription>Sélectionnez un plan pour le modifier ou le supprimer. Le plan actif est surligné.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {generatedPlans.filter(p => p && p.plan).map((storedPlan) => (
+                            <div key={storedPlan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === storedPlan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}>
+                                <div>
+                                    <p className="font-semibold">{storedPlan.plan.title}</p>
+                                    <p className="text-sm text-muted-foreground">{storedPlan.plan.chapters.length} chapitres - Généré à {storedPlan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                                <div className="flex gap-2 self-end sm:self-center">
+                                    <Button variant="outline" size="sm" onClick={() => setActivePlanId(storedPlan.localId)} disabled={activePlanId === storedPlan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button>
+                                    <Button variant="destructive" size="sm" onClick={() => handleDeletePlan(storedPlan.localId)} disabled={isBuildingMode}><Trash2 className="mr-2 h-4 w-4"/>Supprimer</Button>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             {(isGeneratingPlan || activePlan) && !isBuildingMode && (<Card className="mt-8"><CardHeader><CardTitle>2. Plan de Formation Actif</CardTitle><CardDescription>Vérifiez et modifiez le plan généré par l'IA avant de le sauvegarder.</CardDescription></CardHeader><CardContent>{isGeneratingPlan ? renderPlanLoadingState() : activePlan && renderEditablePlan()}</CardContent></Card>)}
             
             {isBuildingMode && (() => {
@@ -489,5 +559,3 @@ export default function CreateCoursePage() {
         </div>
     )
 }
-
-    
