@@ -55,15 +55,14 @@ export default function LoginPage() {
       // Redirection is handled by useEffect
     } catch (error: any) {
       console.error('LoginPage: OAuth signin error:', error);
-
-      // Handle user-cancellations gracefully
-      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
-        setIsSubmitting(false);
-        return; // Exit without showing an error toast
-      }
       
       let errorMessage = "Une erreur inconnue est survenue. Veuillez réessayer.";
-      if (error?.code === 'auth/popup-blocked') {
+      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+        setIsSubmitting(false);
+        return; 
+      } else if (error?.code === 'auth/network-request-failed') {
+          errorMessage = 'La requête réseau a échoué. Vérifiez votre connexion internet. Il est aussi possible que le domaine de cette application ne soit pas autorisé dans votre console Firebase.';
+      } else if (error?.code === 'auth/popup-blocked') {
         errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
       } else if (error?.code === 'auth/unauthorized-domain') {
         errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
@@ -95,6 +94,8 @@ export default function LoginPage() {
             description = "Cette adresse e-mail est déjà utilisée par un autre compte.";
         } else if (error.code === 'auth/weak-password') {
             description = "Le mot de passe est trop faible. Il doit contenir au moins 6 caractères.";
+        } else if (error.code === 'auth/network-request-failed') {
+          description = "La requête réseau a échoué. Assurez-vous d'être connecté à internet et que le domaine est bien autorisé dans votre console Firebase.";
         } else if (error.message) {
             description = error.message;
         }
@@ -112,9 +113,10 @@ export default function LoginPage() {
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by the useEffect hook
     } catch (error: any) {
-        // Firebase provides generic error codes for sign-in failures to prevent user enumeration
-        // so we just use a generic message.
-        const description = "Adresse e-mail ou mot de passe incorrect.";
+        let description = "Adresse e-mail ou mot de passe incorrect.";
+        if (error.code === 'auth/network-request-failed') {
+            description = "La requête réseau a échoué. Assurez-vous d'être connecté à internet et que le domaine est bien autorisé dans votre console Firebase.";
+        }
         toast({ variant: 'destructive', title: 'Erreur de connexion', description });
         setIsSubmitting(false);
     }
