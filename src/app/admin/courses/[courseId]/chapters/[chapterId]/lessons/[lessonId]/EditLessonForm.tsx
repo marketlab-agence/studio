@@ -119,8 +119,8 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
     if (!aiSuggestions) return;
     setLesson(prev => ({
         ...prev,
-        interactiveComponentName: aiSuggestions.interactiveComponentName || '',
-        visualComponentName: aiSuggestions.visualComponentName || '',
+        interactiveComponentName: aiSuggestions.interactiveComponentName || prev.interactiveComponentName,
+        visualComponentName: aiSuggestions.visualComponentName || prev.visualComponentName,
     }));
     setAiSuggestions(null); // Hide the suggestion box after applying
     toast({
@@ -136,7 +136,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
         <ChevronRight className="h-4 w-4" />
         <Link href={`/admin/courses/${courseId}`} className="hover:text-primary">Formation</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${courseId}/chapters/${chapterId}`} className="hover:text-primary_foreground truncate max-w-xs">{initialChapterTitle}</Link>
+        <Link href={`/admin/courses/${courseId}/chapters/${chapterId}`} className="hover:text-primary max-w-xs truncate">{initialChapterTitle}</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground truncate max-w-xs">{lesson.title}</span>
       </div>
@@ -228,10 +228,29 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
                 <Alert>
                     <Sparkles className="h-4 w-4" />
                     <AlertTitle>Suggestions de l'IA</AlertTitle>
-                    <AlertDescription className="space-y-2 mt-2">
-                        <p>Interactif : <strong>{aiSuggestions.interactiveComponentName || 'Aucun'}</strong></p>
-                        <p>Visuel : <strong>{aiSuggestions.visualComponentName || 'Aucun'}</strong></p>
-                        <Button size="sm" onClick={applySuggestions} className="mt-2">Appliquer les suggestions</Button>
+                    <AlertDescription asChild>
+                      <div className="space-y-4 mt-2">
+                        {aiSuggestions.interactiveComponentName ? (
+                            <div>
+                                <p>Interactif : <strong>{aiSuggestions.interactiveComponentName}</strong></p>
+                                <p className="text-xs text-muted-foreground italic pl-4 border-l-2 border-border ml-2 mt-1">"{aiSuggestions.interactiveComponentJustification}"</p>
+                            </div>
+                        ) : (
+                            <p>Composant interactif suggéré : <strong>Aucun</strong></p>
+                        )}
+                        {aiSuggestions.visualComponentName ? (
+                            <div>
+                                <p>Visuel : <strong>{aiSuggestions.visualComponentName}</strong></p>
+                                <p className="text-xs text-muted-foreground italic pl-4 border-l-2 border-border ml-2 mt-1">"{aiSuggestions.visualComponentJustification}"</p>
+                            </div>
+                        ) : (
+                             <p>Composant visuel suggéré : <strong>Aucun</strong></p>
+                        )}
+                        
+                        {(aiSuggestions.interactiveComponentName || aiSuggestions.visualComponentName) && (
+                            <Button size="sm" onClick={applySuggestions} className="mt-2">Appliquer les suggestions</Button>
+                        )}
+                      </div>
                     </AlertDescription>
                 </Alert>
             )}

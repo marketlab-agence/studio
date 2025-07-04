@@ -24,7 +24,9 @@ export type SuggestLessonComponentsInput = z.infer<typeof SuggestLessonComponent
 
 const SuggestLessonComponentsOutputSchema = z.object({
   interactiveComponentName: z.string().optional().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience. If no component is relevant, this field can be omitted."),
-  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted.")
+  interactiveComponentJustification: z.string().optional().describe("A brief justification explaining why this interactive component is essential, referencing the lesson content."),
+  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted."),
+  visualComponentJustification: z.string().optional().describe("A brief justification explaining why this visual component is essential, referencing the lesson content.")
 });
 export type SuggestLessonComponentsOutput = z.infer<typeof SuggestLessonComponentsOutputSchema>;
 
@@ -32,7 +34,7 @@ const suggestLessonComponentsPrompt = ai.definePrompt({
     name: 'suggestLessonComponentsPrompt',
     input: { schema: SuggestLessonComponentsInputSchema },
     output: { schema: SuggestLessonComponentsOutputSchema },
-    prompt: `You are a highly selective and critical instructional designer. Your task is to analyze the lesson content provided below and decide if an interactive or visual component would genuinely enhance learning. **Most lessons do not need extra components.** Only suggest a component if it is almost *essential* for understanding a complex topic or practicing a key skill described in the lesson content.
+    prompt: `You are an expert and highly critical instructional designer. Your task is to analyze the provided lesson content and suggest pedagogical components ONLY if they are absolutely essential for enhancing learning. You must justify every suggestion by quoting or referencing a specific part of the lesson content.
 
 **1. Analyze the following content:**
 
@@ -44,20 +46,20 @@ const suggestLessonComponentsPrompt = ai.definePrompt({
     {{{illustrativeContent}}}
     ---
 
-**2. Make a decision based SOLELY on the content provided above:**
+**2. Follow this strict reasoning process:**
 
--   **First, determine if ANY component is needed.** Is there a specific part of the \`illustrativeContent\` that is hard to grasp with text alone? If not, **your response must be empty.** Do not suggest any components.
--   **If a component is necessary, your choice MUST be directly justified by the \`illustrativeContent\` and the \`courseTopic\`.**
-    -   Example: If the \`courseTopic\` is "Git" and the \`illustrativeContent\` describes \`git add\` and \`git commit\`, then \`StagingAreaVisualizer\` is a relevant suggestion.
-    -   Example: If the \`courseTopic\` is "Sales" and the \`illustrativeContent\` describes a sales funnel, then \`ConceptDiagram\` might be relevant, but \`GitCommandSimulator\` is **completely irrelevant and must not be chosen**.
--   **If NO component from the list is a good fit, even if it seems vaguely related, DO NOT suggest it.** Omit the fields in your response.
+*   **Justification First:** Before selecting any component, you must write a justification.
+    *   For an **interactive component**, ask: "Is there a specific, practical skill described in the content that the user MUST practice to understand?" If yes, write a justification that explains why and what part of the content supports this.
+    *   For a **visual component**, ask: "Is there a complex concept, flow, or data relationship in the content that is very difficult to grasp with text alone?" If yes, write a justification.
+*   **If no strong justification can be made, DO NOT suggest a component.** Your output for that component and its justification must be empty. It is better to suggest nothing than to suggest something irrelevant.
+*   **Relevance Check:** Your justification and component choice MUST be directly related to the **Course Topic: {{{courseTopic}}}**. Do not suggest Git-related components for a course on Sales.
 
-**3. If, and only if, you have decided a component is essential, select the single best component from each list below:**
+**3. If, and only if, you have a strong justification, select the single best component from the lists below:**
 
--   **Available Interactive Components:** {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
--   **Available Visualization Components:** {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+*   **Available Interactive Components:** {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+*   **Available Visualization Components:** {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
 
-Your final output must strictly follow the output schema, containing only the names of the selected components, or be empty if none are relevant.
+**4. Generate your response following the output schema precisely.** Include the component name and its corresponding justification.
 `,
   });
 
