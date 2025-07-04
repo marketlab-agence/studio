@@ -5,22 +5,27 @@ import { useState } from 'react';
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronRight, Save, Pencil, Loader2 } from 'lucide-react';
+import { ChevronRight, Save, Pencil, Loader2, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/types/tutorial.types';
-import { updateLessonContent } from '@/actions/courseActions';
+import { updateLessonContent, generateAndSaveLessonContent } from '@/actions/courseActions';
 
 export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, chapterId }: { initialLesson: Lesson; initialChapterTitle: string, courseId: string, chapterId: string }) {
   const { toast } = useToast();
   
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingComponents, setIsGeneratingComponents] = useState(false);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -39,6 +44,47 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
         });
     } finally {
         setIsSaving(false);
+    }
+  };
+
+  const handleGenerateComponents = async () => {
+    setIsGeneratingComponents(true);
+
+    const chapterIndexMatch = chapterId.match(/-ch(\d+)$/);
+    const lessonIndexMatch = lesson.id.match(/-l(\d+)$/);
+
+    if (!chapterIndexMatch || !lessonIndexMatch) {
+        toast({ title: 'Erreur de format d\'ID', description: 'Impossible de déterminer les indices du chapitre/leçon.', variant: 'destructive'});
+        setIsGeneratingComponents(false);
+        return;
+    }
+    
+    const chapterIndex = parseInt(chapterIndexMatch[1], 10) - 1;
+    const lessonIndex = parseInt(lessonIndexMatch[1], 10) - 1;
+
+    try {
+        const result = await generateAndSaveLessonContent(courseId, chapterIndex, lessonIndex);
+        
+        setLesson(prev => ({
+            ...prev,
+            content: result.illustrativeContent,
+            interactiveComponentName: result.interactiveComponentName,
+            visualComponentName: result.visualComponentName
+        }));
+
+        toast({
+            title: 'Contenu régénéré !',
+            description: 'Le contenu et les composants ont été mis à jour par lIA.',
+        });
+    } catch (error) {
+        console.error(error);
+        toast({
+            title: 'Erreur de Génération',
+            description: 'Impossible de générer le contenu.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsGeneratingComponents(false);
     }
   };
   
@@ -98,6 +144,43 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
             />
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Composants Pédagogiques</CardTitle>
+            <CardDescription>
+                L'IA peut (re)générer le contenu et suggérer des composants interactifs/visuels. Vous pouvez aussi les renseigner manuellement.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="interactiveComponent">Composant Interactif / Pratique</Label>
+                    <Input
+                        id="interactiveComponent"
+                        value={lesson.interactiveComponentName || ''}
+                        onChange={(e) => setLesson(prev => ({...prev, interactiveComponentName: e.target.value}))}
+                        placeholder="Ex: StagingAreaVisualizer"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="visualComponent">Composant de Visualisation</Label>
+                    <Input
+                        id="visualComponent"
+                        value={lesson.visualComponentName || ''}
+                        onChange={(e) => setLesson(prev => ({...prev, visualComponentName: e.target.value}))}
+                        placeholder="Ex: GitGraph"
+                    />
+                </div>
+            </div>
+        </CardContent>
+        <CardFooter>
+            <Button variant="outline" onClick={handleGenerateComponents} disabled={isGeneratingComponents}>
+                {isGeneratingComponents ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                Régénérer le contenu avec l'IA
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );
