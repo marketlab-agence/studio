@@ -194,6 +194,20 @@ const VISUAL_COMPONENTS = [
     "TrunkBasedDevelopmentVisualizer", "ConflictVisualizer"
 ];
 
+function getRelevantComponents(courseId: string): { interactive: string[], visual: string[] } {
+    const GENERIC_INTERACTIVE = [ "AiHelper" ];
+    const GENERIC_VISUAL = ["AnimatedFlow", "ConceptDiagram", "StatisticsChart"];
+
+    // A list of course IDs that are considered "technical" and can use the full component list
+    const TECHNICAL_COURSES = ["git-github-tutorial", "jira-de-zero-a-heros"];
+
+    if (TECHNICAL_COURSES.includes(courseId)) {
+        return { interactive: INTERACTIVE_COMPONENTS, visual: VISUAL_COMPONENTS };
+    }
+
+    return { interactive: GENERIC_INTERACTIVE, visual: GENERIC_VISUAL };
+}
+
 export async function generateAndSaveLessonMarkdown(
   courseId: string,
   chapterIndex: number,
@@ -270,6 +284,8 @@ export async function suggestAndSaveLessonComponents(
   if (!tutorialLesson || tutorialChapterIndex === -1 || tutorialLessonIndex === -1) {
     throw new Error('Tutorial lesson not found.');
   }
+  
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
 
   const input: SuggestLessonComponentsInput = {
     lessonTitle: tutorialLesson.title,
@@ -278,8 +294,8 @@ export async function suggestAndSaveLessonComponents(
     courseTopic: course.title,
     targetAudience: generationParams?.targetAudience || 'Débutants',
     courseLanguage: generationParams?.courseLanguage || 'Français',
-    availableInteractiveComponents: INTERACTIVE_COMPONENTS,
-    availableVisualComponents: VISUAL_COMPONENTS,
+    availableInteractiveComponents: relevantInteractive,
+    availableVisualComponents: relevantVisual,
   };
 
   const { interactiveComponentName, visualComponentName } = await suggestLessonComponents(input);
@@ -316,6 +332,8 @@ export async function getComponentSuggestionsAction(
     throw new Error('Tutorial lesson not found.');
   }
 
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
+
   const input: SuggestLessonComponentsInput = {
     lessonTitle: tutorialLesson.title,
     lessonObjective: tutorialLesson.objective,
@@ -323,8 +341,8 @@ export async function getComponentSuggestionsAction(
     courseTopic: course.title,
     targetAudience: generationParams?.targetAudience || 'Débutants',
     courseLanguage: generationParams?.courseLanguage || 'Français',
-    availableInteractiveComponents: INTERACTIVE_COMPONENTS,
-    availableVisualComponents: VISUAL_COMPONENTS,
+    availableInteractiveComponents: relevantInteractive,
+    availableVisualComponents: relevantVisual,
   };
 
   return suggestLessonComponents(input);
