@@ -28,8 +28,8 @@ export type GenerateLessonContentInput = z.infer<typeof GenerateLessonContentInp
 
 const GenerateLessonContentOutputSchema = z.object({
   illustrativeContent: z.string().describe("The main educational content for the lesson in well-structured Markdown format. It should include headings, lists, code blocks, and bold text to explain the concepts clearly."),
-  interactiveComponentName: z.string().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience."),
-  visualComponentName: z.string().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept.")
+  interactiveComponentName: z.string().optional().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience. If no component is relevant, this field can be omitted."),
+  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted.")
 });
 
 const generateLessonContentPrompt = ai.definePrompt({
@@ -64,23 +64,35 @@ Generate a complete package for this single lesson. You MUST provide three disti
     - Write in a didactic and engaging tone. Avoid generic concluding paragraphs; focus on delivering rich, informative content from start to finish.
 
 2.  **Interactive Component (\`interactiveComponentName\`):**
-    - From the list below, select ONE component that is MOST relevant to the lesson's objective to provide a hands-on experience.
+    - Based on the content you just wrote, analyze if a hands-on, practical component would significantly improve understanding.
+    - From the list below, select ONE component that is MOST relevant. If no component is truly necessary or relevant, omit this field entirely.
     - Available Interactive Components: {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-    - You must output only the name of the chosen component.
 
 3.  **Visual Component (\`visualComponentName\`):**
-    - From the list below, select ONE component that BEST illustrates a key concept from the lesson.
+    - Based on the content you just wrote, analyze if a visual diagram or chart would clarify a complex concept or relationship.
+    - From the list below, select ONE component that BEST illustrates a key concept. If no component is truly necessary or relevant, omit this field entirely.
     - Available Visualization Components: {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-    - You must output only the name of the chosen component.
 
 **Crucial Rules:**
 - Focus ONLY on generating content for the lesson titled "{{{lessonTitle}}}". Do not generate content for any other lesson.
 - Your component selections MUST come from the exact lists provided. Do not invent new components.
-- **The choice of components MUST be directly relevant to the course topic: \`{{{courseTopic}}}\` and the lesson title: \`{{{lessonTitle}}}\`. For example, if the course topic is 'Sales Closing', DO NOT select a component related to Git like \`GitCommandSimulator\` or \`IssueTracker\`. Choose something more generic or relevant like \`AiHelper\` or \`ConceptDiagram\`.**
+- **The choice of components MUST be directly relevant to the course topic: \`{{{courseTopic}}}\` and the lesson title: \`{{{lessonTitle}}}\`. For example, if the course topic is 'Sales Closing', DO NOT select a component related to Git like \`GitCommandSimulator\` or \`IssueTracker\`. Choose something more generic or relevant like \`AiHelper\` or \`ConceptDiagram\` only if it makes sense with the generated content.**
 `,
   });
 
+const generateLessonContentFlow = ai.defineFlow(
+  {
+    name: 'generateLessonContentFlow',
+    inputSchema: GenerateLessonContentInputSchema,
+    outputSchema: GenerateLessonContentOutputSchema,
+  },
+  async (input) => {
+    const { output } = await generateLessonContentPrompt(input);
+    return output!;
+  }
+);
+
+
 export async function generateLessonContent(input: GenerateLessonContentInput): Promise<GenerateLessonContentOutput> {
-  const { output } = await generateLessonContentPrompt(input);
-  return output!;
+  return generateLessonContentFlow(input);
 }

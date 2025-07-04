@@ -6,10 +6,9 @@ import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/crea
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
-import type { Tutorial, Lesson, Quiz, Question } from '@/types/tutorial.types';
+import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
-import { generateLessonMarkdown, type GenerateLessonMarkdownInput } from '@/ai/flows/generate-lesson-markdown-flow';
-import { suggestLessonComponents, type SuggestLessonComponentsInput, type SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
+import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 
 // Server-only file writing functions
 async function saveCourses() {
@@ -208,11 +207,12 @@ function getRelevantComponents(courseId: string): { interactive: string[], visua
     return { interactive: GENERIC_INTERACTIVE, visual: GENERIC_VISUAL };
 }
 
-export async function generateAndSaveLessonMarkdown(
+
+export async function generateLessonContentAction(
   courseId: string,
   chapterIndex: number,
   lessonIndex: number,
-): Promise<{ illustrativeContent: string }> {
+): Promise<GenerateLessonContentOutput> {
   const course = COURSES.find(c => c.id === courseId);
   if (!course || !course.plan) {
     throw new Error('Course or course plan not found.');
@@ -225,16 +225,16 @@ export async function generateAndSaveLessonMarkdown(
 
   const chapterId = `${courseId}-ch${chapterIndex + 1}`;
   const lessonId = `${chapterId}-l${lessonIndex + 1}`;
-
+  
   const tutorialChapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
   const tutorialLessonIndex = TUTORIALS[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
 
-  if (!lessonPlan || tutorialChapterIndex === -1 || tutorialLessonIndex === -1) {
+  if (!lessonPlan || tutorialChapterIndex === -1 || typeof tutorialLessonIndex === "undefined" || tutorialLessonIndex === -1) {
     throw new Error('Lesson plan or tutorial lesson structure not found.');
   }
 
   const chapterContext = `Contexte du cours:
-Titre du cours: ${course.plan.title}
+Titre du cours: ${course.title}
 Description: ${course.plan.description}
 Plan complet des chapitres:
 ${course.plan.chapters.map(c => `- ${c.title}`).join('\n')}
@@ -242,7 +242,9 @@ ${course.plan.chapters.map(c => `- ${c.title}`).join('\n')}
 Leçons de ce chapitre:
 ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
-  const input: GenerateLessonMarkdownInput = {
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
+
+  const input: GenerateLessonContentInput = {
     lessonTitle: lessonPlan.title,
     lessonObjective: lessonPlan.objective,
     courseTopic: course.title,
@@ -250,56 +252,13 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
     courseLanguage: generationParams?.courseLanguage || 'Français',
     lessonLength: generationParams?.lessonLength || 'Moyen',
     chapterContext,
-  };
-
-  const { illustrativeContent } = await generateLessonMarkdown(input);
-
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
-  await saveTutorials();
-
-  revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
-
-  return { illustrativeContent };
-}
-
-export async function suggestAndSaveLessonComponents(
-  courseId: string,
-  chapterIndex: number,
-  lessonIndex: number,
-): Promise<SuggestLessonComponentsOutput> {
-  const course = COURSES.find(c => c.id === courseId);
-  if (!course) {
-    throw new Error('Course not found.');
-  }
-  
-  const generationParams = course.generationParams;
-
-  const chapterId = `${courseId}-ch${chapterIndex + 1}`;
-  const lessonId = `${chapterId}-l${lessonIndex + 1}`;
-
-  const tutorialChapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
-  const tutorialLesson = TUTORIALS[tutorialChapterIndex]?.lessons.find(l => l.id === lessonId);
-  const tutorialLessonIndex = TUTORIALS[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
-
-  if (!tutorialLesson || tutorialChapterIndex === -1 || tutorialLessonIndex === -1) {
-    throw new Error('Tutorial lesson not found.');
-  }
-  
-  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
-
-  const input: SuggestLessonComponentsInput = {
-    lessonTitle: tutorialLesson.title,
-    lessonObjective: tutorialLesson.objective,
-    illustrativeContent: tutorialLesson.content,
-    courseTopic: course.title,
-    targetAudience: generationParams?.targetAudience || 'Débutants',
-    courseLanguage: generationParams?.courseLanguage || 'Français',
     availableInteractiveComponents: relevantInteractive,
     availableVisualComponents: relevantVisual,
   };
 
-  const { interactiveComponentName, visualComponentName } = await suggestLessonComponents(input);
+  const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContent(input);
 
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
   TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
   
@@ -307,45 +266,7 @@ export async function suggestAndSaveLessonComponents(
 
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
-  return { interactiveComponentName, visualComponentName };
-}
-
-
-export async function getComponentSuggestionsAction(
-  courseId: string,
-  chapterIndex: number,
-  lessonIndex: number,
-): Promise<SuggestLessonComponentsOutput> {
-  const course = COURSES.find(c => c.id === courseId);
-  if (!course) {
-    throw new Error('Course not found.');
-  }
-  
-  const generationParams = course.generationParams;
-  const chapterId = `${courseId}-ch${chapterIndex + 1}`;
-  const lessonId = `${chapterId}-l${lessonIndex + 1}`;
-
-  const tutorialChapter = TUTORIALS.find(t => t.id === chapterId);
-  const tutorialLesson = tutorialChapter?.lessons.find(l => l.id === lessonId);
-
-  if (!tutorialLesson) {
-    throw new Error('Tutorial lesson not found.');
-  }
-
-  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
-
-  const input: SuggestLessonComponentsInput = {
-    lessonTitle: tutorialLesson.title,
-    lessonObjective: tutorialLesson.objective,
-    illustrativeContent: tutorialLesson.content,
-    courseTopic: course.title,
-    targetAudience: generationParams?.targetAudience || 'Débutants',
-    courseLanguage: generationParams?.courseLanguage || 'Français',
-    availableInteractiveComponents: relevantInteractive,
-    availableVisualComponents: relevantVisual,
-  };
-
-  return suggestLessonComponents(input);
+  return { illustrativeContent, interactiveComponentName, visualComponentName };
 }
 
 

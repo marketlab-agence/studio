@@ -1,5 +1,6 @@
 
 
+
 export interface Tutorial {
   id: string;
   courseId: string;
@@ -52,6 +53,6 @@ export type GlobalProgress = Record<string, CourseProgress>;
 
 export type GenerateLessonContentOutput = {
   illustrativeContent: string;
-  interactiveComponentName: string;
-  visualComponentName: string;
+  interactiveComponentName?: string;
+  visualComponentName?: string;
 };

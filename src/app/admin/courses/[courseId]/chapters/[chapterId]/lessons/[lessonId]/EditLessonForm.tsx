@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -20,21 +19,16 @@ import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/types/tutorial.types';
 import { 
     updateLessonContent, 
-    generateAndSaveLessonMarkdown,
-    suggestAndSaveLessonComponents,
-    getComponentSuggestionsAction
+    generateLessonContentAction,
 } from '@/actions/courseActions';
-import type { SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 
 export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, chapterId }: { initialLesson: Lesson; initialChapterTitle: string, courseId: string, chapterId: string }) {
   const { toast } = useToast();
   
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
   const [isSaving, setIsSaving] = useState(false);
-  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
-  const [isGeneratingComponents, setIsGeneratingComponents] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<SuggestLessonComponentsOutput | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const getIndices = () => {
     const chapterIndexMatch = chapterId.match(/-ch(\d+)$/);
@@ -74,11 +68,18 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
     const indices = getIndices();
     if (!indices) return;
     
-    setIsGeneratingContent(true);
+    setIsGenerating(true);
     try {
-      const { illustrativeContent } = await generateAndSaveLessonMarkdown(courseId, indices.chapterIndex, indices.lessonIndex);
-      setLesson(prev => ({ ...prev, content: illustrativeContent }));
-      toast({ title: 'Contenu régénéré !', description: 'Le contenu Markdown a été mis à jour par lIA.' });
+      const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContentAction(courseId, indices.chapterIndex, indices.lessonIndex);
+      
+      setLesson(prev => ({ 
+          ...prev, 
+          content: illustrativeContent,
+          interactiveComponentName: interactiveComponentName || undefined,
+          visualComponentName: visualComponentName || undefined
+      }));
+      
+      toast({ title: 'Contenu généré !', description: 'Le contenu et les composants ont été mis à jour par lIA.' });
     } catch (error) {
         console.error(error);
         toast({
@@ -87,47 +88,8 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
             variant: 'destructive',
         });
     } finally {
-      setIsGeneratingContent(false);
+      setIsGenerating(false);
     }
-  };
-
-  const handleSuggestComponents = async () => {
-    const indices = getIndices();
-    if (!indices) return;
-
-    setIsGeneratingComponents(true);
-    setAiSuggestions(null);
-    try {
-        const suggestions = await getComponentSuggestionsAction(courseId, indices.chapterIndex, indices.lessonIndex);
-        setAiSuggestions(suggestions);
-        toast({
-            title: 'Suggestions reçues !',
-            description: "L'IA a terminé son analyse. Vous pouvez appliquer les suggestions.",
-        });
-    } catch (error) {
-        console.error(error);
-        toast({
-            title: 'Erreur de Suggestion',
-            description: 'Impossible de suggérer des composants.',
-            variant: 'destructive',
-        });
-    } finally {
-        setIsGeneratingComponents(false);
-    }
-  };
-
-  const applySuggestions = () => {
-    if (!aiSuggestions) return;
-    setLesson(prev => ({
-        ...prev,
-        interactiveComponentName: aiSuggestions.interactiveComponentName || prev.interactiveComponentName,
-        visualComponentName: aiSuggestions.visualComponentName || prev.visualComponentName,
-    }));
-    setAiSuggestions(null); // Hide the suggestion box after applying
-    toast({
-        title: 'Suggestions Appliquées',
-        description: 'N\'oubliez pas de sauvegarder la leçon.',
-    });
   };
   
   return (
@@ -162,9 +124,9 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
         <CardHeader>
             <div className="flex justify-between items-center">
                 <CardTitle>Contenu de la Leçon</CardTitle>
-                <Button variant="outline" onClick={handleGenerateContent} disabled={isGeneratingContent}>
-                    {isGeneratingContent ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    Régénérer le contenu
+                <Button variant="outline" onClick={handleGenerateContent} disabled={isGenerating}>
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Générer la Leçon par IA
                 </Button>
             </div>
         </CardHeader>
@@ -201,7 +163,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
         <CardHeader>
             <CardTitle>Composants Pédagogiques</CardTitle>
             <CardDescription>
-                L'IA peut analyser le contenu de votre leçon pour suggérer des composants pertinents. Vous pouvez aussi les renseigner manuellement.
+                Renseignez manuellement les noms des composants ou utilisez la génération IA pour les remplir.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -225,43 +187,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
                     />
                 </div>
             </div>
-             {aiSuggestions && (
-                <Alert>
-                    <Sparkles className="h-4 w-4" />
-                    <AlertTitle>Suggestions de l'IA</AlertTitle>
-                    <AlertDescription>
-                      <div className="space-y-4 mt-2">
-                        {aiSuggestions.interactiveComponentName ? (
-                            <div>
-                                <p>Interactif : <strong>{aiSuggestions.interactiveComponentName}</strong></p>
-                                <p className="text-xs text-muted-foreground italic pl-4 border-l-2 border-border ml-2 mt-1">"{aiSuggestions.interactiveComponentJustification}"</p>
-                            </div>
-                        ) : (
-                            <p>Composant interactif suggéré : <strong>Aucun</strong></p>
-                        )}
-                        {aiSuggestions.visualComponentName ? (
-                            <div>
-                                <p>Visuel : <strong>{aiSuggestions.visualComponentName}</strong></p>
-                                <p className="text-xs text-muted-foreground italic pl-4 border-l-2 border-border ml-2 mt-1">"{aiSuggestions.visualComponentJustification}"</p>
-                            </div>
-                        ) : (
-                             <p>Composant visuel suggéré : <strong>Aucun</strong></p>
-                        )}
-                        
-                        {(aiSuggestions.interactiveComponentName || aiSuggestions.visualComponentName) && (
-                            <Button size="sm" onClick={applySuggestions} className="mt-2">Appliquer les suggestions</Button>
-                        )}
-                      </div>
-                    </AlertDescription>
-                </Alert>
-            )}
         </CardContent>
-        <CardFooter>
-            <Button variant="outline" onClick={handleSuggestComponents} disabled={isGeneratingComponents}>
-                {isGeneratingComponents ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                Demander une suggestion à l'IA
-            </Button>
-        </CardFooter>
       </Card>
     </div>
   );
