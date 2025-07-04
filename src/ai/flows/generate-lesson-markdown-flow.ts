@@ -49,9 +49,14 @@ const generateLessonMarkdownPrompt = ai.definePrompt({
 **Your Task:**
 Generate ONLY the **Illustrative Content (\`illustrativeContent\`)** for this single lesson.
 
-- Write detailed, high-quality educational content in well-formatted Markdown. The length should correspond to the 'Desired Content Length' specified (Court: a few paragraphs, Moyen: standard length, Long: very detailed with multiple sections and examples).
-- The content MUST be directly related to the course topic: **{{{courseTopic}}}**. All examples must use this topic.
-- The structure MUST be professional and clear: use headings, lists, code blocks, and bold text.
+- Write detailed, high-quality educational content in well-formatted Markdown. The length should correspond to the 'Desired Content Length' specified.
+- The content MUST be directly related to the course topic: **{{{courseTopic}}}**.
+- **The structure MUST be professional, clear, and highly readable.** Follow these formatting rules strictly:
+    - Use Markdown headings (\`#\`, \`##\`, \`###\`) to create a clear hierarchy for titles and subtitles.
+    - Use **bold** text (\`**text**\`) for key terms to make them stand out.
+    - Use numbered lists (\`1.\`, \`2.\`, \`3.\`) or bulleted lists (\`*\`, \`-\`) for enumerations and lists of points.
+    - Ensure proper punctuation and grammar throughout the text.
+    - **Crucially, ensure there are double line breaks between paragraphs, lists, and headings to create clear visual separation and improve readability.**
 - Write in a didactic and engaging tone. Avoid generic concluding paragraphs; focus on delivering rich, informative content from start to finish.
 - DO NOT generate component names or any other fields. Your entire output must be the Markdown content for the lesson.
 `,

@@ -930,5 +930,324 @@
       "allowMultipleChoice": true,
       "feedbackTiming": "end"
     }
+  },
+  {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n",
+    "title": "Automatisation de processus informatique pour débutants avec n8n",
+    "description": "Ce cours vous guidera à travers les bases de l'automatisation des processus informatiques en utilisant n8n, une plateforme puissante et flexible. Vous apprendrez à installer, configurer et utiliser n8n pour automatiser des tâches courantes, interagir avec des APIs, et intégrer des services cloud populaires. Conçu pour les débutants, ce cours vous donnera les compétences nécessaires pour créer des workflows efficaces et améliorer votre productivité.",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Définir l'automatisation des processus et ses avantages.",
+              "title": "Introduction à l'automatisation des processus informatiques"
+            },
+            {
+              "objective": "Identifier les cas d'utilisation courants de l'automatisation.",
+              "title": "Applications de l'automatisation dans divers domaines"
+            },
+            {
+              "objective": "Comprendre les bases de n8n et ses fonctionnalités principales.",
+              "title": "Qu'est-ce que n8n ? Une vue d'ensemble"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Réduire les erreurs humaines"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Augmenter les coûts"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ralentir les opérations"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel est l'un des principaux avantages de l'automatisation des processus ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Un langage de programmation complexe"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Une plateforme d'automatisation de flux de travail"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un outil de gestion de projet"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment décririez-vous n8n ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 1",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à l'automatisation et à n8n"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Installer n8n localement ou sur un serveur.",
+              "title": "Installation de n8n : Guide étape par étape"
+            },
+            {
+              "objective": "Configurer l'interface utilisateur de n8n.",
+              "title": "Configuration initiale et interface utilisateur"
+            },
+            {
+              "objective": "Comprendre les concepts de base des nœuds et des workflows.",
+              "title": "Nœuds et Workflows : Les éléments fondamentaux"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Localement sur votre ordinateur"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Sur un serveur cloud"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Sur une calculatrice"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Où pouvez-vous installer n8n ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Des images"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Des unités de base de flux de travail"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Des documents"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Que sont les nœuds dans n8n ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 2",
+            "feedbackTiming": "end"
+          },
+          "title": "Installation et Configuration de n8n"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Créer un workflow simple pour envoyer un email.",
+              "title": "Votre premier workflow : Envoyer un email"
+            },
+            {
+              "objective": "Utiliser des déclencheurs pour automatiser le démarrage des workflows.",
+              "title": "Déclencheurs : Automatiser le démarrage des workflows"
+            },
+            {
+              "objective": "Découvrir comment utiliser des variables dans les workflows.",
+              "title": "Variables et expressions : Rendre vos workflows dynamiques"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Un déclencheur"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un nœud de sortie"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un nœud de fonction"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel type de nœud initie généralement un workflow ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour stocker et manipuler des données"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour créer des interfaces utilisateur"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour envoyer des messages"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Pourquoi utiliser des variables dans un workflow ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 3",
+            "feedbackTiming": "end"
+          },
+          "title": "Création de Workflows Simples"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Utiliser les nœuds HTTP Request pour interagir avec des APIs.",
+              "title": "Interagir avec les APIs : Nœuds HTTP Request"
+            },
+            {
+              "objective": "Effectuer des opérations CRUD (Create, Read, Update, Delete) sur des données.",
+              "title": "Opérations CRUD : Créer, Lire, Mettre à jour, Supprimer des données"
+            },
+            {
+              "objective": "Gérer les erreurs et les exceptions dans les workflows.",
+              "title": "Gestion des erreurs : Assurer la robustesse de vos workflows"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "HTTP Request"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "FTP Request"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "SMTP Request"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel nœud est utilisé pour interagir avec les APIs dans n8n ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Créer"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Lire"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Mettre à jour"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Supprimer"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les opérations CRUD courantes sur les données ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 4",
+            "feedbackTiming": "end"
+          },
+          "title": "Automatisation Avancée : APIs et Gestion des Données"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Connecter n8n à des services cloud populaires comme Google Sheets et Slack.",
+              "title": "Intégration avec Google Sheets : Automatiser vos feuilles de calcul"
+            },
+            {
+              "objective": "Envoyer des messages Slack automatisés.",
+              "title": "Intégration avec Slack : Communication automatisée"
+            },
+            {
+              "objective": "Exploiter d'autres intégrations populaires.",
+              "title": "Autres Intégrations : Exploration des possibilités"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Un système d'exploitation"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Un tableur en ligne"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un logiciel de montage vidéo"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que Google Sheets ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour envoyer des messages"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour stocker des fichiers"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour gérer des projets"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Dans quel but peut-on utiliser l'intégration de n8n avec Slack ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 5",
+            "feedbackTiming": "end"
+          },
+          "title": "Intégrations avec des Services Cloud"
+        }
+      ],
+      "description": "Ce cours vous guidera à travers les bases de l'automatisation des processus informatiques en utilisant n8n, une plateforme puissante et flexible. Vous apprendrez à installer, configurer et utiliser n8n pour automatiser des tâches courantes, interagir avec des APIs, et intégrer des services cloud populaires. Conçu pour les débutants, ce cours vous donnera les compétences nécessaires pour créer des workflows efficaces et améliorer votre productivité.",
+      "title": "Automatisation de processus informatique pour débutants avec n8n"
+    },
+    "generationParams": {
+      "topic": "L'automatisation de processus informatique \n(via n8n)",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Court",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
   }
 ]

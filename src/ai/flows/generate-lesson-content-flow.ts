@@ -54,13 +54,14 @@ const generateLessonContentPrompt = ai.definePrompt({
 Generate a complete package for this single lesson. You MUST provide three distinct parts in your response, following the output schema:
 
 1.  **Illustrative Content (\`illustrativeContent\`):**
-    - Write detailed, high-quality educational content in well-formatted Markdown. The length should correspond to the 'Desired Content Length' specified (Court: a few paragraphs, Moyen: standard length, Long: very detailed with multiple sections and examples).
-    - The content MUST be directly related to the course topic: **{{{courseTopic}}}**. All examples must use this topic. For example, if the topic is "Trello", a lesson on "Collaboration" MUST explain how to collaborate using Trello's features.
-    - The structure MUST be professional and clear:
-        - Use Markdown headings (#, ##, ###) to create a clear hierarchy.
-        - Use **bold** text for key terms.
-        - Use numbered or bulleted lists for enumerations.
-        - Ensure proper punctuation and paragraph breaks for readability.
+    - Write detailed, high-quality educational content in well-formatted Markdown. The length should correspond to the 'Desired Content Length' specified.
+    - The content MUST be directly related to the course topic: **{{{courseTopic}}}**.
+    - **The structure MUST be professional, clear, and highly readable.** Follow these formatting rules strictly:
+        - Use Markdown headings (\`#\`, \`##\`, \`###\`) to create a clear hierarchy for titles and subtitles.
+        - Use **bold** text (\`**text**\`) for key terms to make them stand out.
+        - Use numbered lists (\`1.\`, \`2.\`, \`3.\`) or bulleted lists (\`*\`, \`-\`) for enumerations and lists of points.
+        - Ensure proper punctuation and grammar throughout the text.
+        - **Crucially, ensure there are double line breaks between paragraphs, lists, and headings to create clear visual separation and improve readability.**
     - Write in a didactic and engaging tone. Avoid generic concluding paragraphs; focus on delivering rich, informative content from start to finish.
 
 2.  **Interactive Component (\`interactiveComponentName\`):**

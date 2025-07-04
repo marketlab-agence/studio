@@ -2266,5 +2266,270 @@
     ],
     "passingScore": 80,
     "feedbackTiming": "end"
+  },
+  "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1": {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1",
+    "title": "Quiz du Chapitre 1",
+    "questions": [
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q1",
+        "text": "Quel est l'un des principaux avantages de l'automatisation des processus ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q1-a1",
+            "text": "Réduire les erreurs humaines",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q1-a2",
+            "text": "Augmenter les coûts",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q1-a3",
+            "text": "Ralentir les opérations",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q2",
+        "text": "Comment décririez-vous n8n ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q2-a1",
+            "text": "Un langage de programmation complexe",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q2-a2",
+            "text": "Une plateforme d'automatisation de flux de travail",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch1-q2-a3",
+            "text": "Un outil de gestion de projet",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2": {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2",
+    "title": "Quiz du Chapitre 2",
+    "questions": [
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q1",
+        "text": "Où pouvez-vous installer n8n ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q1-a1",
+            "text": "Localement sur votre ordinateur",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q1-a2",
+            "text": "Sur un serveur cloud",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q1-a3",
+            "text": "Sur une calculatrice",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": true
+      },
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q2",
+        "text": "Que sont les nœuds dans n8n ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q2-a1",
+            "text": "Des images",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q2-a2",
+            "text": "Des unités de base de flux de travail",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch2-q2-a3",
+            "text": "Des documents",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3": {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3",
+    "title": "Quiz du Chapitre 3",
+    "questions": [
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q1",
+        "text": "Quel type de nœud initie généralement un workflow ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q1-a1",
+            "text": "Un déclencheur",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q1-a2",
+            "text": "Un nœud de sortie",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q1-a3",
+            "text": "Un nœud de fonction",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q2",
+        "text": "Pourquoi utiliser des variables dans un workflow ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q2-a1",
+            "text": "Pour stocker et manipuler des données",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q2-a2",
+            "text": "Pour créer des interfaces utilisateur",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch3-q2-a3",
+            "text": "Pour envoyer des messages",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4": {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4",
+    "title": "Quiz du Chapitre 4",
+    "questions": [
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q1",
+        "text": "Quel nœud est utilisé pour interagir avec les APIs dans n8n ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q1-a1",
+            "text": "HTTP Request",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q1-a2",
+            "text": "FTP Request",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q1-a3",
+            "text": "SMTP Request",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q2",
+        "text": "Quelles sont les opérations CRUD courantes sur les données ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q2-a1",
+            "text": "Créer",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q2-a2",
+            "text": "Lire",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q2-a3",
+            "text": "Mettre à jour",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch4-q2-a4",
+            "text": "Supprimer",
+            "isCorrect": true
+          }
+        ],
+        "isMultipleChoice": true
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
+  },
+  "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5": {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5",
+    "title": "Quiz du Chapitre 5",
+    "questions": [
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q1",
+        "text": "Qu'est-ce que Google Sheets ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q1-a1",
+            "text": "Un système d'exploitation",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q1-a2",
+            "text": "Un tableur en ligne",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q1-a3",
+            "text": "Un logiciel de montage vidéo",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      },
+      {
+        "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q2",
+        "text": "Dans quel but peut-on utiliser l'intégration de n8n avec Slack ?",
+        "answers": [
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q2-a1",
+            "text": "Pour envoyer des messages",
+            "isCorrect": true
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q2-a2",
+            "text": "Pour stocker des fichiers",
+            "isCorrect": false
+          },
+          {
+            "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n-ch5-q2-a3",
+            "text": "Pour gérer des projets",
+            "isCorrect": false
+          }
+        ],
+        "isMultipleChoice": false
+      }
+    ],
+    "passingScore": 80,
+    "feedbackTiming": "end"
   }
 }
