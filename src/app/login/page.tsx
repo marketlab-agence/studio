@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -42,16 +41,6 @@ export default function LoginPage() {
     }
   }, [user, authLoading, router, searchParams]);
 
-
-  const handleAuthError = (error: any, title: string) => {
-    let description = error.message;
-    if (error.code === 'auth/invalid-api-key') {
-      description = "La clé d'API Firebase n'est pas valide. Veuillez vérifier les valeurs dans votre fichier .env et redémarrer le serveur de développement.";
-    }
-    toast({ variant: 'destructive', title, description });
-    setIsSubmitting(false);
-  }
-
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     if (!auth) {
       console.error('LoginPage: Auth not initialized');
@@ -63,39 +52,32 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
-      // Redirection is handled by the useEffect hook
+      // Redirection is handled by useEffect
     } catch (error: any) {
-        console.error('LoginPage: OAuth signin error:', error);
+      console.error('LoginPage: OAuth signin error:', error);
+
+      // Handle user-cancellations gracefully
+      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+        setIsSubmitting(false);
+        return; // Exit without showing an error toast
+      }
       
-        let errorMessage = error.message || "Une erreur inconnue est survenue. Veuillez réessayer.";
-        let shouldShowError = true;
-        
-        if (error.code) { // Check if it's a Firebase error with a code
-            switch (error.code) {
-              case 'auth/popup-blocked':
-                errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
-                break;
-              case 'auth/popup-closed-by-user':
-                errorMessage = 'Connexion annulée. Veuillez compléter le processus d\'authentification dans la popup pour vous connecter.';
-                break;
-              case 'auth/unauthorized-domain':
-                errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
-                break;
-              case 'auth/cancelled-popup-request':
-                shouldShowError = false;
-                break;
-              default:
-                // Use the default firebase error message
-                errorMessage = error.message;
-                break;
-            }
-        }
-        
-        if (shouldShowError) {
-          handleAuthError({ ...error, message: errorMessage }, 'Information de connexion');
-        } else {
-          setIsSubmitting(false); // Make sure to reset state even if not showing error
-        }
+      let errorMessage = "Une erreur inconnue est survenue. Veuillez réessayer.";
+      if (error?.code === 'auth/popup-blocked') {
+        errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        variant: 'destructive',
+        title: 'Erreur de connexion',
+        description: errorMessage,
+      });
+
+      setIsSubmitting(false);
     }
   };
 
@@ -108,7 +90,16 @@ export default function LoginPage() {
       toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
       // Redirection is handled by the useEffect hook
     } catch (error: any) {
-      handleAuthError(error, 'Erreur d\'inscription');
+        let description = "Une erreur est survenue. Veuillez réessayer.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "Cette adresse e-mail est déjà utilisée par un autre compte.";
+        } else if (error.code === 'auth/weak-password') {
+            description = "Le mot de passe est trop faible. Il doit contenir au moins 6 caractères.";
+        } else if (error.message) {
+            description = error.message;
+        }
+        toast({ variant: 'destructive', title: 'Erreur d\'inscription', description });
+        setIsSubmitting(false);
     }
   };
 
@@ -121,7 +112,11 @@ export default function LoginPage() {
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by the useEffect hook
     } catch (error: any) {
-      handleAuthError(error, 'Erreur de connexion');
+        // Firebase provides generic error codes for sign-in failures to prevent user enumeration
+        // so we just use a generic message.
+        const description = "Adresse e-mail ou mot de passe incorrect.";
+        toast({ variant: 'destructive', title: 'Erreur de connexion', description });
+        setIsSubmitting(false);
     }
   };
 
