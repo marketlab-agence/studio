@@ -65,28 +65,37 @@ export default function LoginPage() {
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by the useEffect hook
     } catch (error: any) {
-      console.error('LoginPage: OAuth signin error', {
-        code: error.code,
-        message: error.message,
-        details: error
-      });
+        console.error('LoginPage: OAuth signin error:', error);
       
-      let errorMessage = error.message;
-      let shouldShowError = true;
-      
-      if (error.code === 'auth/popup-blocked') {
-        errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Connexion annulée. Veuillez compléter le processus d\'authentification dans la popup pour vous connecter.';
-      } else if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        shouldShowError = false;
-      }
-      
-      if (shouldShowError) {
-        handleAuthError({ ...error, message: errorMessage }, 'Information de connexion');
-      }
+        let errorMessage = error.message || "Une erreur inconnue est survenue. Veuillez réessayer.";
+        let shouldShowError = true;
+        
+        if (error.code) { // Check if it's a Firebase error with a code
+            switch (error.code) {
+              case 'auth/popup-blocked':
+                errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
+                break;
+              case 'auth/popup-closed-by-user':
+                errorMessage = 'Connexion annulée. Veuillez compléter le processus d\'authentification dans la popup pour vous connecter.';
+                break;
+              case 'auth/unauthorized-domain':
+                errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
+                break;
+              case 'auth/cancelled-popup-request':
+                shouldShowError = false;
+                break;
+              default:
+                // Use the default firebase error message
+                errorMessage = error.message;
+                break;
+            }
+        }
+        
+        if (shouldShowError) {
+          handleAuthError({ ...error, message: errorMessage }, 'Information de connexion');
+        } else {
+          setIsSubmitting(false); // Make sure to reset state even if not showing error
+        }
     }
   };
 
