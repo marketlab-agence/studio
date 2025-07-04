@@ -21,6 +21,7 @@ import type { Lesson } from '@/types/tutorial.types';
 import { 
     updateLessonContent, 
     generateAndSaveLessonMarkdown,
+    suggestAndSaveLessonComponents,
     getComponentSuggestionsAction
 } from '@/actions/courseActions';
 import type { SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
@@ -228,7 +229,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
                 <Alert>
                     <Sparkles className="h-4 w-4" />
                     <AlertTitle>Suggestions de l'IA</AlertTitle>
-                    <AlertDescription asChild>
+                    <AlertDescription>
                       <div className="space-y-4 mt-2">
                         {aiSuggestions.interactiveComponentName ? (
                             <div>
