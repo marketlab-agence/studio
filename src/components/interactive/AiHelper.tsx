@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Bot, Loader2, Sparkles } from 'lucide-react';
-import { getGitHelp } from '@/ai/flows/git-helper-flow';
+import { getContextualHelp } from '@/ai/flows/git-helper-flow';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -19,17 +19,14 @@ type AiHelperProps = {
 };
 
 export function AiHelper({ lessonContext = "Assistant IA Général", courseTopic = "Git et GitHub" }: AiHelperProps) {
-    // Determine the default query based on the course topic.
-    const getDefaultQuery = (topic: string) => topic.toLowerCase().includes('git') ? 'git rebase -i HEAD~3' : '';
-    
-    const [query, setQuery] = useState(getDefaultQuery(courseTopic));
+    const [query, setQuery] = useState('');
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [responseLength, setResponseLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
     
-    // Update the query if the course topic changes.
     useEffect(() => {
+        const getDefaultQuery = (topic: string) => topic.toLowerCase().includes('git') ? 'git rebase -i HEAD~3' : '';
         setQuery(getDefaultQuery(courseTopic));
     }, [courseTopic]);
 
@@ -45,7 +42,7 @@ export function AiHelper({ lessonContext = "Assistant IA Général", courseTopic
         setResponse('');
 
         try {
-            const result = await getGitHelp({
+            const result = await getContextualHelp({
                 userInput: query,
                 lessonContext,
                 courseTopic,
