@@ -21,8 +21,10 @@ import type { Lesson } from '@/types/tutorial.types';
 import { 
     updateLessonContent, 
     generateAndSaveLessonMarkdown,
-    suggestAndSaveLessonComponents
+    getComponentSuggestionsAction
 } from '@/actions/courseActions';
+import type { SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, chapterId }: { initialLesson: Lesson; initialChapterTitle: string, courseId: string, chapterId: string }) {
   const { toast } = useToast();
@@ -31,6 +33,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
   const [isGeneratingComponents, setIsGeneratingComponents] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<SuggestLessonComponentsOutput | null>(null);
 
   const getIndices = () => {
     const chapterIndexMatch = chapterId.match(/-ch(\d+)$/);
@@ -92,18 +95,13 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
     if (!indices) return;
 
     setIsGeneratingComponents(true);
+    setAiSuggestions(null);
     try {
-        const { interactiveComponentName, visualComponentName } = await suggestAndSaveLessonComponents(courseId, indices.chapterIndex, indices.lessonIndex);
-        
-        setLesson(prev => ({
-            ...prev,
-            interactiveComponentName,
-            visualComponentName
-        }));
-
+        const suggestions = await getComponentSuggestionsAction(courseId, indices.chapterIndex, indices.lessonIndex);
+        setAiSuggestions(suggestions);
         toast({
-            title: 'Composants suggérés !',
-            description: 'Les composants pédagogiques ont été mis à jour par l\'IA.',
+            title: 'Suggestions reçues !',
+            description: "L'IA a terminé son analyse. Vous pouvez appliquer les suggestions.",
         });
     } catch (error) {
         console.error(error);
@@ -115,6 +113,20 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
     } finally {
         setIsGeneratingComponents(false);
     }
+  };
+
+  const applySuggestions = () => {
+    if (!aiSuggestions) return;
+    setLesson(prev => ({
+        ...prev,
+        interactiveComponentName: aiSuggestions.interactiveComponentName || '',
+        visualComponentName: aiSuggestions.visualComponentName || '',
+    }));
+    setAiSuggestions(null); // Hide the suggestion box after applying
+    toast({
+        title: 'Suggestions Appliquées',
+        description: 'N\'oubliez pas de sauvegarder la leçon.',
+    });
   };
   
   return (
@@ -188,7 +200,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
         <CardHeader>
             <CardTitle>Composants Pédagogiques</CardTitle>
             <CardDescription>
-                L'IA peut suggérer des composants pertinents. Vous pouvez aussi les renseigner manuellement.
+                L'IA peut analyser le contenu de votre leçon pour suggérer des composants pertinents. Vous pouvez aussi les renseigner manuellement.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -198,7 +210,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
                     <Input
                         id="interactiveComponent"
                         value={lesson.interactiveComponentName || ''}
-                        onChange={(e) => setLesson(prev => ({...prev, interactiveComponentName: e.target.value}))}
+                        onChange={(e) => setLesson(prev => ({...prev, interactiveComponentName: e.target.value || undefined}))}
                         placeholder="Ex: StagingAreaVisualizer"
                     />
                 </div>
@@ -207,16 +219,27 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
                     <Input
                         id="visualComponent"
                         value={lesson.visualComponentName || ''}
-                        onChange={(e) => setLesson(prev => ({...prev, visualComponentName: e.target.value}))}
+                        onChange={(e) => setLesson(prev => ({...prev, visualComponentName: e.target.value || undefined}))}
                         placeholder="Ex: GitGraph"
                     />
                 </div>
             </div>
+             {aiSuggestions && (
+                <Alert>
+                    <Sparkles className="h-4 w-4" />
+                    <AlertTitle>Suggestions de l'IA</AlertTitle>
+                    <AlertDescription className="space-y-2 mt-2">
+                        <p>Interactif : <strong>{aiSuggestions.interactiveComponentName || 'Aucun'}</strong></p>
+                        <p>Visuel : <strong>{aiSuggestions.visualComponentName || 'Aucun'}</strong></p>
+                        <Button size="sm" onClick={applySuggestions} className="mt-2">Appliquer les suggestions</Button>
+                    </AlertDescription>
+                </Alert>
+            )}
         </CardContent>
         <CardFooter>
             <Button variant="outline" onClick={handleSuggestComponents} disabled={isGeneratingComponents}>
                 {isGeneratingComponents ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                Suggérer des composants
+                Demander une suggestion à l'IA
             </Button>
         </CardFooter>
       </Card>

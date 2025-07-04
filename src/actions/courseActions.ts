@@ -293,6 +293,42 @@ export async function suggestAndSaveLessonComponents(
   return { interactiveComponentName, visualComponentName };
 }
 
+
+export async function getComponentSuggestionsAction(
+  courseId: string,
+  chapterIndex: number,
+  lessonIndex: number,
+): Promise<SuggestLessonComponentsOutput> {
+  const course = COURSES.find(c => c.id === courseId);
+  if (!course) {
+    throw new Error('Course not found.');
+  }
+  
+  const generationParams = course.generationParams;
+  const chapterId = `${courseId}-ch${chapterIndex + 1}`;
+  const lessonId = `${chapterId}-l${lessonIndex + 1}`;
+
+  const tutorialChapter = TUTORIALS.find(t => t.id === chapterId);
+  const tutorialLesson = tutorialChapter?.lessons.find(l => l.id === lessonId);
+
+  if (!tutorialLesson) {
+    throw new Error('Tutorial lesson not found.');
+  }
+
+  const input: SuggestLessonComponentsInput = {
+    lessonTitle: tutorialLesson.title,
+    lessonObjective: tutorialLesson.objective,
+    illustrativeContent: tutorialLesson.content,
+    courseTopic: course.title,
+    targetAudience: generationParams?.targetAudience || 'Débutants',
+    availableInteractiveComponents: INTERACTIVE_COMPONENTS,
+    availableVisualComponents: VISUAL_COMPONENTS,
+  };
+
+  return suggestLessonComponents(input);
+}
+
+
 export async function getCourseAndChapters(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
     const course = COURSES.find(c => c.id === courseId);
     if (!course) {

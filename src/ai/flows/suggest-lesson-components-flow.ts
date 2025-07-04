@@ -32,46 +32,32 @@ const suggestLessonComponentsPrompt = ai.definePrompt({
     name: 'suggestLessonComponentsPrompt',
     input: { schema: SuggestLessonComponentsInputSchema },
     output: { schema: SuggestLessonComponentsOutputSchema },
-    prompt: `You are an expert instructional designer with a critical eye. Your primary goal is to determine if a lesson's content justifies adding a complex interactive or visual component. You must be very selective. **An irrelevant component is worse than no component.**
+    prompt: `You are a highly selective and critical instructional designer. Your task is to analyze the lesson content provided below and decide if an interactive or visual component would genuinely enhance learning. **Most lessons do not need extra components.** Only suggest a component if it is almost *essential* for understanding a complex topic or practicing a key skill described in the lesson content.
 
-**Course Context:**
-- Main Topic: {{{courseTopic}}}
-- Target Audience: {{{targetAudience}}}
+**1. Analyze the following content:**
 
-**Lesson to Analyze:**
-- Lesson Title: {{{lessonTitle}}}
-- Lesson Objective: {{{lessonObjective}}}
-- Lesson Content (Markdown):
----
-{{{illustrativeContent}}}
----
+*   **Course Topic:** {{{courseTopic}}}
+*   **Lesson Title:** {{{lessonTitle}}}
+*   **Lesson Objective:** {{{lessonObjective}}}
+*   **Lesson Content (Markdown):**
+    ---
+    {{{illustrativeContent}}}
+    ---
 
-**Your Task:**
-Follow this strict two-step process:
+**2. Make a decision based SOLELY on the content provided above:**
 
-**Step 1: Analyze Relevance**
-Read the lesson content and objective carefully. Ask yourself: "Is there a key concept here that is *so* complex or abstract that it would be *significantly* clarified by one of the available components? Or is there a practical skill that can *only* be taught through a hands-on simulation?"
+-   **First, determine if ANY component is needed.** Is there a specific part of the \`illustrativeContent\` that is hard to grasp with text alone? If not, **your response must be empty.** Do not suggest any components.
+-   **If a component is necessary, your choice MUST be directly justified by the \`illustrativeContent\` and the \`courseTopic\`.**
+    -   Example: If the \`courseTopic\` is "Git" and the \`illustrativeContent\` describes \`git add\` and \`git commit\`, then \`StagingAreaVisualizer\` is a relevant suggestion.
+    -   Example: If the \`courseTopic\` is "Sales" and the \`illustrativeContent\` describes a sales funnel, then \`ConceptDiagram\` might be relevant, but \`GitCommandSimulator\` is **completely irrelevant and must not be chosen**.
+-   **If NO component from the list is a good fit, even if it seems vaguely related, DO NOT suggest it.** Omit the fields in your response.
 
-- If the answer is no, or if the lesson is simple and self-explanatory, **DO NOT suggest any components.** Your output for the component names should be empty/omitted.
-- If the answer is yes, proceed to Step 2.
+**3. If, and only if, you have decided a component is essential, select the single best component from each list below:**
 
-**Step 2: Select Component (only if absolutely necessary)**
-If, and only if, you determined in Step 1 that a component is truly necessary, select the *single best* component from each list below.
+-   **Available Interactive Components:** {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+-   **Available Visualization Components:** {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
 
-**CRUCIAL INSTRUCTION:** The component you select **MUST** be directly and logically related to the **Main Topic: \`{{{courseTopic}}}\`**.
-- **If the course topic is highly technical and related to Git, GitHub, or Jira**, you can use specific components like \`GitCommandSimulator\`, \`BranchDiagram\`, \`IssueTracker\`, etc.
-- **If the course topic is NOT technical or is on a different subject (e.g., Marketing, Sales, Design)**, you MUST NOT select Git-specific components. Instead, look for generic components like \`AiHelper\`, \`ConceptDiagram\`, \`StatisticsChart\`.
-- **If NO component from the list is a good fit for the specific lesson, even if one seems vaguely related to the topic, DO NOT suggest it.** Omit the field.
-
-1.  **Interactive Component (\`interactiveComponentName\`):**
-    - From the list below, select ONE component.
-    - Available Interactive Components: {{#each availableInteractiveComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-    - If no component is a good fit, omit this field.
-
-2.  **Visual Component (\`visualComponentName\`):**
-    - From the list below, select ONE component.
-    - Available Visualization Components: {{#each availableVisualComponents}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-    - If no component is a good fit, omit this field.
+Your final output must strictly follow the output schema, containing only the names of the selected components, or be empty if none are relevant.
 `,
   });
 
