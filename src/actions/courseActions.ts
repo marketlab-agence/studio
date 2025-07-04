@@ -205,9 +205,6 @@ export async function generateAndSaveLessonMarkdown(
   }
 
   const generationParams = course.generationParams;
-  if (!generationParams) {
-    throw new Error('Course generation parameters not found.');
-  }
 
   const chapterPlan = course.plan.chapters[chapterIndex];
   const lessonPlan = chapterPlan?.lessons[lessonIndex];
@@ -234,10 +231,10 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
   const input: GenerateLessonMarkdownInput = {
     lessonTitle: lessonPlan.title,
     lessonObjective: lessonPlan.objective,
-    courseTopic: generationParams.topic,
-    targetAudience: generationParams.targetAudience,
-    courseLanguage: generationParams.courseLanguage,
-    lessonLength: generationParams.lessonLength || 'Moyen',
+    courseTopic: course.title,
+    targetAudience: generationParams?.targetAudience || 'Débutants',
+    courseLanguage: generationParams?.courseLanguage || 'Français',
+    lessonLength: generationParams?.lessonLength || 'Moyen',
     chapterContext,
   };
 
@@ -262,9 +259,6 @@ export async function suggestAndSaveLessonComponents(
   }
   
   const generationParams = course.generationParams;
-  if (!generationParams) {
-    throw new Error('Course generation parameters not found.');
-  }
 
   const chapterId = `${courseId}-ch${chapterIndex + 1}`;
   const lessonId = `${chapterId}-l${lessonIndex + 1}`;
@@ -281,8 +275,8 @@ export async function suggestAndSaveLessonComponents(
     lessonTitle: tutorialLesson.title,
     lessonObjective: tutorialLesson.objective,
     illustrativeContent: tutorialLesson.content,
-    courseTopic: generationParams.topic,
-    targetAudience: generationParams.targetAudience,
+    courseTopic: course.title,
+    targetAudience: generationParams?.targetAudience || 'Débutants',
     availableInteractiveComponents: INTERACTIVE_COMPONENTS,
     availableVisualComponents: VISUAL_COMPONENTS,
   };
