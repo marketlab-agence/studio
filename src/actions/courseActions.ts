@@ -277,6 +277,7 @@ export async function suggestAndSaveLessonComponents(
     illustrativeContent: tutorialLesson.content,
     courseTopic: course.title,
     targetAudience: generationParams?.targetAudience || 'Débutants',
+    courseLanguage: generationParams?.courseLanguage || 'Français',
     availableInteractiveComponents: INTERACTIVE_COMPONENTS,
     availableVisualComponents: VISUAL_COMPONENTS,
   };
@@ -321,6 +322,7 @@ export async function getComponentSuggestionsAction(
     illustrativeContent: tutorialLesson.content,
     courseTopic: course.title,
     targetAudience: generationParams?.targetAudience || 'Débutants',
+    courseLanguage: generationParams?.courseLanguage || 'Français',
     availableInteractiveComponents: INTERACTIVE_COMPONENTS,
     availableVisualComponents: VISUAL_COMPONENTS,
   };

@@ -16,6 +16,7 @@ const SuggestLessonComponentsInputSchema = z.object({
   lessonObjective: z.string().describe("The learning objective for the lesson."),
   courseTopic: z.string().describe("The main topic of the entire course."),
   targetAudience: z.string().describe("The target audience for the course."),
+  courseLanguage: z.string().optional().describe("The language for the justification."),
   illustrativeContent: z.string().describe("The Markdown content of the lesson, which will be analyzed to suggest relevant components."),
   availableInteractiveComponents: z.array(z.string()).describe("A list of available interactive React components to choose from."),
   availableVisualComponents: z.array(z.string()).describe("A list of available data visualization React components to choose from.")
@@ -41,6 +42,7 @@ const suggestLessonComponentsPrompt = ai.definePrompt({
 *   **Course Topic:** {{{courseTopic}}}
 *   **Lesson Title:** {{{lessonTitle}}}
 *   **Lesson Objective:** {{{lessonObjective}}}
+*   **Language for Justification:** Your entire response, especially the justifications, MUST be in **{{#if courseLanguage}}{{{courseLanguage}}}{{else}}French{{/if}}**.
 *   **Lesson Content (Markdown):**
     ---
     {{{illustrativeContent}}}
