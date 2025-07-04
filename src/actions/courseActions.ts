@@ -6,9 +6,10 @@ import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/crea
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
-import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
+import type { Tutorial, Lesson, Quiz, Question } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
-import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
+import { generateLessonMarkdown, type GenerateLessonMarkdownInput } from '@/ai/flows/generate-lesson-markdown-flow';
+import { suggestLessonComponents, type SuggestLessonComponentsInput, type SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
 
 // Server-only file writing functions
 async function saveCourses() {
@@ -193,16 +194,16 @@ const VISUAL_COMPONENTS = [
     "TrunkBasedDevelopmentVisualizer", "ConflictVisualizer"
 ];
 
-export async function generateAndSaveLessonContent(
+export async function generateAndSaveLessonMarkdown(
   courseId: string,
   chapterIndex: number,
   lessonIndex: number,
-): Promise<GenerateLessonContentOutput> {
+): Promise<{ illustrativeContent: string }> {
   const course = COURSES.find(c => c.id === courseId);
   if (!course || !course.plan) {
     throw new Error('Course or course plan not found.');
   }
-  
+
   const generationParams = course.generationParams;
   if (!generationParams) {
     throw new Error('Course generation parameters not found.');
@@ -210,17 +211,17 @@ export async function generateAndSaveLessonContent(
 
   const chapterPlan = course.plan.chapters[chapterIndex];
   const lessonPlan = chapterPlan?.lessons[lessonIndex];
-  
+
   const chapterId = `${courseId}-ch${chapterIndex + 1}`;
   const lessonId = `${chapterId}-l${lessonIndex + 1}`;
 
   const tutorialChapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
   const tutorialLessonIndex = TUTORIALS[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
 
-  if (!lessonPlan || tutorialChapterIndex === -1 || tutorialLessonIndex === -1 ) {
+  if (!lessonPlan || tutorialChapterIndex === -1 || tutorialLessonIndex === -1) {
     throw new Error('Lesson plan or tutorial lesson structure not found.');
   }
-  
+
   const chapterContext = `Contexte du cours:
 Titre du cours: ${course.plan.title}
 Description: ${course.plan.description}
@@ -230,7 +231,7 @@ ${course.plan.chapters.map(c => `- ${c.title}`).join('\n')}
 Leçons de ce chapitre:
 ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
-  const input: GenerateLessonContentInput = {
+  const input: GenerateLessonMarkdownInput = {
     lessonTitle: lessonPlan.title,
     lessonObjective: lessonPlan.objective,
     courseTopic: generationParams.topic,
@@ -238,22 +239,64 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
     courseLanguage: generationParams.courseLanguage,
     lessonLength: generationParams.lessonLength || 'Moyen',
     chapterContext,
+  };
+
+  const { illustrativeContent } = await generateLessonMarkdown(input);
+
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
+  await saveTutorials();
+
+  revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
+
+  return { illustrativeContent };
+}
+
+export async function suggestAndSaveLessonComponents(
+  courseId: string,
+  chapterIndex: number,
+  lessonIndex: number,
+): Promise<SuggestLessonComponentsOutput> {
+  const course = COURSES.find(c => c.id === courseId);
+  if (!course) {
+    throw new Error('Course not found.');
+  }
+  
+  const generationParams = course.generationParams;
+  if (!generationParams) {
+    throw new Error('Course generation parameters not found.');
+  }
+
+  const chapterId = `${courseId}-ch${chapterIndex + 1}`;
+  const lessonId = `${chapterId}-l${lessonIndex + 1}`;
+
+  const tutorialChapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
+  const tutorialLesson = TUTORIALS[tutorialChapterIndex]?.lessons.find(l => l.id === lessonId);
+  const tutorialLessonIndex = TUTORIALS[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
+
+  if (!tutorialLesson || tutorialChapterIndex === -1 || tutorialLessonIndex === -1) {
+    throw new Error('Tutorial lesson not found.');
+  }
+
+  const input: SuggestLessonComponentsInput = {
+    lessonTitle: tutorialLesson.title,
+    lessonObjective: tutorialLesson.objective,
+    illustrativeContent: tutorialLesson.content,
+    courseTopic: generationParams.topic,
+    targetAudience: generationParams.targetAudience,
     availableInteractiveComponents: INTERACTIVE_COMPONENTS,
     availableVisualComponents: VISUAL_COMPONENTS,
   };
 
-  const generatedLesson = await generateLessonContent(input);
+  const { interactiveComponentName, visualComponentName } = await suggestLessonComponents(input);
 
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = generatedLesson.illustrativeContent;
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = generatedLesson.interactiveComponentName;
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = generatedLesson.visualComponentName;
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
+  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
   
   await saveTutorials();
 
-  revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
-  return generatedLesson;
+  return { interactiveComponentName, visualComponentName };
 }
 
 export async function getCourseAndChapters(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {

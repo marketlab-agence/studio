@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { buildCourseFromPlanAction, savePlanAction, generateAndSaveLessonContent } from '@/actions/courseActions';
+import { buildCourseFromPlanAction, savePlanAction, generateAndSaveLessonMarkdown, suggestAndSaveLessonComponents } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -34,7 +34,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
-import { type GenerateLessonContentOutput } from '@/types/tutorial.types';
+import { type SuggestLessonComponentsOutput } from '@/ai/flows/suggest-lesson-components-flow';
 import { Badge } from '@/components/ui/badge';
 import { COURSES } from '@/lib/courses';
 
@@ -45,6 +45,7 @@ type BuildStep = {
     lessonIndex?: number;
     title: string;
 };
+type GeneratedContent = { illustrativeContent: string } & Partial<SuggestLessonComponentsOutput>;
 
 
 export default function CreateCoursePage() {
@@ -87,7 +88,7 @@ export default function CreateCoursePage() {
     const [buildSteps, setBuildSteps] = useState<BuildStep[]>([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isBuilding, setIsBuilding] = useState(false);
-    const [generatedContent, setGeneratedContent] = useState<GenerateLessonContentOutput | { illustrativeContent: string } | null>(null);
+    const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
     
     // Mount state to prevent hydration errors
     const [isMounted, setIsMounted] = useState(false);
@@ -229,9 +230,10 @@ export default function CreateCoursePage() {
                 setIsBuilding(true);
                 setGeneratedContent(null);
                 try {
-                    if (step.type === 'lesson' && buildingCourseId) {
-                        const result = await generateAndSaveLessonContent(buildingCourseId, step.chapterIndex, step.lessonIndex!);
-                        setGeneratedContent(result);
+                    if (step.type === 'lesson' && buildingCourseId && typeof step.lessonIndex !== 'undefined') {
+                        const { illustrativeContent } = await generateAndSaveLessonMarkdown(buildingCourseId, step.chapterIndex, step.lessonIndex);
+                        const { interactiveComponentName, visualComponentName } = await suggestAndSaveLessonComponents(buildingCourseId, step.chapterIndex, step.lessonIndex);
+                        setGeneratedContent({ illustrativeContent, interactiveComponentName, visualComponentName });
                     } else if (step.type === 'quiz') {
                         setGeneratedContent({ illustrativeContent: `Le quiz "**${step.title}**" a été créé à partir du plan. Vous pourrez le modifier plus tard dans l'éditeur de cours.`});
                     }
@@ -438,7 +440,7 @@ export default function CreateCoursePage() {
                                                             </ReactMarkdown>
                                                         </div>
                                                     )}
-                                                    {'interactiveComponentName' in generatedContent && 'visualComponentName' in generatedContent && (
+                                                    {generatedContent.interactiveComponentName && generatedContent.visualComponentName && (
                                                         <>
                                                             <Separator />
                                                             <div className="grid grid-cols-2 gap-4">
