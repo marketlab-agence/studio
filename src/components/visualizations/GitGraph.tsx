@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { GitMerge, GitPullRequest, GitCommit, ArrowRight, CornerDownRight, Users } from 'lucide-react';
+import { GitMerge, GitPullRequest, GitCommit, ArrowRight, CornerDownRight, Users, ArrowLeft } from 'lucide-react';
 
 export function GitGraph() {
   return (
@@ -63,7 +63,3 @@ export function GitGraph() {
     </div>
   );
 }
-
-const ArrowLeft = (props: React.ComponentProps<'svg'>) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-)
