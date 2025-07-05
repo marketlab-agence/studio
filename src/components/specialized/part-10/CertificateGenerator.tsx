@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { getSettings } from '@/actions/adminActions';
 
 export function CertificateGenerator({ averageQuizScore, masteryIndex }: { averageQuizScore: number, masteryIndex: number }) {
@@ -55,18 +53,23 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
         return "pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.";
     };
 
-    const handleDownloadPdf = () => {
+    const handleDownloadPdf = async () => {
         if (!certificateRef.current || isDownloading) return;
         setIsDownloading(true);
 
         const element = certificateRef.current;
-        const scale = 2; // Augmenter l'échelle pour une meilleure qualité
+        const scale = 2;
 
-        html2canvas(element, { 
-            scale: scale,
-            useCORS: true,
-            backgroundColor: '#0f172a' // Correspond au fond sombre
-        }).then((canvas) => {
+        try {
+            const { default: html2canvas } = await import('html2canvas');
+            const { default: jsPDF } = await import('jspdf');
+
+            const canvas = await html2canvas(element, { 
+                scale: scale,
+                useCORS: true,
+                backgroundColor: '#0f172a'
+            });
+            
             const imgData = canvas.toDataURL('image/png');
             
             const pdf = new jsPDF({
@@ -77,11 +80,11 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex }: { avera
             
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
             pdf.save(`certificat-katalyst-${name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-            setIsDownloading(false);
-        }).catch(err => {
+        } catch (err) {
             console.error("Erreur lors de la génération du PDF : ", err);
+        } finally {
             setIsDownloading(false);
-        });
+        }
     };
 
     const handleShareLinkedIn = () => {
