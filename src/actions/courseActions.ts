@@ -305,10 +305,9 @@ export async function deleteCourseAction(courseId: string) {
     // Remove the course
     COURSES.splice(courseIndex, 1);
 
-    // Remove associated tutorials
+    // Remove associated tutorials atomically
     const updatedTutorials = TUTORIALS.filter(t => t.courseId !== courseId);
-    TUTORIALS.length = 0; // Clear original array
-    Array.prototype.push.apply(TUTORIALS, updatedTutorials); // Push new content
+    TUTORIALS.splice(0, TUTORIALS.length, ...updatedTutorials);
 
     // Remove associated quizzes
     tutorialIdsToDelete.forEach(id => {
