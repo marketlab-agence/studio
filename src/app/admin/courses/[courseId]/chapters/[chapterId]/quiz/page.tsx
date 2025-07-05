@@ -1,10 +1,11 @@
+
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
 import { notFound } from 'next/navigation';
 import { EditQuizForm } from './EditQuizForm';
 
 // This is now a server component
-export default async function EditQuizPage({ params }: { params: { courseId: string; chapterId: string; } }) {
+export default function EditQuizPage({ params }: { params: { courseId: string; chapterId: string; } }) {
   const { courseId, chapterId } = params;
 
   // Data fetching happens on the server

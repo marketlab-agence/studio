@@ -1,9 +1,10 @@
+
 import { TUTORIALS } from '@/lib/tutorials';
 import { notFound } from 'next/navigation';
 import { EditLessonForm } from './EditLessonForm';
 
 // This is now a server component
-export default async function EditLessonPage({ params }: { params: { courseId: string; chapterId: string; lessonId: string; } }) {
+export default function EditLessonPage({ params }: { params: { courseId: string; chapterId: string; lessonId: string; } }) {
   const { courseId, chapterId, lessonId } = params;
 
   // Data fetching happens on the server, so it will always be the latest version from the file system
