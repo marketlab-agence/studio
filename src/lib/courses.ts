@@ -1,6 +1,1263 @@
 
 import type { CourseInfo } from '@/types/course.types';
-import coursesData from '@/data/courses.json';
 
-// Initialize with data from the JSON file. This is client-safe.
-export let COURSES: CourseInfo[] = coursesData as CourseInfo[];
+// Data is now inlined to ensure a single source of truth in memory.
+const coursesData: CourseInfo[] = [
+  {
+    "id": "git-github-tutorial",
+    "title": "Git & GitHub : Le Guide Complet",
+    "description": "La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.",
+    "status": "Publié"
+  },
+  {
+    "id": "le-closing-pour-debutants-de-prospect-a-client",
+    "title": "Le Closing pour Débutants : De Prospect à Client",
+    "description": "Ce cours est conçu pour les débutants souhaitant maîtriser l'art du closing. Vous apprendrez les bases, les techniques avancées, et comment gérer les objections pour transformer les prospects en clients fidèles. Développez vos compétences et atteignez vos objectifs de vente !",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre les bases du closing.",
+              "title": "Introduction au Closing : Définitions et Concepts Clés"
+            },
+            {
+              "objective": "Identifier les qualités essentielles d'un bon closer.",
+              "title": "Le Profil du Closer Performant : Compétences et Aptitudes"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "L'art de conclure une vente en transformant un prospect en client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Une technique de marketing agressif."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un processus de négociation complexe."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que le closing ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "L'écoute active"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "La persévérance"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "L'agressivité"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "L'empathie"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les qualités essentielles d'un bon closer ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les objections du client."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Écouter attentivement et comprendre les préoccupations du client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Forcer le client à acheter."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment un closer doit-il gérer les objections ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Construire une relation de confiance avec le client."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Manipuler le client pour conclure la vente."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Comprendre les besoins et les désirs du client."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quel est l'objectif principal d'un closer ?"
+              }
+            ],
+            "title": "Quiz : Les Fondamentaux du Closing",
+            "feedbackTiming": "end"
+          },
+          "title": "Les Bases du Closing"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre les techniques de closing les plus efficaces.",
+              "title": "Techniques de Closing Avancées : Conclusion Efficace"
+            },
+            {
+              "objective": "Savoir gérer les objections et les refus.",
+              "title": "Gérer les Objections et les Refus : Transformer les 'Non' en 'Oui'"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "La technique du résumé et de la question directe."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La technique de l'intimidation."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La technique de la désinformation."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quelle technique de closing est la plus éthique et efficace ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "L'ignorer complètement."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "L'accepter et chercher à comprendre les raisons."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Proposer des solutions alternatives."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Se fâcher et insister."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment doit-on gérer un refus ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Poser des questions ouvertes pour identifier les besoins réels."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Parler sans cesse pour convaincre."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les signaux d'achat du client."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Que doit faire un closer pour mieux comprendre les besoins du client ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "En renforçant la valeur du produit ou service offert."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En baissant le prix de manière excessive."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "En proposant des garanties supplémentaires."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment peut-on atténuer la résistance d'un client face au prix ?"
+              }
+            ],
+            "title": "Quiz : Maîtriser l'Art du Closing",
+            "feedbackTiming": "end"
+          },
+          "title": "Techniques Avancées et Gestion des Objections"
+        }
+      ],
+      "description": "Ce cours est conçu pour les débutants souhaitant maîtriser l'art du closing. Vous apprendrez les bases, les techniques avancées, et comment gérer les objections pour transformer les prospects en clients fidèles. Développez vos compétences et atteignez vos objectifs de vente !",
+      "title": "Le Closing pour Débutants : De Prospect à Client",
+      "localId": "1751244165121",
+      "createdAt": "2025-06-30T00:42:45.121Z"
+    },
+    "generationParams": {
+      "topic": "",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
+  },
+  {
+    "id": "introduction-au-marketing-digital",
+    "title": "Introduction au Marketing Digital",
+    "description": "Ce cours vous initie au monde passionnant du marketing digital. Apprenez les bases, explorez les différents canaux, et découvrez comment créer du contenu engageant et optimiser votre présence en ligne. Conçu pour les débutants, ce cours vous donnera les clés pour réussir dans le marketing digital.",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre les bases du marketing digital.",
+              "title": "Introduction au Marketing Digital"
+            },
+            {
+              "objective": "Identifier les différents canaux digitaux.",
+              "title": "Les Canaux de Marketing Digital"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "L'ensemble des techniques marketing utilisées sur internet."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La publicité à la télévision."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Le marketing direct par courrier."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que le marketing digital ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "SEO"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Email Marketing"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Le télémarketing"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Les réseaux sociaux"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les canaux du marketing digital ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Augmenter les ventes immédiatement."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Améliorer la visibilité en ligne."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Fidéliser les clients."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quel est l'objectif principal du marketing digital ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "D'imprimer des flyers."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "De mesurer et d'analyser les résultats des campagnes."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "De ne pas utiliser d'outils."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quelle est l'importance de l'analyse des données en marketing digital ?"
+              }
+            ],
+            "title": "Quiz: Introduction au Marketing Digital",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction au Marketing Digital"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à créer du contenu engageant.",
+              "title": "Création de Contenu Digital"
+            },
+            {
+              "objective": "Découvrir les stratégies de référencement (SEO).",
+              "title": "Introduction au SEO"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Un contenu qui attire, engage et convertit l'audience cible."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un contenu long et compliqué."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un contenu uniquement axé sur la promotion des produits."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce qu'un contenu digital efficace ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Recherche de mots-clés"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Optimisation des balises méta"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "La publicité à la télévision"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Création de liens de qualité"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les techniques d'optimisation SEO ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les commentaires et avis."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Répondre aux commentaires et interagir avec la communauté."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Encourager les conversations et les partages."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment engager son audience sur les réseaux sociaux ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Augmenter le prix des produits."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Améliorer l'expérience utilisateur sur le site web."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Faire de la publicité mensongère."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment améliorer le taux de conversion d'un site web ?"
+              }
+            ],
+            "title": "Quiz: Création de Contenu et SEO",
+            "feedbackTiming": "end"
+          },
+          "title": "Création de Contenu et SEO"
+        }
+      ],
+      "description": "Ce cours vous initie au monde passionnant du marketing digital. Apprenez les bases, explorez les différents canaux, et découvrez comment créer du contenu engageant et optimiser votre présence en ligne. Conçu pour les débutants, ce cours vous donnera les clés pour réussir dans le marketing digital.",
+      "title": "Introduction au Marketing Digital",
+      "localId": "1751248313484",
+      "createdAt": "2025-06-30T01:51:53.484Z"
+    },
+    "generationParams": {
+      "topic": "Le Marketing digital",
+      "targetAudience": "Débutants",
+      "numChapters": 2,
+      "numLessonsPerChapter": 2,
+      "numQuestionsPerQuiz": 4,
+      "courseLanguage": "Français",
+      "lessonLength": "Court",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
+  },
+  {
+    "id": "ingenierie-des-prompts-pour-debutants",
+    "title": "Ingénierie des Prompts pour Débutants",
+    "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à définir l'ingénierie des prompts et son importance.",
+              "title": "Introduction à l'ingénierie des prompts"
+            },
+            {
+              "objective": "Comprendre comment concevoir des prompts efficaces pour différents modèles de langage.",
+              "title": "Principes de base de la conception de prompts"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "L'art de poser des questions à un moteur de recherche."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "La discipline de conception et d'optimisation des prompts pour les modèles de langage."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Uniquement utile pour les tâches créatives."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que l'ingénierie des prompts ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Clarté et concision."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ambiguïté."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Spécificité du contexte."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Longueur excessive."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les principes clés d'un prompt efficace ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 1: Introduction à l'ingénierie des prompts",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à l'ingénierie des prompts"
+        }
+      ],
+      "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
+      "title": "Ingénierie des Prompts pour Débutants",
+      "localId": "ingenierie-des-prompts-pour-debutants",
+      "createdAt": "2025-06-30T04:44:01.570Z"
+    },
+    "generationParams": {
+      "topic": "",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Moyen",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
+  },
+  {
+    "id": "jira-de-zero-a-heros",
+    "title": "Jira : De Zéro à Héros",
+    "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre les bases de Jira.",
+              "title": "Introduction à Jira"
+            },
+            {
+              "objective": "Apprendre à naviguer dans l'interface Jira.",
+              "title": "Navigation dans Jira"
+            },
+            {
+              "objective": "Créer et configurer votre premier projet dans Jira.",
+              "title": "Création de Projet"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Un outil de gestion de projet."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un langage de programmation."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un système d'exploitation."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Tableau de bord."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Calendrier."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Paramètres."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Où pouvez-vous voir un aperçu de tous vos projets dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "En cliquant sur 'Créer un projet'."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En allant dans les paramètres du compte."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "En utilisant la ligne de commande."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment créer un nouveau projet dans Jira ?"
+              }
+            ],
+            "title": "Quiz: Introduction à Jira",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à Jira"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre ce que sont les types de problèmes.",
+              "title": "Types de Problèmes"
+            },
+            {
+              "objective": "Créer différents types de problèmes (Tâches, Bugs, Épiques).",
+              "title": "Création de Problèmes"
+            },
+            {
+              "objective": "Décrire et organiser les problèmes efficacement.",
+              "title": "Gestion des Problèmes"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Tâche"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Bug"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Épique"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Projet"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont des types de problèmes courants dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Assigner un responsable."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Définir une priorité."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Ajouter une description détaillée."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Supprimer le problème."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les actions importantes lors de la création d'un problème ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Utiliser des étiquettes."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Créer des liens entre les problèmes."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les problèmes."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment organiser efficacement les problèmes dans Jira ?"
+              }
+            ],
+            "title": "Quiz: Gestion des Problèmes",
+            "feedbackTiming": "end"
+          },
+          "title": "Problèmes et Tâches"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à utiliser les tableaux Kanban.",
+              "title": "Introduction aux Tableaux Kanban"
+            },
+            {
+              "objective": "Configurer et personnaliser un tableau Kanban.",
+              "title": "Configuration de Tableaux Kanban"
+            },
+            {
+              "objective": "Gérer le flux de travail avec Kanban.",
+              "title": "Gestion du Flux de Travail Kanban"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Visualiser le flux de travail."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Automatiser les tests."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Générer des rapports financiers."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel est l'objectif principal d'un tableau Kanban ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Colonnes"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Cartes"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Lignes"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les éléments clés d'un tableau Kanban ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Limiter le travail en cours."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les blocages."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ajouter autant de tâches que possible."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quelle est une pratique importante pour gérer le flux de travail avec Kanban ?"
+              }
+            ],
+            "title": "Quiz: Tableaux Kanban",
+            "feedbackTiming": "end"
+          },
+          "title": "Tableaux Kanban"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Comprendre le fonctionnement des tableaux Scrum.",
+              "title": "Introduction aux Tableaux Scrum"
+            },
+            {
+              "objective": "Planifier un sprint dans un tableau Scrum.",
+              "title": "Planification de Sprint"
+            },
+            {
+              "objective": "Suivre l'avancement du sprint et des tâches.",
+              "title": "Suivi de Sprint"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Sprints"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Flux continu"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Aucun délai"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment le travail est-il organisé dans un tableau Scrum ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Product Owner"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Scrum Master"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Équipe de développement"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Chef de projet"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont les rôles clés dans Scrum ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Réunion quotidienne (Daily Scrum)."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Réunion hebdomadaire."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pas de réunion."
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel type de réunion est couramment utilisé dans Scrum ?"
+              }
+            ],
+            "title": "Quiz: Tableaux Scrum",
+            "feedbackTiming": "end"
+          },
+          "title": "Tableaux Scrum"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Apprendre à créer des rapports personnalisés.",
+              "title": "Création de Rapports Personnalisés"
+            },
+            {
+              "objective": "Analyser les données avec des filtres.",
+              "title": "Analyse de Données avec Filtres"
+            },
+            {
+              "objective": "Utiliser les rapports pour améliorer la performance de l'équipe.",
+              "title": "Amélioration de la Performance avec les Rapports"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour suivre l'avancement du projet."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Pour identifier les blocages."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Pour prendre des décisions éclairées."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Pourquoi les rapports sont-ils importants dans Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Par statut"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Par responsable"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Par priorité"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quels sont des exemples de filtres couramment utilisés dans les rapports Jira ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Identifier les goulots d'étranglement."
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Ajuster les priorités."
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ignorer les problèmes."
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Comment les rapports peuvent-ils aider à améliorer la performance de l'équipe ?"
+              }
+            ],
+            "title": "Quiz: Rapports et Analyse",
+            "feedbackTiming": "end"
+          },
+          "title": "Rapports et Analyse"
+        }
+      ],
+      "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
+      "title": "Jira : De Zéro à Héros",
+      "localId": "jira-de-zero-a-heros",
+      "createdAt": "2025-06-30T05:53:57.226Z"
+    },
+    "generationParams": {
+      "topic": "Jira : De Zéro à Héros\nOrganisez, suivez et gérez le travail de votre équipe avec le leader de la gestion de projet Agile.",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Court",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
+  },
+  {
+    "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n",
+    "title": "Automatisation de processus informatique pour débutants avec n8n",
+    "description": "Ce cours vous guidera à travers les bases de l'automatisation des processus informatiques en utilisant n8n, une plateforme puissante et flexible. Vous apprendrez à installer, configurer et utiliser n8n pour automatiser des tâches courantes, interagir avec des APIs, et intégrer des services cloud populaires. Conçu pour les débutants, ce cours vous donnera les compétences nécessaires pour créer des workflows efficaces et améliorer votre productivité.",
+    "status": "Publié",
+    "plan": {
+      "chapters": [
+        {
+          "lessons": [
+            {
+              "objective": "Définir l'automatisation des processus et ses avantages.",
+              "title": "Introduction à l'automatisation des processus informatiques"
+            },
+            {
+              "objective": "Identifier les cas d'utilisation courants de l'automatisation.",
+              "title": "Applications de l'automatisation dans divers domaines"
+            },
+            {
+              "objective": "Comprendre les bases de n8n et ses fonctionnalités principales.",
+              "title": "Qu'est-ce que n8n ? Une vue d'ensemble"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Réduire les erreurs humaines"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Augmenter les coûts"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Ralentir les opérations"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel est l'un des principaux avantages de l'automatisation des processus ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Un langage de programmation complexe"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Une plateforme d'automatisation de flux de travail"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un outil de gestion de projet"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Comment décririez-vous n8n ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 1",
+            "feedbackTiming": "end"
+          },
+          "title": "Introduction à l'automatisation et à n8n"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Installer n8n localement ou sur un serveur.",
+              "title": "Installation de n8n : Guide étape par étape"
+            },
+            {
+              "objective": "Configurer l'interface utilisateur de n8n.",
+              "title": "Configuration initiale et interface utilisateur"
+            },
+            {
+              "objective": "Comprendre les concepts de base des nœuds et des workflows.",
+              "title": "Nœuds et Workflows : Les éléments fondamentaux"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Localement sur votre ordinateur"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Sur un serveur cloud"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Sur une calculatrice"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Où pouvez-vous installer n8n ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Des images"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Des unités de base de flux de travail"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Des documents"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Que sont les nœuds dans n8n ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 2",
+            "feedbackTiming": "end"
+          },
+          "title": "Installation et Configuration de n8n"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Créer un workflow simple pour envoyer un email.",
+              "title": "Votre premier workflow : Envoyer un email"
+            },
+            {
+              "objective": "Utiliser des déclencheurs pour automatiser le démarrage des workflows.",
+              "title": "Déclencheurs : Automatiser le démarrage des workflows"
+            },
+            {
+              "objective": "Découvrir comment utiliser des variables dans les workflows.",
+              "title": "Variables et expressions : Rendre vos workflows dynamiques"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Un déclencheur"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un nœud de sortie"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un nœud de fonction"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel type de nœud initie généralement un workflow ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour stocker et manipuler des données"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour créer des interfaces utilisateur"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour envoyer des messages"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Pourquoi utiliser des variables dans un workflow ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 3",
+            "feedbackTiming": "end"
+          },
+          "title": "Création de Workflows Simples"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Utiliser les nœuds HTTP Request pour interagir avec des APIs.",
+              "title": "Interagir avec les APIs : Nœuds HTTP Request"
+            },
+            {
+              "objective": "Effectuer des opérations CRUD (Create, Read, Update, Delete) sur des données.",
+              "title": "Opérations CRUD : Créer, Lire, Mettre à jour, Supprimer des données"
+            },
+            {
+              "objective": "Gérer les erreurs et les exceptions dans les workflows.",
+              "title": "Gestion des erreurs : Assurer la robustesse de vos workflows"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "HTTP Request"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "FTP Request"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "SMTP Request"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Quel nœud est utilisé pour interagir avec les APIs dans n8n ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Créer"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Lire"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Mettre à jour"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Supprimer"
+                  }
+                ],
+                "isMultipleChoice": true,
+                "text": "Quelles sont les opérations CRUD courantes sur les données ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 4",
+            "feedbackTiming": "end"
+          },
+          "title": "Automatisation Avancée : APIs et Gestion des Données"
+        },
+        {
+          "lessons": [
+            {
+              "objective": "Connecter n8n à des services cloud populaires comme Google Sheets et Slack.",
+              "title": "Intégration avec Google Sheets : Automatiser vos feuilles de calcul"
+            },
+            {
+              "objective": "Envoyer des messages Slack automatisés.",
+              "title": "Intégration avec Slack : Communication automatisée"
+            },
+            {
+              "objective": "Exploiter d'autres intégrations populaires.",
+              "title": "Autres Intégrations : Exploration des possibilités"
+            }
+          ],
+          "quiz": {
+            "questions": [
+              {
+                "answers": [
+                  {
+                    "isCorrect": false,
+                    "text": "Un système d'exploitation"
+                  },
+                  {
+                    "isCorrect": true,
+                    "text": "Un tableur en ligne"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Un logiciel de montage vidéo"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Qu'est-ce que Google Sheets ?"
+              },
+              {
+                "answers": [
+                  {
+                    "isCorrect": true,
+                    "text": "Pour envoyer des messages"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour stocker des fichiers"
+                  },
+                  {
+                    "isCorrect": false,
+                    "text": "Pour gérer des projets"
+                  }
+                ],
+                "isMultipleChoice": false,
+                "text": "Dans quel but peut-on utiliser l'intégration de n8n avec Slack ?"
+              }
+            ],
+            "title": "Quiz du Chapitre 5",
+            "feedbackTiming": "end"
+          },
+          "title": "Intégrations avec des Services Cloud"
+        }
+      ],
+      "description": "Ce cours vous guidera à travers les bases de l'automatisation des processus informatiques en utilisant n8n, une plateforme puissante et flexible. Vous apprendrez à installer, configurer et utiliser n8n pour automatiser des tâches courantes, interagir avec des APIs, et intégrer des services cloud populaires. Conçu pour les débutants, ce cours vous donnera les compétences nécessaires pour créer des workflows efficaces et améliorer votre productivité.",
+      "title": "Automatisation de processus informatique pour débutants avec n8n"
+    },
+    "generationParams": {
+      "topic": "L'automatisation de processus informatique \n(via n8n)",
+      "targetAudience": "Débutants",
+      "courseLanguage": "Français",
+      "lessonLength": "Court",
+      "allowMultipleChoice": true,
+      "feedbackTiming": "end"
+    }
+  }
+];
+
+// This is a mutable export, allowing in-memory modifications for the prototype.
+// In a real production app, this would be handled by a database.
+export let COURSES: CourseInfo[] = coursesData;
+
+    
