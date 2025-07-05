@@ -52,7 +52,7 @@ export default function BlogPostPage({ params }: Props) {
           alt={post.title}
           width={1200}
           height={600}
-          className="aspect-video w-full rounded-lg object-cover mb-12"
+          className="aspect-[2/1] w-full rounded-lg object-cover mb-12"
           data-ai-hint="blog technology abstract"
         />
 

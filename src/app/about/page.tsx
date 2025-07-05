@@ -32,7 +32,7 @@ export default function AboutPage() {
                 width={600}
                 height={400}
                 alt="Une image représentant la technologie et l'apprentissage"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover"
+                className="mx-auto aspect-[3/2] overflow-hidden rounded-xl object-cover"
                 data-ai-hint="technology learning"
               />
             </div>

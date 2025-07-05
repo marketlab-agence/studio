@@ -72,7 +72,7 @@ export default function Home() {
               width={600}
               height={400}
               alt="Hero"
-              className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
+              className="mx-auto aspect-[3/2] overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
               data-ai-hint="productivity workflow tools"
             />
           </div>
