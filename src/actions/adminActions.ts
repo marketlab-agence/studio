@@ -1,4 +1,3 @@
-
 'use server';
 
 import { COURSES } from '@/lib/courses';
@@ -7,15 +6,9 @@ import { SETTINGS, type AppSettings } from '@/lib/settings';
 import { revalidatePath } from 'next/cache';
 
 async function saveSettings() {
-  const fs = require('fs');
-  const path = require('path');
-  const dataDirectory = path.join(process.cwd(), 'src/data');
-  const settingsFilePath = path.join(dataDirectory, 'settings.json');
-
-  if (!fs.existsSync(dataDirectory)) {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-  }
-  fs.writeFileSync(settingsFilePath, JSON.stringify(SETTINGS, null, 2));
+  // In a real production environment, you would save this to a database.
+  // For this prototype, settings are only saved in-memory for the session.
+  console.log("Simulating settings save. Data is in-memory only.");
 }
 
 export async function getSettings() {

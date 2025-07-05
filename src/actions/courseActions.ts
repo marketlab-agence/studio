@@ -12,39 +12,21 @@ import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flo
 
 // Server-only file writing functions
 async function saveCourses() {
-  const fs = await import('fs');
-  const path = await import('path');
-  const dataDirectory = path.join(process.cwd(), 'src/data');
-  const coursesFilePath = path.join(dataDirectory, 'courses.json');
-
-  if (!fs.existsSync(dataDirectory)) {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-  }
-  fs.writeFileSync(coursesFilePath, JSON.stringify(COURSES, null, 2));
+  // In a real production environment, you would save this to a database.
+  // For this prototype, data is in-memory only.
+  console.log("Simulating courses save. Data is in-memory only.");
 }
 
 async function saveTutorials() {
-  const fs = await import('fs');
-  const path = await import('path');
-  const dataDirectory = path.join(process.cwd(), 'src/data');
-  const tutorialsFilePath = path.join(dataDirectory, 'tutorials.json');
-
-  if (!fs.existsSync(dataDirectory)) {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-  }
-  fs.writeFileSync(tutorialsFilePath, JSON.stringify(TUTORIALS, null, 2));
+  // In a real production environment, you would save this to a database.
+  // For this prototype, data is in-memory only.
+  console.log("Simulating tutorials save. Data is in-memory only.");
 }
 
 async function saveQuizzes() {
-  const fs = await import('fs');
-  const path = await import('path');
-  const dataDirectory = path.join(process.cwd(), 'src/data');
-  const quizzesFilePath = path.join(dataDirectory, 'quizzes.json');
-
-  if (!fs.existsSync(dataDirectory)) {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-  }
-  fs.writeFileSync(quizzesFilePath, JSON.stringify(QUIZZES, null, 2));
+  // In a real production environment, you would save this to a database.
+  // For this prototype, data is in-memory only.
+  console.log("Simulating quizzes save. Data is in-memory only.");
 }
 
 
