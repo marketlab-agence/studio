@@ -2,6 +2,7 @@
 import { TUTORIALS } from '@/lib/tutorials';
 import { notFound } from 'next/navigation';
 import { EditLessonForm } from './EditLessonForm';
+import { generateLessonContentAction, updateLessonContent } from '@/actions/courseActions';
 
 type EditLessonPageProps = {
   params: {
@@ -11,7 +12,6 @@ type EditLessonPageProps = {
   }
 };
 
-// This is now a server component
 export default function EditLessonPage({ params }: EditLessonPageProps) {
   const { courseId, chapterId, lessonId } = params;
 
@@ -31,6 +31,8 @@ export default function EditLessonPage({ params }: EditLessonPageProps) {
         initialChapterTitle={chapter.title}
         courseId={courseId}
         chapterId={chapterId}
+        updateLessonContentAction={updateLessonContent}
+        generateLessonContentAction={generateLessonContentAction}
     />
   );
 }

@@ -21,9 +21,24 @@ import {
     updateLessonContent, 
     generateLessonContentAction,
 } from '@/actions/courseActions';
-import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 
-export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, chapterId }: { initialLesson: Lesson; initialChapterTitle: string, courseId: string, chapterId: string }) {
+interface EditLessonFormProps {
+    initialLesson: Lesson;
+    initialChapterTitle: string;
+    courseId: string;
+    chapterId: string;
+    updateLessonContentAction: typeof updateLessonContent;
+    generateLessonContentAction: typeof generateLessonContentAction;
+}
+
+export function EditLessonForm({ 
+    initialLesson, 
+    initialChapterTitle, 
+    courseId, 
+    chapterId,
+    updateLessonContentAction,
+    generateLessonContentAction,
+}: EditLessonFormProps) {
   const { toast } = useToast();
   
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
@@ -47,7 +62,7 @@ export function EditLessonForm({ initialLesson, initialChapterTitle, courseId, c
   const handleSave = async () => {
     setIsSaving(true);
     try {
-        await updateLessonContent(courseId, chapterId, lesson);
+        await updateLessonContentAction(courseId, chapterId, lesson);
         toast({
             title: 'Leçon Sauvegardée',
             description: `La leçon "${lesson.title}" a été mise à jour avec succès.`,
