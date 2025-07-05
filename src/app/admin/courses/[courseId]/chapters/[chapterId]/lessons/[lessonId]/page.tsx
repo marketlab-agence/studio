@@ -4,15 +4,15 @@ import { notFound } from 'next/navigation';
 import { EditLessonForm } from './EditLessonForm';
 import { generateLessonContentAction, updateLessonContent } from '@/actions/courseActions';
 
-type EditLessonPageProps = {
+type LessonPageProps = {
   params: {
     courseId: string;
     chapterId: string;
     lessonId: string;
-  }
+  };
 };
 
-export default function EditLessonPage({ params }: EditLessonPageProps) {
+export default async function EditLessonPage({ params }: LessonPageProps) {
   const { courseId, chapterId, lessonId } = params;
 
   // Data fetching happens on the server, so it will always be the latest version from the file system
