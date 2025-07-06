@@ -44,11 +44,6 @@ export default function LoginPage() {
 
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     if (!isFirebaseConfigured) {
-      toast({
-        variant: 'destructive',
-        title: 'Configuration requise',
-        description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
-      });
       return;
     }
     
@@ -86,14 +81,8 @@ export default function LoginPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFirebaseConfigured) {
-        toast({
-            variant: 'destructive',
-            title: 'Configuration requise',
-            description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
-        });
-        return;
-    }
+    if (!isFirebaseConfigured) return;
+
     setIsSubmitting(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
@@ -117,14 +106,8 @@ export default function LoginPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFirebaseConfigured) {
-        toast({
-            variant: 'destructive',
-            title: 'Configuration requise',
-            description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
-        });
-        return;
-    }
+    if (!isFirebaseConfigured) return;
+
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -153,6 +136,15 @@ export default function LoginPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
+      {!isFirebaseConfigured && (
+        <Alert variant="destructive" className="mb-4 max-w-md w-full">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Configuration Requise</AlertTitle>
+          <AlertDescription>
+            L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.
+          </AlertDescription>
+        </Alert>
+      )}
       <Tabs defaultValue="signin" className="w-full max-w-md">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="signin">Se connecter</TabsTrigger>
@@ -166,10 +158,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={!isFirebaseConfigured || isSubmitting}>
                   <GoogleIcon className="mr-2 h-4 w-4" /> Google
                 </Button>
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={!isFirebaseConfigured || isSubmitting}>
                   <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                 </Button>
               </div>
@@ -184,13 +176,13 @@ export default function LoginPage() {
               <form onSubmit={handleEmailSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-signin">Email</Label>
-                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
+                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-signin">Mot de passe</Label>
-                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
+                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full" disabled={!isFirebaseConfigured || isSubmitting}>
                   {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
                 </Button>
               </form>
@@ -205,10 +197,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={!isFirebaseConfigured || isSubmitting}>
                         <GoogleIcon className="mr-2 h-4 w-4" /> Google
                     </Button>
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={!isFirebaseConfigured || isSubmitting}>
                         <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                     </Button>
                 </div>
@@ -223,13 +215,13 @@ export default function LoginPage() {
                 <form onSubmit={handleEmailSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email-signup">Email</Label>
-                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
+                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password-signup">Mot de passe</Label>
-                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
+                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
                     </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full" disabled={!isFirebaseConfigured || isSubmitting}>
                       {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
                     </Button>
                 </form>
