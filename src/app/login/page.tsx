@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -82,7 +83,14 @@ export default function LoginPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Configuration requise',
+            description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
+        });
+        return;
+    }
     setIsSubmitting(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
@@ -106,7 +114,14 @@ export default function LoginPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Configuration requise',
+            description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
+        });
+        return;
+    }
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -157,10 +172,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
                   <GoogleIcon className="mr-2 h-4 w-4" /> Google
                 </Button>
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
+                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
                   <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                 </Button>
               </div>
@@ -175,13 +190,13 @@ export default function LoginPage() {
               <form onSubmit={handleEmailSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-signin">Email</Label>
-                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
+                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-signin">Mot de passe</Label>
-                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
+                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting || !isFirebaseConfigured}>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
                 </Button>
               </form>
@@ -196,10 +211,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
                         <GoogleIcon className="mr-2 h-4 w-4" /> Google
                     </Button>
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting || !isFirebaseConfigured}>
+                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
                         <GithubIcon className="mr-2 h-4 w-4" /> GitHub
                     </Button>
                 </div>
@@ -214,13 +229,13 @@ export default function LoginPage() {
                 <form onSubmit={handleEmailSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email-signup">Email</Label>
-                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
+                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password-signup">Mot de passe</Label>
-                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={!isFirebaseConfigured || isSubmitting} />
+                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
                     </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting || !isFirebaseConfigured}>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
                     </Button>
                 </form>
