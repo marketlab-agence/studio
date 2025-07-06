@@ -4,6 +4,7 @@ import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 import { SETTINGS, type AppSettings } from '@/lib/settings';
 import { revalidatePath } from 'next/cache';
+import { MOCK_USERS } from '@/lib/users';
 
 async function saveSettings() {
   // In a real production environment, you would save this to a database.
@@ -31,4 +32,17 @@ export async function getAdminCourses() {
     }));
     
     return coursesData;
+}
+
+export async function getAdminUsers() {
+    // In a real app, you would fetch this from a database.
+    // We also might not want to send all user data to the client.
+    return MOCK_USERS.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        status: user.status
+    }));
 }

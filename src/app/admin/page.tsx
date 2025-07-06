@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
                     <CardDescription>Gérez les utilisateurs, leurs rôles et leurs abonnements.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <Button disabled>Bientôt disponible</Button>
+                     <Button asChild><Link href="/admin/users">Gérer les utilisateurs</Link></Button>
                 </CardContent>
             </Card>
              <Card>
