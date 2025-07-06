@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-    BookCopy, DollarSign, LayoutDashboard, Users, Verified, Save, Loader2
+    BookCopy, DollarSign, LayoutDashboard, Users, Verified, Save, Loader2, CreditCard
 } from 'lucide-react';
 import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
             )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
             <Card>
                 <CardHeader>
                     <CardTitle>Gestion des Formations</CardTitle>
@@ -156,10 +156,19 @@ export default function AdminDashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Gestion des Utilisateurs</CardTitle>
-                    <CardDescription>Gérez les utilisateurs, leurs rôles et leurs abonnements.</CardDescription>
+                    <CardDescription>Gérez les utilisateurs et leurs rôles.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <Button asChild><Link href="/admin/users">Gérer les utilisateurs</Link></Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Gestion des Abonnements</CardTitle>
+                    <CardDescription>Créez et modifiez les plans d'abonnement de la plateforme.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Button asChild><Link href="/admin/subscriptions">Gérer les abonnements</Link></Button>
                 </CardContent>
             </Card>
              <Card>

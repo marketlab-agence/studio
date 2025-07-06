@@ -43,7 +43,7 @@ export default async function AdminUsersListPage() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-                <Link href="/admin/subscriptions/create">
+                <Link href="/admin/subscriptions">
                     Gérer les abonnements
                 </Link>
             </Button>
