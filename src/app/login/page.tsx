@@ -32,7 +32,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isFirebaseConfigured = !!auth;
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -43,17 +42,9 @@ export default function LoginPage() {
   }, [user, authLoading, router, searchParams]);
 
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
-    if (!auth) {
-      toast({
-          variant: 'destructive',
-          title: 'Configuration Requise',
-          description: "L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.",
-      });
-      return;
-    }
-    
     setIsSubmitting(true);
     try {
+      if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
       await signInWithPopup(auth, provider);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by useEffect
@@ -86,17 +77,9 @@ export default function LoginPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
-        toast({
-            variant: 'destructive',
-            title: 'Configuration Requise',
-            description: "L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.",
-        });
-        return;
-    }
-
     setIsSubmitting(true);
     try {
+      if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
       await createUserWithEmailAndPassword(auth, email, password);
       toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
       // Redirection is handled by the useEffect hook
@@ -118,17 +101,9 @@ export default function LoginPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
-        toast({
-            variant: 'destructive',
-            title: 'Configuration Requise',
-            description: "L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.",
-        });
-        return;
-    }
-
     setIsSubmitting(true);
     try {
+      if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by the useEffect hook
