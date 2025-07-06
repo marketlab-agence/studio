@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { PlusCircle, BookCopy, ChevronRight } from 'lucide-react';
 import { ActionButtons } from './ActionButtons';
 
+export const dynamic = 'force-dynamic';
+
 type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
 
 export default async function AdminCoursesListPage() {

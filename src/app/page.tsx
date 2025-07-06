@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 
+export const dynamic = 'force-dynamic';
+
 const tools = [
   { name: 'Jira', icon: KanbanSquare },
   { name: 'Trello', icon: Users },

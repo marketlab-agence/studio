@@ -8,6 +8,8 @@ import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Da
 import { COURSES } from '@/lib/courses';
 import { TUTORIALS } from '@/lib/tutorials';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Formations - Katalyst',
   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
