@@ -43,9 +43,12 @@ export default function LoginPage() {
   }, [user, authLoading, router, searchParams]);
 
   const handleOAuthSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
-    if (!auth) {
-      console.error('LoginPage: Auth not initialized');
-      toast({ variant: 'destructive', title: 'Erreur', description: 'Firebase n\'est pas configuré correctement.' });
+    if (!isFirebaseConfigured) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuration requise',
+        description: "L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.",
+      });
       return;
     }
     
@@ -83,7 +86,7 @@ export default function LoginPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
+    if (!isFirebaseConfigured) {
         toast({
             variant: 'destructive',
             title: 'Configuration requise',
@@ -114,7 +117,7 @@ export default function LoginPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
+    if (!isFirebaseConfigured) {
         toast({
             variant: 'destructive',
             title: 'Configuration requise',
@@ -150,15 +153,6 @@ export default function LoginPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
-      {!isFirebaseConfigured && (
-        <Alert variant="destructive" className="max-w-md mb-4">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Configuration Firebase Manquante</AlertTitle>
-          <AlertDescription>
-            L'authentification est désactivée. L'administrateur doit configurer Firebase pour activer la connexion.
-          </AlertDescription>
-        </Alert>
-      )}
       <Tabs defaultValue="signin" className="w-full max-w-md">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="signin">Se connecter</TabsTrigger>
