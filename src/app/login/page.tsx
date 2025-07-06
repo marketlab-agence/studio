@@ -16,12 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleIcon, GithubIcon } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Terminal } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
@@ -75,47 +73,48 @@ export default function LoginPage() {
     }
   };
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try {
-      if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast({ title: 'Inscription réussie', description: 'Vous êtes maintenant connecté.' });
-      // Redirection is handled by the useEffect hook
-    } catch (error: any) {
-        let description = "Une erreur est survenue. Veuillez réessayer.";
-        if (error.code === 'auth/email-already-in-use') {
-            description = "Cette adresse e-mail est déjà utilisée par un autre compte.";
-        } else if (error.code === 'auth/weak-password') {
-            description = "Le mot de passe est trop faible. Il doit contenir au moins 6 caractères.";
-        } else if (error.code === 'auth/network-request-failed') {
-          description = "La requête réseau a échoué. Assurez-vous d'être connecté à internet et que le domaine est bien autorisé dans votre console Firebase.";
-        } else if (error.message) {
-            description = error.message;
-        }
-        toast({ variant: 'destructive', title: 'Erreur d\'inscription', description });
-        setIsSubmitting(false);
+    if (!auth) {
+      toast({ variant: 'destructive', title: 'Erreur de configuration', description: "L'authentification Firebase n'est pas configurée." });
+      setIsSubmitting(false);
+      return;
     }
-  };
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
     try {
-      if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
+      // First, try to sign in
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
-      // Redirection is handled by the useEffect hook
-    } catch (error: any) {
-        let description = "Adresse e-mail ou mot de passe incorrect.";
-        if (error.code === 'auth/network-request-failed') {
-            description = "La requête réseau a échoué. Assurez-vous d'être connecté à internet et que le domaine est bien autorisé dans votre console Firebase.";
+    } catch (signInError: any) {
+      // If user does not exist or password is wrong, try to create an account
+      if (signInError.code === 'auth/invalid-credential') {
+        try {
+          // Try to create an account
+          await createUserWithEmailAndPassword(auth, email, password);
+          toast({ title: 'Compte créé avec succès', description: 'Bienvenue !' });
+        } catch (signUpError: any) {
+          // If sign up fails because email is in use, it means the password was wrong for sign in
+          if (signUpError.code === 'auth/email-already-in-use') {
+            toast({ variant: 'destructive', title: 'Erreur de connexion', description: "Le mot de passe est incorrect. Veuillez réessayer." });
+          } else if (signUpError.code === 'auth/weak-password') {
+            toast({ variant: 'destructive', title: 'Erreur d\'inscription', description: "Le mot de passe est trop faible (6 caractères minimum)." });
+          } else {
+            toast({ variant: 'destructive', title: 'Erreur', description: signUpError.message });
+          }
+        }
+      } else { // Handle other sign-in errors
+        let description = "Une erreur est survenue. Veuillez réessayer.";
+        if (signInError.code === 'auth/network-request-failed') {
+          description = "La requête réseau a échoué. Vérifiez votre connexion internet.";
         }
         toast({ variant: 'destructive', title: 'Erreur de connexion', description });
-        setIsSubmitting(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
 
   if (authLoading || user) {
     return (
@@ -130,90 +129,43 @@ export default function LoginPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
-      <Tabs defaultValue="signin" className="w-full max-w-md">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="signin">Se connecter</TabsTrigger>
-          <TabsTrigger value="signup">S'inscrire</TabsTrigger>
-        </TabsList>
-        <TabsContent value="signin">
-          <Card>
-            <CardHeader className="space-y-1 text-center">
-              <CardTitle className="text-2xl">Bienvenue</CardTitle>
-              <CardDescription>Connectez-vous pour accéder à votre tableau de bord.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
-                  <GoogleIcon className="mr-2 h-4 w-4" /> Google
-                </Button>
-                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
-                  <GithubIcon className="mr-2 h-4 w-4" /> GitHub
-                </Button>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Ou continuez avec</span>
-                </div>
-              </div>
-              <form onSubmit={handleEmailSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email-signin">Email</Label>
-                  <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-signin">Mot de passe</Label>
-                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="signup">
-          <Card>
-            <CardHeader className="space-y-1 text-center">
-              <CardTitle className="text-2xl">Créer un compte</CardTitle>
-              <CardDescription>Entrez vos informations pour commencer votre apprentissage.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
-                        <GoogleIcon className="mr-2 h-4 w-4" /> Google
-                    </Button>
-                    <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
-                        <GithubIcon className="mr-2 h-4 w-4" /> GitHub
-                    </Button>
-                </div>
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Ou inscrivez-vous avec votre email</span>
-                    </div>
-                </div>
-                <form onSubmit={handleEmailSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-signup">Email</Label>
-                      <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password-signup">Mot de passe</Label>
-                      <Input id="password-signup" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
-                    </Button>
-                </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl">Bienvenue</CardTitle>
+          <CardDescription>Connectez-vous ou créez un compte pour continuer.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={isSubmitting}>
+              <GoogleIcon className="mr-2 h-4 w-4" /> Google
+            </Button>
+            <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={isSubmitting}>
+              <GithubIcon className="mr-2 h-4 w-4" /> GitHub
+            </Button>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Ou continuez avec</span>
+            </div>
+          </div>
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
+            </div>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Continuer avec votre Email'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   );
 }
