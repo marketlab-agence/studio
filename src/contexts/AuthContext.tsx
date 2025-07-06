@@ -3,9 +3,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import { MOCK_USERS } from '@/lib/users';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 type AuthContextType = {
   user: User | null;
@@ -24,27 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    if (!auth) {
+    if (!auth || !db) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser) {
-        // Check localStorage first for persisted plan changes
-        const storedPlan = localStorage.getItem(`user_plan_${authUser.uid}`);
-        if (storedPlan === 'Premium' || storedPlan === 'Gratuit') {
-          setPlan(storedPlan);
-          setIsPremium(storedPlan === 'Premium');
-        } else {
-          // Fallback to mock data for initial load
-          const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
-          const userPlan = mockUser?.plan || 'Gratuit';
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          const userPlan = userData.plan || 'Gratuit';
           setPlan(userPlan);
           setIsPremium(userPlan === 'Premium');
-          // Persist the initial plan
-          localStorage.setItem(`user_plan_${authUser.uid}`, userPlan);
+        } else {
+          // Create a new user document in Firestore if it doesn't exist
+          const newUserProfile = {
+            id: authUser.uid,
+            name: authUser.displayName || 'Nouvel Utilisateur',
+            email: authUser.email || '',
+            plan: 'Gratuit',
+            status: 'Actif',
+            role: 'Utilisateur',
+            joined: format(new Date(), 'yyyy-MM-dd'),
+            phone: authUser.phoneNumber || undefined,
+          };
+          await setDoc(userDocRef, newUserProfile);
+          setPlan('Gratuit');
+          setIsPremium(false);
         }
       } else {
         setPlan(null);
@@ -56,11 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const updateUserPlan = useCallback((newPlan: 'Premium' | 'Gratuit') => {
-    if (user) {
+  const updateUserPlan = useCallback(async (newPlan: 'Premium' | 'Gratuit') => {
+    if (user && db) {
+      const userDocRef = doc(db, 'users', user.uid);
+      try {
+        await updateDoc(userDocRef, { plan: newPlan });
         setPlan(newPlan);
         setIsPremium(newPlan === 'Premium');
-        localStorage.setItem(`user_plan_${user.uid}`, newPlan);
+      } catch (error) {
+        console.error("Error updating user plan in Firestore:", error);
+      }
     }
   }, [user]);
 

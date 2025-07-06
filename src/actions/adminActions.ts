@@ -1,48 +1,44 @@
+
 'use server';
 
-import { COURSES } from '@/lib/courses';
-import { TUTORIALS } from '@/lib/tutorials';
-import { SETTINGS, type AppSettings } from '@/lib/settings';
 import { revalidatePath } from 'next/cache';
-import { MOCK_USERS } from '@/lib/users';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { AppSettings } from '@/lib/settings';
+import type { CourseInfo } from '@/types/course.types';
+import type { MockUser } from '@/lib/users';
 
 async function saveSettings() {
-  // In a real production environment, you would save this to a database.
-  // For this prototype, settings are only saved in-memory for the session.
-  console.log("Simulating settings save. Data is in-memory only.");
+  // Cette fonction n'est plus nécessaire car les écritures se font directement.
 }
 
-export async function getSettings() {
-    return SETTINGS;
+export async function getSettings(): Promise<AppSettings> {
+    const settingsRef = doc(db, 'settings', 'app');
+    const settingsSnap = await getDoc(settingsRef);
+    if (settingsSnap.exists()) {
+        return settingsSnap.data() as AppSettings;
+    }
+    // Valeurs par défaut si les paramètres n'existent pas
+    return { instructorName: 'Instructeur par Défaut' };
 }
 
 export async function updateSettings(newSettings: AppSettings) {
-    SETTINGS.instructorName = newSettings.instructorName;
-    await saveSettings();
+    const settingsRef = doc(db, 'settings', 'app');
+    await setDoc(settingsRef, newSettings, { merge: true });
     revalidatePath('/admin');
     revalidatePath('/certificate');
 }
 
-export async function getAdminCourses() {
-    const coursesData = COURSES.map(course => ({
-        id: course.id,
-        title: course.title,
-        lessonsCount: TUTORIALS.filter(t => t.courseId === course.id).reduce((acc, chap) => acc + chap.lessons.length, 0),
-        status: course.status,
-    }));
-    
+export async function getAdminCourses(): Promise<CourseInfo[]> {
+    const coursesCol = collection(db, 'courses');
+    const coursesSnap = await getDocs(coursesCol);
+    const coursesData = coursesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseInfo));
     return coursesData;
 }
 
-export async function getAdminUsers() {
-    // In a real app, you would fetch this from a database.
-    // We also might not want to send all user data to the client.
-    return MOCK_USERS.map(user => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        plan: user.plan,
-        status: user.status
-    }));
+export async function getAdminUsers(): Promise<MockUser[]> {
+    const usersCol = collection(db, 'users');
+    const usersSnap = await getDocs(usersCol);
+    const usersData = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as MockUser));
+    return usersData;
 }

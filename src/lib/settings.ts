@@ -1,13 +1,10 @@
 
 import type { AppSettings } from '@/types/settings.types';
 
-// Data is now inlined to ensure a single source of truth in memory.
-const settingsData: AppSettings = {
-  "instructorName": "Alex Dubois"
+// This file is now for defining types and interfaces, not for storing mutable data.
+// The data source is now Firestore.
+// The initial data has been migrated to a seeding script or will be created via the admin UI.
+
+export const placeholder: AppSettings = {
+    instructorName: ''
 };
-
-// This is a mutable export, allowing in-memory modifications for the prototype.
-// In a real production app, this would be handled by a database.
-export let SETTINGS: AppSettings = settingsData;
-
-    
