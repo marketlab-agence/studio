@@ -23,12 +23,21 @@ import type { AppSettings } from '@/types/settings.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { DatabaseSetupGuide } from './dashboard/DatabaseSetupGuide';
+
+type AdminCourse = {
+    id: string;
+    title: string;
+    lessonsCount: number;
+    status: 'Publié' | 'Brouillon' | 'Plan';
+};
 
 
 export default function AdminDashboardPage() {
   const { user: authUser } = useAuth();
   const { toast } = useToast();
 
+  const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     premiumUsers: 0,
@@ -41,6 +50,7 @@ export default function AdminDashboardPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [instructorName, setInstructorName] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   useEffect(() => {
     async function loadAdminData() {
@@ -48,6 +58,11 @@ export default function AdminDashboardPage() {
         
         try {
             const coursesData = await getAdminCourses();
+            if (coursesData.length === 0) {
+                setNeedsSetup(true);
+            }
+            setCourses(coursesData);
+
             const settingsData = await getSettings();
             setSettings(settingsData);
             setInstructorName(settingsData.instructorName || '');
@@ -117,82 +132,84 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {dataLoading ? (
-                <>
-                    {[...Array(4)].map((_, i) => (
-                       <Card key={i}>
-                           <CardHeader className="flex-row items-center justify-between pb-2">
-                               <Skeleton className="h-5 w-24" />
-                               <Skeleton className="h-4 w-4" />
-                            </CardHeader>
-                           <CardContent>
-                               <Skeleton className="h-8 w-16" />
-                               <Skeleton className="h-3 w-28 mt-2" />
-                           </CardContent>
-                       </Card>
-                    ))}
-                </>
-            ) : (
-                <>
+        {dataLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader className="flex-row items-center justify-between pb-2">
+                            <Skeleton className="h-5 w-24" />
+                            <Skeleton className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-16" />
+                            <Skeleton className="h-3 w-28 mt-2" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        ) : needsSetup ? (
+            <DatabaseSetupGuide />
+        ) : (
+            <>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Totals</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
                     <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Abonnés Premium</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
                     <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenus (Mensuel)</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</div></CardContent></Card>
                     <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Formations Actives</CardTitle><BookCopy className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalCourses}</div></CardContent></Card>
-                </>
-            )}
-        </div>
+                </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Gestion des Formations</CardTitle>
-                    <CardDescription>Accédez à la bibliothèque des formations pour créer, modifier et publier des cours.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex gap-2">
-                    <Button asChild><Link href="/admin/courses">Gérer les formations</Link></Button>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Gestion des Utilisateurs</CardTitle>
-                    <CardDescription>Gérez les utilisateurs et leurs rôles.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <Button asChild><Link href="/admin/users">Gérer les utilisateurs</Link></Button>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Gestion des Abonnements</CardTitle>
-                    <CardDescription>Créez et modifiez les plans d'abonnement de la plateforme.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <Button asChild><Link href="/admin/subscriptions">Gérer les abonnements</Link></Button>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Paramètres</CardTitle>
-                    <CardDescription>Gérez les paramètres globaux de la plateforme.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="instructorName">Nom de l'instructeur</Label>
-                        <Input 
-                            id="instructorName" 
-                            value={instructorName} 
-                            onChange={(e) => setInstructorName(e.target.value)}
-                            disabled={dataLoading}
-                         />
-                    </div>
-                    <Button onClick={handleSaveSettings} disabled={isSavingSettings || dataLoading || !instructorName}>
-                        {isSavingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Sauvegarder
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Gestion des Formations</CardTitle>
+                            <CardDescription>Accédez à la bibliothèque des formations pour créer, modifier et publier des cours.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex gap-2">
+                            <Button asChild><Link href="/admin/courses">Gérer les formations</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Gestion des Utilisateurs</CardTitle>
+                            <CardDescription>Gérez les utilisateurs et leurs rôles.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild><Link href="/admin/users">Gérer les utilisateurs</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Gestion des Abonnements</CardTitle>
+                            <CardDescription>Créez et modifiez les plans d'abonnement de la plateforme.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild><Link href="/admin/subscriptions">Gérer les abonnements</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Paramètres</CardTitle>
+                            <CardDescription>Gérez les paramètres globaux de la plateforme.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="instructorName">Nom de l'instructeur</Label>
+                                <Input 
+                                    id="instructorName" 
+                                    value={instructorName} 
+                                    onChange={(e) => setInstructorName(e.target.value)}
+                                    disabled={dataLoading}
+                                />
+                            </div>
+                            <Button onClick={handleSaveSettings} disabled={isSavingSettings || dataLoading || !instructorName}>
+                                {isSavingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Sauvegarder
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+        )}
       </>
   );
 }
