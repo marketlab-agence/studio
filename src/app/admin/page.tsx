@@ -23,7 +23,6 @@ import type { AppSettings } from '@/types/settings.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { DatabaseSetupGuide } from './dashboard/DatabaseSetupGuide';
 
 type AdminCourse = {
     id: string;
@@ -50,7 +49,6 @@ export default function AdminDashboardPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [instructorName, setInstructorName] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [needsSetup, setNeedsSetup] = useState(false);
 
   useEffect(() => {
     async function loadAdminData() {
@@ -58,9 +56,6 @@ export default function AdminDashboardPage() {
         
         try {
             const coursesData = await getAdminCourses();
-            if (coursesData.length === 0) {
-                setNeedsSetup(true);
-            }
             setCourses(coursesData);
 
             const settingsData = await getSettings();
@@ -147,8 +142,6 @@ export default function AdminDashboardPage() {
                     </Card>
                 ))}
             </div>
-        ) : needsSetup ? (
-            <DatabaseSetupGuide />
         ) : (
             <>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
