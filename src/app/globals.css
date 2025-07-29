@@ -70,4 +70,27 @@
   .prose p {
       @apply my-5 leading-7;
   }
+
+  .prose h2 {
+    @apply text-3xl font-bold tracking-tight mt-12 mb-4 border-b pb-2;
+  }
+  .prose h3 {
+    @apply text-2xl font-bold tracking-tight mt-8 mb-3;
+  }
+  .prose h4 {
+      @apply text-xl font-bold tracking-tight mt-6 mb-2;
+  }
+  .prose ul, .prose ol {
+    @apply my-5 ml-6 space-y-3;
+  }
+  .prose ul {
+    @apply list-disc;
+  }
+  .prose ol {
+    @apply list-decimal;
+  }
+  .prose li {
+    @apply pl-2;
+  }
 }
+
