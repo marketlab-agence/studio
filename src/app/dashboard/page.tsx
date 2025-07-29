@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles, Handshake } from 'lucide-react';
@@ -27,9 +28,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { COURSES } from '@/lib/courses';
+import allCourses from '@/data/courses.json';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
+import type { CourseInfo } from '@/types/course.types';
+import type { Quiz } from '@/types/tutorial.types';
+import type { Tutorial } from '@/types/tutorial.types';
 
 
 // This map is to associate an icon with a courseId
@@ -92,7 +96,7 @@ export default function DashboardPage() {
 
     const startedCourses = useMemo(() => {
         if (!globalProgress) return [];
-        return COURSES.filter(course => {
+        return (allCourses as CourseInfo[]).filter(course => {
             const progress = globalProgress[course.id];
             // A course is considered "started" if a progress object exists for it
             // and it has at least one completed lesson OR a "current" lesson is tracked.

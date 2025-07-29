@@ -9,17 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState } from 'react';
-import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useRequirePremium } from '@/hooks/useRequirePremium';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getSettingsAction } from '@/actions/adminActions';
 
 export default function CertificatePage() {
   const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
   const { setActiveCourse, overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex, courseChapters } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
+  const [instructorName, setInstructorName] = useState('Instructeur Katalyst');
 
   useRequirePremium();
 
@@ -27,6 +28,15 @@ export default function CertificatePage() {
     setIsMounted(true);
     // Hardcode to git course for now, this page should be dynamic later
     setActiveCourse('git-github-tutorial');
+
+    async function fetchSettings() {
+        const settings = await getSettingsAction();
+        if (settings.instructorName) {
+            setInstructorName(settings.instructorName);
+        }
+    }
+    fetchSettings();
+
   }, [setActiveCourse]);
 
   useEffect(() => {
@@ -99,7 +109,7 @@ export default function CertificatePage() {
     }
 
     if (isTutorialComplete && isScoreSufficient) {
-      return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} />;
+      return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} instructorName={instructorName} />;
     }
 
     if (!isTutorialComplete) {

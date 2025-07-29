@@ -1,11 +1,12 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { COURSES } from '@/lib/courses';
-import { TUTORIALS } from '@/lib/tutorials';
+import { getCourses } from '@/lib/courses';
+import { getTutorials } from '@/lib/tutorials';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,8 +37,10 @@ const courseDetails: Record<string, { icon: React.ElementType; features: string[
   }
 };
 
-export default function Home() {
-  const publishedCourses = COURSES.filter(c => c.status === 'Publié');
+export default async function Home() {
+  const courses = await getCourses();
+  const tutorials = await getTutorials();
+  const publishedCourses = courses.filter(c => c.status === 'Publié');
 
   return (
     <main className="flex-1 bg-background">
@@ -131,7 +134,7 @@ export default function Home() {
                     features: [course.description]
                 };
                 const href = `/tutorial/${course.id}`;
-                const chapterCount = TUTORIALS.filter(t => t.courseId === course.id).length;
+                const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
 
                 return (
                     <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">

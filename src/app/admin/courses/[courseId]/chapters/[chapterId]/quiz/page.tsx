@@ -1,16 +1,18 @@
 
-import { TUTORIALS } from '@/lib/tutorials';
-import { QUIZZES } from '@/lib/quiz';
+import { getTutorials } from '@/lib/tutorials';
+import { getQuizzes } from '@/lib/quiz';
 import { notFound } from 'next/navigation';
 import { EditQuizForm } from './EditQuizForm';
 
 // This is now a server component
-export default function EditQuizPage({ params }: { params: { courseId: string; chapterId: string; } }) {
+export default async function EditQuizPage({ params }: { params: { courseId: string; chapterId: string; } }) {
   const { courseId, chapterId } = params;
 
   // Data fetching happens on the server
-  const chapter = TUTORIALS.find(c => c.id === chapterId);
-  const quiz = QUIZZES[chapterId] ? JSON.parse(JSON.stringify(QUIZZES[chapterId])) : null;
+  const tutorials = await getTutorials();
+  const chapter = tutorials.find(c => c.id === chapterId);
+  const quizzes = await getQuizzes();
+  const quiz = quizzes[chapterId] ? JSON.parse(JSON.stringify(quizzes[chapterId])) : null;
 
   if (!quiz || !chapter) {
     notFound();

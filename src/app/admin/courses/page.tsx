@@ -1,4 +1,5 @@
-import { getAdminCourses } from '@/actions/adminActions';
+
+import { getAdminCoursesAction } from '@/actions/adminActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,10 +10,10 @@ import { ActionButtons } from './ActionButtons';
 
 export const dynamic = 'force-dynamic';
 
-type AdminCourse = Awaited<ReturnType<typeof getAdminCourses>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
+type AdminCourse = Awaited<ReturnType<typeof getAdminCoursesAction>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
 
 export default async function AdminCoursesListPage() {
-  const allCourses = (await getAdminCourses()) as AdminCourse[];
+  const allCourses = (await getAdminCoursesAction()) as AdminCourse[];
   
   const badgeVariants: { [key: string]: "default" | "secondary" | "outline" } = {
     'Publié': 'default',

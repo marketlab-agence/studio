@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/types/tutorial.types';
 import { 
-    updateLessonContent, 
+    updateLessonContentAction, 
     generateLessonContentAction,
 } from '@/actions/courseActions';
 
@@ -27,8 +27,6 @@ interface EditLessonFormProps {
     initialChapterTitle: string;
     courseId: string;
     chapterId: string;
-    updateLessonContentAction: typeof updateLessonContent;
-    generateLessonContentAction: typeof generateLessonContentAction;
 }
 
 export function EditLessonForm({ 
@@ -36,8 +34,6 @@ export function EditLessonForm({
     initialChapterTitle, 
     courseId, 
     chapterId,
-    updateLessonContentAction,
-    generateLessonContentAction,
 }: EditLessonFormProps) {
   const { toast } = useToast();
   

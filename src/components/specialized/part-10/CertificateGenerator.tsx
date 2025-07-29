@@ -1,35 +1,19 @@
 
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { getSettings } from '@/actions/adminActions';
 
-export function CertificateGenerator({ averageQuizScore, masteryIndex }: { averageQuizScore: number, masteryIndex: number }) {
+export function CertificateGenerator({ averageQuizScore, masteryIndex, instructorName }: { averageQuizScore: number, masteryIndex: number, instructorName: string }) {
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
     const [certificateId, setCertificateId] = useState('');
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [instructorName, setInstructorName] = useState('Alex Dubois');
-
-    useEffect(() => {
-        async function fetchInstructorName() {
-            try {
-                const settings = await getSettings();
-                if (settings?.instructorName) {
-                    setInstructorName(settings.instructorName);
-                }
-            } catch (error) {
-                console.error("Failed to fetch instructor name:", error);
-            }
-        }
-        fetchInstructorName();
-    }, []);
 
     const handleGenerate = () => {
         if (name.trim()) {

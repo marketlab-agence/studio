@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket } from 'lucide-react';
-import { COURSES } from '@/lib/courses';
-import { TUTORIALS } from '@/lib/tutorials';
+import { getCourses } from '@/lib/courses';
+import { getTutorials } from '@/lib/tutorials';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,8 +76,10 @@ const futureCourses = [
   }
 ];
 
-export default function CoursesPage() {
-  const publishedCourses = COURSES.filter(c => c.status === 'Publié');
+export default async function CoursesPage() {
+  const courses = await getCourses();
+  const tutorials = await getTutorials();
+  const publishedCourses = courses.filter(c => c.status === 'Publié');
 
   return (
     <main className="flex-1 bg-background">
@@ -98,7 +100,7 @@ export default function CoursesPage() {
                 features: [course.description]
               };
               const href = `/tutorial/${course.id}`;
-              const chapterCount = TUTORIALS.filter(t => t.courseId === course.id).length;
+              const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
 
               return (
                 <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">

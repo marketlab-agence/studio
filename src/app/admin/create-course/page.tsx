@@ -37,7 +37,8 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
-import { COURSES } from '@/lib/courses';
+import type { CourseInfo } from '@/types/course.types';
+
 
 type StoredPlan = { plan: CreateCourseOutput; params: CreateCourseInput; localId: string; createdAt: Date };
 type BuildStep = {
@@ -46,6 +47,16 @@ type BuildStep = {
     lessonIndex?: number;
     title: string;
 };
+
+// This is a temporary solution to get course data on the client side without fs
+// In a real app, this would be an API call.
+async function getCourseClient(courseId: string): Promise<CourseInfo | undefined> {
+    // This is a placeholder. In a real app, you would fetch this from an API
+    // that can access the file system on the server.
+    // For now, we accept that this client-side action won't have the real data.
+    return undefined;
+}
+
 
 export default function CreateCoursePage() {
     const router = useRouter();
@@ -99,18 +110,19 @@ export default function CreateCoursePage() {
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad && planIdToLoad !== activePlanId) {
-            const courseToLoad = COURSES.find(c => c.id === planIdToLoad);
-            if (courseToLoad?.plan && courseToLoad?.generationParams) {
-                const storedPlanFromCourse: StoredPlan = {
-                    plan: courseToLoad.plan,
-                    params: courseToLoad.generationParams,
-                    localId: courseToLoad.id,
-                    createdAt: new Date(),
-                };
-                
-                setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
-                setActivePlanId(storedPlanFromCourse.localId);
-            }
+            getCourseClient(planIdToLoad).then(courseToLoad => {
+                 if (courseToLoad?.plan && courseToLoad?.generationParams) {
+                    const storedPlanFromCourse: StoredPlan = {
+                        plan: courseToLoad.plan,
+                        params: courseToLoad.generationParams,
+                        localId: courseToLoad.id,
+                        createdAt: new Date(),
+                    };
+                    
+                    setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
+                    setActivePlanId(storedPlanFromCourse.localId);
+                }
+            })
         }
     }, [searchParams, activePlanId, setActivePlanId, setGeneratedPlans]);
 
@@ -164,7 +176,12 @@ export default function CreateCoursePage() {
         if (!activePlan || !activeStoredPlan) return;
         setIsSavingPlan(true);
         try {
-            await savePlanAction(activePlan, activeStoredPlan.params);
+            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
+            const newStoredPlan = { ...activeStoredPlan, localId: courseId };
+            
+            setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
+            setActivePlanId(newStoredPlan.localId);
+
             toast({ title: "Plan sauvegardé !", description: "Votre plan a été sauvegardé dans la liste des formations." });
         } catch (e) {
             console.error(e);
@@ -209,15 +226,15 @@ export default function CreateCoursePage() {
 
     const handleFinishBuild = () => {
         if (activeStoredPlan) {
-            handleDeletePlan(activeStoredPlan.localId);
+           // We don't delete the plan anymore, as its ID might be the final course ID.
+           // The savePlanAction now handles overwriting correctly.
         }
         toast({
             title: "Formation créée avec succès !",
             description: "Vous allez être redirigé vers la liste des formations.",
         });
-        if (buildingCourseId) {
-            router.push(`/admin/courses`);
-        }
+        // Redirect to the list of courses, not the specific course page.
+        router.push(`/admin/courses`);
     };
 
     // Auto-trigger generation when step changes

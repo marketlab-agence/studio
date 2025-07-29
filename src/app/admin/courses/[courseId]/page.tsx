@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -17,14 +18,14 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, ChevronRight, UploadCloud } from 'lucide-react';
-import { publishCourseAction, getCourseAndChapters } from '@/actions/courseActions';
+import { getCourseAndChaptersAction } from '@/actions/courseActions';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
 import { PublishCourseButton } from './PublishCourseButton';
 
 
 export default async function CourseChaptersPage({ params }: { params: { courseId: string } }) {
-  const { course, chapters } = await getCourseAndChapters(params.courseId);
+  const { course, chapters } = await getCourseAndChaptersAction(params.courseId);
 
   if (!course) {
     notFound();

@@ -1,12 +1,14 @@
 
+
 'use client';
-import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
 import type { CourseProgress, GlobalProgress, Tutorial } from '@/types/tutorial.types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { TUTORIALS } from '@/lib/tutorials';
 import { QUIZZES } from '@/lib/quiz';
+import allCourses from '@/data/courses.json';
 import type { CourseInfo } from '@/types/course.types';
-import { COURSES } from '@/lib/courses';
+import type { Quiz } from '@/types/tutorial.types';
 
 const initialCourseProgress: CourseProgress = {
     quizScores: {},
@@ -33,8 +35,8 @@ type TutorialContextType = {
   resetActiveCourseProgress: () => void;
   resetChapter: (chapterId: string) => void;
   areAllLessonsInChapterCompleted: (chapterId: string) => boolean;
-  currentChapter: typeof TUTORIALS[0] | undefined;
-  currentLesson: typeof TUTORIALS[0]['lessons'][0] | undefined;
+  currentChapter: Tutorial | undefined;
+  currentLesson: Tutorial['lessons'][0] | undefined;
   currentView: 'lesson' | 'quiz';
   totalLessons: number;
   totalCompleted: number;
@@ -76,21 +78,25 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         },
     });
 
-    const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+    const [activeCourseId, setActiveCourseId] = useLocalStorage<string | null>('activeCourseId', null);
     const [course, setCourse] = useState<CourseInfo | undefined>();
     const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
+    
+    useEffect(() => {
+        setCourse((allCourses as CourseInfo[]).find(c => c.id === activeCourseId));
+        setCourseChapters((TUTORIALS as Tutorial[]).filter(t => t.courseId === activeCourseId));
+    }, [activeCourseId]);
+
 
     const setActiveCourse = useCallback((courseId: string) => {
         setActiveCourseId(courseId);
-        setCourse(COURSES.find(c => c.id === courseId));
-        setCourseChapters(TUTORIALS.filter(t => t.courseId === courseId));
-    }, []);
+    }, [setActiveCourseId]);
 
     const setActiveCourseAndData = useCallback((newCourse: CourseInfo, newChapters: Tutorial[]) => {
         setActiveCourseId(newCourse.id);
         setCourse(newCourse);
         setCourseChapters(newChapters);
-    }, []);
+    }, [setActiveCourseId]);
 
     const progress = useMemo(() => activeCourseId ? (globalProgress[activeCourseId] || initialCourseProgress) : initialCourseProgress, [globalProgress, activeCourseId]);
 
@@ -251,7 +257,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         // Only calculate stats for courses that have been started
         const startedCourseIds = Object.keys(globalProgress).filter(courseId => {
             const courseProgressData = globalProgress[courseId];
-            const course = COURSES.find(c => c.id === courseId);
+            const course = (allCourses as CourseInfo[]).find(c => c.id === courseId);
             // A course is considered "started" if a progress object exists for it
             // and it has at least one completed lesson OR a "current" lesson is tracked.
             return courseProgressData && course && course.status === 'Publié' && (courseProgressData.completedLessons.size > 0 || courseProgressData.currentLessonId);
@@ -261,7 +267,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
             const courseProgressData = globalProgress[courseId];
             if (!courseProgressData) return;
             
-            const chaptersForThisCourse = TUTORIALS.filter(t => t.courseId === courseId);
+            const chaptersForThisCourse = (TUTORIALS as Tutorial[]).filter(t => t.courseId === courseId);
             const lessonsForThisCourse = chaptersForThisCourse.reduce((acc, chap) => acc + chap.lessons.length, 0);
             
             globalTotalLessons += lessonsForThisCourse;

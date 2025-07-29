@@ -1,4 +1,5 @@
-import { getAdminUsers } from '@/actions/adminActions';
+
+import { getAdminUsersAction } from '@/actions/adminActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,7 +10,7 @@ import { Users, ChevronRight, Shield } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminUsersListPage() {
-  const users = await getAdminUsers();
+  const users = await getAdminUsersAction();
   
   const roleBadgeVariants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     'Super Admin': 'destructive',

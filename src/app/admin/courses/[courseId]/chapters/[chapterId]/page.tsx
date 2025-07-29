@@ -1,5 +1,5 @@
 
-import { TUTORIALS } from '@/lib/tutorials';
+import { getTutorials } from '@/lib/tutorials';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -19,11 +19,13 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
-import { COURSES } from '@/lib/courses';
+import { getCourses } from '@/lib/courses';
 
-export default function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
-  const chapter = TUTORIALS.find(c => c.id === params.chapterId);
-  const course = COURSES.find(c => c.id === params.courseId);
+export default async function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
+  const tutorials = await getTutorials();
+  const chapter = tutorials.find(c => c.id === params.chapterId);
+  const courses = await getCourses();
+  const course = courses.find(c => c.id === params.courseId);
 
   if (!chapter || !course) {
     notFound();

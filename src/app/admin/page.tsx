@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { getAdminCourses, getSettings, updateSettings } from '@/actions/adminActions';
+import { getAdminCoursesAction, getSettingsAction, updateSettingsAction, getAdminUsersAction } from '@/actions/adminActions';
 import type { AppSettings } from '@/types/settings.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -55,27 +55,14 @@ export default function AdminDashboardPage() {
         setDataLoading(true);
         
         try {
-            const coursesData = await getAdminCourses();
+            const coursesData = await getAdminCoursesAction();
             setCourses(coursesData);
 
-            const settingsData = await getSettings();
+            const settingsData = await getSettingsAction();
             setSettings(settingsData);
             setInstructorName(settingsData.instructorName || '');
-
-            let initialUsers = [...MOCK_USERS];
-            if (authUser && !initialUsers.some(u => u.email === authUser.email)) {
-                const newUser = {
-                    id: authUser.uid,
-                    name: authUser.displayName || 'Nouvel Utilisateur',
-                    email: authUser.email || '',
-                    role: 'Utilisateur',
-                    plan: 'Gratuit',
-                    status: 'Actif',
-                    joined: format(new Date(), 'yyyy-MM-dd'),
-                    phone: authUser.phoneNumber || undefined,
-                };
-                initialUsers.push(newUser as any);
-            }
+            
+            const initialUsers = await getAdminUsersAction();
             
             if (initialUsers.length > 0) {
                 const totalUsers = initialUsers.length;
@@ -99,13 +86,13 @@ export default function AdminDashboardPage() {
         }
     }
     loadAdminData();
-  }, [authUser, toast]);
+  }, [toast]);
   
   const handleSaveSettings = async () => {
     if (!instructorName) return;
     setIsSavingSettings(true);
     try {
-        await updateSettings({ instructorName });
+        await updateSettingsAction({ instructorName });
         toast({ title: 'Paramètres sauvegardés !', description: 'Le nom de l\'instructeur a été mis à jour.' });
     } catch (e) {
         toast({ title: 'Erreur', description: 'La sauvegarde a échoué.', variant: 'destructive' });

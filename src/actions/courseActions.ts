@@ -3,32 +3,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { COURSES } from '@/lib/courses';
-import { TUTORIALS } from '@/lib/tutorials';
-import { QUIZZES } from '@/lib/quiz';
+import { getCourses, saveCourses } from '@/lib/courses';
+import { getTutorials, saveTutorials } from '@/lib/tutorials';
+import { getQuizzes, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
-
-// Server-only file writing functions
-async function saveCourses() {
-  // In a real production environment, you would save this to a database.
-  // For this prototype, data is in-memory only.
-  console.log("Simulating courses save. Data is in-memory only.");
-}
-
-async function saveTutorials() {
-  // In a real production environment, you would save this to a database.
-  // For this prototype, data is in-memory only.
-  console.log("Simulating tutorials save. Data is in-memory only.");
-}
-
-async function saveQuizzes() {
-  // In a real production environment, you would save this to a database.
-  // For this prototype, data is in-memory only.
-  console.log("Simulating quizzes save. Data is in-memory only.");
-}
-
 
 const slugify = (text: string) =>
   text
@@ -42,45 +22,40 @@ const slugify = (text: string) =>
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
+    const courses = await getCourses();
+    
     const courseId = slugify(plan.title);
     
-    if (!COURSES.find(c => c.id === courseId)) {
-        COURSES.push({
-            id: courseId,
-            title: plan.title,
-            description: plan.description,
-            status: 'Plan',
-            plan: plan,
-            generationParams: params,
-        });
-    } else {
-        const index = COURSES.findIndex(c => c.id === courseId);
-        if (index !== -1) {
-            COURSES[index] = {
-                ...COURSES[index],
-                title: plan.title,
-                description: plan.description,
-                status: 'Plan',
-                plan: plan,
-                generationParams: params,
-            };
-        }
-    }
+    // Remove any existing course with the same ID to prevent duplicates/stale data
+    const updatedCourses = courses.filter(c => c.id !== courseId);
+    
+    updatedCourses.push({
+        id: courseId,
+        title: plan.title,
+        description: plan.description,
+        status: 'Plan',
+        plan: plan,
+        generationParams: params,
+    });
 
-    await saveCourses();
+    await saveCourses(updatedCourses);
     revalidatePath('/admin/courses');
     return { courseId };
 }
 
 
 export async function buildCourseFromPlanAction(courseId: string) {
-    const courseIndex = COURSES.findIndex(c => c.id === courseId);
+    const courses = await getCourses();
+    const tutorials = await getTutorials();
+    const quizzes = await getQuizzes();
+
+    const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
         console.error("Course not found for building");
         return;
     }
     
-    const course = COURSES[courseIndex];
+    const course = courses[courseIndex];
     const plan = course.plan;
 
     if (!plan) {
@@ -91,7 +66,7 @@ export async function buildCourseFromPlanAction(courseId: string) {
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
         
-        if (TUTORIALS.find(t => t.id === chapterId)) return;
+        if (tutorials.find(t => t.id === chapterId)) return;
 
         const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
             id: `${chapterId}-l${lessonIndex + 1}`,
@@ -109,7 +84,7 @@ export async function buildCourseFromPlanAction(courseId: string) {
             description: `Un chapitre sur ${chapterPlan.title}.`,
             lessons: lessons,
         };
-        TUTORIALS.push(newTutorial);
+        tutorials.push(newTutorial);
 
         const quizQuestions: Question[] = chapterPlan.quiz.questions.map((q, questionIndex) => ({
             id: `${chapterId}-q${questionIndex + 1}`,
@@ -129,17 +104,17 @@ export async function buildCourseFromPlanAction(courseId: string) {
             passingScore: 80,
             feedbackTiming: chapterPlan.quiz.feedbackTiming || 'end',
         };
-        QUIZZES[chapterId] = newQuiz;
+        quizzes[chapterId] = newQuiz;
     });
 
-    COURSES[courseIndex] = {
+    courses[courseIndex] = {
         ...course,
         status: 'Brouillon',
     };
     
-    await saveCourses();
-    await saveTutorials();
-    await saveQuizzes();
+    await saveCourses(courses);
+    await saveTutorials(tutorials);
+    await saveQuizzes(quizzes);
 
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
@@ -148,10 +123,11 @@ export async function buildCourseFromPlanAction(courseId: string) {
 
 
 export async function publishCourseAction(courseId: string) {
-    const course = COURSES.find(c => c.id === courseId);
+    const courses = await getCourses();
+    const course = courses.find(c => c.id === courseId);
     if (course) {
         course.status = 'Publié';
-        await saveCourses();
+        await saveCourses(courses);
         revalidatePath('/admin');
         revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
@@ -179,7 +155,6 @@ function getRelevantComponents(courseId: string): { interactive: string[], visua
     const GENERIC_INTERACTIVE = [ "AiHelper" ];
     const GENERIC_VISUAL = ["AnimatedFlow", "ConceptDiagram", "StatisticsChart"];
 
-    // A list of course IDs that are considered "technical" and can use the full component list
     const TECHNICAL_COURSES = ["git-github-tutorial", "jira-de-zero-a-heros"];
 
     if (TECHNICAL_COURSES.includes(courseId)) {
@@ -195,7 +170,10 @@ export async function generateLessonContentAction(
   chapterIndex: number,
   lessonIndex: number,
 ): Promise<GenerateLessonContentOutput> {
-  const course = COURSES.find(c => c.id === courseId);
+  const courses = await getCourses();
+  const tutorials = await getTutorials();
+  
+  const course = courses.find(c => c.id === courseId);
   if (!course || !course.plan) {
     throw new Error('Course or course plan not found.');
   }
@@ -208,8 +186,8 @@ export async function generateLessonContentAction(
   const chapterId = `${courseId}-ch${chapterIndex + 1}`;
   const lessonId = `${chapterId}-l${lessonIndex + 1}`;
   
-  const tutorialChapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
-  const tutorialLessonIndex = TUTORIALS[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
+  const tutorialChapterIndex = tutorials.findIndex(t => t.id === chapterId);
+  const tutorialLessonIndex = tutorials[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
 
   if (!lessonPlan || tutorialChapterIndex === -1 || typeof tutorialLessonIndex === "undefined" || tutorialLessonIndex === -1) {
     throw new Error('Lesson plan or tutorial lesson structure not found.');
@@ -240,11 +218,11 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
   const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContent(input);
 
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
-  TUTORIALS[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
+  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
+  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
+  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
   
-  await saveTutorials();
+  await saveTutorials(tutorials);
 
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
@@ -252,73 +230,77 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 }
 
 
-export async function getCourseAndChapters(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
-    const course = COURSES.find(c => c.id === courseId);
+export async function getCourseAndChaptersAction(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
+    const courses = await getCourses();
+    const tutorials = await getTutorials();
+    const course = courses.find(c => c.id === courseId);
     if (!course) {
         return { course: null, chapters: [] };
     }
-    const chapters = TUTORIALS.filter(t => t.courseId === courseId);
+    const chapters = tutorials.filter(t => t.courseId === courseId);
     return { course, chapters };
 }
 
-export async function updateLessonContent(courseId: string, chapterId: string, lesson: Lesson) {
-    const chapterIndex = TUTORIALS.findIndex(t => t.id === chapterId);
+export async function updateLessonContentAction(courseId: string, chapterId: string, lesson: Lesson) {
+    const tutorials = await getTutorials();
+    const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
         throw new Error('Chapter not found');
     }
 
-    const lessonIndex = TUTORIALS[chapterIndex].lessons.findIndex(l => l.id === lesson.id);
+    const lessonIndex = tutorials[chapterIndex].lessons.findIndex(l => l.id === lesson.id);
     if (lessonIndex === -1) {
         throw new Error('Lesson not found');
     }
 
-    TUTORIALS[chapterIndex].lessons[lessonIndex] = lesson;
+    tutorials[chapterIndex].lessons[lessonIndex] = lesson;
 
-    await saveTutorials();
+    await saveTutorials(tutorials);
     
     // Revalidate paths to reflect changes
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
 }
 
-export async function updateQuiz(courseId: string, chapterId: string, updatedQuiz: Quiz) {
-    if (!QUIZZES[chapterId]) {
+export async function updateQuizAction(courseId: string, chapterId: string, updatedQuiz: Quiz) {
+    const quizzes = await getQuizzes();
+    if (!quizzes[chapterId]) {
         throw new Error('Quiz not found');
     }
-    QUIZZES[chapterId] = updatedQuiz;
-    await saveQuizzes();
+    quizzes[chapterId] = updatedQuiz;
+    await saveQuizzes(quizzes);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
 }
 
 export async function deleteCourseAction(courseId: string) {
-    const courseIndex = COURSES.findIndex(c => c.id === courseId);
+    let courses = await getCourses();
+    let tutorials = await getTutorials();
+    let quizzes = await getQuizzes();
+
+    const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
         throw new Error('Course not found for deletion');
     }
 
     // Identify associated tutorials and their IDs before modifying arrays
-    const tutorialsForCourse = TUTORIALS.filter(t => t.courseId === courseId);
-    const tutorialIdsToDelete = new Set(tutorialsForCourse.map(t => t.id));
+    const tutorialIdsToDelete = new Set(tutorials.filter(t => t.courseId === courseId).map(t => t.id));
 
-    // Remove the course
-    COURSES.splice(courseIndex, 1);
-
-    // Remove associated tutorials atomically
-    const updatedTutorials = TUTORIALS.filter(t => t.courseId !== courseId);
-    TUTORIALS.splice(0, TUTORIALS.length, ...updatedTutorials);
+    // Remove the course and associated tutorials
+    courses = courses.filter(c => c.id !== courseId);
+    tutorials = tutorials.filter(t => t.courseId !== courseId);
 
     // Remove associated quizzes
     tutorialIdsToDelete.forEach(id => {
-        if (QUIZZES[id]) {
-            delete QUIZZES[id];
+        if (quizzes[id]) {
+            delete quizzes[id];
         }
     });
 
-    await saveCourses();
-    await saveTutorials();
-    await saveQuizzes();
+    await saveCourses(courses);
+    await saveTutorials(tutorials);
+    await saveQuizzes(quizzes);
 
     revalidatePath('/admin/courses');
 }

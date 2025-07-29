@@ -48,6 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
         setPlan(newPlan);
         setIsPremium(newPlan === 'Premium');
+        const mockUser = MOCK_USERS.find(u => u.email === user.email);
+        if (mockUser) {
+            mockUser.plan = newPlan;
+        }
     }
   }, [user]);
 

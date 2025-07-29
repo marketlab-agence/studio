@@ -19,7 +19,7 @@ import type { Quiz, Question, Answer } from '@/types/tutorial.types';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { updateQuiz } from '@/actions/courseActions';
+import { updateQuizAction } from '@/actions/courseActions';
 
 interface EditQuizFormProps {
     initialQuiz: Quiz;
@@ -103,7 +103,7 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
     setIsSaving(true);
     if (quiz) {
         try {
-            await updateQuiz(courseId, chapterId, quiz);
+            await updateQuizAction(courseId, chapterId, quiz);
             toast({
                 title: 'Quiz Sauvegardé',
                 description: `Le quiz pour "${initialChapterTitle}" a été mis à jour.`,
