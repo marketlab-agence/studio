@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Bot, Loader2, Sparkles } from 'lucide-react';
-import { getContextualHelp } from '@/ai/flows/git-helper-flow';
+import { getContextualHelp } from '@/ai/flows/contextual-helper-flow';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -14,11 +14,11 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type AiHelperProps = {
-    lessonContext?: string;
-    courseTopic?: string;
+    lessonContext: string;
+    courseTopic: string;
 };
 
-export function AiHelper({ lessonContext = "Assistant IA Général", courseTopic = "Git et GitHub" }: AiHelperProps) {
+export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
     const [query, setQuery] = useState('');
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);

@@ -43,12 +43,12 @@ export default function AiAssistantPage() {
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Git Assistant IA</h1>
-            <p className="text-muted-foreground">Votre copilote expert pour maîtriser Git.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Assistant IA</h1>
+            <p className="text-muted-foreground">Votre copilote expert pour maîtriser n'importe quel sujet.</p>
           </div>
         </div>
         
-        <AiHelper />
+        <AiHelper courseTopic="Git et GitHub" lessonContext="Assistant général" />
 
       </div>
     </main>
