@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser) {
+        // Use local mock data instead of Firestore
         const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
         const userPlan = mockUser ? mockUser.plan : 'Gratuit';
         setPlan(userPlan);
