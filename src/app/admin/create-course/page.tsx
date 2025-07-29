@@ -159,16 +159,16 @@ export default function CreateCoursePage() {
         }
     };
     
-    const handleSavePlanAndRedirect = async () => {
+    const handleSavePlan = async () => {
         if (!activePlan || !activeStoredPlan) return;
         setIsSavingPlan(true);
         try {
             await savePlanAction(activePlan, activeStoredPlan.params);
-            toast({ title: "Plan sauvegardé !", description: "Redirection vers la liste des formations..." });
-            router.push(`/admin/courses`);
+            toast({ title: "Plan sauvegardé !", description: "Votre plan a été sauvegardé dans la liste des formations." });
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors de la sauvegarde du plan.");
+        } finally {
             setIsSavingPlan(false);
         }
     };
@@ -341,7 +341,7 @@ export default function CreateCoursePage() {
           </Accordion>
           <Separator />
           <div className="flex flex-wrap gap-4">
-              <Button onClick={handleSavePlanAndRedirect} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan</Button>
+              <Button onClick={handleSavePlan} size="lg" variant="secondary" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isSavingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>} Sauvegarder le Plan</Button>
               <Button onClick={handleStartCourseBuild} size="lg" disabled={isSavingPlan || isCreatingCourse || isBuildingMode}>{isCreatingCourse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4"/>} Lancer la Création Détaillée</Button>
           </div>
       </div>
