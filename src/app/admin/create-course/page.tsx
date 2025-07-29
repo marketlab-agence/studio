@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -212,10 +213,10 @@ export default function CreateCoursePage() {
         }
         toast({
             title: "Formation créée avec succès !",
-            description: "Vous êtes redirigé vers la page d'édition de la formation.",
+            description: "Vous allez être redirigé vers la liste des formations.",
         });
         if (buildingCourseId) {
-            router.push(`/admin/courses/${buildingCourseId}`);
+            router.push(`/admin/courses`);
         }
     };
 
