@@ -34,6 +34,7 @@ export default function AboutPage() {
                 alt="Une image représentant la technologie et l'apprentissage"
                 className="mx-auto aspect-[3/2] overflow-hidden rounded-xl object-cover"
                 data-ai-hint="technology learning"
+                priority
               />
             </div>
           </div>

@@ -12,7 +12,7 @@ type AuthContextType = {
   loading: boolean;
   plan: 'Premium' | 'Gratuit' | null;
   isPremium: boolean;
-  updateUserPlan: (newPlan: 'Premium' | 'Gratuit') => void;
+  updateUserPlan: ((newPlan: 'Premium' | 'Gratuit') => void) | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,28 +24,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser) {
-        // Check localStorage first for persisted plan changes
-        const storedPlan = localStorage.getItem(`user_plan_${authUser.uid}`);
-        if (storedPlan === 'Premium' || storedPlan === 'Gratuit') {
-          setPlan(storedPlan);
-          setIsPremium(storedPlan === 'Premium');
-        } else {
-          // Fallback to mock data for initial load
-          const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
-          const userPlan = mockUser?.plan || 'Gratuit';
-          setPlan(userPlan);
-          setIsPremium(userPlan === 'Premium');
-          // Persist the initial plan
-          localStorage.setItem(`user_plan_${authUser.uid}`, userPlan);
-        }
+        const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
+        const userPlan = mockUser ? mockUser.plan : 'Gratuit';
+        setPlan(userPlan);
+        setIsPremium(userPlan === 'Premium');
       } else {
         setPlan(null);
         setIsPremium(false);
@@ -57,10 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateUserPlan = useCallback((newPlan: 'Premium' | 'Gratuit') => {
+    // This is a mock update for the local session.
+    // In a real app, this would write to the database.
     if (user) {
         setPlan(newPlan);
         setIsPremium(newPlan === 'Premium');
-        localStorage.setItem(`user_plan_${user.uid}`, newPlan);
     }
   }, [user]);
 

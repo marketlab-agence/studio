@@ -6,9 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { 
     GoogleAuthProvider, 
-    GithubAuthProvider, 
+    GithubAuthProvider,
     signInWithPopup,
-    createUserWithEmailAndPassword, 
     signInWithEmailAndPassword 
 } from 'firebase/auth';
 
@@ -21,6 +20,7 @@ import { GoogleIcon, GithubIcon } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,7 +58,7 @@ export default function LoginPage() {
       } else if (error?.code === 'auth/popup-blocked') {
         errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
       } else if (error?.code === 'auth/unauthorized-domain') {
-        errorMessage = 'Ce domaine n\'est pas autorisé pour l\'authentification OAuth. Contactez l\'administrateur.';
+        errorMessage = "Ce domaine n'est pas autorisé pour l'authentification OAuth. Contactez l'administrateur."; // Fixed syntax error
       } else if (error?.message) {
         errorMessage = error.message;
       }
@@ -83,33 +83,18 @@ export default function LoginPage() {
     }
 
     try {
-      // First, try to sign in
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
     } catch (signInError: any) {
-      // If user does not exist or password is wrong, try to create an account
+      let description = "Une erreur est survenue. Veuillez réessayer.";
       if (signInError.code === 'auth/invalid-credential') {
-        try {
-          // Try to create an account
-          await createUserWithEmailAndPassword(auth, email, password);
-          toast({ title: 'Compte créé avec succès', description: 'Bienvenue !' });
-        } catch (signUpError: any) {
-          // If sign up fails because email is in use, it means the password was wrong for sign in
-          if (signUpError.code === 'auth/email-already-in-use') {
-            toast({ variant: 'destructive', title: 'Erreur de connexion', description: "Le mot de passe est incorrect. Veuillez réessayer." });
-          } else if (signUpError.code === 'auth/weak-password') {
-            toast({ variant: 'destructive', title: 'Erreur d\'inscription', description: "Le mot de passe est trop faible (6 caractères minimum)." });
-          } else {
-            toast({ variant: 'destructive', title: 'Erreur', description: signUpError.message });
-          }
-        }
-      } else { // Handle other sign-in errors
-        let description = "Une erreur est survenue. Veuillez réessayer.";
-        if (signInError.code === 'auth/network-request-failed') {
+        description = "Email ou mot de passe incorrect. Veuillez réessayer.";
+      } else if (signInError.code === 'auth/user-disabled') {
+          description = "Votre compte a été désactivé. Veuillez contacter l'administrateur.";
+      } else if (signInError.code === 'auth/network-request-failed') {
           description = "La requête réseau a échoué. Vérifiez votre connexion internet.";
-        }
-        toast({ variant: 'destructive', title: 'Erreur de connexion', description });
       }
+      toast({ variant: 'destructive', title: 'Erreur de connexion', description });
     } finally {
       setIsSubmitting(false);
     }
@@ -161,9 +146,12 @@ export default function LoginPage() {
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Continuer avec votre Email'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
             </Button>
           </form>
+          <div className="text-center text-sm">
+            Vous n'avez pas de compte ? <Link href="/signup" className="underline">Inscrivez-vous</Link>
+          </div>
         </CardContent>
       </Card>
     </main>
