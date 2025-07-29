@@ -24,11 +24,6 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [responseLength, setResponseLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
-    
-    useEffect(() => {
-        const getDefaultQuery = (topic: string) => topic.toLowerCase().includes('git') ? 'git rebase -i HEAD~3' : '';
-        setQuery(getDefaultQuery(courseTopic));
-    }, [courseTopic]);
 
 
     const placeholderQuery = courseTopic.toLowerCase().includes('git') 
