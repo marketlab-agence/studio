@@ -7,6 +7,7 @@ import type { AppSettings } from '@/types/settings.types';
 import { getSettings, saveSettings } from '@/lib/settings';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
+import { db } from '@/lib/firebase-admin';
 
 export async function getSettingsAction(): Promise<AppSettings> {
     return await getSettings();
@@ -21,8 +22,8 @@ export async function updateSettingsAction(newSettings: AppSettings) {
 
 export async function getAdminCoursesAction() {
     try {
-        const courses = await getCourses();
-        const tutorials = await getTutorials();
+        const courses = await getCourses(db);
+        const tutorials = await getTutorials(db);
 
         const coursesData = courses.map(course => {
             const lessonsCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, tutorial) => acc + (tutorial.lessons?.length || 0), 0);
