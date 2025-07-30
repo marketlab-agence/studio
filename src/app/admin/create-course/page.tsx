@@ -192,17 +192,19 @@ export default function CreateCoursePage() {
             // Step 1: Always save the latest version of the plan to get a reliable courseId
             const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
             
+            // Step 2: Build the course structure using the reliable courseId
+            await buildCourseFromPlanAction(courseId);
+            
+            // Set the final courseId for the building process
+            setBuildingCourseId(courseId);
+
             // Update local state to reflect the potentially new (or confirmed) courseId
             if (activePlanId !== courseId) {
                 const newStoredPlan = { ...activeStoredPlan, localId: courseId };
                 setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
                 setActivePlanId(courseId);
             }
-            setBuildingCourseId(courseId);
             
-            // Step 2: Build the course structure using the reliable courseId
-            await buildCourseFromPlanAction(courseId);
-
             // Step 3: Prepare the UI for building mode
             const steps: BuildStep[] = [];
             activePlan.chapters.forEach((chapter, cIndex) => {
