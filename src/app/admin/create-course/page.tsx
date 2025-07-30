@@ -140,7 +140,6 @@ export default function CreateCoursePage() {
         }
         setIsGeneratingPlan(true);
         setError(null);
-        setActivePlanId(null);
         try {
             const params: CreateCourseInput = { topic, targetAudience, numChapters: numChapters ? parseInt(numChapters, 10) : undefined, numLessonsPerChapter: numLessons ? parseInt(numLessons, 10) : undefined, numQuestionsPerQuiz: numQuestions ? parseInt(numQuestions, 10) : undefined, courseLanguage: language || undefined, lessonLength, allowMultipleChoice, feedbackTiming };
             const plan = await createCoursePlan(params);
