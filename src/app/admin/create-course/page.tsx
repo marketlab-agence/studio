@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { buildCourseFromPlanAction, savePlanAction, generateLessonContentAction } from '@/actions/courseActions';
+import { buildCourseFromPlanAction, savePlanAction, generateLessonContentAction, getCourseAndChaptersAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -47,16 +47,6 @@ type BuildStep = {
     lessonIndex?: number;
     title: string;
 };
-
-// This is a temporary solution to get course data on the client side without fs
-// In a real app, this would be an API call.
-async function getCourseClient(courseId: string): Promise<CourseInfo | undefined> {
-    // This is a placeholder. In a real app, you would fetch this from an API
-    // that can access the file system on the server.
-    // For now, we accept that this client-side action won't have the real data.
-    return undefined;
-}
-
 
 export default function CreateCoursePage() {
     const router = useRouter();
@@ -110,7 +100,7 @@ export default function CreateCoursePage() {
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad && planIdToLoad !== activePlanId) {
-            getCourseClient(planIdToLoad).then(courseToLoad => {
+            getCourseAndChaptersAction(planIdToLoad).then(({ course: courseToLoad }) => {
                  if (courseToLoad?.plan && courseToLoad?.generationParams) {
                     const storedPlanFromCourse: StoredPlan = {
                         plan: courseToLoad.plan,
