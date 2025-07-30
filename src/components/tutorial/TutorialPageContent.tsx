@@ -33,6 +33,7 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
     goToNextLesson,
     currentView,
     setActiveCourseAndData,
+    areAllLessonsInChapterCompleted,
   } = useTutorial();
 
   useEffect(() => {
@@ -63,7 +64,11 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
   const chapterQuiz = useMemo(() => currentChapter ? allQuizzesData[currentChapter.id] : undefined, [currentChapter, allQuizzesData]);
   
   const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
-  const isQuizAvailable = !!chapterQuiz;
+  
+  const allLessonsInChapterCompleted = currentChapter ? areAllLessonsInChapterCompleted(currentChapter.id) : false;
+  
+  const isQuizAvailable = !!chapterQuiz && (isLastLessonInChapter || allLessonsInChapterCompleted);
+
 
   const handleQuizComplete = useCallback((score: number, answers: Record<string, string[]>) => {
     if (currentChapter) setQuizScore(currentChapter.id, score, answers);
@@ -128,7 +133,7 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
                         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
                             <LessonView lesson={currentLesson} />
                         </div>
-                        <NavigationControls onTakeQuiz={isLastLessonInChapter && isQuizAvailable ? handleStartQuiz : undefined} />
+                        <NavigationControls onTakeQuiz={isQuizAvailable ? handleStartQuiz : undefined} />
                     </>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8">

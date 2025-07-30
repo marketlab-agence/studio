@@ -277,7 +277,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         return currentQuestion.answers.map(a => {
             if (currentQuestion.isMultipleChoice) {
                 return (
-                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[:checked]:border-primary transition-colors">
+                    <div key={a.id} className="flex items-center space-x-3 p-3 rounded-md border bg-background hover:bg-muted/50 has-[:checked]:border-primary transition-colors">
                         <Checkbox
                             id={`${currentQuestion.id}-${a.id}`}
                             onCheckedChange={() => handleAnswerChange(a.id)}
@@ -288,7 +288,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                 )
             }
             return (
-                 <Label key={a.id} htmlFor={`${currentQuestion.id}-${a.id}`} className="flex items-center space-x-3 p-3 rounded-md border border-transparent has-[[data-state=checked]]:border-primary transition-colors cursor-pointer">
+                 <Label key={a.id} htmlFor={`${currentQuestion.id}-${a.id}`} className="flex items-center space-x-3 p-3 rounded-md border bg-background hover:bg-muted/50 has-[[data-state=checked]]:border-primary transition-colors cursor-pointer">
                     <RadioGroupItem 
                         value={a.id} 
                         id={`${currentQuestion.id}-${a.id}`}

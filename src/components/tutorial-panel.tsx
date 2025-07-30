@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -95,15 +95,17 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
               const isFirstChapter = index === 0;
               const prevChapter = isFirstChapter ? null : chapters[index - 1];
               const prevChapterQuiz = prevChapter ? allQuizzesData[prevChapter.id] : null;
-              
+
               const hasPassedPreviousQuiz = () => {
-                if (!prevChapter || !prevChapterQuiz) return true; // First chapter is always unlocked
+                if (isFirstChapter) return true;
+                if (!prevChapter || !prevChapterQuiz) return false;
                 const score = progress.quizScores[prevChapter.id];
                 return score !== undefined && score >= prevChapterQuiz.passingScore;
               };
-              
+
+              const isChapterLockedByQuiz = !hasPassedPreviousQuiz();
               const isPremiumLocked = index > 0 && !isPremium;
-              const isChapterTotallyLocked = isPremiumLocked || !hasPassedPreviousQuiz();
+              const isChapterTotallyLocked = isPremiumLocked || isChapterLockedByQuiz;
 
               const chapterQuiz = allQuizzesData[tutorial.id];
               const isQuizPassed = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
