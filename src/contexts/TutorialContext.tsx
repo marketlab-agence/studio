@@ -192,47 +192,69 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   const goToNextLesson = useCallback(() =>
   {
-    if (!activeCourseId || !courseChapters.length || !progress.currentChapterId || !progress.currentLessonId) return;
+    if (!activeCourseId || !courseChapters.length || !progress.currentChapterId) return;
     
-    updateActiveCourseProgress(prev =>
-    {
-        const newCompleted = new Set(prev.completedLessons).add(prev.currentLessonId!);
+    updateActiveCourseProgress(prev => {
+        // Always mark the current lesson as complete when moving next
+        const newCompleted = prev.currentLessonId ? new Set(prev.completedLessons).add(prev.currentLessonId) : prev.completedLessons;
 
         const chapterIndex = courseChapters.findIndex(c => c.id === prev.currentChapterId);
         if (chapterIndex === -1) return { ...prev, completedLessons: newCompleted };
 
         const currentChapter = courseChapters[chapterIndex];
-        const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
+        const lessonIndex = prev.currentLessonId ? currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId) : -1;
 
+        // If there's a next lesson in the current chapter
         if (lessonIndex > -1 && lessonIndex < currentChapter.lessons.length - 1) {
-            // Go to next lesson in the same chapter
-            return { ...prev, currentLessonId: currentChapter.lessons[lessonIndex + 1].id, completedLessons: newCompleted };
+            return {
+                ...prev,
+                currentLessonId: currentChapter.lessons[lessonIndex + 1].id,
+                currentView: 'lesson',
+                completedLessons: newCompleted
+            };
         }
         
-        // At the end of a chapter, but not taking quiz. Usually means quiz was passed.
-        // Look for next chapter.
+        // If we are at the end of a chapter or coming from a quiz, find the next chapter
         if (chapterIndex < courseChapters.length - 1) {
              const nextChapter = courseChapters[chapterIndex + 1];
              if (nextChapter && nextChapter.lessons.length > 0) {
-                 return { ...prev, currentChapterId: nextChapter.id, currentLessonId: nextChapter.lessons[0].id, completedLessons: newCompleted };
+                 return {
+                     ...prev,
+                     currentChapterId: nextChapter.id,
+                     currentLessonId: nextChapter.lessons[0].id,
+                     currentView: 'lesson',
+                     completedLessons: newCompleted
+                 };
              }
         }
 
-        // If at the very end, just mark as complete
+        // If at the very end of the course, go to certificate page or similar
+        // For now, just stay on the last element and mark as complete
+        // A redirect can be triggered from the component based on isLastLessonInTutorial
         return { ...prev, completedLessons: newCompleted };
     });
-  }, [activeCourseId, courseChapters, progress.currentChapterId, progress.currentLessonId, updateActiveCourseProgress]);
+  }, [activeCourseId, courseChapters, progress.currentChapterId, updateActiveCourseProgress]);
+
 
   const goToPreviousLesson = useCallback(() =>
   {
-    if (!activeCourseId || !courseChapters.length || !progress.currentChapterId || !progress.currentLessonId) return;
+    if (!activeCourseId || !courseChapters.length || !progress.currentChapterId) return;
     updateActiveCourseProgress(prev =>
     {
+        // If current view is quiz, just go back to the last lesson of the current chapter.
+        if (prev.currentView === 'quiz') {
+            const currentChapter = courseChapters.find(c => c.id === prev.currentChapterId);
+            if (currentChapter && currentChapter.lessons.length > 0) {
+                 return { ...prev, currentLessonId: currentChapter.lessons[currentChapter.lessons.length - 1].id, currentView: 'lesson' };
+            }
+        }
+
       const chapterIndex = courseChapters.findIndex(c => c.id === prev.currentChapterId);
       if (chapterIndex === -1) return prev;
-
+      
       const currentChapter = courseChapters[chapterIndex];
-      const lessonIndex = currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId);
+      const lessonIndex = prev.currentLessonId ? currentChapter.lessons.findIndex(l => l.id === prev.currentLessonId) : -1;
+
       if (lessonIndex > 0) return { ...prev, currentLessonId: currentChapter.lessons[lessonIndex - 1].id, currentView: 'lesson' };
 
       if (chapterIndex > 0)
@@ -242,7 +264,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
       }
       return prev;
     });
-  }, [activeCourseId, courseChapters, progress.currentChapterId, progress.currentLessonId, updateActiveCourseProgress]);
+  }, [activeCourseId, courseChapters, progress.currentChapterId, updateActiveCourseProgress]);
 
   const resetActiveCourseProgress = useCallback(() =>
   {
@@ -286,8 +308,8 @@ export function TutorialProvider({ children }: { children: ReactNode })
     const currentChapter = courseChapters.find(t => t.id === progress.currentChapterId);
     const currentLesson = currentChapter?.lessons.find(l => l.id === progress.currentLessonId);
 
-    const chapterIndex = courseChapters.findIndex(c => c.id === progress.currentChapterId);
-    const lessonIndex = currentChapter?.lessons.findIndex(l => l.id === progress.currentLessonId) ?? -1;
+    const chapterIndex = progress.currentChapterId ? courseChapters.findIndex(c => c.id === progress.currentChapterId) : -1;
+    const lessonIndex = (currentChapter && progress.currentLessonId) ? currentChapter.lessons.findIndex(l => l.id === progress.currentLessonId) : -1;
 
     const isFirstLessonInTutorial = chapterIndex === 0 && lessonIndex === 0;
     const isLastLessonInTutorial = chapterIndex === courseChapters.length - 1 && lessonIndex === (currentChapter?.lessons.length ?? 0) - 1;

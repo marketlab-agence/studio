@@ -95,7 +95,12 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
               const isFirstChapter = index === 0;
               const prevChapter = isFirstChapter ? null : chapters[index - 1];
               const prevChapterQuiz = prevChapter ? allQuizzesData[prevChapter.id] : null;
-              const hasPassedPreviousQuiz = prevChapter && prevChapterQuiz ? (progress.quizScores[prevChapter.id] ?? 0) >= prevChapterQuiz.passingScore : true;
+              
+              const hasPassedPreviousQuiz = useMemo(() => {
+                if (!prevChapter || !prevChapterQuiz) return true; // First chapter is always unlocked
+                const score = progress.quizScores[prevChapter.id];
+                return score !== undefined && score >= prevChapterQuiz.passingScore;
+              }, [prevChapter, prevChapterQuiz, progress.quizScores]);
               
               const isPremiumLocked = index > 0 && !isPremium;
               const isChapterTotallyLocked = isPremiumLocked || !hasPassedPreviousQuiz;

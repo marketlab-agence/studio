@@ -1,8 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -38,17 +36,16 @@ type UserAnswers = Record<string, string[]>;
 
 export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) {
     const router = useRouter();
-    const { progress, resetChapter, setCurrentLocation, courseChapters } = useTutorial();
+    const { progress, resetChapter, setCurrentLocation, courseChapters, totalLessons, totalCompleted } = useTutorial();
     const { isPremium } = useAuth();
-    const existingScore = progress.quizScores[quiz.id];
-    const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
-    const existingAnswers = progress.quizAnswers?.[quiz.id];
-
+    
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [showResults, setShowResults] = useState(false);
     const [calculatedScore, setCalculatedScore] = useState(0);
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+    const isTutorialComplete = useMemo(() => totalLessons > 0 && totalCompleted >= totalLessons, [totalLessons, totalCompleted]);
 
     const resetQuiz = useCallback(() => {
         setUserAnswers({});
@@ -58,25 +55,30 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     }, []);
     
     const handleResetChapterAndStartOver = () => {
-        resetChapter(quiz.id);
-        const chapter = courseChapters.find(c => c.id === quiz.id); // Use courseChapters from context
+        const chapter = courseChapters.find(c => c.id === quiz.id);
         if (chapter && chapter.lessons.length > 0) {
+            // Reset progress for this chapter
+            resetChapter(quiz.id);
+            // Navigate to the first lesson of the chapter
             setCurrentLocation(chapter.id, chapter.lessons[0].id);
         }
     };
 
     useEffect(() => {
-        if (showResults) {
-            return;
-        }
+        // This effect runs once when the component mounts with a new quiz.
+        // It decides whether to show the results immediately or start a new attempt.
+        const existingScore = progress.quizScores[quiz.id];
+        const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
+        const existingAnswers = progress.quizAnswers?.[quiz.id];
 
-        if (hasPassedBefore) {
-            setUserAnswers(existingAnswers || {});
+        if (hasPassedBefore && existingAnswers) {
+            setUserAnswers(existingAnswers);
+            setCalculatedScore(existingScore);
             setShowResults(true);
         } else {
             resetQuiz();
         }
-    }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz, showResults]);
+    }, [quiz.id, progress.quizScores, progress.quizAnswers, quiz.passingScore, resetQuiz]);
     
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
@@ -138,8 +140,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         }
     };
     
-    const finalScore = hasPassedBefore ? (existingScore ?? 0) : calculatedScore;
-    const isQuizPassed = finalScore >= quiz.passingScore;
+    const isQuizPassed = calculatedScore >= quiz.passingScore;
     const isFirstChapterQuiz = courseChapters[0]?.id === quiz.id;
     const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
 
@@ -177,7 +178,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                             <CardTitle className="text-2xl">Résultats du Quiz</CardTitle>
                             <CardDescription>Votre score :</CardDescription>
                             <p className={cn("text-5xl font-bold", isQuizPassed ? 'text-green-500' : 'text-destructive')}>
-                                {finalScore.toFixed(0)}%
+                                {calculatedScore.toFixed(0)}%
                             </p>
                         </CardHeader>
                         <CardContent>
@@ -186,7 +187,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                     <CheckCircle className="h-4 w-4 !text-green-500" />
                                     <AlertTitle>Félicitations !</AlertTitle>
                                     <AlertDescription>
-                                        Vous avez réussi le quiz.
+                                        Vous avez réussi le quiz. {isTutorialComplete && 'Vous avez terminé toutes les leçons !'}
                                     </AlertDescription>
                                 </Alert>
                             ) : (
@@ -199,7 +200,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                                 </Alert>
                             )}
 
-                            {isPremium && isQuizPassed && (
+                             {isPremium && isQuizPassed && (
                                 <div className="mt-6 space-y-4 max-h-60 overflow-y-auto p-2">
                                     <h3 className="font-semibold">Correction détaillée :</h3>
                                     {quiz.questions.map(q => {
@@ -231,9 +232,9 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                             )}
                         </CardContent>
                         <CardFooter className="flex-row-reverse gap-2">
-                            {isQuizPassed ? (
-                                <Button onClick={onFinishQuiz} disabled={showUpgradePrompt}>
-                                    Continuer
+                             {isQuizPassed ? (
+                                <Button onClick={isTutorialComplete ? () => router.push('/certificate') : onFinishQuiz} disabled={showUpgradePrompt}>
+                                    {isTutorialComplete ? 'Voir mon certificat' : 'Chapitre suivant'}
                                     <ChevronRight className="ml-2 h-4 w-4" />
                                 </Button>
                             ) : (
