@@ -15,11 +15,11 @@ const slugify = (text: string) =>
   text
     .toString()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim()
-    .replace(/s+/g, '-')
-    .replace(/[^w-]+/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
@@ -54,8 +54,7 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
 export async function buildCourseFromPlanAction(courseId: string) {
     const { db } = await getFirebaseAdmin();
     // 1. Get the most up-to-date data from Firestore
-    const courses = await getCourses(db);
-    const course = courses.find(c => c.id === courseId);
+    const course = await getCourseById(db, courseId);
 
     if (!course || !course.plan) {
         throw new Error("Course or its plan not found in Firestore.");
@@ -115,16 +114,17 @@ export async function buildCourseFromPlanAction(courseId: string) {
         };
         quizzes[chapterId] = newQuiz;
     });
-
-    const courseIndexToUpdate = courses.findIndex(c => c.id === courseId);
+    
+    const allCourses = await getCourses(db);
+    const courseIndexToUpdate = allCourses.findIndex(c => c.id === courseId);
     if(courseIndexToUpdate !== -1) {
-        courses[courseIndexToUpdate] = {
+        allCourses[courseIndexToUpdate] = {
             ...course,
             status: 'Brouillon',
         };
     }
     
-    await saveCourses(db, courses);
+    await saveCourses(db, allCourses);
     await saveTutorials(db, tutorials);
     await saveQuizzes(db, quizzes);
 

@@ -187,7 +187,7 @@ export default function CreateCoursePage() {
         if (!activePlan || !activeStoredPlan) return;
         setIsCreatingCourse(true);
         setError(null);
-
+    
         try {
             // Step 1: Always save the latest version of the plan to get a reliable courseId
             const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
@@ -197,7 +197,7 @@ export default function CreateCoursePage() {
             
             // Set the final courseId for the building process
             setBuildingCourseId(courseId);
-
+    
             // Update local state to reflect the potentially new (or confirmed) courseId
             if (activePlanId !== courseId) {
                 const newStoredPlan = { ...activeStoredPlan, localId: courseId };
