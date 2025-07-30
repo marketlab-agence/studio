@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -99,22 +98,24 @@ export default function CreateCoursePage() {
     // Effect to load a plan from URL param on initial load
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
-        if (planIdToLoad && planIdToLoad !== activePlanId) {
+        if (planIdToLoad) {
             getCourseAndChaptersAction(planIdToLoad).then(({ course: courseToLoad }) => {
                  if (courseToLoad?.plan && courseToLoad?.generationParams) {
                     const storedPlanFromCourse: StoredPlan = {
                         plan: courseToLoad.plan,
                         params: courseToLoad.generationParams,
-                        localId: courseToLoad.id,
+                        localId: courseToLoad.id, // Use the real course ID
                         createdAt: new Date(),
                     };
                     
                     setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
                     setActivePlanId(storedPlanFromCourse.localId);
+                    setBuildingCourseId(courseToLoad.id); // Pre-set the course ID for build
                 }
             })
         }
-    }, [searchParams, activePlanId, setActivePlanId, setGeneratedPlans]);
+    }, [searchParams, setGeneratedPlans, setActivePlanId]);
+
 
     // Effect to sync the form state whenever the active plan changes
     useEffect(() => {
@@ -153,6 +154,7 @@ export default function CreateCoursePage() {
 
             setGeneratedPlans(prev => [newStoredPlan, ...prev]);
             setActivePlanId(newStoredPlan.localId);
+            setBuildingCourseId(null); // Reset building course ID for new plans
         } catch (e) {
             console.error(e);
             setError("Une erreur est survenue lors de la génération du plan. Veuillez réessayer.");
@@ -170,6 +172,7 @@ export default function CreateCoursePage() {
             
             setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
             setActivePlanId(newStoredPlan.localId);
+            setBuildingCourseId(courseId); // Set the correct course ID after saving
 
             toast({ title: "Plan sauvegardé !", description: "Votre plan a été sauvegardé dans la liste des formations." });
         } catch (e) {
@@ -184,10 +187,26 @@ export default function CreateCoursePage() {
         if (!activePlan || !activeStoredPlan) return;
         setIsCreatingCourse(true);
         setError(null);
+
         try {
-            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
+            let courseId = buildingCourseId;
+
+            // If the plan hasn't been saved yet, save it first to get an ID.
+            if (!courseId || courseId !== activeStoredPlan.localId) {
+                const savedPlan = await savePlanAction(activePlan, activeStoredPlan.params);
+                courseId = savedPlan.courseId;
+                setBuildingCourseId(courseId);
+                // Update local storage with the real ID
+                const newStoredPlan = { ...activeStoredPlan, localId: courseId };
+                setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
+                setActivePlanId(newStoredPlan.localId);
+            }
+            
+            if (!courseId) {
+                throw new Error("Impossible d'obtenir un ID de cours pour la création.");
+            }
+
             await buildCourseFromPlanAction(courseId);
-            setBuildingCourseId(courseId);
 
             const steps: BuildStep[] = [];
             activePlan.chapters.forEach((chapter, cIndex) => {
@@ -228,14 +247,14 @@ export default function CreateCoursePage() {
 
     // Auto-trigger generation when step changes
     useEffect(() => {
-        if (isBuildingMode && currentStepIndex < buildSteps.length) {
+        if (isBuildingMode && currentStepIndex < buildSteps.length && buildingCourseId) {
             const step = buildSteps[currentStepIndex];
             
             const generateStepContent = async () => {
                 setIsBuilding(true);
                 setGeneratedContent(null);
                 try {
-                    if (step.type === 'lesson' && buildingCourseId && typeof step.lessonIndex !== 'undefined') {
+                    if (step.type === 'lesson' && typeof step.lessonIndex !== 'undefined') {
                         const result = await generateLessonContentAction(buildingCourseId, step.chapterIndex, step.lessonIndex);
                         setGeneratedContent(result);
                     } else if (step.type === 'quiz') {
@@ -567,3 +586,5 @@ export default function CreateCoursePage() {
         </div>
     )
 }
+
+    
