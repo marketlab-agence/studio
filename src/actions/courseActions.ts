@@ -60,22 +60,19 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
 export async function buildCourseFromPlanAction(courseId: string) {
     const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
-    const tutorials = await getTutorials(db);
-    let quizzes = await getQuizzes(db);
-
     const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
-        console.error("Course not found for building");
-        return;
+        throw new Error("Course not found for building");
     }
-    
     const course = courses[courseIndex];
     const plan = course.plan;
 
     if (!plan) {
-        console.error("Plan not found for building course");
-        return;
+        throw new Error("Plan not found for building course");
     }
+    
+    const tutorials = await getTutorials(db);
+    let quizzes = await getQuizzes(db);
 
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
