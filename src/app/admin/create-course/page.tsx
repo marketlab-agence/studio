@@ -231,16 +231,11 @@ export default function CreateCoursePage() {
     };
 
     const handleFinishBuild = () => {
-        if (activeStoredPlan) {
-           // We don't delete the plan anymore, as its ID might be the final course ID.
-           // The savePlanAction now handles overwriting correctly.
+        if (buildingCourseId) {
+            router.push(`/admin/courses/${buildingCourseId}`);
+        } else {
+            router.push('/admin/courses');
         }
-        toast({
-            title: "Formation créée avec succès !",
-            description: "Vous allez être redirigé vers la liste des formations.",
-        });
-        // Redirect to the list of courses, not the specific course page.
-        router.push(`/admin/courses`);
     };
 
     // Auto-trigger generation when step changes
