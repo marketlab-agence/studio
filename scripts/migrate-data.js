@@ -1,3 +1,4 @@
+
 require('dotenv').config({ path: '.env.local' });
 const admin = require('firebase-admin');
 const fs = require('fs').promises;
@@ -30,9 +31,15 @@ async function migrateJsonToFirestore(jsonFileName, collectionName) {
     const fileContent = await fs.readFile(jsonPath, 'utf8');
     const data = JSON.parse(fileContent);
 
-    if (!Array.isArray(data)) {
+    // If the data is an object and not an array, it should be stored in a 'default' document.
+    if (typeof data === 'object' && !Array.isArray(data) && data !== null) {
         await db.collection(collectionName).doc('default').set(data);
-        console.log(`✅ Migrated ${jsonFileName}.`);
+        console.log(`✅ Migrated object from ${jsonFileName} to document 'default'.`);
+        return;
+    }
+
+    if (!Array.isArray(data)) {
+        console.error(`❌ Data from ${jsonFileName} is not an array or a single object. Skipping.`);
         return;
     }
 
