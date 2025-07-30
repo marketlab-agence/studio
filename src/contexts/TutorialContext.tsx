@@ -288,12 +288,13 @@ export function TutorialProvider({ children }: { children: ReactNode })
     });
   }, [updateActiveCourseProgress, courseChapters]);
 
-  const areAllLessonsInChapterCompleted = useCallback((chapterId: string): boolean =>
-  {
+  const areAllLessonsInChapterCompleted = useCallback((chapterId: string): boolean => {
     const chapter = courseChapters.find(c => c.id === chapterId);
     if (!chapter) return false;
+    // Check if every lesson in THIS chapter is in the completed set
     return chapter.lessons.every(lesson => progress.completedLessons.has(lesson.id));
   }, [progress.completedLessons, courseChapters]);
+
 
   const value = useMemo(() =>
   {
