@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket } from 'lucide-react';
+import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket, BrainCircuit } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
 
@@ -15,40 +15,17 @@ export const metadata: Metadata = {
   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
 };
 
-const courseDetails: Record<string, { icon: React.ElementType; features: string[] }> = {
-  'git-github-tutorial': {
-    icon: GitCommitHorizontal,
-    features: [
-      'Apprenez les commandes fondamentales et avancées de Git.',
-      'Maîtrisez les workflows professionnels comme GitFlow.',
-      'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
-      'Entraînez-vous avec plus de 20 simulateurs et composants interactifs.',
-    ]
-  },
-  'le-closing-pour-debutants-de-prospect-a-client': {
-    icon: Handshake,
-    features: [
-      'Comprendre les concepts clés et le profil du closer performant.',
-      'Apprendre et appliquer des techniques de closing avancées.',
-      'Savoir gérer les objections pour transformer les prospects en clients fidèles.',
-    ]
-  },
-  'introduction-au-marketing-digital': {
-      icon: Sparkles,
-      features: [
-        "Comprendre les bases du marketing digital.",
-        "Apprendre à créer du contenu engageant.",
-        "Découvrir les stratégies de référencement (SEO).",
-      ]
-  }
+const courseIcons: Record<string, React.ElementType> = {
+  'git-github-tutorial': GitCommitHorizontal,
+  'le-closing-pour-debutants-de-prospect-a-client': Handshake,
+  'introduction-au-marketing-digital': Sparkles,
+  'ingenierie-des-prompts-pour-debutants': BrainCircuit,
+  'jira-de-zero-a-heros': KanbanSquare,
+  'automatisation-de-processus-informatique-pour-debutants-avec-n8n': Rocket,
 };
 
+
 const futureCourses = [
-  {
-    title: 'Jira : De Zéro à Héros',
-    icon: KanbanSquare,
-    description: 'Organisez, suivez et gérez le travail de votre équipe avec le leader de la gestion de projet Agile.',
-  },
   {
     title: 'Trello : La Simplicité Visuelle',
     icon: Users,
@@ -95,19 +72,17 @@ export default async function CoursesPage() {
           </div>
           <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
             {publishedCourses.map((course) => {
-              const details = courseDetails[course.id] || {
-                icon: Rocket,
-                features: [course.description]
-              };
+              const Icon = courseIcons[course.id] || Rocket;
               const href = `/tutorial/${course.id}`;
               const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
+              const lessonCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, t) => acc + t.lessons.length, 0);
 
               return (
                 <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-primary/10 rounded-full">
-                        <details.icon className="h-8 w-8 text-primary" />
+                        <Icon className="h-8 w-8 text-primary" />
                       </div>
                       <div>
                         <CardTitle className="text-2xl">{course.title}</CardTitle>
@@ -115,17 +90,16 @@ export default async function CoursesPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex-grow">
-                    <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-                      {details.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      ))}
-                    </ul>
+                   <CardContent className="flex-grow">
+                     <p className="text-sm text-muted-foreground">
+                        Cette formation est conçue pour vous apporter des compétences pratiques et directement applicables dans votre quotidien professionnel.
+                     </p>
                   </CardContent>
                   <CardFooter className="flex-col items-start gap-4">
                     <div className="flex flex-wrap gap-2">
                         <Badge>Inclus</Badge>
                         {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
+                        {lessonCount > 0 && <Badge variant="secondary">{lessonCount} Leçons</Badge>}
                         <Badge variant="secondary">Quiz Interactifs</Badge>
                     </div>
                     <Link href={href} className="w-full">

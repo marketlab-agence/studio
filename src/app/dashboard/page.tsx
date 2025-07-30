@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles, Handshake } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles, Handshake, KanbanSquare, Rocket } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -37,16 +37,12 @@ import type { Tutorial } from '@/types/tutorial.types';
 
 
 // This map is to associate an icon with a courseId
-const courseDetails: Record<string, { icon: React.ElementType }> = {
-  'git-github-tutorial': {
-    icon: GitCommitHorizontal,
-  },
-  'le-closing-pour-debutants-de-prospect-a-client': {
-    icon: Handshake,
-  },
-   'introduction-au-marketing-digital': {
-    icon: Sparkles,
-  }
+const courseIcons: Record<string, React.ElementType> = {
+  'git-github-tutorial': GitCommitHorizontal,
+  'le-closing-pour-debutants-de-prospect-a-client': Handshake,
+  'introduction-au-marketing-digital': Sparkles,
+  'jira-de-zero-a-heros': KanbanSquare,
+  'automatisation-de-processus-informatique-pour-debutants-avec-n8n': Rocket,
 };
 
 
@@ -261,7 +257,7 @@ export default function DashboardPage() {
                         const totalLessonsForCourse = courseChapters.reduce((acc, chap) => acc + chap.lessons.length, 0);
                         const completedLessonsForCourse = courseProgress?.completedLessons.size || 0;
                         const overallProgressForCourse = totalLessonsForCourse > 0 ? (completedLessonsForCourse / totalLessonsForCourse) * 100 : 0;
-                        const Icon = courseDetails[course.id]?.icon || BookOpen;
+                        const Icon = courseIcons[course.id] || Rocket;
 
                         return (
                             <Card key={course.id} className="flex flex-col md:flex-row md:items-center gap-6 p-6 border-primary/20 hover:border-primary/50 transition-colors">

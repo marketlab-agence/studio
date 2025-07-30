@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked } from 'lucide-react';
+import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCourses } from '@/lib/courses';
@@ -18,23 +18,13 @@ const tools = [
   { name: 'AWS', icon: Database },
 ];
 
-const courseDetails: Record<string, { icon: React.ElementType; features: string[] }> = {
-  'git-github-tutorial': {
-    icon: GitCommitHorizontal,
-    features: [
-      'Apprenez les commandes fondamentales et avancées de Git.',
-      'Maîtrisez les workflows professionnels comme GitFlow.',
-      'Collaborez efficacement sur GitHub avec les Pull Requests et les Issues.',
-    ]
-  },
-  'le-closing-pour-debutants-de-prospect-a-client': {
-    icon: Handshake,
-    features: [
-      'Comprendre les concepts clés et le profil du closer performant.',
-      'Apprendre et appliquer des techniques de closing avancées.',
-      'Savoir gérer les objections pour transformer les prospects en clients fidèles.',
-    ]
-  }
+const courseIcons: Record<string, React.ElementType> = {
+  'git-github-tutorial': GitCommitHorizontal,
+  'le-closing-pour-debutants-de-prospect-a-client': Handshake,
+  'introduction-au-marketing-digital': Sparkles,
+  'ingenierie-des-prompts-pour-debutants': BrainCircuit,
+  'jira-de-zero-a-heros': KanbanSquare,
+  'automatisation-de-processus-informatique-pour-debutants-avec-n8n': Rocket,
 };
 
 export default async function Home() {
@@ -128,11 +118,8 @@ export default async function Home() {
             </div>
           </div>
           <div className="mx-auto grid max-w-5xl items-stretch gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
-             {publishedCourses.map(course => {
-                const details = courseDetails[course.id] || {
-                    icon: Rocket,
-                    features: [course.description]
-                };
+             {publishedCourses.slice(0, 1).map(course => { // Show only the first featured course
+                const Icon = courseIcons[course.id] || Rocket;
                 const href = `/tutorial/${course.id}`;
                 const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
 
@@ -141,7 +128,7 @@ export default async function Home() {
                       <CardHeader>
                         <div className="flex items-center gap-4">
                           <div className="p-3 bg-primary/10 rounded-full">
-                            <details.icon className="h-8 w-8 text-primary" />
+                            <Icon className="h-8 w-8 text-primary" />
                           </div>
                           <div>
                             <CardTitle className="text-2xl">{course.title}</CardTitle>
@@ -150,17 +137,16 @@ export default async function Home() {
                         </div>
                       </CardHeader>
                       <CardContent className="flex-grow">
-                        <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-                            {details.features.map((feature, index) => (
-                                <li key={index}>{feature}</li>
-                            ))}
-                        </ul>
+                         <p className="text-sm text-muted-foreground">
+                            Cette formation complète vous guide depuis les bases du contrôle de version jusqu'aux workflows de collaboration avancés sur GitHub.
+                         </p>
                       </CardContent>
                       <CardFooter className="flex-col items-start gap-4">
                          <div className="flex flex-wrap gap-2">
                             <Badge>Inclus</Badge>
                             {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
                             <Badge variant="secondary">Quiz Interactifs</Badge>
+                            <Badge variant="secondary">Projet Final</Badge>
                         </div>
                         <Link href={href} className="w-full">
                           <Button className="w-full" size="lg">Commencer la formation</Button>
