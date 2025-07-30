@@ -12,17 +12,15 @@ const QUIZZES_COLLECTION = 'quizzes';
  */
 export async function getQuizzes(db: Firestore): Promise<Record<string, Quiz>> {
   try {
-    console.log("Attempting to get quizzes from Firestore...");
     const snapshot = await db.collection(QUIZZES_COLLECTION).get();
     if (snapshot.empty) {
-      console.log('No quizzes found in Firestore.');
       return {};
     }
     const quizzes: Record<string, Quiz> = {};
     snapshot.docs.forEach(doc => {
-      quizzes[doc.id] = { id: doc.id, ...doc.data() } as Quiz;
+        // The document ID is the key for the quiz object
+        quizzes[doc.id] = { id: doc.id, ...doc.data() } as Quiz;
     });
-    console.log(`Successfully fetched ${Object.keys(quizzes).length} quizzes from Firestore.`);
     return quizzes;
   } catch (error: any) {
     console.error("Error getting quizzes from Firestore: ", error.message || error);
@@ -38,15 +36,12 @@ export async function getQuizzes(db: Firestore): Promise<Record<string, Quiz>> {
  */
 export async function getQuizById(db: Firestore, id: string): Promise<Quiz | null> {
     try {
-      console.log(`Attempting to get quiz by id ${id} from Firestore.`);
       const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
       const doc = await docRef.get();
   
       if (!doc.exists) {
-        console.log(`No quiz found with id: ${id} in Firestore.`);
         return null;
       }
-      console.log(`Successfully fetched quiz by id ${id} from Firestore.`);
       return { id: doc.id, ...doc.data() } as Quiz;
     } catch (error: any) {
       console.error(`Error getting quiz by id ${id} from Firestore: `, error.message || error);
@@ -54,46 +49,35 @@ export async function getQuizById(db: Firestore, id: string): Promise<Quiz | nul
     }
 }
 
-/**
- * Creates or updates a quiz in the Firestore 'quizzes' collection.
- * If the quiz object has an ID, it will update the existing document.
- * If not, it will create a new one.
- * @param {Firestore} db - The Firestore database instance.
- * @param {Quiz} quiz - The quiz object to save.
- * @returns {Promise<Quiz>} The saved quiz object with its ID.
- */
-export async function createOrUpdateQuiz(db: Firestore, quiz: Quiz): Promise<Quiz> {
-  const docRef = quiz.id
-    ? db.collection(QUIZZES_COLLECTION).doc(quiz.id)
-    : db.collection(QUIZZES_COLLECTION).doc();
-
-  const quizData = { ...quiz, id: docRef.id };
-
-  try {
-    console.log(`Attempting to save quiz ${docRef.id} to Firestore.`);
-    await docRef.set(quizData, { merge: true }); // merge: true to avoid overwriting fields not in quizData
-    console.log(`Quiz ${docRef.id} saved successfully.`);
-    return quizData;
-  } catch (error: any) {
-    console.error(`Error saving quiz ${docRef.id} to Firestore: `, error.message || error);
-    throw new Error("Could not save quiz to Firestore.");
-  }
-}
 
 /**
- * Deletes a quiz from the Firestore 'quizzes' collection.
+ * Saves or updates a dictionary of quizzes in the Firestore 'quizzes' collection.
+ * Each key in the object is treated as a document ID.
+ * This is useful for saving all quizzes at once.
  * @param {Firestore} db - The Firestore database instance.
- * @param {string} id - The ID of the quiz to delete.
+ * @param {Record<string, Quiz>} quizzes - An object where keys are quiz IDs and values are quiz data.
  * @returns {Promise<void>}
  */
-export async function deleteQuiz(db: Firestore, id: string): Promise<void> {
+export async function saveQuizzes(db: Firestore, quizzes: Record<string, Quiz>): Promise<void> {
+    const batch = db.batch();
+
+    for (const quizId in quizzes) {
+        if (Object.prototype.hasOwnProperty.call(quizzes, quizId)) {
+            const quizData = quizzes[quizId];
+            if (!quizId) {
+                 console.error("Quiz object is missing an ID. Skipping save.", quizData);
+                 continue;
+            }
+            const docRef = db.collection(QUIZZES_COLLECTION).doc(quizId);
+            // Ensure the id within the object matches the document id
+            batch.set(docRef, { ...quizData, id: quizId });
+        }
+    }
+
     try {
-        console.log(`Attempting to delete quiz ${id} from Firestore.`);
-        const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
-        await docRef.delete();
-        console.log(`Quiz ${id} deleted successfully.`);
+        await batch.commit();
     } catch (error: any) {
-        console.error(`Error deleting quiz ${id} from Firestore: `, error.message || error);
-        throw new Error("Could not delete quiz from Firestore.");
+        console.error("Error saving quizzes to Firestore: ", error.message || error);
+        throw new Error("Could not save quizzes to Firestore.");
     }
 }
