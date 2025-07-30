@@ -94,6 +94,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   const [allTutorialsData, setAllTutorialsData] = useState<Tutorial[]>([]);
   const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() =>
   {
@@ -111,6 +112,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
         if (coursesRes.ok) setAllCoursesData(await coursesRes.json());
         if (tutorialsRes.ok) setAllTutorialsData(await tutorialsRes.json());
         if (quizzesRes.ok) setAllQuizzesData(await quizzesRes.json());
+        setIsDataLoaded(true);
 
       } catch (error)
       {
@@ -125,7 +127,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   useEffect(() =>
   {
-    if (!isLoading && activeCourseId)
+    if (isDataLoaded && activeCourseId)
     {
       setCourse(allCoursesData.find(c => c.id === activeCourseId));
       const chapters = allTutorialsData
@@ -136,7 +138,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
         setCourse(undefined);
         setCourseChapters([]);
     }
-  }, [activeCourseId, allCoursesData, allTutorialsData, isLoading]);
+  }, [activeCourseId, allCoursesData, allTutorialsData, isDataLoaded]);
 
   const setActiveCourse = useCallback((courseId: string) => setActiveCourseId(courseId), [setActiveCourseId]);
 

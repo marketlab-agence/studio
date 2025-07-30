@@ -61,10 +61,11 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
   const addQuestion = () => {
     setQuiz(prev => {
       if (!prev) return null;
+      const questionId = `${chapterId}-q${Date.now()}`;
       const newQuestion: Question = {
-        id: `${chapterId}-q${Date.now()}`,
+        id: questionId,
         text: 'Nouvelle question',
-        answers: [{id: `${chapterId}-q${Date.now()}-a1`, text: 'Réponse correcte', isCorrect: true}],
+        answers: [{id: `${questionId}-a1`, text: 'Réponse correcte', isCorrect: true}],
         isMultipleChoice: false
       };
       return {...prev, questions: [...prev.questions, newQuestion]};
@@ -83,8 +84,10 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
     setQuiz(prev => {
         if (!prev) return null;
         const newQuestions = [...prev.questions];
-        const newAnswer: Answer = { id: `${newQuestions[qIndex].id}-a${Date.now()}`, text: 'Nouvelle réponse', isCorrect: false };
-        newQuestions[qIndex].answers.push(newAnswer);
+        const question = newQuestions[qIndex];
+        const answerId = `${question.id}-a${Date.now()}`;
+        const newAnswer: Answer = { id: answerId, text: 'Nouvelle réponse', isCorrect: false };
+        question.answers.push(newAnswer);
         return {...prev, questions: newQuestions};
     });
   };
