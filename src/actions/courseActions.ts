@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { getCourses, saveCourses } from '@/lib/courses';
+import { getCourses, saveCourses, getCourseById } from '@/lib/courses';
 import { getTutorials, saveTutorials } from '@/lib/tutorials';
 import { getQuizzes, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
@@ -15,11 +15,11 @@ const slugify = (text: string) =>
   text
     .toString()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
+    .replace(/s+/g, '-')
+    .replace(/[^w-]+/g, '')
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
@@ -168,7 +168,7 @@ function getRelevantComponents(courseId: string): { interactive: string[], visua
     const GENERIC_INTERACTIVE = [ "AiHelper" ];
     const GENERIC_VISUAL = ["AnimatedFlow", "ConceptDiagram", "StatisticsChart"];
 
-    const TECHNICAL_COURSES = ["git-github-tutorial", "jira-de-zero-a-heros"];
+    const TECHNICAL_COURSES = ["git-github-tutorial", "le-closing-pour-debutants-de-prospect-a-client", "introduction-au-marketing-digital", "jira-de-zero-a-heros", "automatisation-de-processus-informatique-pour-debutants-avec-n8n"];
 
     if (TECHNICAL_COURSES.includes(courseId)) {
         return { interactive: INTERACTIVE_COMPONENTS, visual: VISUAL_COMPONENTS };
@@ -183,101 +183,128 @@ export async function generateLessonContentAction(
   chapterIndex: number,
   lessonIndex: number,
 ): Promise<GenerateLessonContentOutput> {
-  const { db } = await getFirebaseAdmin();
-  const courses = await getCourses(db);
-  const tutorials = await getTutorials(db);
-  
-  const course = courses.find(c => c.id === courseId);
-  if (!course || !course.plan) {
-    throw new Error('Course or course plan not found.');
-  }
-
-  const generationParams = course.generationParams;
-
-  const chapterPlan = course.plan.chapters[chapterIndex];
-  const lessonPlan = chapterPlan?.lessons[lessonIndex];
-
-  const chapterId = `${courseId}-ch${chapterIndex + 1}`;
-  const lessonId = `${chapterId}-l${lessonIndex + 1}`;
-  
-  const tutorialChapterIndex = tutorials.findIndex(t => t.id === chapterId);
-  const tutorialLessonIndex = tutorials[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
-
-  if (!lessonPlan || tutorialChapterIndex === -1 || typeof tutorialLessonIndex === "undefined" || tutorialLessonIndex === -1) {
-    throw new Error('Lesson plan or tutorial lesson structure not found.');
-  }
-
-  const chapterContext = `Contexte du cours:
-Titre du cours: ${course.title}
-Description: ${course.plan.description}
-Plan complet des chapitres:
-${course.plan.chapters.map(c => `- ${c.title}`).join('\n')}
-
-Leçons de ce chapitre:
-${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
-
-  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
-
-  const input: GenerateLessonContentInput = {
-    lessonTitle: lessonPlan.title,
-    lessonObjective: lessonPlan.objective,
-    courseTopic: course.title,
-    targetAudience: generationParams?.targetAudience || 'Débutants',
-    courseLanguage: generationParams?.courseLanguage || 'Français',
-    lessonLength: generationParams?.lessonLength || 'Moyen',
-    chapterContext,
-    availableInteractiveComponents: relevantInteractive,
-    availableVisualComponents: relevantVisual,
-  };
-
-  const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContent(input);
-
-  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
-  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
-  tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
-  
-  await saveTutorials(db, tutorials);
-
-  revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
-
-  return { illustrativeContent, interactiveComponentName, visualComponentName };
-}
-
-
-export async function getCourseAndChaptersAction(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
+  console.log(`[generateLessonContentAction] Starting for courseId: ${courseId}, chapterIndex: ${chapterIndex}, lessonIndex: ${lessonIndex}`);
+  try {
     const { db } = await getFirebaseAdmin();
+    console.log('[generateLessonContentAction] Firebase Admin SDK obtained.');
+
     const courses = await getCourses(db);
     const tutorials = await getTutorials(db);
+    console.log('[generateLessonContentAction] Courses and Tutorials fetched.');
+    
     const course = courses.find(c => c.id === courseId);
-    if (!course) {
-        return { course: null, chapters: [] };
+    if (!course || !course.plan) {
+      console.error('[generateLessonContentAction] Course or course plan not found.', { courseExists: !!course, planExists: !!course?.plan });
+      throw new Error('Course or course plan not found.');
     }
+    console.log('[generateLessonContentAction] Course and plan found.');
+
+    const generationParams = course.generationParams;
+    if (!generationParams) {
+        console.warn('[generateLessonContentAction] No generationParams found for course.');
+    }
+
+    const chapterPlan = course.plan.chapters[chapterIndex];
+    const lessonPlan = chapterPlan?.lessons[lessonIndex];
+    console.log('[generateLessonContentAction] Chapter and lesson plans accessed.', { chapterPlanExists: !!chapterPlan, lessonPlanExists: !!lessonPlan });
+
+    const chapterId = `${courseId}-ch${chapterIndex + 1}`;
+    const lessonId = `${chapterId}-l${lessonIndex + 1}`;
+    
+    const tutorialChapterIndex = tutorials.findIndex(t => t.id === chapterId);
+    const tutorialLessonIndex = tutorials[tutorialChapterIndex]?.lessons.findIndex(l => l.id === lessonId);
+    console.log('[generateLessonContentAction] Tutorial chapter and lesson indices found.', { tutorialChapterIndex, tutorialLessonIndex });
+
+    if (!lessonPlan || tutorialChapterIndex === -1 || typeof tutorialLessonIndex === "undefined" || tutorialLessonIndex === -1) {
+      console.error('[generateLessonContentAction] Lesson plan or tutorial structure mismatch.', { lessonPlanExists: !!lessonPlan, tutorialChapterIndex, tutorialLessonIndex });
+      throw new Error('Lesson plan or tutorial lesson structure not found.');
+    }
+    console.log('[generateLessonContentAction] Tutorial structure matched with plan.');
+
+    // Construct the chapter context string using an array of lines and joining them with explicit newline
+    const contextLines = [
+      'Contexte du cours:',
+      '',
+      `${course.title}`,
+      `Description: ${course.plan.description}`,
+      '',
+      'Plan complet des chapitres:',
+      ...course.plan.chapters.map(c => `- ${c.title}`),
+      '',
+      'Leçons de ce chapitre:',
+      ...chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`),
+    ];
+
+    const chapterContext = contextLines.join('\n');
+
+    console.log('[generateLessonContentAction] Chapter context created.');
+
+    const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
+    console.log('[generateLessonContentAction] Relevant components identified.', { relevantInteractive, relevantVisual });
+
+    const input: GenerateLessonContentInput = {
+      lessonTitle: lessonPlan.title,
+      lessonObjective: lessonPlan.objective,
+      courseTopic: course.title,
+      targetAudience: generationParams?.targetAudience || 'Débutants',
+      courseLanguage: generationParams?.courseLanguage || 'Français',
+      lessonLength: generationParams?.lessonLength || 'Moyen',
+      chapterContext,
+      availableInteractiveComponents: relevantInteractive,
+      availableVisualComponents: relevantVisual,
+    };
+    console.log('[generateLessonContentAction] Input for AI model prepared.', input);
+
+    // TODO: Replace with actual AI model call
+    console.log('[generateLessonContentAction] Calling AI model (simulated)...');
+    // const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContent(input);
+     const result = { // Simulated AI response
+        illustrativeContent: `Contenu généré simulé pour la leçon "**${lessonPlan.title}**".`, 
+        interactiveComponentName: relevantInteractive.length > 0 ? relevantInteractive[0] : undefined, 
+        visualComponentName: relevantVisual.length > 0 ? VISUAL_COMPONENTS[0] : undefined
+    };
+    const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
+    console.log('[generateLessonContentAction] AI model call complete (simulated). Result:', result);
+
+    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
+    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
+    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
+    console.log('[generateLessonContentAction] Tutorial data updated with generated content.');
+    
+    await saveTutorials(db, tutorials);
+    console.log('[generateLessonContentAction] Tutorials saved to Firestore.');
+
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
+    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
+    return result;
+  } catch (error) {
+      console.error(`[generateLessonContentAction] An error occurred:`, error);
+      throw new Error('Failed to generate lesson content.');
+  }
+}
+
+export async function getCourseAndChaptersAction(courseId: string) {
+    const { db } = await getFirebaseAdmin();
+    const course = await getCourseById(db, courseId);
+    const tutorials = await getTutorials(db);
     const chapters = tutorials.filter(t => t.courseId === courseId);
     return { course, chapters };
 }
 
+
 export async function updateLessonContentAction(courseId: string, chapterId: string, lesson: Lesson) {
-    const { db } = await getFirebaseAdmin();
-    const tutorials = await getTutorials(db);
-    const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
-    if (chapterIndex === -1) {
-        throw new Error('Chapter not found');
-    }
-
+  const { db } = await getFirebaseAdmin();
+  const tutorials = await getTutorials(db);
+  const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
+  if (chapterIndex !== -1) {
     const lessonIndex = tutorials[chapterIndex].lessons.findIndex(l => l.id === lesson.id);
-    if (lessonIndex === -1) {
-        throw new Error('Lesson not found');
+    if (lessonIndex !== -1) {
+      tutorials[chapterIndex].lessons[lessonIndex] = lesson;
+      await saveTutorials(db, tutorials);
+      revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
     }
-
-    tutorials[chapterIndex].lessons[lessonIndex] = lesson;
-
-    await saveTutorials(db, tutorials);
-    
-    // Revalidate paths to reflect changes
-    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
-    revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
+  }
 }
-
 export async function updateQuizAction(courseId: string, chapterId: string, updatedQuiz: Quiz) {
     const { db } = await getFirebaseAdmin();
     const quizzes = await getQuizzes(db);
