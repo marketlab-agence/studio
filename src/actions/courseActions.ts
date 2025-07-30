@@ -9,6 +9,7 @@ import { getQuizzes, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
+import { db } from '@/lib/firebase-admin';
 
 const slugify = (text: string) =>
   text
@@ -22,7 +23,7 @@ const slugify = (text: string) =>
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
-    const courses = await getCourses();
+    const courses = await getCourses(db);
     
     const courseId = slugify(plan.title);
     
@@ -38,16 +39,16 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
         generationParams: params,
     });
 
-    await saveCourses(updatedCourses);
+    await saveCourses(db, updatedCourses);
     revalidatePath('/admin/courses');
     return { courseId };
 }
 
 
 export async function buildCourseFromPlanAction(courseId: string) {
-    const courses = await getCourses();
-    const tutorials = await getTutorials();
-    const quizzes = await getQuizzes();
+    const courses = await getCourses(db);
+    const tutorials = await getTutorials(db);
+    const quizzes = await getQuizzes(db);
 
     const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
@@ -112,9 +113,9 @@ export async function buildCourseFromPlanAction(courseId: string) {
         status: 'Brouillon',
     };
     
-    await saveCourses(courses);
-    await saveTutorials(tutorials);
-    await saveQuizzes(quizzes);
+    await saveCourses(db, courses);
+    await saveTutorials(db, tutorials);
+    await saveQuizzes(db, quizzes);
 
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
@@ -123,11 +124,11 @@ export async function buildCourseFromPlanAction(courseId: string) {
 
 
 export async function publishCourseAction(courseId: string) {
-    const courses = await getCourses();
+    const courses = await getCourses(db);
     const course = courses.find(c => c.id === courseId);
     if (course) {
         course.status = 'Publié';
-        await saveCourses(courses);
+        await saveCourses(db, courses);
         revalidatePath('/admin');
         revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
@@ -170,8 +171,8 @@ export async function generateLessonContentAction(
   chapterIndex: number,
   lessonIndex: number,
 ): Promise<GenerateLessonContentOutput> {
-  const courses = await getCourses();
-  const tutorials = await getTutorials();
+  const courses = await getCourses(db);
+  const tutorials = await getTutorials(db);
   
   const course = courses.find(c => c.id === courseId);
   if (!course || !course.plan) {
@@ -222,7 +223,7 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
   tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
   tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
   
-  await saveTutorials(tutorials);
+  await saveTutorials(db, tutorials);
 
   revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
 
@@ -231,8 +232,8 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
 
 export async function getCourseAndChaptersAction(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
-    const courses = await getCourses();
-    const tutorials = await getTutorials();
+    const courses = await getCourses(db);
+    const tutorials = await getTutorials(db);
     const course = courses.find(c => c.id === courseId);
     if (!course) {
         return { course: null, chapters: [] };
@@ -242,7 +243,7 @@ export async function getCourseAndChaptersAction(courseId: string): Promise<{ co
 }
 
 export async function updateLessonContentAction(courseId: string, chapterId: string, lesson: Lesson) {
-    const tutorials = await getTutorials();
+    const tutorials = await getTutorials(db);
     const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
         throw new Error('Chapter not found');
@@ -255,7 +256,7 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 
     tutorials[chapterIndex].lessons[lessonIndex] = lesson;
 
-    await saveTutorials(tutorials);
+    await saveTutorials(db, tutorials);
     
     // Revalidate paths to reflect changes
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
@@ -263,21 +264,21 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 }
 
 export async function updateQuizAction(courseId: string, chapterId: string, updatedQuiz: Quiz) {
-    const quizzes = await getQuizzes();
+    const quizzes = await getQuizzes(db);
     if (!quizzes[chapterId]) {
         throw new Error('Quiz not found');
     }
     quizzes[chapterId] = updatedQuiz;
-    await saveQuizzes(quizzes);
+    await saveQuizzes(db, quizzes);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
 }
 
 export async function deleteCourseAction(courseId: string) {
-    let courses = await getCourses();
-    let tutorials = await getTutorials();
-    let quizzes = await getQuizzes();
+    let courses = await getCourses(db);
+    let tutorials = await getTutorials(db);
+    let quizzes = await getQuizzes(db);
 
     const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
@@ -298,9 +299,9 @@ export async function deleteCourseAction(courseId: string) {
         }
     });
 
-    await saveCourses(courses);
-    await saveTutorials(tutorials);
-    await saveQuizzes(quizzes);
+    await saveCourses(db, courses);
+    await saveTutorials(db, tutorials);
+    await saveQuizzes(db, quizzes);
 
     revalidatePath('/admin/courses');
 }
