@@ -291,7 +291,6 @@ export function TutorialProvider({ children }: { children: ReactNode })
   const areAllLessonsInChapterCompleted = useCallback((chapterId: string): boolean => {
     const chapter = courseChapters.find(c => c.id === chapterId);
     if (!chapter) return false;
-    // Check if every lesson in THIS chapter is in the completed set
     return chapter.lessons.every(lesson => progress.completedLessons.has(lesson.id));
   }, [progress.completedLessons, courseChapters]);
 
