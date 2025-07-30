@@ -5,17 +5,14 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { savePlanAction } from '@/actions/courseActions';
 import { buildCourseFromPlanAction } from '@/actions/courseActions';
 import { generateLessonContentAction } from '@/actions/courseActions';
-import { createCoursePlan } from '@/ai/flows/create-course-flow'; // Assuming this function exists and works
 import type { CreateCourseOutput, CreateCourseInput } from '@/ai/flows/create-course-flow';
-
-
 
 export async function startFullCourseGenerationAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string; status: string; error?: string }> {
     let courseId: string | undefined;
     try {
         console.log('Starting full course generation workflow...');
 
-        // Step 1: Save the initial plan
+        // Step 1: Save the initial plan to get a stable courseId
         console.log('Step 1: Saving initial plan...');
         const savePlanResult = await savePlanAction(plan, params);
         courseId = savePlanResult.courseId;
@@ -26,22 +23,21 @@ export async function startFullCourseGenerationAction(plan: CreateCourseOutput, 
         await buildCourseFromPlanAction(courseId);
         console.log('Course structure built.');
 
-        // --- MISSING STEPS from @meta-creation-workflow.md go here ---
-        // This is where you would call AI to generate:
-        // - Component Architecture (Prompt 2)
-        // - UI Flow Diagram (Prompt 3)
-        // - Layout Design (Prompt 4)
-        // - Core Layout Components (Placeholders) (Prompt 5)
-        // - Specific Visualizations and Interactions (Code/Instructions) (Prompt 7)
-        // - Quizzes (Prompt 8)
-
-        // For now, let's focus on getting the lesson content generation working reliably
-        // This part is already initiated by the useEffect in the client, but we could
-        // potentially trigger it here directly or manage the steps on the server.
-        // Let's keep the step management on the client for now as it's already there,
-        // but ensure the client calls this action first.
-
-        console.log('Full course generation workflow started.');
+        // Step 3 (NEW): Generate content for all lessons sequentially
+        console.log('Step 3: Generating content for all lessons...');
+        if (plan.chapters) {
+            for (let i = 0; i < plan.chapters.length; i++) {
+                const chapter = plan.chapters[i];
+                if (chapter.lessons) {
+                    for (let j = 0; j < chapter.lessons.length; j++) {
+                        console.log(`Generating content for Chapter ${i + 1}, Lesson ${j + 1}...`);
+                        await generateLessonContentAction(courseId, i, j);
+                    }
+                }
+            }
+        }
+        console.log('All lesson content generated.');
+        console.log('Full course generation workflow completed successfully.');
 
         return { courseId, status: 'success' };
 
@@ -50,8 +46,3 @@ export async function startFullCourseGenerationAction(plan: CreateCourseOutput, 
         return { courseId: courseId || '', status: 'error', error: error.message };
     }
 }
-
-// You might need other Server Actions here for updating specific parts
-// after the initial generation, e.g., updateLessonContentAction, updateQuizAction.
-// These already exist in courseActions.ts, we'll need to decide if we move them here.
-

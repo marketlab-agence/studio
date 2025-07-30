@@ -20,7 +20,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { buildCourseFromPlanAction, savePlanAction, generateLessonContentAction, getCourseAndChaptersAction } from '@/actions/courseActions';
+import { savePlanAction, getCourseById, buildCourseFromPlanAction, generateLessonContentAction } from '@/actions/courseActions';
+import { startFullCourseGenerationAction } from '@/actions/fullCourseGenerationActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -99,7 +100,7 @@ export default function CreateCoursePage() {
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad) {
-            getCourseAndChaptersAction(planIdToLoad).then(({ course: courseToLoad }) => {
+            getCourseById(planIdToLoad).then((courseToLoad) => {
                  if (courseToLoad?.plan && courseToLoad?.generationParams) {
                     const storedPlanFromCourse: StoredPlan = {
                         plan: courseToLoad.plan,
@@ -189,41 +190,23 @@ export default function CreateCoursePage() {
         setError(null);
     
         try {
-            // Step 1: Always save the latest version of the plan to get a reliable courseId
-            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
+            const result = await startFullCourseGenerationAction(activePlan, activeStoredPlan.params);
             
-            // Step 2: Build the course structure using the reliable courseId
-            await buildCourseFromPlanAction(courseId);
-            
-            // Set the final courseId for the building process
-            setBuildingCourseId(courseId);
-    
-            // Update local state to reflect the potentially new (or confirmed) courseId
-            if (activePlanId !== courseId) {
-                const newStoredPlan = { ...activeStoredPlan, localId: courseId };
-                setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
-                setActivePlanId(courseId);
+            if (result.status === 'success' && result.courseId) {
+                toast({ title: 'Génération terminée !', description: 'Le contenu complet du cours a été créé.' });
+                router.push(`/admin/courses/${result.courseId}`);
+            } else {
+                throw new Error(result.error || 'La génération complète du cours a échoué.');
             }
-            
-            // Step 3: Prepare the UI for building mode
-            const steps: BuildStep[] = [];
-            activePlan.chapters.forEach((chapter, cIndex) => {
-                chapter.lessons.forEach((lesson, lIndex) => {
-                    steps.push({ type: 'lesson', chapterIndex: cIndex, lessonIndex: lIndex, title: lesson.title });
-                });
-                steps.push({ type: 'quiz', chapterIndex: cIndex, title: `Quiz: ${chapter.title}` });
-            });
-            setBuildSteps(steps);
-            setCurrentStepIndex(0);
-            setGeneratedContent(null);
-            setIsBuildingMode(true);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            setError("Une erreur est survenue lors du lancement de la création. Veuillez réessayer.");
+            setError(e.message || "Une erreur est survenue lors du lancement de la création.");
         } finally {
             setIsCreatingCourse(false);
+            setIsBuildingMode(false); // Make sure to exit building mode on error
         }
     };
+
 
     const handleBuildContinue = () => {
         setGeneratedContent(null);
@@ -408,7 +391,7 @@ export default function CreateCoursePage() {
             <Card>
                 <CardHeader><CardTitle>1. Décrivez votre formation</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2"><Label htmlFor="topic">Sujet de la formation (obligatoire)</Label><Textarea id="topic" placeholder="Ex: Une introduction à Docker pour les développeurs web" value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isBuildingMode}/></div>
+                    <div className="space-y-2"><Label htmlFor="topic">Sujet de la formation (obligatoire)</Label><Textarea id="topic" placeholder="Ex: Une introduction à Docker pour les développeurs web" value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isBuildingMode} /></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="audience">Public Cible (obligatoire)</Label><Input id="audience" placeholder="Ex: Débutants, Développeurs expérimentés" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} disabled={isBuildingMode}/></div><div className="space-y-2"><Label htmlFor="language">Langue de la formation (facultatif)</Label><Input id="language" placeholder="Ex: Français, English" value={language} onChange={(e) => setLanguage(e.target.value)} disabled={isBuildingMode}/></div></div>
                     <Card className="bg-muted/50 p-4"><CardDescription className="mb-4">Options avancées (facultatif)</CardDescription>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
