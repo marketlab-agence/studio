@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
-import { db } from '@/lib/firebase-admin'; // Import the db instance
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,7 @@ const courseIcons: Record<string, React.ElementType> = {
 };
 
 export default async function Home() {
-  // Pass the db instance to the functions
+  const { db } = await getFirebaseAdmin();
   const courses = await getCourses(db);
   const tutorials = await getTutorials(db);
   const publishedCourses = courses.filter(c => c.status === 'Publié');

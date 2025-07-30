@@ -5,7 +5,7 @@ import { getTutorials } from '@/lib/tutorials';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
 import TutorialPageContent from '@/components/tutorial/TutorialPageContent';
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 // Helper function to extract number from chapter title
 const getChapterNumber = (title: string) => {
@@ -15,6 +15,7 @@ const getChapterNumber = (title: string) => {
 
 export default async function TutorialCoursePage({ params }: { params: { courseId: string } }) {
   const { courseId } = params;
+  const { db } = await getFirebaseAdmin();
 
   const allCourses: CourseInfo[] = await getCourses(db);
   const allTutorials: Tutorial[] = await getTutorials(db);

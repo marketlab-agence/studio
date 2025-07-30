@@ -20,11 +20,13 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export default async function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
-  const tutorials = await getTutorials();
+  const { db } = await getFirebaseAdmin();
+  const tutorials = await getTutorials(db);
   const chapter = tutorials.find(c => c.id === params.chapterId);
-  const courses = await getCourses();
+  const courses = await getCourses(db);
   const course = courses.find(c => c.id === params.courseId);
 
   if (!chapter || !course) {

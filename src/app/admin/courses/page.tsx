@@ -10,10 +10,16 @@ import { ActionButtons } from './ActionButtons';
 
 export const dynamic = 'force-dynamic';
 
-type AdminCourse = Awaited<ReturnType<typeof getAdminCoursesAction>>[0] & { status: 'Publié' | 'Brouillon' | 'Plan' };
+type AdminCourse = {
+    id: string;
+    title: string;
+    lessonsCount: number;
+    status: 'Publié' | 'Brouillon' | 'Plan';
+};
 
 export default async function AdminCoursesListPage() {
-  const allCourses = (await getAdminCoursesAction()) as AdminCourse[];
+  const allCoursesData = await getAdminCoursesAction();
+  const allCourses = allCoursesData as AdminCourse[];
   
   const badgeVariants: { [key: string]: "default" | "secondary" | "outline" } = {
     'Publié': 'default',

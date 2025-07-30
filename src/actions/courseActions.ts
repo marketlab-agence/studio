@@ -9,7 +9,7 @@ import { getQuizzes, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 const slugify = (text: string) =>
   text
@@ -23,6 +23,7 @@ const slugify = (text: string) =>
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
+    const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
     
     const courseId = slugify(plan.title);
@@ -46,6 +47,7 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
 
 
 export async function buildCourseFromPlanAction(courseId: string) {
+    const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
     const tutorials = await getTutorials(db);
     const quizzes = await getQuizzes(db);
@@ -124,6 +126,7 @@ export async function buildCourseFromPlanAction(courseId: string) {
 
 
 export async function publishCourseAction(courseId: string) {
+    const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
     const course = courses.find(c => c.id === courseId);
     if (course) {
@@ -171,6 +174,7 @@ export async function generateLessonContentAction(
   chapterIndex: number,
   lessonIndex: number,
 ): Promise<GenerateLessonContentOutput> {
+  const { db } = await getFirebaseAdmin();
   const courses = await getCourses(db);
   const tutorials = await getTutorials(db);
   
@@ -232,6 +236,7 @@ ${chapterPlan.lessons.map(l => `- ${l.title}: ${l.objective}`).join('\n')}`;
 
 
 export async function getCourseAndChaptersAction(courseId: string): Promise<{ course: CourseInfo | null, chapters: Tutorial[] }> {
+    const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
     const tutorials = await getTutorials(db);
     const course = courses.find(c => c.id === courseId);
@@ -243,6 +248,7 @@ export async function getCourseAndChaptersAction(courseId: string): Promise<{ co
 }
 
 export async function updateLessonContentAction(courseId: string, chapterId: string, lesson: Lesson) {
+    const { db } = await getFirebaseAdmin();
     const tutorials = await getTutorials(db);
     const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
@@ -264,6 +270,7 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 }
 
 export async function updateQuizAction(courseId: string, chapterId: string, updatedQuiz: Quiz) {
+    const { db } = await getFirebaseAdmin();
     const quizzes = await getQuizzes(db);
     if (!quizzes[chapterId]) {
         throw new Error('Quiz not found');
@@ -276,6 +283,7 @@ export async function updateQuizAction(courseId: string, chapterId: string, upda
 }
 
 export async function deleteCourseAction(courseId: string) {
+    const { db } = await getFirebaseAdmin();
     let courses = await getCourses(db);
     let tutorials = await getTutorials(db);
     let quizzes = await getQuizzes(db);

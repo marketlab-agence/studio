@@ -1,6 +1,6 @@
 
 import { AppSettings } from '@/types/settings.types';
-import { db } from './firebase-admin'; // Assurez-vous que ce chemin est correct
+import { getFirebaseAdmin } from './firebase-admin';
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SETTINGS_ID = 'default';
@@ -17,6 +17,7 @@ const defaultSettings: AppSettings = {
  */
 export async function getSettings(): Promise<AppSettings> {
   try {
+    const { db } = await getFirebaseAdmin();
     const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
     const doc = await docRef.get();
 
@@ -41,6 +42,7 @@ export async function getSettings(): Promise<AppSettings> {
  */
 export async function saveSettings(settings: AppSettings): Promise<void> {
   try {
+    const { db } = await getFirebaseAdmin();
     const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
     await docRef.set(settings);
   } catch (error) {

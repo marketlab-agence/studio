@@ -7,7 +7,7 @@ import type { AppSettings } from '@/types/settings.types';
 import { getSettings, saveSettings } from '@/lib/settings';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function getSettingsAction(): Promise<AppSettings> {
     return await getSettings();
@@ -22,6 +22,7 @@ export async function updateSettingsAction(newSettings: AppSettings) {
 
 export async function getAdminCoursesAction() {
     try {
+        const { db } = await getFirebaseAdmin();
         const courses = await getCourses(db);
         const tutorials = await getTutorials(db);
 

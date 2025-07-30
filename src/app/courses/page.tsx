@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket, BrainCircuit } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +55,7 @@ const futureCourses = [
 ];
 
 export default async function CoursesPage() {
+  const { db } = await getFirebaseAdmin();
   const courses = await getCourses(db);
   const tutorials = await getTutorials(db);
   const publishedCourses = courses.filter(c => c.status === 'Publié');

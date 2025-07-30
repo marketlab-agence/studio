@@ -1,11 +1,12 @@
 
 import { getCourses } from '@/lib/courses';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin'; // Import db
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
-    const courses = await getCourses(db); // Pass db
+    const { db } = await getFirebaseAdmin();
+    const courses = await getCourses(db);
     return NextResponse.json(courses);
   } catch (error) {
     console.error("API Error: Failed to fetch courses:", error);
