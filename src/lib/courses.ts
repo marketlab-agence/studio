@@ -77,3 +77,4 @@ export async function saveCourses(db: Firestore, courses: CourseInfo[]): Promise
     throw new Error("Could not save courses to Firestore.");
   }
 }
+
