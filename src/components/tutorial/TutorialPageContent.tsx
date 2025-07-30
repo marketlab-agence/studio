@@ -63,12 +63,9 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
 
   const chapterQuiz = useMemo(() => currentChapter ? allQuizzesData[currentChapter.id] : undefined, [currentChapter, allQuizzesData]);
   
-  const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
-  
   const allLessonsInChapterCompleted = currentChapter ? areAllLessonsInChapterCompleted(currentChapter.id) : false;
   
-  const isQuizAvailable = !!chapterQuiz && (isLastLessonInChapter || allLessonsInChapterCompleted);
-
+  const isQuizAvailable = !!chapterQuiz && allLessonsInChapterCompleted;
 
   const handleQuizComplete = useCallback((score: number, answers: Record<string, string[]>) => {
     if (currentChapter) setQuizScore(currentChapter.id, score, answers);
@@ -88,7 +85,6 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
     if (passed) {
       goToNextLesson();
     } else {
-      // If failed, go back to the first lesson of the current chapter
       setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
     }
   }, [currentChapter, progress.quizScores, setCurrentLocation, goToNextLesson, allQuizzesData]);

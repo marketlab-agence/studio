@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
@@ -12,8 +13,13 @@ export function NavigationControls({ onTakeQuiz }: NavigationControlsProps) {
         goToNextLesson, 
         goToPreviousLesson,
         isFirstLessonInTutorial,
-        isLastLessonInTutorial
+        isLastLessonInTutorial,
+        currentLesson,
+        areAllLessonsInChapterCompleted,
+        currentChapter
     } = useTutorial();
+
+    const canTakeQuiz = onTakeQuiz && currentChapter && areAllLessonsInChapterCompleted(currentChapter.id);
 
     return (
         <div className="flex justify-between items-center p-4 border-t bg-card">
@@ -22,13 +28,13 @@ export function NavigationControls({ onTakeQuiz }: NavigationControlsProps) {
                 Précédent
             </Button>
             
-            {onTakeQuiz ? (
+            {canTakeQuiz ? (
                  <Button onClick={onTakeQuiz}>
                     Passer le quiz
                     <GraduationCap className="ml-2 h-4 w-4" />
                 </Button>
             ) : (
-                <Button onClick={goToNextLesson} disabled={isLastLessonInTutorial}>
+                <Button onClick={goToNextLesson} disabled={isLastLessonInTutorial && currentLesson !== null}>
                     Leçon suivante
                     <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

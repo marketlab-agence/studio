@@ -57,16 +57,12 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     const handleResetChapterAndStartOver = () => {
         const chapter = courseChapters.find(c => c.id === quiz.id);
         if (chapter && chapter.lessons.length > 0) {
-            // Reset progress for this chapter
             resetChapter(quiz.id);
-            // Navigate to the first lesson of the chapter
             setCurrentLocation(chapter.id, chapter.lessons[0].id);
         }
     };
 
     useEffect(() => {
-        // This effect runs once when the component mounts with a new quiz.
-        // It decides whether to show the results immediately or start a new attempt.
         const existingScore = progress.quizScores[quiz.id];
         const hasPassedBefore = existingScore !== undefined && existingScore >= quiz.passingScore;
         const existingAnswers = progress.quizAnswers?.[quiz.id];
@@ -120,7 +116,7 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
                     
                     return { totalScore: acc.totalScore + questionScore, maxScore: acc.maxScore + 1 };
 
-                } else { // Single choice question
+                } else {
                     const correctAnswerId = q.answers.find(a => a.isCorrect)?.id;
                     const userAnswerId = userAnswers[q.id]?.[0];
                     const isCorrect = correctAnswerId && userAnswerId === correctAnswerId;
