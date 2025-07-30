@@ -30,25 +30,19 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
     
     const courseIndex = courses.findIndex(c => c.id === courseId);
 
+    const newCourseData: CourseInfo = {
+        id: courseId,
+        title: plan.title,
+        description: plan.description,
+        status: 'Plan',
+        plan: plan,
+        generationParams: params,
+    };
+
     if (courseIndex !== -1) {
-        // Update existing plan
-        courses[courseIndex] = {
-            ...courses[courseIndex],
-            title: plan.title,
-            description: plan.description,
-            plan: plan,
-            generationParams: params,
-        };
+        courses[courseIndex] = { ...courses[courseIndex], ...newCourseData };
     } else {
-        // Add new plan
-        courses.push({
-            id: courseId,
-            title: plan.title,
-            description: plan.description,
-            status: 'Plan',
-            plan: plan,
-            generationParams: params,
-        });
+        courses.push(newCourseData);
     }
 
     await saveCourses(db, courses);
@@ -59,25 +53,25 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
 
 export async function buildCourseFromPlanAction(courseId: string) {
     const { db } = await getFirebaseAdmin();
+    // 1. Get the most up-to-date data from Firestore
     const courses = await getCourses(db);
-    const courseIndex = courses.findIndex(c => c.id === courseId);
-    if (courseIndex === -1) {
-        throw new Error("Course not found for building");
-    }
-    const course = courses[courseIndex];
-    const plan = course.plan;
+    const course = courses.find(c => c.id === courseId);
 
-    if (!plan) {
-        throw new Error("Plan not found for building course");
+    if (!course || !course.plan) {
+        throw new Error("Course or its plan not found in Firestore.");
     }
+
+    const plan = course.plan;
     
-    const tutorials = await getTutorials(db);
+    // 2. Fetch existing tutorials and quizzes
+    let tutorials = await getTutorials(db);
     let quizzes = await getQuizzes(db);
 
+    // 3. Build structure based on the reliable plan from Firestore
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
         
-        // Skip if chapter (tutorial) already exists
+        // Skip if chapter (tutorial) already exists to avoid duplication
         if (tutorials.find(t => t.id === chapterId)) return;
 
         const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
@@ -107,9 +101,9 @@ export async function buildCourseFromPlanAction(courseId: string) {
             answers: q.answers.map((a, answerIndex) => ({
                 id: `${chapterId}-q${questionIndex + 1}-a${answerIndex + 1}`,
                 text: a.text,
-                isCorrect: a.isCorrect,
+                isCorrect: !!a.isCorrect,
             })),
-            isMultipleChoice: q.isMultipleChoice,
+            isMultipleChoice: !!q.isMultipleChoice,
         }));
 
         const newQuiz: Quiz = {
@@ -122,10 +116,13 @@ export async function buildCourseFromPlanAction(courseId: string) {
         quizzes[chapterId] = newQuiz;
     });
 
-    courses[courseIndex] = {
-        ...course,
-        status: 'Brouillon',
-    };
+    const courseIndexToUpdate = courses.findIndex(c => c.id === courseId);
+    if(courseIndexToUpdate !== -1) {
+        courses[courseIndexToUpdate] = {
+            ...course,
+            status: 'Brouillon',
+        };
+    }
     
     await saveCourses(db, courses);
     await saveTutorials(db, tutorials);

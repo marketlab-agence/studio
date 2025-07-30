@@ -189,25 +189,21 @@ export default function CreateCoursePage() {
         setError(null);
 
         try {
-            let courseId = buildingCourseId;
-
-            // If the plan hasn't been saved yet, save it first to get an ID.
-            if (!courseId || courseId !== activeStoredPlan.localId) {
-                const savedPlan = await savePlanAction(activePlan, activeStoredPlan.params);
-                courseId = savedPlan.courseId;
-                setBuildingCourseId(courseId);
-                // Update local storage with the real ID
+            // Step 1: Always save the latest version of the plan to get a reliable courseId
+            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
+            
+            // Update local state to reflect the potentially new (or confirmed) courseId
+            if (activePlanId !== courseId) {
                 const newStoredPlan = { ...activeStoredPlan, localId: courseId };
                 setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
-                setActivePlanId(newStoredPlan.localId);
+                setActivePlanId(courseId);
             }
+            setBuildingCourseId(courseId);
             
-            if (!courseId) {
-                throw new Error("Impossible d'obtenir un ID de cours pour la création.");
-            }
-
+            // Step 2: Build the course structure using the reliable courseId
             await buildCourseFromPlanAction(courseId);
 
+            // Step 3: Prepare the UI for building mode
             const steps: BuildStep[] = [];
             activePlan.chapters.forEach((chapter, cIndex) => {
                 chapter.lessons.forEach((lesson, lIndex) => {
