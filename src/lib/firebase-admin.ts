@@ -1,32 +1,40 @@
 import * as admin from 'firebase-admin';
+import 'dotenv/config';
 
-// This is a singleton to ensure we only initialize the app once.
-let db: admin.firestore.Firestore;
+console.log('--- Initializing Firebase Admin SDK ---');
 
-if (!admin.apps.length) {
-  try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID ? 'Loaded' : 'MISSING');
+console.log('FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL ? 'Loaded' : 'MISSING');
+console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY ? 'Loaded' : 'MISSING');
 
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
-        throw new Error('Firebase environment variables are not set. Please check your .env.local file.');
-    }
-
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
-      }),
-    });
-    console.log("Firebase Admin SDK initialized successfully.");
-  } catch (error: any) {
-    console.error("Firebase Admin SDK initialization error:", error.message);
-    // We don't re-throw here so the app can still run,
-    // but database operations will fail.
-    // The UI should handle the case where db is not available.
-  }
+if (
+  !process.env.FIREBASE_PROJECT_ID ||
+  !process.env.FIREBASE_PRIVATE_KEY ||
+  !process.env.FIREBASE_CLIENT_EMAIL
+) {
+  console.error('CRITICAL: Firebase admin environment variables are missing.');
+  throw new Error('Firebase environment variables not set. Please check your .env.local file.');
 }
 
-db = admin.firestore();
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(new RegExp(String.fromCharCode(92) + String.fromCharCode(110), 'g'), String.fromCharCode(10)), // Extremely robust privateKey handling
+};
 
-export { db };
+try {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    });
+    console.log('Firebase Admin SDK initialized successfully.');
+  } else {
+    console.log('Firebase Admin SDK already initialized.');
+  }
+} catch (error: any) {
+    console.error('CRITICAL: Firebase Admin SDK initialization failed.', error.message);
+    throw new Error(`Firebase Admin SDK initialization failed: ${error.message}`);
+}
+
+export const db = admin.firestore();
+export const auth = admin.auth();

@@ -14,11 +14,11 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
 import { Skeleton } from './ui/skeleton';
-import { QUIZZES } from '@/lib/quiz';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
+import type { Quiz } from '@/types/tutorial.types';
 
 export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapters: Tutorial[] }) {
   const {
@@ -34,9 +34,24 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
   const router = useRouter();
 
   const [isMounted, setIsMounted] = useState(false);
+  const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
 
   useEffect(() => {
     setIsMounted(true);
+    const fetchQuizzes = async () => {
+      try {
+        const res = await fetch('/api/quizzes');
+        if (res.ok) {
+          const data = await res.json();
+          setAllQuizzesData(data);
+        } else {
+          console.error("Failed to fetch quizzes from API");
+        }
+      } catch (error) {
+        console.error("Error fetching quizzes:", error);
+      }
+    };
+    fetchQuizzes();
   }, []);
 
   const handleLessonClick = (chapterId: string, lessonId: string) => {
@@ -79,16 +94,14 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
             {chapters.map((tutorial, index) => {
               const isFirstChapter = index === 0;
               const prevChapter = isFirstChapter ? null : chapters[index - 1];
-              const prevChapterQuiz = prevChapter ? QUIZZES[prevChapter.id] : null;
-              const quizScorePrevChapter = prevChapter ? progress.quizScores[prevChapter.id] ?? 0 : 0;
-              const isChapterLockedByPreviousQuiz = !isFirstChapter && prevChapterQuiz && quizScorePrevChapter < prevChapterQuiz.passingScore;
+              const prevChapterQuiz = prevChapter ? allQuizzesData[prevChapter.id] : null;
+              const hasPassedPreviousQuiz = prevChapter && prevChapterQuiz ? (progress.quizScores[prevChapter.id] ?? 0) >= prevChapterQuiz.passingScore : true;
               
               const isPremiumLocked = index > 0 && !isPremium;
-              const isChapterTotallyLocked = isChapterLockedByPreviousQuiz || isPremiumLocked;
+              const isChapterTotallyLocked = isPremiumLocked || !hasPassedPreviousQuiz;
 
-              const chapterQuiz = QUIZZES[tutorial.id];
+              const chapterQuiz = allQuizzesData[tutorial.id];
               const isQuizPassed = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
-
               const areLessonsCompletedForQuiz = areAllLessonsInChapterCompleted(tutorial.id);
 
               return (

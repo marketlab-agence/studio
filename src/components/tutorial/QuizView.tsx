@@ -26,7 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TUTORIALS } from '@/lib/tutorials';
 import { useAuth } from '@/contexts/AuthContext';
 
 type QuizViewProps = {
@@ -60,25 +59,21 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
     
     const handleResetChapterAndStartOver = () => {
         resetChapter(quiz.id);
-        const chapter = TUTORIALS.find(c => c.id === quiz.id);
+        const chapter = courseChapters.find(c => c.id === quiz.id); // Use courseChapters from context
         if (chapter && chapter.lessons.length > 0) {
             setCurrentLocation(chapter.id, chapter.lessons[0].id);
         }
     };
 
     useEffect(() => {
-        // This effect decides whether to show a fresh quiz or past results.
-        // It should not interfere if the user has just completed the quiz in the current session.
         if (showResults) {
             return;
         }
 
-        // If the user has passed this quiz before, just show them the results.
         if (hasPassedBefore) {
             setUserAnswers(existingAnswers || {});
             setShowResults(true);
         } else {
-            // Otherwise, start a fresh quiz.
             resetQuiz();
         }
     }, [quiz.id, hasPassedBefore, existingAnswers, resetQuiz, showResults]);

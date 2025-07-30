@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
+import { db } from '@/lib/firebase-admin'; // Import the db instance
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +29,9 @@ const courseIcons: Record<string, React.ElementType> = {
 };
 
 export default async function Home() {
-  const courses = await getCourses();
-  const tutorials = await getTutorials();
+  // Pass the db instance to the functions
+  const courses = await getCourses(db);
+  const tutorials = await getTutorials(db);
   const publishedCourses = courses.filter(c => c.status === 'Publié');
 
   return (
@@ -121,6 +123,9 @@ export default async function Home() {
              {publishedCourses.slice(0, 1).map(course => { // Show only the first featured course
                 const Icon = courseIcons[course.id] || Rocket;
                 const href = `/tutorial/${course.id}`;
+                // Fetch tutorials for this course, but ensure they are fetched from the API
+                // For a server component, you could fetch them here or pass them as props.
+                // For now, let's keep it simple as this is the homepage.
                 const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
 
                 return (

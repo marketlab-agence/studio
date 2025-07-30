@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket, BrainCircuit } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
 import { getTutorials } from '@/lib/tutorials';
+import { db } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ const futureCourses = [
   {
     title: 'Trello : La Simplicité Visuelle',
     icon: Users,
-    description: 'Maîtrisez l\'art des tableaux Kanban pour une gestion de projet intuitive et collaborative.',
+    description: "Maîtrisez l'art des tableaux Kanban pour une gestion de projet intuitive et collaborative.",
   },
   {
     title: 'Slack : Communication & Automatisation',
@@ -39,7 +40,7 @@ const futureCourses = [
   {
     title: 'Notion : Votre Second Cerveau',
     icon: BookMarked,
-    description: 'Structurez la connaissance, gérez les tâches et construisez des systèmes d\'organisation personnels et d\'équipe.',
+    description: "Structurez la connaissance, gérez les tâches et construisez des systèmes d'organisation personnels et d'équipe.",
   },
   {
     title: 'AWS : Les Fondamentaux du Cloud',
@@ -54,8 +55,8 @@ const futureCourses = [
 ];
 
 export default async function CoursesPage() {
-  const courses = await getCourses();
-  const tutorials = await getTutorials();
+  const courses = await getCourses(db);
+  const tutorials = await getTutorials(db);
   const publishedCourses = courses.filter(c => c.status === 'Publié');
 
   return (

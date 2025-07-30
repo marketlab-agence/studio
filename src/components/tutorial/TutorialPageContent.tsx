@@ -2,33 +2,35 @@
 'use client';
 
 import { useMemo, useCallback, useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { TutorialPanel } from '@/components/tutorial-panel';
 import { LessonView } from '@/components/tutorial/LessonView';
 import { QuizView } from '@/components/tutorial/QuizView';
 import { NavigationControls } from '@/components/tutorial/NavigationControls';
 import { useTutorial } from '@/contexts/TutorialContext';
-import { QUIZZES } from '@/lib/quiz';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, AlertTriangle } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
+import type { Quiz } from '@/types/tutorial.types';
 
 export default function TutorialPageContent({ course, chapters: courseChapters }: { course: CourseInfo, chapters: Tutorial[] }) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
+  const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
 
   const {
+    isLoading,
     progress,
     currentChapter,
     currentLesson,
     setQuizScore,
     setCurrentLocation,
     showQuizForChapter,
+    goToNextLesson,
     currentView,
     setActiveCourseAndData,
   } = useTutorial();
@@ -41,6 +43,15 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
   
   useEffect(() => {
     setIsMounted(true);
+    const fetchQuizzes = async () => {
+      try {
+        const res = await fetch('/api/quizzes');
+        if (res.ok) setAllQuizzesData(await res.json());
+      } catch (error) {
+        console.error("Error fetching quizzes:", error);
+      }
+    };
+    fetchQuizzes();
   }, []);
 
   useEffect(() => {
@@ -49,65 +60,39 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
     }
   }, [user, authLoading, router]);
 
-  const chapterQuiz = useMemo(() => currentChapter ? QUIZZES[currentChapter.id] : undefined, [currentChapter]);
+  const chapterQuiz = useMemo(() => currentChapter ? allQuizzesData[currentChapter.id] : undefined, [currentChapter, allQuizzesData]);
   
   const isLastLessonInChapter = currentLesson && currentChapter ? currentChapter.lessons[currentChapter.lessons.length - 1].id === currentLesson.id : false;
   const isQuizAvailable = !!chapterQuiz;
 
   const handleQuizComplete = useCallback((score: number, answers: Record<string, string[]>) => {
-    if (currentChapter) {
-      setQuizScore(currentChapter.id, score, answers);
-    }
+    if (currentChapter) setQuizScore(currentChapter.id, score, answers);
   }, [currentChapter, setQuizScore]);
   
   const handleStartQuiz = () => {
-    if (currentChapter) {
-      showQuizForChapter(currentChapter.id);
-    }
+    if (currentChapter) showQuizForChapter(currentChapter.id);
   }
 
   const handleFinishQuiz = useCallback(() => {
     if (!currentChapter) return;
 
     const score = progress.quizScores[currentChapter.id] ?? 0;
-    const quiz = QUIZZES[currentChapter.id];
-    const passed = score >= (quiz?.passingScore ?? 80);
+    const quiz = allQuizzesData[currentChapter.id];
+    const passed = quiz ? score >= quiz.passingScore : false;
 
     if (passed) {
-      let nextUncompletedChapter = null;
-      let nextUncompletedLesson = null;
-
-      for (const chapter of courseChapters) {
-        const lesson = chapter.lessons.find(
-          (l) => !progress.completedLessons.has(l.id)
-        );
-        if (lesson) {
-          nextUncompletedChapter = chapter;
-          nextUncompletedLesson = lesson;
-          break; 
-        }
-      }
-
-      if (nextUncompletedChapter && nextUncompletedLesson) {
-        setCurrentLocation(
-          nextUncompletedChapter.id,
-          nextUncompletedLesson.id
-        );
-      } else {
-        router.push('/certificate');
-      }
+      goToNextLesson();
     } else {
+      // If failed, go back to the first lesson of the current chapter
       setCurrentLocation(currentChapter.id, currentChapter.lessons[0].id);
     }
-  }, [currentChapter, progress.quizScores, progress.completedLessons, setCurrentLocation, router, courseChapters]);
+  }, [currentChapter, progress.quizScores, setCurrentLocation, goToNextLesson, allQuizzesData]);
   
   const skeletonView = (
     <div className="flex flex-col h-full">
        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
            <Skeleton className="h-6 w-1/4 mb-2" />
            <Skeleton className="h-10 w-3/4 mb-4" />
-           <Skeleton className="h-6 w-full mb-8" />
-           <Skeleton className="h-4 w-full mb-4" />
            <Skeleton className="h-4 w-full mb-4" />
            <Skeleton className="h-4 w-5/6 mb-4" />
        </div>
@@ -132,7 +117,7 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
       </aside>
       <main className="flex-1 flex flex-col min-w-0 bg-card rounded-lg border">
         
-        {!isMounted || authLoading || !user ? (
+        {!isMounted || authLoading || !user || isLoading ? (
             skeletonView
         ) : (
           <>
@@ -150,12 +135,12 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
                     <div className="p-4 bg-primary/10 rounded-full mb-4">
                       <BookOpen className="h-10 w-10 text-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">Bienvenue dans le tutoriel interactif</h2>
+                    <h2 className="text-2xl font-bold mb-2">Bienvenue !</h2>
                     <p className="max-w-md text-muted-foreground mb-6">
-                      Sélectionnez un chapitre dans le panneau de gauche, ou cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
+                      Cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
                     </p>
                     <Button size="lg" onClick={() => setCurrentLocation(courseChapters[0].id, courseChapters[0].lessons[0].id)}>
-                        Commencer le tutoriel
+                        Commencer
                     </Button>
                   </div>
                 )}
