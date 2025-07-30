@@ -28,19 +28,30 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
     
     const courseId = slugify(plan.title);
     
-    // Remove any existing course with the same ID to prevent duplicates/stale data
-    const updatedCourses = courses.filter(c => c.id !== courseId);
-    
-    updatedCourses.push({
-        id: courseId,
-        title: plan.title,
-        description: plan.description,
-        status: 'Plan',
-        plan: plan,
-        generationParams: params,
-    });
+    const courseIndex = courses.findIndex(c => c.id === courseId);
 
-    await saveCourses(db, updatedCourses);
+    if (courseIndex !== -1) {
+        // Update existing plan
+        courses[courseIndex] = {
+            ...courses[courseIndex],
+            title: plan.title,
+            description: plan.description,
+            plan: plan,
+            generationParams: params,
+        };
+    } else {
+        // Add new plan
+        courses.push({
+            id: courseId,
+            title: plan.title,
+            description: plan.description,
+            status: 'Plan',
+            plan: plan,
+            generationParams: params,
+        });
+    }
+
+    await saveCourses(db, courses);
     revalidatePath('/admin/courses');
     return { courseId };
 }
@@ -50,7 +61,7 @@ export async function buildCourseFromPlanAction(courseId: string) {
     const { db } = await getFirebaseAdmin();
     const courses = await getCourses(db);
     const tutorials = await getTutorials(db);
-    const quizzes = await getQuizzes(db);
+    let quizzes = await getQuizzes(db);
 
     const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
@@ -69,6 +80,7 @@ export async function buildCourseFromPlanAction(courseId: string) {
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
         
+        // Skip if chapter (tutorial) already exists
         if (tutorials.find(t => t.id === chapterId)) return;
 
         const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
@@ -88,6 +100,9 @@ export async function buildCourseFromPlanAction(courseId: string) {
             lessons: lessons,
         };
         tutorials.push(newTutorial);
+
+        // Skip if quiz already exists
+        if (quizzes[chapterId]) return;
 
         const quizQuestions: Question[] = chapterPlan.quiz.questions.map((q, questionIndex) => ({
             id: `${chapterId}-q${questionIndex + 1}`,
