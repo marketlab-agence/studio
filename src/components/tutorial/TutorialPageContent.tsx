@@ -20,7 +20,6 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
-  const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
 
   const {
     isLoading,
@@ -34,6 +33,7 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
     currentView,
     setActiveCourseAndData,
     areAllLessonsInChapterCompleted,
+    allQuizzesData,
   } = useTutorial();
 
   useEffect(() => {
@@ -44,15 +44,6 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
   
   useEffect(() => {
     setIsMounted(true);
-    const fetchQuizzes = async () => {
-      try {
-        const res = await fetch('/api/quizzes');
-        if (res.ok) setAllQuizzesData(await res.json());
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-      }
-    };
-    fetchQuizzes();
   }, []);
 
   useEffect(() => {

@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
-import type { Quiz } from '@/types/tutorial.types';
 
 export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapters: Tutorial[] }) {
   const {
@@ -86,6 +85,7 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                   if (isFirstChapter) return true;
                   if (!prevChapter || !prevChapterQuiz) return false;
                   const score = progress.quizScores[prevChapter.id];
+                  // A chapter is unlocked if the previous chapter's quiz score is >= 80
                   return score !== undefined && score >= prevChapterQuiz.passingScore;
               };
 
