@@ -149,9 +149,9 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
                             </div>
 
                             <div className="text-center">
-                                <p className="font-signature text-4xl text-foreground/80">{instructorName}</p>
-                                <div className="h-px w-full bg-foreground my-1 max-w-[200px] mx-auto"></div>
-                                <p className="text-sm font-semibold">L'Instructeur</p>
+                                <p className="font-signature text-4xl text-foreground/80 mb-2">{instructorName}</p>
+                                <div className="h-px w-full bg-foreground/80 max-w-[200px] mx-auto"></div>
+                                <p className="text-sm font-semibold mt-1">L'Instructeur</p>
                             </div>
                         </div>
                       </div>
