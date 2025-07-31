@@ -20,8 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { savePlanAction, getCourseById, buildCourseFromPlanAction, generateLessonContentAction, getCourseAndChaptersAction } from '@/actions/courseActions';
-import { startFullCourseGenerationAction } from '@/actions/fullCourseGenerationActions';
+import { savePlanAction, buildCourseFromPlanAction, generateLessonContentAction } from '@/actions/courseActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -37,12 +36,11 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
-import type { CourseInfo } from '@/types/course.types';
 
 
 type StoredPlan = { plan: CreateCourseOutput; params: CreateCourseInput; localId: string; createdAt: Date };
 type BuildStep = {
-    type: 'lesson' | 'quiz' | 'complete';
+    type: 'lesson' | 'quiz';
     chapterIndex: number;
     lessonIndex?: number;
     title: string;
@@ -100,22 +98,13 @@ export default function CreateCoursePage() {
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad) {
-            getCourseAndChaptersAction(planIdToLoad).then(({ course, chapters }) => {
-                 if (course?.plan && course?.generationParams) {
-                    const storedPlanFromCourse: StoredPlan = {
-                        plan: course.plan,
-                        params: course.generationParams,
-                        localId: course.id, // Use the real course ID
-                        createdAt: new Date(),
-                    };
-                    
-                    setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
-                    setActivePlanId(storedPlanFromCourse.localId);
-                    setBuildingCourseId(course.id); // Pre-set the course ID for build
-                }
-            })
+            const planFromStorage = generatedPlans.find(p => p.localId === planIdToLoad);
+            if(planFromStorage) {
+                setActivePlanId(planIdToLoad);
+                setBuildingCourseId(planIdToLoad);
+            }
         }
-    }, [searchParams, setGeneratedPlans, setActivePlanId]);
+    }, [searchParams, generatedPlans, setActivePlanId]);
 
 
     // Effect to sync the form state whenever the active plan changes
@@ -190,20 +179,35 @@ export default function CreateCoursePage() {
         setError(null);
     
         try {
-            const result = await startFullCourseGenerationAction(activePlan, activeStoredPlan.params);
+            // Étape 1 : Sauvegarder le plan pour obtenir un ID de cours stable
+            const { courseId } = await savePlanAction(activePlan, activeStoredPlan.params);
+            const newStoredPlan = { ...activeStoredPlan, localId: courseId };
+            setGeneratedPlans(prev => [newStoredPlan, ...prev.filter(p => p.localId !== activeStoredPlan.localId)]);
+            setActivePlanId(newStoredPlan.localId);
+            setBuildingCourseId(courseId);
+    
+            // Étape 2 : Construire la structure du cours
+            await buildCourseFromPlanAction(courseId);
+    
+            // Étape 3 : Préparer les étapes pour la vue de l'atelier
+            const steps: BuildStep[] = [];
+            activePlan.chapters.forEach((chapter, chapterIndex) => {
+                chapter.lessons.forEach((lesson, lessonIndex) => {
+                    steps.push({ type: 'lesson', chapterIndex, lessonIndex, title: lesson.title });
+                });
+                steps.push({ type: 'quiz', chapterIndex, title: chapter.quiz.title });
+            });
+            setBuildSteps(steps);
+            setCurrentStepIndex(0);
             
-            if (result.status === 'success' && result.courseId) {
-                toast({ title: 'Génération terminée !', description: 'Le contenu complet du cours a été créé.' });
-                router.push(`/admin/courses/${result.courseId}`);
-            } else {
-                throw new Error(result.error || 'La génération complète du cours a échoué.');
-            }
+            // Étape 4 : Activer le mode construction
+            setIsBuildingMode(true);
+    
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Une erreur est survenue lors du lancement de la création.");
         } finally {
             setIsCreatingCourse(false);
-            setIsBuildingMode(false); // Make sure to exit building mode on error
         }
     };
 
@@ -562,3 +566,5 @@ export default function CreateCoursePage() {
         </div>
     )
 }
+
+    
