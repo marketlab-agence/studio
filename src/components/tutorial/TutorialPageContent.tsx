@@ -140,7 +140,11 @@ export default function TutorialPageContent({ course, chapters: courseChapters }
                     <p className="max-w-md text-muted-foreground mb-6">
                       Cliquez sur le bouton ci-dessous pour démarrer avec la première leçon.
                     </p>
-                    <Button size="lg" onClick={() => setCurrentLocation(courseChapters[0].id, courseChapters[0].lessons[0].id)}>
+                    <Button size="lg" onClick={() => {
+                        if (courseChapters.length > 0 && courseChapters[0].lessons.length > 0) {
+                            setCurrentLocation(courseChapters[0].id, courseChapters[0].lessons[0].id);
+                        }
+                    }}>
                         Commencer
                     </Button>
                   </div>
