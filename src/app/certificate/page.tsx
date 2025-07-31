@@ -1,43 +1,63 @@
 
 'use client';
 
-import { Award, Lock, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Award, Lock, Loader2, Trophy, BookOpen } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { CertificateGenerator } from '@/components/specialized/part-10/CertificateGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useRequirePremium } from '@/hooks/useRequirePremium';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getSettingsAction } from '@/actions/adminActions';
+import type { CourseInfo } from '@/types/course.types';
+import type { Tutorial } from '@/types/tutorial.types';
+import Link from 'next/link';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
+type CourseCompletionData = {
+  course: CourseInfo;
+  progress: number;
+  score: number;
+  isComplete: boolean;
+  isEligible: boolean;
+};
 
 export default function CertificatePage() {
   const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
-  const { setActiveCourse, overallProgress, progress, setCurrentLocation, averageQuizScore, masteryIndex, courseChapters } = useTutorial();
-  const [isMounted, setIsMounted] = useState(false);
-  const [instructorName, setInstructorName] = useState('Instructeur Katalyst');
-
+  const { globalProgress, allQuizzesData } = useTutorial();
   useRequirePremium();
 
+  const [isMounted, setIsMounted] = useState(false);
+  const [instructorName, setInstructorName] = useState('Instructeur Katalyst');
+  const [allCourses, setAllCourses] = useState<CourseInfo[]>([]);
+  const [allTutorials, setAllTutorials] = useState<Tutorial[]>([]);
+  
   useEffect(() => {
     setIsMounted(true);
-    // Hardcode to git course for now, this page should be dynamic later
-    setActiveCourse('git-github-tutorial');
-
-    async function fetchSettings() {
+    async function fetchData() {
         const settings = await getSettingsAction();
         if (settings.instructorName) {
             setInstructorName(settings.instructorName);
         }
-    }
-    fetchSettings();
+        // In a real app, you might want to show loading states for these
+        const coursesRes = await fetch('/api/courses');
+        if (coursesRes.ok) setAllCourses((await coursesRes.json()).filter((c: CourseInfo) => c.status === 'Publié'));
 
-  }, [setActiveCourse]);
+        const tutorialsRes = await fetch('/api/tutorials');
+        if (tutorialsRes.ok) setAllTutorials(await tutorialsRes.json());
+    }
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -45,121 +65,121 @@ export default function CertificatePage() {
     }
   }, [user, authLoading, router]);
 
+  const completionData = useMemo((): CourseCompletionData[] => {
+    return allCourses.map(course => {
+        const progressData = globalProgress[course.id];
+        if (!progressData) {
+            return { course, progress: 0, score: 0, isComplete: false, isEligible: false };
+        }
 
-  const handleContinue = () => {
-    if (!courseChapters) return;
-    
-    // Start searching from the user's last known chapter.
-    let startChapterIndex = progress.currentChapterId 
-        ? courseChapters.findIndex(c => c.id === progress.currentChapterId) 
-        : 0;
+        const courseTutorials = allTutorials.filter(t => t.courseId === course.id);
+        const totalLessons = courseTutorials.reduce((acc, t) => acc + t.lessons.length, 0);
+        const completedLessons = progressData.completedLessons.size;
+        
+        const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+        
+        const attemptedQuizIds = Object.keys(progressData.quizScores);
+        const totalScore = attemptedQuizIds.reduce((acc, quizId) => acc + (progressData.quizScores[quizId] || 0), 0);
+        const averageQuizScore = attemptedQuizIds.length > 0 ? totalScore / attemptedQuizIds.length : 0;
 
-    if (startChapterIndex === -1) {
-        // Fallback if currentChapterId is invalid for some reason
-        startChapterIndex = 0;
-    }
-    
-    // Create a reordered list of chapters to search, starting from the current one and wrapping around.
-    const chaptersToSearch = [...courseChapters.slice(startChapterIndex), ...courseChapters.slice(0, startChapterIndex)];
-    
-    let nextLesson = null;
-    let chapterOfNextLesson = null;
+        const isComplete = overallProgress >= 100;
+        const isEligible = isComplete && averageQuizScore >= 80;
 
-    for (const chapter of chaptersToSearch) {
-      // Find the first uncompleted lesson in this chapter
-      const lesson = chapter.lessons.find(l => !progress.completedLessons.has(l.id));
-      if (lesson) {
-          nextLesson = lesson;
-          chapterOfNextLesson = chapter;
-          break; // Found the first uncompleted lesson, stop searching.
-      }
-    }
-    
-    if (nextLesson && chapterOfNextLesson) {
-        setCurrentLocation(chapterOfNextLesson.id, nextLesson.id);
-        router.push(`/tutorial/${chapterOfNextLesson.courseId}`)
-    } else if (progress.currentChapterId && progress.currentLessonId) {
-      // Fallback to last known position if for some reason we can't find the next one
-      setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
-    }
-  };
+        return {
+            course,
+            progress: overallProgress,
+            score: averageQuizScore,
+            isComplete,
+            isEligible,
+        };
+    }).filter(data => data.progress > 0); // Only show courses the user has started
+  }, [allCourses, allTutorials, globalProgress]);
 
-  const isTutorialComplete = overallProgress >= 100;
-  const isScoreSufficient = averageQuizScore >= 80;
+  const eligibleCourses = completionData.filter(c => c.isEligible);
+  const inProgressCourses = completionData.filter(c => !c.isEligible);
 
   const renderContent = () => {
     if (!isMounted || authLoading || !user || !isPremium) {
-      return (
-        <Card className="text-center py-8">
-          <CardHeader>
-            <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-            <CardTitle>Vérification de l'accès</CardTitle>
-            <CardDescription>
-              Nous vérifions votre statut d'abonnement...
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="max-w-sm mx-auto space-y-4">
-             <Skeleton className="h-4 w-32 mx-auto" />
-             <Skeleton className="h-4 w-full" />
-          </CardContent>
-        </Card>
-      );
+      return <Skeleton className="h-64 w-full" />;
     }
 
-    if (isTutorialComplete && isScoreSufficient) {
-      return <CertificateGenerator averageQuizScore={averageQuizScore} masteryIndex={masteryIndex} instructorName={instructorName} />;
-    }
-
-    if (!isTutorialComplete) {
+    if (eligibleCourses.length === 0 && inProgressCourses.length === 0) {
         return (
-          <Card className="text-center py-8">
-            <CardHeader>
-              <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-                <Lock className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <CardTitle>Certificat Verrouillé</CardTitle>
-              <CardDescription>
-                Vous devez terminer l'intégralité du tutoriel pour débloquer votre certificat.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-sm mx-auto space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-2">Votre progression actuelle :</p>
-                <Progress value={overallProgress} />
-                <p className="text-sm text-muted-foreground mt-2">{Math.round(overallProgress)}%</p>
-              </div>
-              <Button onClick={handleContinue}>Continuer le Tutoriel</Button>
-            </CardContent>
-          </Card>
-        );
+            <Card className="text-center py-8">
+                <CardHeader>
+                    <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+                        <BookOpen className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <CardTitle>Commencez une formation !</CardTitle>
+                    <CardDescription>
+                        Vous n'avez pas encore commencé de formation. Explorez notre catalogue pour débloquer votre premier certificat.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link href="/courses">Explorer les formations</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )
     }
-    
-    // Case: tutorial complete but score not sufficient
+
     return (
-        <Card className="text-center py-8">
-            <CardHeader>
-                <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-                <Lock className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <CardTitle>Certificat Presque Débloqué</CardTitle>
-                <CardDescription>
-                Vous devez obtenir un score moyen d'au moins 80% aux quiz pour générer votre certificat.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-sm mx-auto space-y-4">
-                <div>
-                <p className="text-sm font-medium mb-2">Votre score moyen actuel :</p>
-                <div className="text-4xl font-bold text-destructive">{averageQuizScore.toFixed(0)}%</div>
-                <p className="text-sm text-muted-foreground mt-2">Objectif : 80%</p>
-                </div>
-                <Button asChild>
-                <Link href="/dashboard">Améliorer mon score</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    );
+        <div className="space-y-6">
+            {eligibleCourses.length > 0 && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Trophy className="text-yellow-400"/> Formations terminées</CardTitle>
+                        <CardDescription>Félicitations ! Vous pouvez générer un certificat pour ces formations.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Accordion type="single" collapsible className="w-full">
+                            {eligibleCourses.map(data => (
+                                <AccordionItem value={data.course.id} key={data.course.id}>
+                                    <AccordionTrigger className="text-lg font-semibold hover:no-underline">{data.course.title}</AccordionTrigger>
+                                    <AccordionContent>
+                                        <CertificateGenerator courseTitle={data.course.title} averageQuizScore={data.score} masteryIndex={0} instructorName={instructorName} />
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    </CardContent>
+                </Card>
+            )}
+
+            {inProgressCourses.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Formations en cours</CardTitle>
+                        <CardDescription>Terminez ces formations et obtenez un score suffisant pour débloquer votre certificat.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       {inProgressCourses.map(data => (
+                           <div key={data.course.id} className="p-4 border rounded-lg">
+                                <h3 className="font-semibold">{data.course.title}</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 text-sm">
+                                    <div>
+                                        <p className="font-medium mb-1">Progression</p>
+                                        <Progress value={data.progress} />
+                                        <p className="text-xs text-muted-foreground mt-1">{Math.round(data.progress)}%</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium mb-1">Score moyen aux quiz</p>
+                                        <p className={`font-bold ${data.score < 80 ? 'text-destructive' : 'text-green-500'}`}>
+                                            {data.score.toFixed(0)}% <span className="text-xs font-normal text-muted-foreground">(Objectif: 80%)</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="mt-4" asChild>
+                                    <Link href={`/dashboard`}>Continuer la formation</Link>
+                                </Button>
+                           </div>
+                       ))}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    )
   };
 
   return (
@@ -170,11 +190,10 @@ export default function CertificatePage() {
             <Award className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Votre Certificat de Réussite</h1>
-            <p className="text-muted-foreground">Validez la complétion de votre apprentissage sur Git & GitHub.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Vos Certificats de Réussite</h1>
+            <p className="text-muted-foreground">Validez la complétion de votre apprentissage pour chaque formation.</p>
           </div>
         </div>
-
         {renderContent()}
       </div>
     </main>

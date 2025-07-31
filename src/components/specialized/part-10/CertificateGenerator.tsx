@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export function CertificateGenerator({ averageQuizScore, masteryIndex, instructorName }: { averageQuizScore: number, masteryIndex: number, instructorName: string }) {
+export function CertificateGenerator({ courseTitle, averageQuizScore, masteryIndex, instructorName }: { courseTitle: string, averageQuizScore: number, masteryIndex: number, instructorName: string }) {
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
@@ -22,19 +22,19 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
                 month: 'long',
                 day: 'numeric',
             }));
-             setCertificateId(`GHI-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
+             setCertificateId(`KAT-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
             setGenerated(true);
         }
     };
     
     const getMentionText = () => {
-        if (averageQuizScore >= 98 && masteryIndex <= 1.1) {
+        if (averageQuizScore >= 98) {
             return "avec mention Excellence, pour sa compréhension exceptionnelle et sa maîtrise du premier coup.";
         }
         if (averageQuizScore >= 90) {
             return "avec mention Très Bien, pour sa solide et constante maîtrise des concepts.";
         }
-        return "pour avoir démontré avec succès sa maîtrise des compétences fondamentales et avancées en contrôle de version avec Git et en collaboration sur GitHub.";
+        return `pour avoir démontré avec succès sa maîtrise des compétences sur la formation "${courseTitle}".`;
     };
 
     const handleDownloadPdf = async () => {
@@ -72,24 +72,18 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
     };
 
     const handleShareLinkedIn = () => {
-        const courseTitle = "Git & GitHub : Le Guide Complet";
-        const text = `Fier d'avoir obtenu ma certification "${courseTitle}" sur la plateforme d'apprentissage interactif Katalyst ! J'ai approfondi mes compétences en contrôle de version et collaboration. #Git #GitHub #Developpement #FormationContinue`;
+        const text = `Fier d'avoir obtenu ma certification "${courseTitle}" sur la plateforme d'apprentissage interactif Katalyst ! #FormationContinue #Katalyst`;
         const url = window.location.origin;
         const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`;
         window.open(shareUrl, '_blank', 'noopener,noreferrer');
     };
 
   return (
-    <Card className="my-6">
-      <CardHeader>
-        <CardTitle>Générateur de Certificat</CardTitle>
-        <CardDescription>Entrez votre nom pour générer votre certificat de réussite.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="my-6">
         {!generated ? (
-            <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                 <Input 
-                    placeholder="Votre nom complet" 
+                    placeholder="Votre nom complet pour le certificat" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
@@ -112,7 +106,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
                         
                         <div className="flex items-center gap-4">
                             <GitCommitHorizontal className="h-10 w-10 text-primary"/>
-                            <h1 className="text-2xl font-bold">Maîtrise de Git & GitHub</h1>
+                            <h1 className="text-2xl font-bold">{courseTitle}</h1>
                         </div>
 
                         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Certificat d'Accomplissement</p>
@@ -121,7 +115,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
                         
                         <h2 className="text-5xl font-bold font-headline text-primary">{name}</h2>
                         
-                        <p className="max-w-lg text-muted-foreground">
+                        <p className="max-w-xl text-muted-foreground">
                             {getMentionText()}
                         </p>
 
@@ -149,7 +143,7 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
                       </div>
                     </div>
                     <div className="text-center mt-8 flex flex-wrap justify-center gap-4">
-                        <Button variant="outline" onClick={() => setGenerated(false)}>Générer un autre certificat</Button>
+                        <Button variant="outline" onClick={() => setGenerated(false)}>Modifier le nom</Button>
                         <Button onClick={handleDownloadPdf} disabled={isDownloading}>
                             {isDownloading ? <Loader2 className="mr-2 animate-spin"/> : <Download className="mr-2"/>}
                             {isDownloading ? 'Génération...' : 'Télécharger en PDF'}
@@ -162,7 +156,6 @@ export function CertificateGenerator({ averageQuizScore, masteryIndex, instructo
                 </motion.div>
             </AnimatePresence>
         )}
-      </CardContent>
-    </Card>
+      </div>
   );
 }
