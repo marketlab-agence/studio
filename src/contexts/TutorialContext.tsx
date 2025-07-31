@@ -126,7 +126,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   }, [globalProgress, user, isProgressLoading]);
 
 
-  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [activeCourseId, setActiveCourse] = useState<string | null>(null);
   const [course, setCourse] = useState<CourseInfo | undefined>();
   const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
 
@@ -155,7 +155,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   const setActiveCourseAndData = useCallback((newCourse: CourseInfo, newChapters: Tutorial[]) =>
   {
-    setActiveCourseId(newCourse.id);
+    setActiveCourse(newCourse.id);
     setCourse(newCourse);
     const sortedChapters = [...newChapters].sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
     setCourseChapters(sortedChapters);
