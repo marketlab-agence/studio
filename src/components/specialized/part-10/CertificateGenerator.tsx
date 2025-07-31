@@ -1,19 +1,28 @@
 
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2 } from 'lucide-react';
+import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function CertificateGenerator({ courseTitle, averageQuizScore, masteryIndex, instructorName }: { courseTitle: string, averageQuizScore: number, masteryIndex: number, instructorName: string }) {
+    const { user, loading } = useAuth();
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
     const [completionDate, setCompletionDate] = useState('');
     const [certificateId, setCertificateId] = useState('');
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isDownloading, setIsDownloading] = useState(false);
+
+    useEffect(() => {
+        if (user?.displayName) {
+            setName(user.displayName);
+        }
+    }, [user]);
+
 
     const handleGenerate = () => {
         if (name.trim()) {
@@ -81,14 +90,19 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
   return (
     <div className="my-6">
         {!generated ? (
-            <div className="flex flex-col sm:flex-row gap-2 max-w-md">
-                <Input 
-                    placeholder="Votre nom complet pour le certificat" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                />
-                <Button onClick={handleGenerate} disabled={!name.trim()}>Générer mon certificat</Button>
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+                 <div className="flex-1 w-full sm:w-auto">
+                    <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground text-sm h-10 flex items-center">
+                        {loading || !user?.displayName ? (
+                            <span className="italic">Chargement...</span>
+                        ) : (
+                            <span className="font-medium text-foreground">{user.displayName}</span>
+                        )}
+                    </div>
+                </div>
+                <Button onClick={handleGenerate} disabled={loading || !user?.displayName} className="w-full sm:w-auto">
+                    Générer mon certificat
+                </Button>
             </div>
         ) : (
              <AnimatePresence>
@@ -143,7 +157,7 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
                       </div>
                     </div>
                     <div className="text-center mt-8 flex flex-wrap justify-center gap-4">
-                        <Button variant="outline" onClick={() => setGenerated(false)}>Modifier le nom</Button>
+                        <Button variant="outline" onClick={() => setGenerated(false)}>Retour</Button>
                         <Button onClick={handleDownloadPdf} disabled={isDownloading}>
                             {isDownloading ? <Loader2 className="mr-2 animate-spin"/> : <Download className="mr-2"/>}
                             {isDownloading ? 'Génération...' : 'Télécharger en PDF'}
