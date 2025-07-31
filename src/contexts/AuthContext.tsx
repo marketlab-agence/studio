@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import type { AppUser } from '@/lib/users';
 
@@ -19,6 +19,35 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to create a user document if it doesn't exist
+const createUserDocument = async (user: User) => {
+    if (!db) return null;
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        console.log(`Creating user document for UID: ${user.uid}`);
+        const newUser: Omit<AppUser, 'id'> = {
+            name: user.displayName || user.email || 'Nouvel Utilisateur',
+            email: user.email!,
+            plan: 'Gratuit',
+            status: 'Actif',
+            role: 'Utilisateur',
+            joined: new Date().toISOString().split('T')[0],
+            phone: user.phoneNumber || '',
+        };
+        try {
+            await setDoc(userDocRef, newUser);
+            return newUser;
+        } catch (error) {
+            console.error("Error creating user document:", error);
+            return null;
+        }
+    }
+    return userDoc.data() as AppUser;
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,21 +59,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser && db) {
+        // Ensure user document exists before setting up a listener
+        await createUserDocument(authUser);
+        
         const userDocRef = doc(db, 'users', authUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userData = userDoc.data() as AppUser;
-            setPlan(userData.plan);
-            setUserRole(userData.role);
-            setIsPremium(userData.plan === 'Premium');
-        } else {
-            // Handle case where user exists in Auth but not in Firestore
-            // Potentially create a new user document here.
-             console.log("User document not found in Firestore for UID:", authUser.uid);
-             setPlan('Gratuit');
-             setUserRole('Utilisateur');
-             setIsPremium(false);
-        }
+        
+        // Use onSnapshot for real-time updates to user data (like plan changes)
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists()) {
+                const userData = doc.data() as AppUser;
+                setPlan(userData.plan);
+                setUserRole(userData.role);
+                setIsPremium(userData.plan === 'Premium');
+            } else {
+                 // This case should be rare now, but as a fallback:
+                 setPlan('Gratuit');
+                 setUserRole('Utilisateur');
+                 setIsPremium(false);
+            }
+        });
+        
+        // This will be called when the auth state changes (e.g., user logs out)
+        return () => unsubscribeSnapshot();
+        
       } else {
         setPlan(null);
         setUserRole(null);
@@ -61,8 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDocRef = doc(db, 'users', user.uid);
         try {
             await setDoc(userDocRef, { plan: newPlan }, { merge: true });
-            setPlan(newPlan);
-            setIsPremium(newPlan === 'Premium');
+            // State will be updated by the onSnapshot listener, so no need to call setPlan here.
         } catch (error) {
             console.error("Failed to update user plan in Firestore:", error);
         }

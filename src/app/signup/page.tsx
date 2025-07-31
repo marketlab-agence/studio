@@ -7,14 +7,16 @@ import { useRouter } from 'next/navigation';
 import { useForm, FieldErrors } from 'react-hook-form'; // Import FieldErrors
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import type { AppUser } from '@/lib/users';
 
 const signupSchema = z.object({
     email: z.string().email({
@@ -45,16 +47,35 @@ export default function SignupPage() {
 
     const onSubmit = async ({ email, password, displayName }: SignupFormValues) => {
         setIsSubmitting(true);
+        if (!auth || !db) {
+             toast({ variant: 'destructive', title: 'Erreur de configuration', description: "Le service d'authentification n'est pas disponible." });
+             setIsSubmitting(false);
+             return;
+        }
+
         try {
-            // Using non-null assertion (!) for debugging. 
-            // Ensure Firebase environment variables are set for proper initialization.
-            const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
-            // Consider updating displayName here after creation if needed, 
-            // though Firebase createUserWithEmailAndPassword doesn't take displayName directly
-            // await updateProfile(userCredential.user, { displayName: displayName });
+            // 1. Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // 2. Update Auth profile
+            await updateProfile(user, { displayName: displayName });
+            
+            // 3. Create user document in Firestore
+            const userDocRef = doc(db, 'users', user.uid);
+            const newUser: Omit<AppUser, 'id'> = {
+                name: displayName,
+                email: user.email!,
+                plan: 'Gratuit',
+                status: 'Actif',
+                role: 'Utilisateur',
+                joined: new Date().toISOString().split('T')[0],
+                phone: user.phoneNumber || '',
+            };
+            await setDoc(userDocRef, newUser);
             
             toast({ title: "Inscription réussie !", description: "Votre compte a été créé avec succès." });
-            router.push('/'); // Redirect to home or a welcome page
+            router.push('/dashboard');
         } catch (error: any) {
             console.error(error);
             let errorMessage = "Une erreur est survenue lors de l'inscription.";

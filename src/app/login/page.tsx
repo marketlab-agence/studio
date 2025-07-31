@@ -3,13 +3,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { 
     GoogleAuthProvider, 
     GithubAuthProvider,
     signInWithPopup,
-    signInWithEmailAndPassword 
+    signInWithEmailAndPassword,
+    User
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +23,34 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import type { AppUser } from '@/lib/users';
+
+
+// Helper to create a user document in Firestore if it doesn't exist
+const createUserDocumentFromOAuth = async (user: User) => {
+    if (!db) return;
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        const newUser: Omit<AppUser, 'id'> = {
+            name: user.displayName || user.email || 'Utilisateur Anonyme',
+            email: user.email!,
+            plan: 'Gratuit',
+            status: 'Actif',
+            role: 'Utilisateur',
+            joined: new Date().toISOString().split('T')[0],
+            phone: user.phoneNumber || '',
+        };
+        try {
+            await setDoc(userDocRef, newUser);
+            console.log("User document created from OAuth for UID:", user.uid);
+        } catch (error) {
+            console.error("Error creating user document from OAuth:", error);
+        }
+    }
+}
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,7 +73,11 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Create user document in Firestore if it's a new user
+      await createUserDocumentFromOAuth(result.user);
+      
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
       // Redirection is handled by useEffect
     } catch (error: any) {
