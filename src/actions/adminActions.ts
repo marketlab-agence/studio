@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { MOCK_USERS } from '@/lib/users';
+import type { AppUser } from '@/lib/users';
 import type { AppSettings } from '@/types/settings.types';
 import { getSettings, saveSettings } from '@/lib/settings';
 import { getCourses } from '@/lib/courses';
@@ -42,13 +42,40 @@ export async function getAdminCoursesAction() {
     }
 }
 
-export async function getAdminUsersAction() {
-    return MOCK_USERS.map(user => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        plan: user.plan,
-        status: user.status
-    }));
+export async function getAdminUsersAction(): Promise<AppUser[]> {
+    try {
+        const { db } = await getFirebaseAdmin();
+        const usersSnapshot = await db.collection('users').get();
+        const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
+        return users;
+    } catch(error) {
+        console.error("Failed to fetch admin users:", error);
+        return [];
+    }
+}
+
+export async function getAdminUserByIdAction(userId: string): Promise<AppUser | null> {
+    try {
+        const { db } = await getFirebaseAdmin();
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            return null;
+        }
+        return { id: userDoc.id, ...userDoc.data() } as AppUser;
+    } catch (error) {
+        console.error("Failed to fetch user:", error);
+        return null;
+    }
+}
+
+export async function updateUserRoleAction(userId: string, role: AppUser['role']): Promise<void> {
+    try {
+        const { db } = await getFirebaseAdmin();
+        await db.collection('users').doc(userId).update({ role });
+        revalidatePath(`/admin/users/${userId}`);
+        revalidatePath('/admin/users');
+    } catch (error) {
+        console.error("Failed to update user role:", error);
+        throw new Error("Could not update user role.");
+    }
 }

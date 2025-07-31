@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { MOCK_USERS } from '@/lib/users';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -82,10 +82,9 @@ const RoleCard = ({
 
 
 export default function ManageRolesPage() {
-    const { user } = useAuth();
+    const { user, userRole } = useAuth();
     const { toast } = useToast();
-    const currentUserData = user ? MOCK_USERS.find(u => u.email === user.email) : null;
-    const isSuperAdmin = currentUserData?.role === 'Super Admin';
+    const isSuperAdmin = userRole === 'Super Admin';
     
     const [permissions, setPermissions] = useState(initialRolePermissions);
     const [isSaving, setIsSaving] = useState(false);
@@ -117,9 +116,9 @@ export default function ManageRolesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <Button asChild variant="outline" size="sm">
-          <Link href="/admin?tab=users">
+          <Link href="/admin/users">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour au panneau d'administration
+            Retour à la gestion des utilisateurs
           </Link>
         </Button>
         {isSuperAdmin && (

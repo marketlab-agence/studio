@@ -4,7 +4,6 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { MOCK_USERS } from '@/lib/users';
 import { DeleteCourseButton } from './DeleteCourseButton';
 
 type AdminCourse = {
@@ -15,9 +14,8 @@ type AdminCourse = {
 };
 
 export function ActionButtons({ course }: { course: AdminCourse }) {
-    const { user } = useAuth();
-    const currentUserData = user ? MOCK_USERS.find(u => u.email === user.email) : null;
-    const isSuperAdmin = currentUserData?.role === 'Super Admin';
+    const { userRole } = useAuth();
+    const isSuperAdmin = userRole === 'Super Admin';
 
     const editButton = (
         <Button asChild variant="outline" size="sm">

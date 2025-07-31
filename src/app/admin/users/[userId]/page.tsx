@@ -1,10 +1,10 @@
+
 'use client';
 
-import { MOCK_USERS, MockUser } from '@/lib/users';
 import { notFound, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Shield, CreditCard, Activity, FileText, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Shield, Activity, FileText, AlertTriangle, Trash2, Loader2, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,41 +19,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
+import { AppUser } from '@/lib/users';
+import { getAdminUserByIdAction, updateUserRoleAction } from '@/actions/adminActions';
+
 
 export default function ManageUserPage() {
   const params = useParams();
   const { userId } = params as { userId: string };
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRole, setSelectedRole] = useState<MockUser['role'] | ''>('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<AppUser['role'] | ''>('');
+  const [isSaving, startSaving] = useTransition();
   const { toast } = useToast();
   const { user: authUser } = useAuth();
   const { overallProgress } = useTutorial();
 
   useEffect(() => {
-    const userData = MOCK_USERS.find(u => u.id === userId);
-    if (userData) {
-      setUser(userData);
-      setSelectedRole(userData.role);
+    async function loadUser() {
+        setLoading(true);
+        const userData = await getAdminUserByIdAction(userId);
+        if (userData) {
+          setUser(userData);
+          setSelectedRole(userData.role);
+        }
+        setLoading(false);
     }
-    setLoading(false);
+    loadUser();
   }, [userId]);
 
   const handleRoleSave = () => {
-    if (!selectedRole || !user) return;
-    setIsSaving(true);
-    // Simulate API call to save the role
-    setTimeout(() => {
-        // In a real app, you would update the data source here.
-        // For this mock, we can update the user object in state.
-        setUser(prev => prev ? {...prev, role: selectedRole} : null);
-        toast({
-            title: "Rôle mis à jour",
-            description: `Le rôle de ${user.name} est maintenant ${selectedRole}.`,
-        });
-        setIsSaving(false);
-    }, 1000);
+    if (!selectedRole || !user || selectedRole === user.role) return;
+
+    startSaving(async () => {
+        try {
+            await updateUserRoleAction(user.id, selectedRole as AppUser['role']);
+            setUser(prev => prev ? {...prev, role: selectedRole as AppUser['role']} : null);
+            toast({
+                title: "Rôle mis à jour",
+                description: `Le rôle de ${user.name} est maintenant ${selectedRole}.`,
+            });
+        } catch(error) {
+            toast({
+                title: "Erreur",
+                description: "La mise à jour du rôle a échoué.",
+                variant: 'destructive',
+            });
+        }
+    });
   };
 
   if (loading) {
@@ -85,16 +97,14 @@ export default function ManageUserPage() {
     return notFound();
   }
   
-  // Use real progress for the logged-in user when viewing their own profile,
-  // otherwise use a consistent mock value.
   const isViewingSelf = authUser?.email === user.email;
-  const userProgress = isViewingSelf ? overallProgress : 17; // Using 17 to match dashboard for other users in this mock scenario.
+  const userProgress = isViewingSelf ? overallProgress : 17;
 
   return (
     <div className="space-y-6">
       <div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/admin?tab=users">
+          <Link href="/admin/users">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Retour à la liste des utilisateurs
           </Link>
@@ -169,7 +179,7 @@ export default function ManageUserPage() {
                     <div>
                         <Label htmlFor="role-select" className="font-semibold text-sm">Rôle de l'utilisateur</Label>
                         <div className="flex items-center gap-2 mt-1">
-                            <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as MockUser['role'])}>
+                            <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppUser['role'])}>
                                 <SelectTrigger id="role-select">
                                     <SelectValue placeholder="Sélectionner un rôle" />
                                 </SelectTrigger>
@@ -181,7 +191,7 @@ export default function ManageUserPage() {
                                 </SelectContent>
                             </Select>
                             <Button onClick={handleRoleSave} disabled={isSaving || selectedRole === user.role}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : 'Sauver'}
+                                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
                             </Button>
                         </div>
                     </div>

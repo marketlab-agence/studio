@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { GitCommitHorizontal, Bell, User, LogOut, LogIn, Shield, Sparkles, Lock } from 'lucide-react';
+import { GitCommitHorizontal, Bell, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -16,15 +17,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { MOCK_USERS } from '@/lib/users';
 import { Badge } from '../ui/badge';
-import { cn } from '@/lib/utils';
 
 export function Header() {
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, userRole } = useAuth();
   const router = useRouter();
-  const currentUserFromMock = user ? MOCK_USERS.find(u => u.email === user.email) : null;
-  const isAdmin = currentUserFromMock?.role === 'Admin' || currentUserFromMock?.role === 'Super Admin';
+  const isAdmin = userRole === 'Admin' || userRole === 'Super Admin';
 
   const handleSignOut = async () => {
     if (auth) {

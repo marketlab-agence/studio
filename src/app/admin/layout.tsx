@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,27 +6,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MOCK_USERS } from '@/lib/users';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, userRole } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!loading) {
-      const currentUserData = user ? MOCK_USERS.find(u => u.email === user.email) : null;
-      if (!user || !currentUserData || !['Super Admin', 'Admin', 'Modérateur'].includes(currentUserData.role)) {
+      if (!user || !userRole || !['Super Admin', 'Admin', 'Modérateur'].includes(userRole)) {
         router.push('/login');
       } else {
         setIsAdmin(true);
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, userRole, router]);
 
   if (loading || !isAdmin) {
     return (

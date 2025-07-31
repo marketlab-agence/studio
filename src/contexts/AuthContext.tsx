@@ -4,16 +4,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { MOCK_USERS } from '@/lib/users';
+import type { AppUser } from '@/lib/users';
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  plan: 'Premium' | 'Gratuit' | null;
+  plan: AppUser['plan'] | null;
+  userRole: AppUser['role'] | null;
   isPremium: boolean;
-  updateUserPlan: ((newPlan: 'Premium' | 'Gratuit') => void) | null;
+  updateUserPlan: ((newPlan: AppUser['plan']) => void) | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,20 +22,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState<'Premium' | 'Gratuit' | null>(null);
+  const [plan, setPlan] = useState<AppUser['plan'] | null>(null);
+  const [userRole, setUserRole] = useState<AppUser['role'] | null>(null);
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
-      if (authUser) {
-        // Use local mock data instead of Firestore
-        const mockUser = MOCK_USERS.find(u => u.email === authUser.email);
-        const userPlan = mockUser ? mockUser.plan : 'Gratuit';
-        setPlan(userPlan);
-        setIsPremium(userPlan === 'Premium');
+      if (authUser && db) {
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userData = userDoc.data() as AppUser;
+            setPlan(userData.plan);
+            setUserRole(userData.role);
+            setIsPremium(userData.plan === 'Premium');
+        } else {
+            // Handle case where user exists in Auth but not in Firestore
+            // Potentially create a new user document here.
+             console.log("User document not found in Firestore for UID:", authUser.uid);
+             setPlan('Gratuit');
+             setUserRole('Utilisateur');
+             setIsPremium(false);
+        }
       } else {
         setPlan(null);
+        setUserRole(null);
         setIsPremium(false);
       }
       setLoading(false);
@@ -43,16 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const updateUserPlan = useCallback((newPlan: 'Premium' | 'Gratuit') => {
-    // This is a mock update for the local session.
-    // In a real app, this would write to the database.
-    if (user) {
-        setPlan(newPlan);
-        setIsPremium(newPlan === 'Premium');
-        // This part is for mock purposes only and should be replaced with a DB write.
-        const mockUser = MOCK_USERS.find(u => u.email === user.email);
-        if (mockUser) {
-            mockUser.plan = newPlan;
+  const updateUserPlan = useCallback(async (newPlan: AppUser['plan']) => {
+    if (user && db) {
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+            await setDoc(userDocRef, { plan: newPlan }, { merge: true });
+            setPlan(newPlan);
+            setIsPremium(newPlan === 'Premium');
+        } catch (error) {
+            console.error("Failed to update user plan in Firestore:", error);
         }
     }
   }, [user]);
@@ -66,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, plan, isPremium, updateUserPlan }}>
+    <AuthContext.Provider value={{ user, loading, plan, userRole, isPremium, updateUserPlan }}>
       {children}
     </AuthContext.Provider>
   );

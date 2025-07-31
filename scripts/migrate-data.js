@@ -1,3 +1,4 @@
+
 require('dotenv').config({ path: '.env.local' });
 const admin = require('firebase-admin');
 const fs = require('fs').promises;
@@ -60,6 +61,7 @@ async function runAllMigrations() {
   await migrateJsonToFirestore('quizzes.json', 'quizzes');
   await migrateJsonToFirestore('tutorials.json', 'tutorials');
   await migrateJsonToFirestore('settings.json', 'settings');
+  await migrateJsonToFirestore('users.json', 'users');
   console.log("All migrations finished.");
 }
 
