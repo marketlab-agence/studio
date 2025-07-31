@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { MOCK_USERS } from '@/lib/users';
 
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
         setPlan(newPlan);
         setIsPremium(newPlan === 'Premium');
+        // This part is for mock purposes only and should be replaced with a DB write.
         const mockUser = MOCK_USERS.find(u => u.email === user.email);
         if (mockUser) {
             mockUser.plan = newPlan;

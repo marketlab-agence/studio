@@ -10,13 +10,15 @@ import React,
   useState,
   useEffect
 } from 'react';
+import { useAuth } from './AuthContext';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type
 {
   CourseProgress,
   GlobalProgress,
   Tutorial
 } from '@/types/tutorial.types';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { CourseInfo } from '@/types/course.types';
 import type { Quiz } from '@/types/tutorial.types';
 
@@ -67,12 +69,6 @@ type TutorialContextType = {
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
-const replacer = (key: string, value: any) =>
-{
-  if (value instanceof Set) return { __dataType: 'Set', value: [...value] };
-  return value;
-};
-
 const reviver = (key: string, value: any) =>
 {
   if (typeof value === 'object' && value !== null && value.__dataType === 'Set') return new Set(value.value);
@@ -81,26 +77,69 @@ const reviver = (key: string, value: any) =>
 
 export function TutorialProvider({ children }: { children: ReactNode })
 {
-  const [globalProgress, setGlobalProgress] = useLocalStorage<GlobalProgress>('tutorial-progress', {}, {
-    serializer: (value) => JSON.stringify(value, replacer),
-    deserializer: (value) => JSON.parse(value, reviver),
-  });
+  const { user, loading: authLoading } = useAuth();
+  const [globalProgress, setGlobalProgress] = useState<GlobalProgress>({});
+  const [isProgressLoading, setIsProgressLoading] = useState(true);
 
-  const [activeCourseId, setActiveCourseId] = useLocalStorage<string | null>('activeCourseId', null);
+  // Load progress from Firestore on user login
+  useEffect(() => {
+    const loadProgress = async () => {
+      if (user && db) {
+        setIsProgressLoading(true);
+        const progressDocRef = doc(db, 'users', user.uid, 'progress', 'all');
+        const progressDoc = await getDoc(progressDocRef);
+        if (progressDoc.exists()) {
+          const rawData = progressDoc.data();
+          const parsedData = JSON.parse(JSON.stringify(rawData), reviver);
+          setGlobalProgress(parsedData);
+        } else {
+          setGlobalProgress({});
+        }
+        setIsProgressLoading(false);
+      } else if (!user) {
+        setGlobalProgress({});
+        setIsProgressLoading(false);
+      }
+    };
+    if(!authLoading) {
+        loadProgress();
+    }
+  }, [user, authLoading]);
+
+  // Save progress to Firestore whenever it changes
+  useEffect(() => {
+    const saveProgress = async () => {
+      if (user && db && Object.keys(globalProgress).length > 0) {
+        const progressDocRef = doc(db, 'users', user.uid, 'progress', 'all');
+        // We need to convert Sets to arrays for Firestore
+        const serializedProgress = JSON.parse(JSON.stringify(globalProgress, (key, value) => {
+            if (value instanceof Set) {
+                return Array.from(value);
+            }
+            return value;
+        }));
+        await setDoc(progressDocRef, serializedProgress, { merge: true });
+      }
+    };
+    saveProgress();
+  }, [globalProgress, user]);
+
+
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [course, setCourse] = useState<CourseInfo | undefined>();
   const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
 
   const [allCoursesData, setAllCoursesData] = useState<CourseInfo[]>([]);
   const [allTutorialsData, setAllTutorialsData] = useState<Tutorial[]>([]);
   const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() =>
   {
     const fetchInitialData = async () =>
     {
-      setIsLoading(true);
+      setIsDataLoading(true);
       try
       {
         const [coursesRes, tutorialsRes, quizzesRes] = await Promise.all([
@@ -119,7 +158,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
         console.error("Error fetching initial data:", error);
       } finally
       {
-        setIsLoading(false);
+        setIsDataLoading(false);
       }
     };
     fetchInitialData();
@@ -140,7 +179,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
     }
   }, [activeCourseId, allCoursesData, allTutorialsData, isDataLoaded]);
 
-  const setActiveCourse = useCallback((courseId: string) => setActiveCourseId(courseId), [setActiveCourseId]);
+  const setActiveCourse = useCallback((courseId: string) => setActiveCourseId(courseId), []);
 
   const setActiveCourseAndData = useCallback((newCourse: CourseInfo, newChapters: Tutorial[]) =>
   {
@@ -148,7 +187,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
     setCourse(newCourse);
     const sortedChapters = [...newChapters].sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
     setCourseChapters(sortedChapters);
-  }, [setActiveCourseId]);
+  }, []);
 
   const progress = useMemo(() => activeCourseId ? (globalProgress[activeCourseId] || initialCourseProgress) : initialCourseProgress, [globalProgress, activeCourseId]);
 
@@ -156,7 +195,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   {
     if (!activeCourseId) return;
     setGlobalProgress(prev => ({ ...prev, [activeCourseId]: progressUpdater(prev[activeCourseId] || initialCourseProgress) }));
-  }, [activeCourseId, setGlobalProgress]);
+  }, [activeCourseId]);
 
   const setCurrentLocation = useCallback((chapterId: string, lessonId: string) =>
   {
@@ -321,7 +360,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
     const masteryIndex = allAttemptsForPassedQuizzes.length > 0 ? allAttemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / allAttemptsForPassedQuizzes.length : 0;
 
     return {
-      isLoading,
+      isLoading: isDataLoading || authLoading || isProgressLoading,
       progress,
       globalProgress,
       course,
@@ -349,7 +388,9 @@ export function TutorialProvider({ children }: { children: ReactNode })
       isLastLessonInTutorial,
     };
   }, [
-    isLoading,
+    isDataLoading,
+    authLoading,
+    isProgressLoading,
     progress,
     globalProgress,
     course,
