@@ -10,6 +10,7 @@ import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } fr
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import type { GlobalProgress } from '@/types/tutorial.types';
 
 const slugify = (text: string) =>
   text
@@ -326,7 +327,8 @@ export async function deleteCourseAction(courseId: string) {
 
     const courseIndex = courses.findIndex(c => c.id === courseId);
     if (courseIndex === -1) {
-        throw new Error('Course not found for deletion');
+        console.warn(`Course with id ${courseId} not found for deletion.`);
+        return; // Course already deleted or never existed
     }
 
     // Identify associated tutorials and their IDs before modifying arrays
@@ -342,12 +344,44 @@ export async function deleteCourseAction(courseId: string) {
             delete quizzes[id];
         }
     });
+    
+    // --- New logic: Clean up user progress data ---
+    try {
+        console.log(`Starting cleanup of progress data for course ${courseId}...`);
+        const usersSnapshot = await db.collection('users').get();
+        if (!usersSnapshot.empty) {
+            const batch = db.batch();
+            for (const userDoc of usersSnapshot.docs) {
+                const progressDocRef = db.collection('users').doc(userDoc.id).collection('progress').doc('all');
+                const progressDoc = await progressDocRef.get();
+                if (progressDoc.exists()) {
+                    const progressData = progressDoc.data() as GlobalProgress;
+                    if (progressData[courseId]) {
+                        console.log(`Found progress for course ${courseId} for user ${userDoc.id}. Deleting...`);
+                        delete progressData[courseId];
+                        batch.set(progressDocRef, progressData);
+                    }
+                }
+            }
+            await batch.commit();
+            console.log(`Progress data cleanup for course ${courseId} completed.`);
+        }
+    } catch(error) {
+        console.error(`Failed to cleanup user progress data for course ${courseId}:`, error);
+        // We throw an error because failing to delete progress can lead to app inconsistencies.
+        throw new Error("Failed to cleanup user progress data.");
+    }
+    // --- End of new logic ---
+
 
     await saveCourses(db, courses);
     await saveTutorials(db, tutorials);
     await saveQuizzes(db, quizzes);
 
     revalidatePath('/admin/courses');
+    revalidatePath('/dashboard');
 }
+
+    
 
     

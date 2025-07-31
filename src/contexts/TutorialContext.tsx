@@ -171,8 +171,18 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   const setCurrentLocation = useCallback((chapterId: string, lessonId: string) =>
   {
+    if (activeCourseId) {
+       const activeCourseExists = course?.id === activeCourseId;
+       if (!activeCourseExists) {
+            console.warn("Attempted to set location for a course that is no longer active or available.");
+            setActiveCourseId(null);
+            setCourse(undefined);
+            setCourseChapters([]);
+            return;
+       }
+    }
     updateActiveCourseProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId, currentView: 'lesson' }));
-  }, [updateActiveCourseProgress]);
+  }, [updateActiveCourseProgress, activeCourseId, course]);
 
   const showQuizForChapter = useCallback((chapterId: string) =>
   {
@@ -388,3 +398,5 @@ export function useTutorial()
   if (!context) throw new Error('useTutorial must be used within a TutorialProvider');
   return context;
 }
+
+    
