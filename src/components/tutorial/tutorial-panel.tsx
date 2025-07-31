@@ -29,29 +29,15 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
     overallProgress,
     showQuizForChapter,
     areAllLessonsInChapterCompleted,
+    allQuizzesData,
   } = useTutorial();
   const { isPremium } = useAuth();
   const router = useRouter();
 
   const [isMounted, setIsMounted] = useState(false);
-  const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
-
+  
   useEffect(() => {
     setIsMounted(true);
-    const fetchQuizzes = async () => {
-      try {
-        const res = await fetch('/api/quizzes');
-        if (res.ok) {
-          const data = await res.json();
-          setAllQuizzesData(data);
-        } else {
-          console.error("Failed to fetch quizzes from API");
-        }
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-      }
-    };
-    fetchQuizzes();
   }, []);
 
   const handleLessonClick = (chapterId: string, lessonId: string) => {
@@ -100,7 +86,8 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                   if (isFirstChapter) return true;
                   if (!prevChapter || !prevChapterQuiz) return false;
                   const score = progress.quizScores[prevChapter.id];
-                  return score !== undefined && score >= prevChapterQuiz.passingScore;
+                  // A chapter is unlocked if the previous chapter's quiz score is >= 80
+                  return score !== undefined && score >= 80;
               };
 
               const isChapterLockedByQuiz = !hasPassedPreviousQuiz();
