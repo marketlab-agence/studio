@@ -16,10 +16,13 @@ async function initializeFirebaseAdmin() {
       throw new Error('Firebase environment variables not set. Please check your .env.local file.');
     }
 
+    // This is the robust way to handle the private key, especially in different environments.
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
     const serviceAccount = {
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      privateKey,
     };
 
     try {

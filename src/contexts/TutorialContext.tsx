@@ -367,7 +367,6 @@ export function TutorialProvider({ children }: { children: ReactNode })
     course,
     courseChapters,
     activeCourseId,
-    setActiveCourseId,
     setActiveCourseAndData,
     setCurrentLocation,
     showQuizForChapter,
