@@ -35,9 +35,6 @@ export function ActionButtons({ course }: { course: AdminCourse }) {
                 <Button asChild variant="outline" size="sm">
                     <Link href={`/admin/create-course?planId=${course.id}`}>Modifier le Plan</Link>
                 </Button>
-                <Button asChild size="sm">
-                    <Link href={`/admin/create-course?planId=${course.id}`}>Démarrer la Création</Link>
-                </Button>
                 {deleteButton}
             </div>
         );
