@@ -44,6 +44,7 @@ type TutorialContextType = {
   globalProgress: GlobalProgress;
   course: CourseInfo | undefined;
   courseChapters: Tutorial[];
+  allQuizzesData: Record<string, Quiz>;
   activeCourseId: string | null;
   setActiveCourse: (courseId: string) => void;
   setActiveCourseAndData: (course: CourseInfo, chapters: Tutorial[]) => void;
@@ -72,6 +73,7 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 const reviver = (key: string, value: any) =>
 {
   if (typeof value === 'object' && value !== null && value.__dataType === 'Set') return new Set(value.value);
+  if (key === 'completedLessons' && Array.isArray(value)) return new Set(value);
   return value;
 };
 
@@ -206,8 +208,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   {
     updateActiveCourseProgress(prev =>
     {
-      const newCompleted = new Set(prev.completedLessons);
-      if (prev.currentLessonId) newCompleted.add(prev.currentLessonId);
+      const newCompleted = prev.currentLessonId ? new Set(prev.completedLessons).add(prev.currentLessonId) : prev.completedLessons;
       return { ...prev, currentChapterId: chapterId, currentLessonId: prev.currentLessonId, currentView: 'quiz', completedLessons: newCompleted };
     });
   }, [updateActiveCourseProgress]);
@@ -365,6 +366,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
       globalProgress,
       course,
       courseChapters,
+      allQuizzesData,
       activeCourseId,
       setActiveCourse,
       setActiveCourseAndData,
@@ -418,3 +420,5 @@ export function useTutorial()
   if (!context) throw new Error('useTutorial must be used within a TutorialProvider');
   return context;
 }
+
+    
