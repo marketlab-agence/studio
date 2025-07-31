@@ -94,7 +94,7 @@ export default function CreatePlanPage() {
     <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <Button asChild variant="outline" size="sm">
-            <Link href="/admin?tab=subscriptions">
+            <Link href="/admin/subscriptions">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour aux abonnements
             </Link>
