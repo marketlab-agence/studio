@@ -12,8 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Circle, Lock, ChevronRight, GraduationCap } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { cn } from '@/lib/utils';
-import { Progress } from './ui/progress';
-import { Skeleton } from './ui/skeleton';
+import { Progress } from '../ui/progress';
+import { Skeleton } from '../ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import type { CourseInfo } from '@/types/course.types';
@@ -87,7 +87,7 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                   if (!prevChapter || !prevChapterQuiz) return false;
                   const score = progress.quizScores[prevChapter.id];
                   // A chapter is unlocked if the previous chapter's quiz score is >= 80
-                  return score !== undefined && score >= 80;
+                  return score !== undefined && score >= prevChapterQuiz.passingScore;
               };
 
               const isChapterLockedByQuiz = !hasPassedPreviousQuiz();
