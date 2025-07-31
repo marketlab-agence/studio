@@ -11,6 +11,7 @@ import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { GlobalProgress } from '@/types/tutorial.types';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const slugify = (text: string) =>
   text
@@ -321,67 +322,53 @@ export async function updateQuizAction(courseId: string, chapterId: string, upda
 
 export async function deleteCourseAction(courseId: string) {
     const { db } = await getFirebaseAdmin();
-    let courses = await getCourses(db);
-    let tutorials = await getTutorials(db);
-    let quizzes = await getQuizzes(db);
 
-    const courseIndex = courses.findIndex(c => c.id === courseId);
-    if (courseIndex === -1) {
-        console.warn(`Course with id ${courseId} not found for deletion.`);
-        return; // Course already deleted or never existed
-    }
-
-    // Identify associated tutorials and their IDs before modifying arrays
-    const tutorialIdsToDelete = new Set(tutorials.filter(t => t.courseId === courseId).map(t => t.id));
-
-    // Remove the course and associated tutorials
-    courses = courses.filter(c => c.id !== courseId);
-    tutorials = tutorials.filter(t => t.courseId !== courseId);
-
-    // Remove associated quizzes
-    tutorialIdsToDelete.forEach(id => {
-        if (quizzes[id]) {
-            delete quizzes[id];
-        }
-    });
-    
-    // --- New logic: Clean up user progress data ---
     try {
-        console.log(`Starting cleanup of progress data for course ${courseId}...`);
-        const usersSnapshot = await db.collection('users').get();
-        if (!usersSnapshot.empty) {
-            const batch = db.batch();
-            for (const userDoc of usersSnapshot.docs) {
-                const progressDocRef = db.collection('users').doc(userDoc.id).collection('progress').doc('all');
-                const progressDoc = await progressDocRef.get();
-                if (progressDoc.exists()) {
-                    const progressData = progressDoc.data() as GlobalProgress;
-                    if (progressData[courseId]) {
-                        console.log(`Found progress for course ${courseId} for user ${userDoc.id}. Deleting...`);
-                        delete progressData[courseId];
-                        batch.set(progressDocRef, progressData);
-                    }
-                }
+        await db.runTransaction(async (transaction) => {
+            // 1. Get all tutorials for the course to find their IDs
+            const tutorialsSnapshot = await transaction.get(
+                db.collection('tutorials').where('courseId', '==', courseId)
+            );
+            const tutorialIds = tutorialsSnapshot.docs.map(doc => doc.id);
+
+            // 2. Delete the course document
+            transaction.delete(db.collection('courses').doc(courseId));
+            console.log(`Course ${courseId} marked for deletion.`);
+
+            // 3. Delete associated tutorials
+            tutorialsSnapshot.docs.forEach(doc => {
+                transaction.delete(doc.ref);
+            });
+            console.log(`Tutorials for course ${courseId} marked for deletion.`);
+
+            // 4. Delete associated quizzes
+            tutorialIds.forEach(id => {
+                transaction.delete(db.collection('quizzes').doc(id));
+            });
+            console.log(`Quizzes for course ${courseId} marked for deletion.`);
+
+            // 5. Clean up user progress data
+            const usersSnapshot = await transaction.get(db.collection('users'));
+            if (!usersSnapshot.empty) {
+                usersSnapshot.docs.forEach(userDoc => {
+                    const progressDocRef = db.collection('users').doc(userDoc.id).collection('progress').doc('all');
+                     // We use an update with FieldValue.delete() to remove a specific field from the document
+                    transaction.update(progressDocRef, {
+                      [courseId]: FieldValue.delete()
+                    });
+                });
+                console.log(`User progress for course ${courseId} marked for cleanup.`);
             }
-            await batch.commit();
-            console.log(`Progress data cleanup for course ${courseId} completed.`);
-        }
-    } catch(error) {
-        console.error(`Failed to cleanup user progress data for course ${courseId}:`, error);
-        // We throw an error because failing to delete progress can lead to app inconsistencies.
-        throw new Error("Failed to cleanup user progress data.");
+        });
+
+        console.log(`Transaction successfully committed for deleting course ${courseId}.`);
+        revalidatePath('/admin/courses');
+        revalidatePath('/dashboard');
+    } catch (error) {
+        console.error(`Transaction failed for deleting course ${courseId}: `, error);
+        throw new Error("Failed to delete course and associated data.");
     }
-    // --- End of new logic ---
-
-
-    await saveCourses(db, courses);
-    await saveTutorials(db, tutorials);
-    await saveQuizzes(db, quizzes);
-
-    revalidatePath('/admin/courses');
-    revalidatePath('/dashboard');
 }
-
     
 
     
