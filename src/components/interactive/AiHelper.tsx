@@ -28,7 +28,7 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
 
     const placeholderQuery = courseTopic.toLowerCase().includes('git') 
         ? 'Quelle est la différence entre `git merge` et `git rebase` ?'
-        : `Donnez-moi un exemple de ${courseTopic}.`;
+        : `Donnez-moi un exemple concret de ${courseTopic.toLowerCase()}.`;
         
     const handleSubmit = async () => {
         if (!query.trim()) return;
@@ -60,7 +60,7 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
                     Playground IA Katalyst
                 </CardTitle>
                 <CardDescription>
-                    Posez une question sur {courseTopic}, demandez une explication sur un concept, ou demandez à corriger une erreur.
+                    Posez une question sur <span className="font-semibold">{courseTopic}</span>, demandez une explication sur un concept, ou demandez à corriger une erreur.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -92,7 +92,7 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
                       rows={3}
                   />
                 </div>
-                <Button onClick={handleSubmit} disabled={isLoading}>
+                <Button onClick={handleSubmit} disabled={isLoading || !query.trim()}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                     Demander à l'IA
                 </Button>

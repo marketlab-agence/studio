@@ -2,15 +2,17 @@
 'use client';
 
 import { AiHelper } from '@/components/interactive/AiHelper';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRequirePremium } from '@/hooks/useRequirePremium';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 export default function AiAssistantPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { course } = useTutorial();
   
   // This hook will redirect non-premium users.
   useRequirePremium();
@@ -21,6 +23,22 @@ export default function AiAssistantPage() {
       router.push('/login');
     }
   }, [user, loading, router]);
+  
+  const assistantContext = useMemo(() => {
+    if (course) {
+        return {
+            topic: course.title,
+            description: `Votre copilote expert pour maîtriser ${course.title}.`,
+            pageTitle: `Assistant IA : ${course.title}`
+        };
+    }
+    return {
+        topic: 'un sujet de votre choix',
+        description: 'Votre copilote expert pour maîtriser n\'importe quel sujet.',
+        pageTitle: 'Assistant IA'
+    };
+  }, [course]);
+
 
   if (loading || !user) {
     return (
@@ -43,14 +61,27 @@ export default function AiAssistantPage() {
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Assistant IA</h1>
-            <p className="text-muted-foreground">Votre copilote expert pour maîtriser n'importe quel sujet.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{assistantContext.pageTitle}</h1>
+            <p className="text-muted-foreground">{assistantContext.description}</p>
           </div>
         </div>
         
-        <AiHelper courseTopic="Git et GitHub" lessonContext="Assistant général" />
+        {course && (
+            <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border">
+                <BookOpen className="h-5 w-5 text-muted-foreground"/>
+                <p className="text-sm text-muted-foreground">
+                    L'assistant est actuellement contextualisé sur votre dernière formation consultée : <span className="font-semibold text-foreground">{course.title}</span>
+                </p>
+            </div>
+        )}
+
+        <AiHelper 
+          courseTopic={assistantContext.topic} 
+          lessonContext="Assistant général" 
+        />
 
       </div>
     </main>
   );
 }
+
