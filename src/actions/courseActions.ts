@@ -3,9 +3,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { getCourses, saveCourses, getCourseById } from '@/lib/courses';
+import { getCourses, saveCourses, getCourseById, deleteCourse } from '@/lib/courses';
 import { getTutorials, saveTutorials } from '@/lib/tutorials';
-import { getQuizzes, saveQuizzes } from '@/lib/quiz';
+import { getQuizzes, saveQuizzes, createOrUpdateQuiz } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
@@ -264,4 +264,41 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
       revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`);
     }
   }
+}
+
+export async function deleteCourseAction(courseId: string) {
+    const { db } = await getFirebaseAdmin();
+    
+    // Delete course document
+    await deleteCourse(db, courseId);
+
+    // Delete associated tutorials (chapters)
+    const tutorials = await getTutorials(db);
+    const tutorialsToDelete = tutorials.filter(t => t.courseId === courseId);
+    const tutorialsToKeep = tutorials.filter(t => t.courseId !== courseId);
+    if (tutorialsToDelete.length > 0) {
+        await saveTutorials(db, tutorialsToKeep);
+    }
+    
+    // Delete associated quizzes
+    const quizzes = await getQuizzes(db);
+    const quizIdsToDelete = tutorialsToDelete.map(t => t.id);
+    const quizzesToKeep: Record<string, Quiz> = {};
+    Object.keys(quizzes).forEach(key => {
+        if (!quizIdsToDelete.includes(key)) {
+            quizzesToKeep[key] = quizzes[key];
+        }
+    });
+
+    if (Object.keys(quizzes).length !== Object.keys(quizzesToKeep).length) {
+        await saveQuizzes(db, quizzesToKeep);
+    }
+
+    revalidatePath('/admin/courses');
+}
+
+export async function updateQuizAction(courseId: string, chapterId: string, quiz: Quiz) {
+  const { db } = await getFirebaseAdmin();
+  await createOrUpdateQuiz(db, quiz);
+  revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
 }

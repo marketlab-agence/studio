@@ -29,6 +29,35 @@ export async function getQuizzes(db: Firestore): Promise<Record<string, Quiz>> {
 }
 
 /**
+ * Saves a map of quizzes to the Firestore 'quizzes' collection.
+ * This will overwrite the entire collection with the new data.
+ * @param {Firestore} db - The Firestore database instance.
+ * @param {Record<string, Quiz>} quizzes - The map of quizzes to save.
+ * @returns {Promise<void>}
+ */
+export async function saveQuizzes(db: Firestore, quizzes: Record<string, Quiz>): Promise<void> {
+    const batch = db.batch();
+    
+    // Optional: To delete all existing quizzes first if you want a clean slate
+    // const snapshot = await db.collection(QUIZZES_COLLECTION).get();
+    // snapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+    Object.keys(quizzes).forEach(quizId => {
+        const docRef = db.collection(QUIZZES_COLLECTION).doc(quizId);
+        batch.set(docRef, quizzes[quizId]);
+    });
+
+    try {
+        await batch.commit();
+        console.log("Quizzes saved successfully to Firestore.");
+    } catch (error) {
+        console.error("Error saving quizzes to Firestore: ", error);
+        throw new Error("Could not save quizzes to Firestore.");
+    }
+}
+
+
+/**
  * Retrieves a single quiz by its ID from the Firestore 'quizzes' collection.
  * @param {Firestore} db - The Firestore database instance.
  * @param {string} id - The ID of the quiz to retrieve.
