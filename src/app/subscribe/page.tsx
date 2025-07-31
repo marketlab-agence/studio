@@ -8,14 +8,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Check, CreditCard, Loader2, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { PLANS_DATA } from '@/lib/plans';
+import { getPlansAction } from '@/actions/planActions';
+import type { SubscriptionPlan } from '@/types/plans.types';
 
 export default function SubscribePage() {
   const router = useRouter();
   const { user, loading, isPremium, updateUserPlan } = useAuth();
   const { toast } = useToast();
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const premiumPlan = PLANS_DATA.premium;
+  const [premiumPlan, setPremiumPlan] = useState<SubscriptionPlan | null>(null);
+
+  useEffect(() => {
+    async function fetchPlan() {
+        const plans = await getPlansAction();
+        const premPlan = plans.find(p => p.id === 'premium');
+        setPremiumPlan(premPlan || null);
+    }
+    fetchPlan();
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -80,7 +90,7 @@ export default function SubscribePage() {
     // --- FIN DE LA SIMULATION ---
   };
 
-  if (loading || !user || isPremium) {
+  if (loading || !user || isPremium || !premiumPlan) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">

@@ -101,6 +101,7 @@ async function runAllMigrations() {
   await migrateJsonToFirestore('tutorials.json', 'tutorials');
   await migrateJsonToFirestore('settings.json', 'settings');
   await migrateJsonToFirestore('users.json', 'users');
+  await migrateJsonToFirestore('plans.json', 'plans');
   console.log("All migrations finished.");
 }
 

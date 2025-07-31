@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
 import { CreditCard, PlusCircle, ChevronRight } from 'lucide-react';
-import { PLANS_DATA } from '@/lib/plans';
+import { getPlansAction } from '@/actions/planActions';
+import type { SubscriptionPlan } from '@/types/plans.types';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminSubscriptionsPage() {
-  const plans = Object.entries(PLANS_DATA).map(([id, plan]) => ({ id, ...plan }));
+export default async function AdminSubscriptionsPage() {
+  const plans = (await getPlansAction()) as SubscriptionPlan[];
 
   return (
     <div className="space-y-6">

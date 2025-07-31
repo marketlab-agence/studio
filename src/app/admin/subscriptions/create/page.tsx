@@ -12,8 +12,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, Save, Loader2, BookCopy, Star } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { PLANS_DATA, ALL_FEATURES, type FeaturePermission } from '@/lib/plans';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ALL_FEATURES, type FeaturePermission, type SubscriptionPlan } from '@/types/plans.types';
+import { getPlansAction, createOrUpdatePlanAction } from '@/actions/planActions';
 
 const availableCourses = [
   { id: 'git-github-tutorial', name: 'Git & GitHub : Le Guide Complet' },
@@ -22,11 +23,13 @@ const availableCourses = [
 
 export default function CreatePlanPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get('plan');
   const isEditing = !!planId;
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [planName, setPlanName] = useState('');
   const [price, setPrice] = useState('');
@@ -36,15 +39,25 @@ export default function CreatePlanPage() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isEditing && planId && PLANS_DATA[planId]) {
-      const planData = PLANS_DATA[planId];
-      setPlanName(planData.name);
-      setPrice(planData.price.toString());
-      setBillingPeriod(planData.billingPeriod);
-      setDescription(planData.description);
-      setSelectedPermissions(planData.permissions);
-      setSelectedCourses(planData.courses);
+    async function loadPlan() {
+      if (isEditing && planId) {
+        setIsLoading(true);
+        const plans = await getPlansAction();
+        const planData = plans.find(p => p.id === planId);
+        if (planData) {
+          setPlanName(planData.name);
+          setPrice(planData.price.toString());
+          setBillingPeriod(planData.billingPeriod);
+          setDescription(planData.description);
+          setSelectedPermissions(planData.permissions);
+          setSelectedCourses(planData.courses);
+        }
+        setIsLoading(false);
+      } else {
+          setIsLoading(false);
+      }
     }
+    loadPlan();
   }, [planId, isEditing]);
 
   const handlePermissionChange = (permissionId: FeaturePermission) => {
@@ -63,32 +76,43 @@ export default function CreatePlanPage() {
     );
   };
 
-  const handleSavePlan = () => {
+  const handleSavePlan = async () => {
     setIsSaving(true);
     const derivedFeatures = ALL_FEATURES
         .filter(feature => selectedPermissions.includes(feature.id))
         .map(feature => feature.label);
     
-    const planData = {
+    const planData: Omit<SubscriptionPlan, 'id'> = {
       name: planName,
-      price: parseFloat(price),
-      billingPeriod,
+      price: parseFloat(price) || 0,
+      billingPeriod: billingPeriod as SubscriptionPlan['billingPeriod'],
       description,
       features: derivedFeatures,
       courses: selectedCourses,
       permissions: selectedPermissions,
+      cta: isEditing ? (PLANS_DATA.premium.cta) : 'S\'inscrire',
+      recommended: false, // You might want to add a switch for this
     };
-    
-    // Simulate API call
-    console.log('Saving plan:', planData);
-    setTimeout(() => {
+
+    try {
+        const savedPlan = await createOrUpdatePlanAction(planData, planId || undefined);
         toast({
-            title: isEditing ? 'Plan Modifié (Simulation)' : 'Plan Sauvegardé (Simulation)',
-            description: `Le plan "${planName}" a été ${isEditing ? 'modifié' : 'créé'}.`,
+            title: isEditing ? 'Plan Modifié' : 'Plan Sauvegardé',
+            description: `Le plan "${savedPlan.name}" a été sauvegardé.`,
         });
+        if (!isEditing) {
+            router.push(`/admin/subscriptions/create?plan=${savedPlan.id}`);
+        }
+    } catch(e) {
+        toast({ title: 'Erreur', description: 'La sauvegarde a échoué.', variant: 'destructive'});
+    } finally {
         setIsSaving(false);
-    }, 1500);
+    }
   };
+  
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <div className="space-y-6">

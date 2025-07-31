@@ -1,0 +1,41 @@
+
+[
+  {
+    "id": "free",
+    "name": "Formule Gratuite",
+    "description": "Accès limité pour découvrir la plateforme.",
+    "price": 0,
+    "billingPeriod": "monthly",
+    "features": [
+      "Accès au premier chapitre de chaque formation",
+      "Quiz de fin de chapitre"
+    ],
+    "courses": [],
+    "permissions": ["FIRST_CHAPTER_ACCESS", "END_OF_CHAPTER_QUIZ"],
+    "cta": "Vous utilisez ce plan",
+    "recommended": false
+  },
+  {
+    "id": "premium",
+    "name": "Formule Premium",
+    "description": "Accès complet et fonctionnalités avancées.",
+    "price": 9.99,
+    "billingPeriod": "monthly",
+    "features": [
+      "Accès à toutes les formations",
+      "Playground avec IA pour conseils et astuces",
+      "Certificat de réussite",
+      "Support prioritaire"
+    ],
+    "courses": ["git-github-tutorial"],
+    "permissions": [
+        "ALL_COURSES_ACCESS", 
+        "AI_PLAYGROUND", 
+        "CERTIFICATE_OF_COMPLETION", 
+        "END_OF_CHAPTER_QUIZ", 
+        "PRIORITY_SUPPORT"
+    ],
+    "cta": "Passer au Premium",
+    "recommended": true
+  }
+]
