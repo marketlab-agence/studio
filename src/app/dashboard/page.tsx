@@ -54,6 +54,7 @@ export default function DashboardPage() {
         setActiveCourseAndData,
         setCurrentLocation,
         showQuizForChapter,
+        allQuizzesData,
     } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
@@ -62,8 +63,7 @@ export default function DashboardPage() {
 
     const [allCoursesData, setAllCoursesData] = useState<CourseInfo[]>([]);
     const [allTutorialsData, setAllTutorialsData] = useState<Tutorial[]>([]);
-    const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
-
+    
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login');
@@ -87,14 +87,12 @@ export default function DashboardPage() {
         // Fetch all data
         const fetchAllData = async () => {
             try {
-                const [coursesRes, tutorialsRes, quizzesRes] = await Promise.all([
+                const [coursesRes, tutorialsRes] = await Promise.all([
                     fetch('/api/courses'),
                     fetch('/api/tutorials'),
-                    fetch('/api/quizzes'),
                 ]);
                 if (coursesRes.ok) setAllCoursesData(await coursesRes.json());
                 if (tutorialsRes.ok) setAllTutorialsData(await tutorialsRes.json());
-                if (quizzesRes.ok) setAllQuizzesData(await quizzesRes.json());
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             }

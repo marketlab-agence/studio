@@ -83,10 +83,10 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
               const prevChapterQuiz = prevChapter ? allQuizzesData[prevChapter.id] : null;
 
               const hasPassedPreviousQuiz = () => {
-                if (isFirstChapter) return true;
-                if (!prevChapter || !prevChapterQuiz) return false;
-                const score = progress.quizScores[prevChapter.id];
-                return score !== undefined && score >= prevChapterQuiz.passingScore;
+                  if (isFirstChapter) return true;
+                  if (!prevChapter || !prevChapterQuiz) return false;
+                  const score = progress.quizScores[prevChapter.id];
+                  return score !== undefined && score >= prevChapterQuiz.passingScore;
               };
 
               const isChapterLockedByQuiz = !hasPassedPreviousQuiz();
