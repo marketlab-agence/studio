@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createCoursePlan, type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { savePlanAction, getCourseById, buildCourseFromPlanAction, generateLessonContentAction } from '@/actions/courseActions';
+import { savePlanAction, getCourseById, buildCourseFromPlanAction, generateLessonContentAction, getCourseAndChaptersAction } from '@/actions/courseActions';
 import { startFullCourseGenerationAction } from '@/actions/fullCourseGenerationActions';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -100,18 +100,18 @@ export default function CreateCoursePage() {
     useEffect(() => {
         const planIdToLoad = searchParams.get('planId');
         if (planIdToLoad) {
-            getCourseById(planIdToLoad).then((courseToLoad) => {
-                 if (courseToLoad?.plan && courseToLoad?.generationParams) {
+            getCourseAndChaptersAction(planIdToLoad).then(({ course, chapters }) => {
+                 if (course?.plan && course?.generationParams) {
                     const storedPlanFromCourse: StoredPlan = {
-                        plan: courseToLoad.plan,
-                        params: courseToLoad.generationParams,
-                        localId: courseToLoad.id, // Use the real course ID
+                        plan: course.plan,
+                        params: course.generationParams,
+                        localId: course.id, // Use the real course ID
                         createdAt: new Date(),
                     };
                     
                     setGeneratedPlans(prev => [storedPlanFromCourse, ...prev.filter(p => p.localId !== storedPlanFromCourse.localId)]);
                     setActivePlanId(storedPlanFromCourse.localId);
-                    setBuildingCourseId(courseToLoad.id); // Pre-set the course ID for build
+                    setBuildingCourseId(course.id); // Pre-set the course ID for build
                 }
             })
         }
