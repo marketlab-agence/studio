@@ -79,3 +79,4 @@ export async function updateUserRoleAction(userId: string, role: AppUser['role']
         throw new Error("Could not update user role.");
     }
 }
+

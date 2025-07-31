@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import {
     BookCopy, DollarSign, LayoutDashboard, Users, Verified, Save, Loader2, CreditCard
 } from 'lucide-react';
-import { MOCK_USERS, PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
+import { PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
