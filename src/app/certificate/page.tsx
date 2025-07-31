@@ -103,14 +103,16 @@ export default function CertificatePage() {
             isComplete,
             isEligible,
         };
-    }).filter(data => data.progress > 0);
+    }).filter(data => data.progress > 0 || data.score > 0);
   }, [allCourses, allTutorials, globalProgress, isDataLoading, isProgressLoading]);
 
   const eligibleCourses = completionData.filter(c => c.isEligible);
   const inProgressCourses = completionData.filter(c => !c.isEligible);
 
+  const isLoading = authLoading || isProgressLoading || isDataLoading;
+
   const renderContent = () => {
-    if (authLoading || isProgressLoading || isDataLoading) {
+    if (isLoading) {
         return (
             <div className="space-y-6">
                 <Card><CardHeader><Skeleton className="h-8 w-3/4"/></CardHeader><CardContent><Skeleton className="h-24 w-full"/></CardContent></Card>

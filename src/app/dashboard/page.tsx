@@ -55,14 +55,14 @@ export default function DashboardPage() {
         setCurrentLocation,
         showQuizForChapter,
         allQuizzesData,
+        isLoading: isProgressLoading,
     } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
-    const [commitData, setCommitData] = useState<{name: string, commits: number}[]>([]);
-    const [languagesData, setLanguagesData] = useState<any[]>([]);
 
     const [allCoursesData, setAllCoursesData] = useState<CourseInfo[]>([]);
     const [allTutorialsData, setAllTutorialsData] = useState<Tutorial[]>([]);
+    const [isDataLoading, setIsDataLoading] = useState(true);
     
     useEffect(() => {
         if (!authLoading && !user) {
@@ -72,20 +72,8 @@ export default function DashboardPage() {
 
     useEffect(() => {
         setIsMounted(true);
-        // Mock data
-        setCommitData([
-            { name: 'Jan', commits: Math.floor(Math.random() * 50) + 10 },
-            { name: 'Fev', commits: Math.floor(Math.random() * 50) + 10 },
-            { name: 'Mar', commits: Math.floor(Math.random() * 50) + 10 },
-        ]);
-        setLanguagesData([
-            { name: 'TypeScript', value: 65, fill: 'hsl(var(--chart-1))' },
-            { name: 'HTML', value: 20, fill: 'hsl(var(--chart-2))' },
-            { name: 'CSS', value: 15, fill: 'hsl(var(--chart-3))' },
-        ]);
-
-        // Fetch all data
         const fetchAllData = async () => {
+            setIsDataLoading(true);
             try {
                 const [coursesRes, tutorialsRes] = await Promise.all([
                     fetch('/api/courses'),
@@ -95,18 +83,20 @@ export default function DashboardPage() {
                 if (tutorialsRes.ok) setAllTutorialsData(await tutorialsRes.json());
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
+            } finally {
+                setIsDataLoading(false);
             }
         };
         fetchAllData();
     }, []);
 
     const startedCourses = useMemo(() => {
-        if (!globalProgress || allCoursesData.length === 0) return [];
+        if (isProgressLoading || isDataLoading) return [];
         return allCoursesData.filter(course => {
             const progress = globalProgress[course.id];
             return progress && (progress.completedLessons.size > 0 || progress.currentLessonId) && course.status === 'Publié';
         });
-    }, [globalProgress, allCoursesData]);
+    }, [globalProgress, allCoursesData, isProgressLoading, isDataLoading]);
 
     const handleContinue = (courseId: string) => {
         const progress = globalProgress[courseId];
@@ -122,7 +112,6 @@ export default function DashboardPage() {
         
         setActiveCourseAndData(course, chapters);
 
-        // Resume from last known location if it exists
         if (progress.currentChapterId && progress.currentLessonId) {
             if(progress.currentView === 'quiz') {
                 showQuizForChapter(progress.currentChapterId);
@@ -133,7 +122,6 @@ export default function DashboardPage() {
             return;
         }
 
-        // If no last location, find the first uncompleted lesson
         for (const chapter of chapters) {
             for (const lesson of chapter.lessons) {
                 if (!progress.completedLessons.has(lesson.id)) {
@@ -142,7 +130,6 @@ export default function DashboardPage() {
                     return;
                 }
             }
-            // If all lessons in chapter are done, check if quiz is done
             const quiz = allQuizzesData[chapter.id];
             if (quiz && (!progress.quizScores[chapter.id] || progress.quizScores[chapter.id] < quiz.passingScore)) {
                 showQuizForChapter(chapter.id);
@@ -151,14 +138,13 @@ export default function DashboardPage() {
             }
         }
         
-        // If everything is complete, go to the last lesson of the last chapter
         const lastChapter = chapters[chapters.length - 1];
         const lastLesson = lastChapter.lessons[lastChapter.lessons.length - 1];
         setCurrentLocation(lastChapter.id, lastLesson.id);
         router.push(`/tutorial/${courseId}`);
     };
 
-    if (authLoading || !user || !isMounted) {
+    if (authLoading || !user || !isMounted || isDataLoading) {
         return (
              <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <div className="mx-auto max-w-7xl space-y-8">
@@ -169,6 +155,7 @@ export default function DashboardPage() {
                           <Skeleton className="h-4 w-80" />
                       </div>
                   </div>
+                  <Skeleton className="h-48 w-full" />
               </div>
             </main>
         )
