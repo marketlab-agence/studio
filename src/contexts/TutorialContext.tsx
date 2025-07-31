@@ -126,7 +126,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   }, [globalProgress, user, isProgressLoading]);
 
 
-  const [activeCourseId, setActiveCourse] = useState<string | null>(null);
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [course, setCourse] = useState<CourseInfo | undefined>();
   const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
 
@@ -155,7 +155,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   const setActiveCourseAndData = useCallback((newCourse: CourseInfo, newChapters: Tutorial[]) =>
   {
-    setActiveCourse(newCourse.id);
+    setActiveCourseId(newCourse.id);
     setCourse(newCourse);
     const sortedChapters = [...newChapters].sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
     setCourseChapters(sortedChapters);
@@ -323,10 +323,10 @@ export function TutorialProvider({ children }: { children: ReactNode })
     const overallProgress = totalLessons > 0 ? (totalCompleted / totalLessons) * 100 : 0;
     
     const { quizScores, quizAttempts } = progress;
-    const allPassedScores = Object.keys(quizScores).filter(quizId => (allQuizzesData[quizId] && quizScores[quizId] >= allQuizzesData[quizId].passingScore)).map(id => quizScores[id]);
+    const allAttemptedScores = Object.values(quizScores);
     const allAttemptsForPassedQuizzes = Object.keys(quizScores).filter(quizId => (allQuizzesData[quizId] && quizScores[quizId] >= allQuizzesData[quizId].passingScore)).map(id => quizAttempts[id] || 1);
-
-    const averageQuizScore = allPassedScores.length > 0 ? allPassedScores.reduce((a, b) => a + b, 0) / allPassedScores.length : 0;
+    
+    const averageQuizScore = allAttemptedScores.length > 0 ? allAttemptedScores.reduce((a, b) => a + b, 0) / allAttemptedScores.length : 0;
     const masteryIndex = allAttemptsForPassedQuizzes.length > 0 ? allAttemptsForPassedQuizzes.reduce((a, b) => a + b, 0) / allAttemptsForPassedQuizzes.length : 0;
 
     return {
@@ -337,7 +337,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
       courseChapters,
       allQuizzesData,
       activeCourseId,
-      setActiveCourse,
+      setActiveCourse: setActiveCourseId,
       setActiveCourseAndData,
       setCurrentLocation,
       showQuizForChapter,
@@ -367,7 +367,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
     course,
     courseChapters,
     activeCourseId,
-    setActiveCourse,
+    setActiveCourseId,
     setActiveCourseAndData,
     setCurrentLocation,
     showQuizForChapter,
