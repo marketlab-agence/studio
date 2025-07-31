@@ -51,16 +51,9 @@ export default function DashboardPage() {
     const router = useRouter();
     const { 
         globalProgress,
-        setActiveCourse, 
+        setActiveCourseAndData,
         setCurrentLocation,
         showQuizForChapter,
-        overallProgress, 
-        totalCompleted, 
-        totalLessons, 
-        resetActiveCourseProgress, 
-        averageQuizScore, 
-        masteryIndex,
-        activeCourseId
     } = useTutorial();
     
     const [isMounted, setIsMounted] = useState(false);
@@ -124,28 +117,47 @@ export default function DashboardPage() {
         const chapters = allTutorialsData
             .filter(t => t.courseId === courseId)
             .sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
+            
+        const course = allCoursesData.find(c => c.id === courseId);
 
-        if (chapters.length === 0) return;
+        if (chapters.length === 0 || !course) return;
         
-        const firstChapter = chapters[0];
-        const firstChapterQuiz = allQuizzesData[firstChapter.id];
-        const firstChapterQuizScore = progress.quizScores[firstChapter.id] ?? 0;
+        setActiveCourseAndData(course, chapters);
 
-        if (!isPremium && firstChapterQuiz && firstChapterQuizScore >= firstChapterQuiz.passingScore) {
-            setActiveCourse(courseId);
-            showQuizForChapter(firstChapter.id);
+        // Resume from last known location if it exists
+        if (progress.currentChapterId && progress.currentLessonId) {
+            if(progress.currentView === 'quiz') {
+                showQuizForChapter(progress.currentChapterId);
+            } else {
+                setCurrentLocation(progress.currentChapterId, progress.currentLessonId);
+            }
             router.push(`/tutorial/${courseId}`);
             return;
         }
 
-        const lastKnownChapterId = progress.currentChapterId || chapters[0]?.id;
-        const lastKnownLessonId = progress.currentLessonId || chapters[0]?.lessons[0]?.id;
-
-        if (lastKnownChapterId && lastKnownLessonId) {
-            setActiveCourse(courseId);
-            setCurrentLocation(lastKnownChapterId, lastKnownLessonId);
-            router.push(`/tutorial/${courseId}`);
+        // If no last location, find the first uncompleted lesson
+        for (const chapter of chapters) {
+            for (const lesson of chapter.lessons) {
+                if (!progress.completedLessons.has(lesson.id)) {
+                    setCurrentLocation(chapter.id, lesson.id);
+                    router.push(`/tutorial/${courseId}`);
+                    return;
+                }
+            }
+            // If all lessons in chapter are done, check if quiz is done
+            const quiz = allQuizzesData[chapter.id];
+            if (quiz && (!progress.quizScores[chapter.id] || progress.quizScores[chapter.id] < quiz.passingScore)) {
+                showQuizForChapter(chapter.id);
+                router.push(`/tutorial/${courseId}`);
+                return;
+            }
         }
+        
+        // If everything is complete, go to the last lesson of the last chapter
+        const lastChapter = chapters[chapters.length - 1];
+        const lastLesson = lastChapter.lessons[lastChapter.lessons.length - 1];
+        setCurrentLocation(lastChapter.id, lastLesson.id);
+        router.push(`/tutorial/${courseId}`);
     };
 
     if (authLoading || !user || !isMounted) {
@@ -183,11 +195,13 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                     {startedCourses.map(course => {
                         const courseProgress = globalProgress[course.id];
+                        if (!courseProgress) return null;
+
                         const courseChapters = allTutorialsData
                             .filter(t => t.courseId === course.id)
                             .sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
                         const totalLessonsForCourse = courseChapters.reduce((acc, chap) => acc + chap.lessons.length, 0);
-                        const completedLessonsForCourse = courseProgress?.completedLessons.size || 0;
+                        const completedLessonsForCourse = courseProgress.completedLessons.size || 0;
                         const overallProgressForCourse = totalLessonsForCourse > 0 ? (completedLessonsForCourse / totalLessonsForCourse) * 100 : 0;
                         const Icon = courseIcons[course.id] || Rocket;
 

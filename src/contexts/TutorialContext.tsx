@@ -72,7 +72,6 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 
 const reviver = (key: string, value: any) =>
 {
-  if (typeof value === 'object' && value !== null && value.__dataType === 'Set') return new Set(value.value);
   if (key === 'completedLessons' && Array.isArray(value)) return new Set(value);
   return value;
 };
@@ -111,7 +110,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
   // Save progress to Firestore whenever it changes
   useEffect(() => {
     const saveProgress = async () => {
-      if (user && db && Object.keys(globalProgress).length > 0) {
+      if (user && db && Object.keys(globalProgress).length > 0 && !isProgressLoading) {
         const progressDocRef = doc(db, 'users', user.uid, 'progress', 'all');
         // We need to convert Sets to arrays for Firestore
         const serializedProgress = JSON.parse(JSON.stringify(globalProgress, (key, value) => {
@@ -124,18 +123,15 @@ export function TutorialProvider({ children }: { children: ReactNode })
       }
     };
     saveProgress();
-  }, [globalProgress, user]);
+  }, [globalProgress, user, isProgressLoading]);
 
 
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [course, setCourse] = useState<CourseInfo | undefined>();
   const [courseChapters, setCourseChapters] = useState<Tutorial[]>([]);
 
-  const [allCoursesData, setAllCoursesData] = useState<CourseInfo[]>([]);
-  const [allTutorialsData, setAllTutorialsData] = useState<Tutorial[]>([]);
   const [allQuizzesData, setAllQuizzesData] = useState<Record<string, Quiz>>({});
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() =>
   {
@@ -144,17 +140,8 @@ export function TutorialProvider({ children }: { children: ReactNode })
       setIsDataLoading(true);
       try
       {
-        const [coursesRes, tutorialsRes, quizzesRes] = await Promise.all([
-          fetch('/api/courses'),
-          fetch('/api/tutorials'),
-          fetch('/api/quizzes'),
-        ]);
-
-        if (coursesRes.ok) setAllCoursesData(await coursesRes.json());
-        if (tutorialsRes.ok) setAllTutorialsData(await tutorialsRes.json());
+        const quizzesRes = await fetch('/api/quizzes');
         if (quizzesRes.ok) setAllQuizzesData(await quizzesRes.json());
-        setIsDataLoaded(true);
-
       } catch (error)
       {
         console.error("Error fetching initial data:", error);
@@ -165,23 +152,6 @@ export function TutorialProvider({ children }: { children: ReactNode })
     };
     fetchInitialData();
   }, []);
-
-  useEffect(() =>
-  {
-    if (isDataLoaded && activeCourseId)
-    {
-      setCourse(allCoursesData.find(c => c.id === activeCourseId));
-      const chapters = allTutorialsData
-        .filter(t => t.courseId === activeCourseId)
-        .sort((a, b) => getChapterNumber(a.title) - getChapterNumber(b.title));
-      setCourseChapters(chapters);
-    } else if (!activeCourseId) {
-        setCourse(undefined);
-        setCourseChapters([]);
-    }
-  }, [activeCourseId, allCoursesData, allTutorialsData, isDataLoaded]);
-
-  const setActiveCourse = useCallback((courseId: string) => setActiveCourseId(courseId), []);
 
   const setActiveCourseAndData = useCallback((newCourse: CourseInfo, newChapters: Tutorial[]) =>
   {
@@ -336,7 +306,6 @@ export function TutorialProvider({ children }: { children: ReactNode })
     return chapter.lessons.every(lesson => progress.completedLessons.has(lesson.id));
   }, [progress.completedLessons, courseChapters]);
 
-
   const value = useMemo(() =>
   {
     const currentChapter = courseChapters.find(t => t.id === progress.currentChapterId);
@@ -420,5 +389,3 @@ export function useTutorial()
   if (!context) throw new Error('useTutorial must be used within a TutorialProvider');
   return context;
 }
-
-    
