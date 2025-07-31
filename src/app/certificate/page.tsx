@@ -34,27 +34,36 @@ type CourseCompletionData = {
 export default function CertificatePage() {
   const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
-  const { globalProgress, allQuizzesData } = useTutorial();
+  const { globalProgress, isLoading: isProgressLoading } = useTutorial();
   useRequirePremium();
 
-  const [isMounted, setIsMounted] = useState(false);
   const [instructorName, setInstructorName] = useState('Instructeur Katalyst');
   const [allCourses, setAllCourses] = useState<CourseInfo[]>([]);
   const [allTutorials, setAllTutorials] = useState<Tutorial[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   
   useEffect(() => {
-    setIsMounted(true);
     async function fetchData() {
+        setIsDataLoading(true);
         const settings = await getSettingsAction();
         if (settings.instructorName) {
             setInstructorName(settings.instructorName);
         }
-        // In a real app, you might want to show loading states for these
-        const coursesRes = await fetch('/api/courses');
-        if (coursesRes.ok) setAllCourses((await coursesRes.json()).filter((c: CourseInfo) => c.status === 'Publié'));
+        
+        try {
+            const [coursesRes, tutorialsRes] = await Promise.all([
+                fetch('/api/courses'),
+                fetch('/api/tutorials')
+            ]);
 
-        const tutorialsRes = await fetch('/api/tutorials');
-        if (tutorialsRes.ok) setAllTutorials(await tutorialsRes.json());
+            if (coursesRes.ok) setAllCourses((await coursesRes.json()).filter((c: CourseInfo) => c.status === 'Publié'));
+            if (tutorialsRes.ok) setAllTutorials(await tutorialsRes.json());
+
+        } catch (error) {
+            console.error("Failed to fetch course data:", error);
+        } finally {
+            setIsDataLoading(false);
+        }
     }
     fetchData();
   }, []);
@@ -66,6 +75,8 @@ export default function CertificatePage() {
   }, [user, authLoading, router]);
 
   const completionData = useMemo((): CourseCompletionData[] => {
+    if (isDataLoading || isProgressLoading) return [];
+
     return allCourses.map(course => {
         const progressData = globalProgress[course.id];
         if (!progressData) {
@@ -92,14 +103,23 @@ export default function CertificatePage() {
             isComplete,
             isEligible,
         };
-    }).filter(data => data.progress > 0); // Only show courses the user has started
-  }, [allCourses, allTutorials, globalProgress]);
+    }).filter(data => data.progress > 0);
+  }, [allCourses, allTutorials, globalProgress, isDataLoading, isProgressLoading]);
 
   const eligibleCourses = completionData.filter(c => c.isEligible);
   const inProgressCourses = completionData.filter(c => !c.isEligible);
 
   const renderContent = () => {
-    if (!isMounted || authLoading || !user || !isPremium) {
+    if (authLoading || isProgressLoading || isDataLoading) {
+        return (
+            <div className="space-y-6">
+                <Card><CardHeader><Skeleton className="h-8 w-3/4"/></CardHeader><CardContent><Skeleton className="h-24 w-full"/></CardContent></Card>
+                <Card><CardHeader><Skeleton className="h-8 w-1/2"/></CardHeader><CardContent><Skeleton className="h-32 w-full"/></CardContent></Card>
+            </div>
+        )
+    }
+
+    if (!isPremium) {
       return <Skeleton className="h-64 w-full" />;
     }
 
