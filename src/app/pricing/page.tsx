@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getPlansAction } from '@/actions/planActions';
-import { SubscriptionPlan } from '@/types/plans.types';
+import type { SubscriptionPlan } from '@/types/plans.types';
 
 export default function PricingPage() {
     const { user, loading, plan, updateUserPlan } = useAuth();
@@ -151,7 +151,7 @@ export default function PricingPage() {
                     <CardTitle className="text-xl">{premiumPlan.name}</CardTitle>
                     <CardDescription>{premiumPlan.description}</CardDescription>
                     <div className="pt-4">
-                        <span className="text-4xl font-bold">{premiumPlan.price}€</span>
+                        <span className="text-4xl font-bold">{premiumPlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</span>
                         <span className="text-muted-foreground">/mois</span>
                     </div>
                 </CardHeader>

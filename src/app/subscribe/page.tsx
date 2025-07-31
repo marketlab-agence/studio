@@ -116,7 +116,7 @@ export default function SubscribePage() {
                             <CardDescription className="mt-1">{premiumPlan.description}</CardDescription>
                         </div>
                         <div className="text-right">
-                            <p className="text-4xl font-bold">{premiumPlan.price}€</p>
+                            <p className="text-4xl font-bold">{premiumPlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
                             <p className="text-xs text-muted-foreground">/ mois</p>
                         </div>
                     </div>
