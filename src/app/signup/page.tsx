@@ -8,12 +8,12 @@ import { useForm, FieldErrors } from 'react-hook-form'; // Import FieldErrors
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Expecting this to resolve to src/lib/firebase.ts
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input'; // Expecting this to resolve to src/components/ui/input.tsx
-import { Button } from '@/components/ui/button'; // Expecting this to resolve to src/components/ui/button.tsx
-import { Checkbox } from '@/components/ui/checkbox'; // Expecting this to resolve to src/components/ui/checkbox.tsx
-import { Label } from '@/components/ui/label'; // Expecting this to resolve to src/components/ui/label.tsx
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 
 const signupSchema = z.object({
@@ -113,7 +113,6 @@ export default function SignupPage() {
                                 className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Nom à afficher"
                                 {...register('displayName')}
-                                // Removed duplicate name attribute
                             />
                             {errors.displayName && <p className="mt-2 text-sm text-red-600">{errors.displayName.message}</p>}
                         </div>
@@ -127,7 +126,6 @@ export default function SignupPage() {
                                 className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Adresse email"
                                 {...register('email')}
-                                // Removed duplicate name attribute
                             />
                              {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
                         </div>
@@ -141,7 +139,6 @@ export default function SignupPage() {
                                 className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                                 placeholder="Mot de passe"
                                 {...register('password')}
-                                // Removed duplicate name attribute
                             />
                             {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
                         </div>
@@ -178,5 +175,4 @@ export default function SignupPage() {
             </div>
         </div>
     );
-
-    
+}
