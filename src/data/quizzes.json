@@ -2,6 +2,7 @@
 {
   "intro-to-git": {
     "id": "intro-to-git",
+    "courseId": "git-github-tutorial",
     "title": "Quiz: Introduction à Git",
     "passingScore": 80,
     "questions": [
