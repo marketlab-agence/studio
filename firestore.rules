@@ -1,0 +1,33 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow users to read and write only their own progress data
+    match /users/{userId}/{documents=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Publicly readable collections (if any)
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if false; // Should be managed by admins
+    }
+
+    match /tutorials/{tutorialId} {
+      allow read: if true;
+      allow write: if false; // Should be managed by admins
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if true;
+      allow write: if false; // Should be managed by admins
+    }
+    
+    match /settings/{settingId} {
+        allow read: if true;
+        allow write: if false; // Should be managed by admins
+    }
+  }
+}
