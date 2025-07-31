@@ -1,106 +1,181 @@
-
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { auth, db } from '@/lib/firebase';
+import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { doc, setDoc } from 'firebase/firestore';
+
+const signupSchema = z.object({
+    email: z.string().email({
+        message: "Veuillez entrer une adresse email valide.",
+    }),
+    password: z.string().min(6, {
+        message: "Le mot de passe doit contenir au moins 6 caractères.",
+    }),
+    displayName: z.string().min(2, {
+      message: "Le nom à afficher doit contenir au moins 2 caractères."
+    }),
+    acceptTerms: z.boolean().refine(val => val === true, {
+      message: "Vous devez accepter les termes et conditions."
+    }),
+});
+
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    const { register, handleSubmit, formState: { errors }, setError } = useForm<SignupFormValues>({
+        resolver: zodResolver(signupSchema),
+    });
 
-    if (!auth) {
-      toast({ variant: 'destructive', title: 'Erreur de configuration', description: "L'authentification Firebase n'est pas configurée." });
-      setIsSubmitting(false);
-      return;
-    }
+    const { toast } = useToast();
 
-    if (!displayName.trim()) {
-        toast({ variant: 'destructive', title: 'Erreur d'inscription', description: "Veuillez entrer un nom à afficher." });
-        setIsSubmitting(false);
-        return;
-    }
+    const onSubmit = async ({ email, password, displayName }: SignupFormValues) => {
+        setIsSubmitting(true);
+        if (!auth || !db) return;
+        
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(userCredential.user, { displayName: displayName });
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Update user profile with display name
-      await updateProfile(userCredential.user, {
-          displayName: displayName.trim()
-      });
+            const userDocRef = doc(db, 'users', userCredential.user.uid);
+            await setDoc(userDocRef, {
+                id: userCredential.user.uid,
+                name: displayName,
+                email: email,
+                plan: 'Gratuit',
+                status: 'Actif',
+                role: 'Utilisateur',
+                joined: new Date().toISOString().split('T')[0],
+            });
+            
+            toast({ title: "Inscription réussie !", description: "Votre compte a été créé avec succès." });
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error(error);
+            let errorMessage = "Une erreur est survenue lors de l'inscription.";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "Cette adresse email est déjà utilisée.";
+            } else if (error.code === 'auth/weak-password') {
+                 errorMessage = "Le mot de passe est trop faible.";
+            } else if (error.code === 'auth/invalid-email') {
+                 errorMessage = "L'adresse email n'est pas valide.";
+            }
+             setError('email', { type: 'manual', message: errorMessage });
 
-      // TODO: Send email verification email
-      // await sendEmailVerification(userCredential.user);
+            toast({
+                variant: 'destructive',
+                title: "Erreur d'inscription",
+                description: errorMessage,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-      toast({ title: 'Compte créé avec succès', description: 'Bienvenue ! Veuillez vérifier votre email.' });
-      router.push('/dashboard'); // Redirect to dashboard or a verification pending page
+     // Add a useEffect to show validation errors from Zod after first render/submit attempt
+     useEffect(() => {
+        if (Object.keys(errors).length > 0) {
+            const firstErrorKey = Object.keys(errors)[0] as keyof SignupFormValues;
+            const errorMessage = errors[firstErrorKey]?.message;
+            if (errorMessage) {
+                toast({
+                    variant: "destructive",
+                    title: "Erreur de validation",
+                    description: errorMessage,
+                });
+            }
+        }
+    }, [errors, toast]);
 
-    } catch (error: any) {
-      console.error('SignupPage: Signup error:', error);
-      let description = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
 
-      if (error.code === 'auth/email-already-in-use') {
-        description = "Cet email est déjà utilisé. Veuillez vous connecter.";
-      } else if (error.code === 'auth/weak-password') {
-        description = "Le mot de passe est trop faible (6 caractères minimum).";
-      } else if (error.code === 'auth/invalid-email') {
-          description = "L'adresse email n'est pas valide.";
-      }
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-md space-y-8">
+                <div>
+                    <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">Créer un compte</h2>
+                </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
+                    <div className="rounded-md shadow-sm space-y-4">
+                         <div>
+                            <Label htmlFor="displayName">Nom à afficher</Label>
+                            <Input
+                                id="displayName"
+                                type="text"
+                                autoComplete="name"
+                                required
+                                placeholder="Votre nom complet"
+                                {...register('displayName')}
+                            />
+                            {errors.displayName && <p className="mt-2 text-sm text-red-600">{errors.displayName.message}</p>}
+                        </div>
+                        <div>
+                            <Label htmlFor="email-address">Adresse email</Label>
+                            <Input
+                                id="email-address"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                placeholder="Adresse email"
+                                {...register('email')}
+                            />
+                             {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
+                        </div>
+                        <div>
+                            <Label htmlFor="password">Mot de passe</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                placeholder="Mot de passe (6 caractères min.)"
+                                {...register('password')}
+                            />
+                            {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
+                        </div>
+                    </div>
 
-      toast({ variant: 'destructive', title: 'Erreur d'inscription', description });
+                    <div className="flex items-center">
+                         <Checkbox
+                            id="acceptTerms"
+                            {...register('acceptTerms')}
+                        />
+                        <Label htmlFor="acceptTerms" className="ml-2 block text-sm text-muted-foreground">
+                            J'accepte les <Link href="/terms" className="underline hover:text-primary">termes et conditions</Link>.
+                        </Label>
+                    </div>
+                     {errors.acceptTerms && <p className="text-sm text-red-600">{errors.acceptTerms.message}</p>}
 
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <main className="flex-1 flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Créer un compte</CardTitle>
-          <CardDescription>Entrez vos informations ci-dessous pour créer votre compte.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Nom à afficher</Label>
-              <Input id="displayName" type="text" placeholder="Votre Nom" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} disabled={isSubmitting} />
+                    <div>
+                        <Button
+                            type="submit"
+                            className="group relative flex w-full justify-center"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Création...' : 'Créer un compte'}
+                        </Button>
+                    </div>
+                </form>
+                 <div className="text-center text-sm text-muted-foreground">
+                    Déjà un compte ? {' '}
+                    <Link href="/login" className="font-medium text-primary hover:underline">
+                        Connectez-vous
+                    </Link>
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer un compte'}
-            </Button>
-          </form>
-          <div className="text-center text-sm">
-            Vous avez déjà un compte ? <Link href="/login" className="underline">Connectez-vous</Link>
-          </div>
-        </CardContent>
-      </Card>
-    </main>
-  );
+        </div>
+    );
 }
