@@ -69,11 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (loading || allPlans.length === 0) return;
-
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser && db) {
+        // Ensure user document exists before proceeding
         await createUserDocument(authUser);
         
         const userDocRef = doc(db, 'users', authUser.uid);
@@ -88,12 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsPremium(currentPlan?.id === 'premium');
 
                 if (currentPlan?.id === 'premium') {
-                    // Premium users have access to all courses, we can signify this with a special value
                     setAccessibleCourses(['ALL']);
                 } else {
                     setAccessibleCourses(currentPlan?.courses || []);
                 }
-
             } else {
                  const freePlan = allPlans.find(p => p.id === 'free') || null;
                  setUserPlan(freePlan);
@@ -101,27 +98,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setIsPremium(false);
                  setAccessibleCourses(freePlan?.courses || []);
             }
+            // Set loading to false only after we have user data (or confirmed non-existence)
+            if (allPlans.length > 0) {
+              setLoading(false);
+            }
         });
         
         return () => unsubscribeSnapshot();
-        
       } else {
+        // No user is logged in
         setUserPlan(null);
         setUserRole(null);
         setIsPremium(false);
         setAccessibleCourses(null);
+        setLoading(false); // Set loading to false as there's no user data to wait for
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [loading, allPlans]); // Rerun when plans are loaded
-
-  useEffect(() => {
-      if(!auth.currentUser) {
-          setLoading(false);
-      }
-  }, [auth.currentUser]);
+  // We need to re-run this effect if plans are loaded after auth state is checked
+  }, [allPlans]);
 
   const updateUserPlan = useCallback(async (newPlanId: SubscriptionPlan['id']) => {
     if (user && db) {
@@ -134,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // This prevents content flashing while waiting for auth state
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">

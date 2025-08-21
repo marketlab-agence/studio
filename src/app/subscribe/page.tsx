@@ -44,42 +44,11 @@ export default function SubscribePage() {
 
     // --- LOGIQUE DE PAIEMENT POUR LA PRODUCTION ---
     // Le code ci-dessous est un guide pour intégrer un système de paiement réel comme Stripe.
-    // Vous auriez besoin d'un backend pour gérer la création de la session de paiement de manière sécurisée.
-
-    // ÉTAPE 1: Appeler votre backend pour créer une session de paiement.
-    // Cette fonction (à créer) communiquerait avec votre serveur.
-    // Exemple :
-    // try {
-    //   const response = await fetch('/api/create-checkout-session', { 
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ planId: 'premium' }) // Envoyez l'ID du plan ou le prix
-    //   });
-    //   const { sessionId } = await response.json();
-    //
-    //   // ÉTAPE 2: Rediriger l'utilisateur vers la page de paiement de Stripe.
-    //   // Vous utiliseriez le SDK Stripe.js pour cela.
-    //   const stripe = await getStripe(); // Fonction utilitaire pour charger Stripe.js
-    //   const { error } = await stripe.redirectToCheckout({ sessionId });
-    //
-    //   if (error) {
-    //     console.error(error);
-    //     toast({ title: 'Erreur', description: 'Impossible de rediriger vers la page de paiement.', variant: 'destructive' });
-    //     setIsSubscribing(false);
-    //   }
-    // } catch (error) {
-    //     console.error("Failed to create checkout session:", error);
-    //     toast({ title: 'Erreur de serveur', description: 'Impossible de lancer le processus de paiement.', variant: 'destructive' });
-    //     setIsSubscribing(false);
-    // }
-    //
-    // L'ÉTAPE 3 (non visible ici) serait sur votre backend : un "webhook" écoute la confirmation de paiement de Stripe
-    // pour mettre à jour le statut de l'utilisateur dans votre base de données.
-
+    
     // --- SIMULATION ACTUELLE (à remplacer par la logique de production) ---
     setTimeout(() => {
         if (updateUserPlan) {
-            updateUserPlan('Premium');
+            updateUserPlan('premium');
         }
         toast({
             title: "Félicitations et bienvenue !",

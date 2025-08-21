@@ -20,7 +20,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
@@ -36,15 +35,18 @@ export default function PricingPage() {
         document.title = 'Tarifs - Katalyst';
         async function fetchPlans() {
             setPlansLoading(true);
-            const fetchedPlans = await getPlansAction();
-            setPlans(fetchedPlans);
-            setPlansLoading(false);
+            try {
+                const fetchedPlans = await getPlansAction();
+                setPlans(fetchedPlans);
+            } catch (error) {
+                console.error("Failed to fetch plans:", error);
+                toast({ title: "Erreur", description: "Impossible de charger les offres.", variant: 'destructive'});
+            } finally {
+                setPlansLoading(false);
+            }
         }
         fetchPlans();
-    }, []);
-
-    const freePlan = plans.find(p => p.id === 'free');
-    const premiumPlan = plans.find(p => p.id === 'premium');
+    }, [toast]);
 
     const handleDowngrade = () => {
         if (updateUserPlan) {
@@ -66,8 +68,11 @@ export default function PricingPage() {
             </main>
         );
     }
+    
+    const freePlan = plans.find(p => p.id === 'free');
+    const premiumPlan = plans.find(p => p.id === 'premium');
 
-  return (
+    return (
     <main className="flex-1 bg-muted/20">
       <section className="w-full py-12 md:py-20 lg:py-24">
         <div className="container px-4 md:px-6">
@@ -124,7 +129,7 @@ export default function PricingPage() {
                                     <AlertDialogHeader>
                                     <AlertDialogTitle>Voulez-vous vraiment changer de formule ?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Votre abonnement Premium sera annulé. Vous ne serez plus facturé et vous perdrez l'accès aux fonctionnalités Premium à la fin de votre période de facturation actuelle. Êtes-vous sûr de vouloir continuer ?
+                                        Votre abonnement Premium sera annulé. Vous perdrez l'accès aux fonctionnalités Premium à la fin de votre période de facturation actuelle. Êtes-vous sûr de vouloir continuer ?
                                     </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

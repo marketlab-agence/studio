@@ -3,7 +3,7 @@ export interface AppUser {
     id: string;
     name: string;
     email: string;
-    planId: string;
+    planId: 'free' | 'premium' | string;
     status: 'Actif' | 'Inactif';
     role: 'Super Admin' | 'Admin' | 'Modérateur' | 'Utilisateur';
     joined: string; // e.g. '2023-01-15'

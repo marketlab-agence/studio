@@ -36,7 +36,7 @@ const createUserDocumentFromOAuth = async (user: User) => {
         const newUser: Omit<AppUser, 'id'> = {
             name: user.displayName || user.email || 'Utilisateur Anonyme',
             email: user.email!,
-            plan: 'Gratuit',
+            planId: 'free',
             status: 'Actif',
             role: 'Utilisateur',
             joined: new Date().toISOString().split('T')[0],
@@ -75,7 +75,6 @@ export default function LoginPage() {
       if (!auth) throw new Error("L'authentification Firebase n'est pas configurée. Veuillez vérifier les variables d'environnement.");
       const result = await signInWithPopup(auth, provider);
       
-      // Create user document in Firestore if it's a new user
       await createUserDocumentFromOAuth(result.user);
       
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
@@ -92,7 +91,7 @@ export default function LoginPage() {
       } else if (error?.code === 'auth/popup-blocked') {
         errorMessage = 'La popup a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site et réessayer.';
       } else if (error?.code === 'auth/unauthorized-domain') {
-        errorMessage = "Ce domaine n'est pas autorisé pour l'authentification OAuth. Contactez l'administrateur."; // Fixed syntax error
+        errorMessage = "Ce domaine n'est pas autorisé pour l'authentification OAuth. Contactez l'administrateur.";
       } else if (error?.message) {
         errorMessage = error.message;
       }
@@ -119,6 +118,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
+      // Redirection will be handled by the useEffect hook watching the user state.
     } catch (signInError: any) {
       let description = "Une erreur est survenue. Veuillez réessayer.";
       if (signInError.code === 'auth/invalid-credential') {
