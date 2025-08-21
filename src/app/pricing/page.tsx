@@ -88,7 +88,7 @@ export default function PricingPage() {
                     <CardTitle className="text-xl">{freePlan.name}</CardTitle>
                     <CardDescription>{freePlan.description}</CardDescription>
                     <div className="pt-4">
-                        <span className="text-4xl font-bold">0€</span>
+                        <span className="text-4xl font-bold">{freePlan.price > 0 ? `${freePlan.price}€` : '0€'}</span>
                         <span className="text-muted-foreground">/mois</span>
                     </div>
                 </CardHeader>

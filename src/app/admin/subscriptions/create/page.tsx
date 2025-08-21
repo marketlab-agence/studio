@@ -8,18 +8,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, Save, Loader2, BookCopy, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ALL_FEATURES, type FeaturePermission, type SubscriptionPlan } from '@/types/plans.types';
+import { type SubscriptionPlan } from '@/types/plans.types';
 import { getPlansAction, createOrUpdatePlanAction } from '@/actions/planActions';
+import { getAdminCoursesAction } from '@/actions/adminActions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-const availableCourses = [
-  { id: 'git-github-tutorial', name: 'Git & GitHub : Le Guide Complet' },
-  // Add other courses here as they become available
-];
+type Course = {
+  id: string;
+  title: string;
+  lessonsCount: number;
+  status: 'Publié' | 'Brouillon' | 'Plan';
+};
 
 export default function CreatePlanPage() {
   const { toast } = useToast();
@@ -35,37 +39,47 @@ export default function CreatePlanPage() {
   const [price, setPrice] = useState('');
   const [billingPeriod, setBillingPeriod] = useState('monthly');
   const [description, setDescription] = useState('');
-  const [selectedPermissions, setSelectedPermissions] = useState<FeaturePermission[]>([]);
+  const [features, setFeatures] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
 
   useEffect(() => {
-    async function loadPlan() {
-      if (isEditing && planId) {
-        setIsLoading(true);
-        const plans = await getPlansAction();
-        const planData = plans.find(p => p.id === planId);
-        if (planData) {
-          setPlanName(planData.name);
-          setPrice(planData.price.toString());
-          setBillingPeriod(planData.billingPeriod);
-          setDescription(planData.description);
-          setSelectedPermissions(planData.permissions);
-          setSelectedCourses(planData.courses);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const coursesData = await getAdminCoursesAction();
+        setAllCourses(coursesData.filter(c => c.status === 'Publié'));
+
+        if (isEditing && planId) {
+          const plans = await getPlansAction();
+          const planData = plans.find(p => p.id === planId);
+          if (planData) {
+            setPlanName(planData.name);
+            setPrice(planData.price.toString());
+            setBillingPeriod(planData.billingPeriod);
+            setDescription(planData.description);
+            setFeatures(planData.features || []);
+            setSelectedCourses(planData.courses || []);
+          }
         }
+      } catch (error) {
+        console.error("Failed to load page data:", error);
+        toast({ title: "Erreur de chargement", description: "Impossible de récupérer les données nécessaires.", variant: "destructive" });
+      } finally {
         setIsLoading(false);
-      } else {
-          setIsLoading(false);
       }
     }
-    loadPlan();
-  }, [planId, isEditing]);
+    loadData();
+  }, [planId, isEditing, toast]);
 
-  const handlePermissionChange = (permissionId: FeaturePermission) => {
-    setSelectedPermissions(prev => 
-        prev.includes(permissionId) 
-            ? prev.filter(id => id !== permissionId)
-            : [...prev, permissionId]
-    );
+  const handleAddFeature = () => {
+    setFeatures([...features, '']);
+  };
+
+  const handleFeatureChange = (index: number, value: string) => {
+    const newFeatures = [...features];
+    newFeatures[index] = value;
+    setFeatures(newFeatures);
   };
   
   const handleCourseSelectionChange = (courseId: string) => {
@@ -78,19 +92,15 @@ export default function CreatePlanPage() {
 
   const handleSavePlan = async () => {
     setIsSaving(true);
-    const derivedFeatures = ALL_FEATURES
-        .filter(feature => selectedPermissions.includes(feature.id))
-        .map(feature => feature.label);
     
     const planData: Omit<SubscriptionPlan, 'id'> = {
       name: planName,
       price: parseFloat(price) || 0,
       billingPeriod: billingPeriod as SubscriptionPlan['billingPeriod'],
       description,
-      features: derivedFeatures,
+      features: features.filter(f => f.trim() !== ''),
       courses: selectedCourses,
-      permissions: selectedPermissions,
-      cta: isEditing ? (PLANS_DATA.premium.cta) : 'S\'inscrire',
+      cta: 'S\'inscrire', // Simplified CTA
       recommended: false, // You might want to add a switch for this
     };
 
@@ -184,19 +194,19 @@ export default function CreatePlanPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Star /> Fonctionnalités</CardTitle>
-                        <CardDescription>Cochez les fonctionnalités qui seront disponibles dans ce plan.</CardDescription>
+                        <CardDescription>Ajoutez les avantages et fonctionnalités qui seront listés pour ce plan.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4 grid grid-cols-1 sm:grid-cols-2">
-                        {ALL_FEATURES.map(feature => (
-                            <div key={feature.id} className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id={feature.id} 
-                                    onCheckedChange={() => handlePermissionChange(feature.id)}
-                                    checked={selectedPermissions.includes(feature.id)}
+                    <CardContent className="space-y-4">
+                        {features.map((feature, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <Input 
+                                    value={feature} 
+                                    onChange={(e) => handleFeatureChange(index, e.target.value)}
+                                    placeholder="Ex: Accès à toutes les formations"
                                 />
-                                <Label htmlFor={feature.id} className="cursor-pointer">{feature.label}</Label>
                             </div>
                         ))}
+                        <Button variant="outline" size="sm" onClick={handleAddFeature}>Ajouter une fonctionnalité</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -207,17 +217,26 @@ export default function CreatePlanPage() {
                         <CardTitle className="flex items-center gap-2"><BookCopy /> Formations Incluses</CardTitle>
                         <CardDescription>Sélectionnez les formations accessibles avec ce plan.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {availableCourses.map(course => (
-                            <div key={course.id} className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id={course.id} 
-                                    onCheckedChange={() => handleCourseSelectionChange(course.id)}
-                                    checked={selectedCourses.includes(course.id)}
-                                />
-                                <Label htmlFor={course.id} className="cursor-pointer">{course.name}</Label>
+                     <CardContent>
+                        <ScrollArea className="h-72">
+                            <div className="space-y-2 p-2">
+                                {allCourses.map(course => (
+                                    <div key={course.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
+                                        <Checkbox
+                                            id={`course-${course.id}`}
+                                            checked={selectedCourses.includes(course.id)}
+                                            onCheckedChange={() => handleCourseSelectionChange(course.id)}
+                                        />
+                                        <label
+                                            htmlFor={`course-${course.id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            {course.title}
+                                        </label>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </ScrollArea>
                     </CardContent>
                 </Card>
             </div>
