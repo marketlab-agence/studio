@@ -62,17 +62,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function fetchPlans() {
-        const plans = await getPlansAction();
-        setAllPlans(plans);
+        try {
+            const plans = await getPlansAction();
+            setAllPlans(plans);
+        } catch (error) {
+            console.error("Failed to fetch subscription plans:", error);
+            // Even if plans fail to load, we might want to continue,
+            // so we don't block the app. Users might just not see plan details.
+        }
     }
     fetchPlans();
   }, []);
 
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
-      if (authUser && db) {
-        // Ensure user document exists before proceeding
+      if (!authUser || !db) {
+          // No user is logged in
+          setUserPlan(null);
+          setUserRole(null);
+          setIsPremium(false);
+          setAccessibleCourses(null);
+          setLoading(false); // Authentication check is complete
+          return;
+      }
+
+      // User is logged in, now handle their data
+      try {
         await createUserDocument(authUser);
         
         const userDocRef = doc(db, 'users', authUser.uid);
@@ -98,25 +115,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setIsPremium(false);
                  setAccessibleCourses(freePlan?.courses || []);
             }
-            // Set loading to false only after we have user data (or confirmed non-existence)
             if (allPlans.length > 0) {
               setLoading(false);
             }
+        }, (error) => {
+            console.error("Error with user snapshot listener:", error);
+            setLoading(false); // Stop loading even if listener fails
         });
         
         return () => unsubscribeSnapshot();
-      } else {
-        // No user is logged in
-        setUserPlan(null);
-        setUserRole(null);
-        setIsPremium(false);
-        setAccessibleCourses(null);
-        setLoading(false); // Set loading to false as there's no user data to wait for
+      } catch (error) {
+          console.error("Error setting up user data listener:", error);
+          setLoading(false); // Stop loading on error
       }
     });
 
     return () => unsubscribe();
-  // We need to re-run this effect if plans are loaded after auth state is checked
   }, [allPlans]);
 
   const updateUserPlan = useCallback(async (newPlanId: SubscriptionPlan['id']) => {
@@ -130,7 +144,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // This prevents content flashing while waiting for auth state
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
