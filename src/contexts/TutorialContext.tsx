@@ -56,6 +56,7 @@ type TutorialContextType = {
   resetActiveCourseProgress: () => void;
   resetChapter: (chapterId: string) => void;
   areAllLessonsInChapterCompleted: (chapterId: string) => boolean;
+  isChapterUnlocked: (chapterId: string) => boolean;
   currentChapter: Tutorial | undefined;
   currentLesson: Tutorial['lessons'][0] | undefined;
   currentView: 'lesson' | 'quiz';
@@ -78,7 +79,7 @@ const reviver = (key: string, value: any) =>
 
 export function TutorialProvider({ children }: { children: ReactNode })
 {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isPremium } = useAuth();
   const [globalProgress, setGlobalProgress] = useState<GlobalProgress>({});
   const [isProgressLoading, setIsProgressLoading] = useState(true);
 
@@ -169,8 +170,26 @@ export function TutorialProvider({ children }: { children: ReactNode })
     setGlobalProgress(prev => ({ ...prev, [activeCourseId]: progressUpdater(prev[activeCourseId] || initialCourseProgress) }));
   }, [activeCourseId]);
 
+    const isChapterUnlocked = useCallback((chapterId: string): boolean => {
+        if (isPremium) {
+            return true;
+        }
+
+        const chapterIndex = courseChapters.findIndex(c => c.id === chapterId);
+        // Le premier chapitre (index 0) est toujours débloqué.
+        if (chapterIndex === 0) {
+            return true;
+        }
+
+        return false;
+    }, [isPremium, courseChapters]);
+
   const setCurrentLocation = useCallback((chapterId: string, lessonId: string) =>
   {
+    if (!isChapterUnlocked(chapterId)) {
+        console.warn(`Access denied to chapter ${chapterId}. Requires premium.`);
+        return;
+    }
     if (activeCourseId) {
        const activeCourseExists = course?.id === activeCourseId;
        if (!activeCourseExists) {
@@ -182,16 +201,20 @@ export function TutorialProvider({ children }: { children: ReactNode })
        }
     }
     updateActiveCourseProgress(prev => ({ ...prev, currentChapterId: chapterId, currentLessonId: lessonId, currentView: 'lesson' }));
-  }, [updateActiveCourseProgress, activeCourseId, course]);
+  }, [updateActiveCourseProgress, activeCourseId, course, isChapterUnlocked]);
 
   const showQuizForChapter = useCallback((chapterId: string) =>
   {
+    if (!isChapterUnlocked(chapterId)) {
+        console.warn(`Access denied to quiz for chapter ${chapterId}. Requires premium.`);
+        return;
+    }
     updateActiveCourseProgress(prev =>
     {
       const newCompleted = prev.currentLessonId ? new Set(prev.completedLessons).add(prev.currentLessonId) : prev.completedLessons;
       return { ...prev, currentChapterId: chapterId, currentLessonId: prev.currentLessonId, currentView: 'quiz', completedLessons: newCompleted };
     });
-  }, [updateActiveCourseProgress]);
+  }, [updateActiveCourseProgress, isChapterUnlocked]);
 
   const setQuizScore = useCallback((quizId: string, score: number, answers: Record<string, string[]>) =>
   {
@@ -237,18 +260,20 @@ export function TutorialProvider({ children }: { children: ReactNode })
         if (chapterIndex < courseChapters.length - 1) {
              const nextChapter = courseChapters[chapterIndex + 1];
              if (nextChapter && nextChapter.lessons.length > 0) {
-                 return {
-                     ...prev,
-                     currentChapterId: nextChapter.id,
-                     currentLessonId: nextChapter.lessons[0].id,
-                     currentView: 'lesson',
-                     completedLessons: newCompleted
-                 };
+                 if (isChapterUnlocked(nextChapter.id)) {
+                    return {
+                        ...prev,
+                        currentChapterId: nextChapter.id,
+                        currentLessonId: nextChapter.lessons[0].id,
+                        currentView: 'lesson',
+                        completedLessons: newCompleted
+                    };
+                 }
              }
         }
         return { ...prev, completedLessons: newCompleted };
     });
-  }, [activeCourseId, courseChapters, progress.currentChapterId, updateActiveCourseProgress]);
+  }, [activeCourseId, courseChapters, progress.currentChapterId, updateActiveCourseProgress, isChapterUnlocked]);
 
 
   const goToPreviousLesson = useCallback(() =>
@@ -357,6 +382,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
       resetActiveCourseProgress,
       resetChapter,
       areAllLessonsInChapterCompleted,
+      isChapterUnlocked,
       currentChapter,
       currentLesson,
       currentView: progress.currentView,
@@ -386,7 +412,8 @@ export function TutorialProvider({ children }: { children: ReactNode })
     resetActiveCourseProgress,
     resetChapter,
     areAllLessonsInChapterCompleted,
-    allQuizzesData
+    allQuizzesData,
+    isChapterUnlocked
   ]);
 
   return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>;
@@ -398,5 +425,3 @@ export function useTutorial()
   if (!context) throw new Error('useTutorial must be used within a TutorialProvider');
   return context;
 }
-
-    

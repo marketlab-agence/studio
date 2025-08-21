@@ -28,6 +28,7 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
     overallProgress,
     showQuizForChapter,
     areAllLessonsInChapterCompleted,
+    isChapterUnlocked,
     allQuizzesData,
   } = useTutorial();
   const { isPremium } = useAuth();
@@ -40,10 +41,18 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
   }, []);
 
   const handleLessonClick = (chapterId: string, lessonId: string) => {
+    if (!isChapterUnlocked(chapterId)) {
+        router.push('/pricing');
+        return;
+    }
     setCurrentLocation(chapterId, lessonId);
   };
   
   const handleQuizClick = (chapterId: string) => {
+    if (!isChapterUnlocked(chapterId)) {
+        router.push('/pricing');
+        return;
+    }
     showQuizForChapter(chapterId);
   };
 
@@ -77,22 +86,7 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
         {isMounted ? (
           <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full p-2">
             {chapters.map((tutorial, index) => {
-              const isFirstChapter = index === 0;
-              const prevChapter = isFirstChapter ? null : chapters[index - 1];
-              const prevChapterQuiz = prevChapter ? allQuizzesData[prevChapter.id] : null;
-
-              const hasPassedPreviousQuiz = () => {
-                  if (isFirstChapter) return true;
-                  if (!prevChapter || !prevChapterQuiz) return false;
-                  const score = progress.quizScores[prevChapter.id];
-                  // A chapter is unlocked if the previous chapter's quiz score is >= 80
-                  return score !== undefined && score >= prevChapterQuiz.passingScore;
-              };
-
-              const isChapterLockedByQuiz = !hasPassedPreviousQuiz();
-              const isPremiumLocked = index > 0 && !isPremium;
-              const isChapterTotallyLocked = isPremiumLocked || isChapterLockedByQuiz;
-
+              const chapterIsUnlocked = isChapterUnlocked(tutorial.id);
               const chapterQuiz = allQuizzesData[tutorial.id];
               const isQuizPassed = chapterQuiz && (progress.quizScores?.[tutorial.id] ?? 0) >= chapterQuiz.passingScore;
               const areLessonsCompletedForQuiz = areAllLessonsInChapterCompleted(tutorial.id);
@@ -102,13 +96,15 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                   <AccordionTrigger
                     className={cn(
                       'text-md rounded-md px-2 py-2 font-semibold hover:bg-muted/50 hover:no-underline',
-                      isChapterTotallyLocked && 'cursor-not-allowed text-muted-foreground/50',
-                      !isChapterTotallyLocked && currentChapter?.id === tutorial.id && 'text-primary'
+                      !chapterIsUnlocked && 'cursor-not-allowed text-muted-foreground/50',
+                      chapterIsUnlocked && currentChapter?.id === tutorial.id && 'text-primary'
                     )}
-                    disabled={isChapterTotallyLocked}
+                    onClick={() => {
+                        if (!chapterIsUnlocked) router.push('/pricing');
+                    }}
                   >
                     <div className="flex flex-1 items-center gap-3">
-                      {isChapterTotallyLocked ? (
+                      {!chapterIsUnlocked ? (
                         <Lock className="h-4 w-4 text-muted-foreground/50" />
                       ) : isQuizPassed ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -128,22 +124,16 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                             key={lesson.id}
                             className={cn(
                               'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm transition-colors',
-                              !isChapterTotallyLocked && progress.currentView === 'lesson' && lesson.id === currentLesson?.id
+                              chapterIsUnlocked && progress.currentView === 'lesson' && lesson.id === currentLesson?.id
                                 ? 'bg-primary/10 text-primary-foreground'
                                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                                isChapterTotallyLocked && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
+                                !chapterIsUnlocked && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
                             )}
-                             onClick={() => {
-                              if (isChapterTotallyLocked) {
-                                router.push('/pricing');
-                              } else {
-                                handleLessonClick(tutorial.id, lesson.id);
-                              }
-                            }}
-                            disabled={isChapterTotallyLocked}
+                             onClick={() => handleLessonClick(tutorial.id, lesson.id)}
+                            disabled={!chapterIsUnlocked}
                           >
                             <span className="font-medium">{lesson.title}</span>
-                            {isChapterTotallyLocked ? (
+                            {!chapterIsUnlocked ? (
                               <Lock className="h-4 w-4 text-yellow-500" />
                             ) : isLessonMarkedAsComplete ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -159,26 +149,20 @@ export function TutorialPanel({ course, chapters }: { course: CourseInfo, chapte
                           key={`${tutorial.id}-quiz`}
                           className={cn(
                             'flex w-full items-center justify-between gap-2 rounded-md p-3 text-left text-sm font-semibold transition-colors',
-                            !isChapterTotallyLocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
+                            chapterIsUnlocked && progress.currentView === 'quiz' && tutorial.id === currentChapter?.id
                               ? 'bg-primary/10 text-primary-foreground'
                               : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                            (isChapterTotallyLocked || !areLessonsCompletedForQuiz) && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
+                            (!chapterIsUnlocked || !areLessonsCompletedForQuiz) && 'cursor-not-allowed text-muted-foreground/50 hover:bg-transparent'
                           )}
-                          onClick={() => {
-                              if (isChapterTotallyLocked) {
-                                router.push('/pricing');
-                              } else if (areLessonsCompletedForQuiz) {
-                                handleQuizClick(tutorial.id);
-                              }
-                          }}
-                          disabled={isChapterTotallyLocked || !areLessonsCompletedForQuiz}
+                          onClick={() => handleQuizClick(tutorial.id)}
+                          disabled={!chapterIsUnlocked || !areLessonsCompletedForQuiz}
                         >
                           <div className="flex items-center gap-2">
                             <GraduationCap className="h-4 w-4" />
                             <span>Quiz du Chapitre</span>
                           </div>
                           {(() => {
-                            if (isChapterTotallyLocked) return <Lock className="h-4 w-4 text-yellow-500" />;
+                            if (!chapterIsUnlocked) return <Lock className="h-4 w-4 text-yellow-500" />;
                             if (!areLessonsCompletedForQuiz) return <Lock className="h-4 w-4" />;
                             if (isQuizPassed) return <CheckCircle className="h-4 w-4 text-green-500" />;
                             if (progress.currentView === 'quiz' && tutorial.id === currentChapter?.id) return <ChevronRight className="h-4 w-4 text-primary" />;
