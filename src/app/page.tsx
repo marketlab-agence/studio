@@ -1,15 +1,16 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked, Sparkles } from 'lucide-react';
+import { ArrowRight, BrainCircuit, CheckCircle, Database, GitCommitHorizontal, KanbanSquare, Handshake, MessageSquare, MousePointerClick, Rocket, Users, BookMarked, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCourses } from '@/lib/courses';
-import { getTutorials } from '@/lib/tutorials';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
-
-export const dynamic = 'force-dynamic';
+import { CourseCard } from './courses/CourseCard';
+import type { CourseInfo } from '@/types/course.types';
+import type { Tutorial } from '@/types/tutorial.types';
 
 const tools = [
   { name: 'Jira', icon: KanbanSquare },
@@ -19,20 +20,32 @@ const tools = [
   { name: 'AWS', icon: Database },
 ];
 
-const courseIcons: Record<string, React.ElementType> = {
-  'git-github-tutorial': GitCommitHorizontal,
-  'le-closing-pour-debutants-de-prospect-a-client': Handshake,
-  'introduction-au-marketing-digital': Sparkles,
-  'ingenierie-des-prompts-pour-debutants': BrainCircuit,
-  'jira-de-zero-a-heros': KanbanSquare,
-  'automatisation-de-processus-informatique-pour-debutants-avec-n8n': Rocket,
-};
+export default function Home() {
+  const [courses, setCourses] = useState<CourseInfo[]>([]);
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function Home() {
-  const { db } = await getFirebaseAdmin();
-  const courses = await getCourses(db);
-  const tutorials = await getTutorials(db);
-  const publishedCourses = courses.filter(c => c.status === 'Publié');
+  useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const [coursesRes, tutorialsRes] = await Promise.all([
+                fetch('/api/courses'),
+                fetch('/api/tutorials')
+            ]);
+            if (coursesRes.ok) {
+                const allCourses: CourseInfo[] = await coursesRes.json();
+                setCourses(allCourses.filter(c => c.status === 'Publié'));
+            }
+            if (tutorialsRes.ok) setTutorials(await tutorialsRes.json());
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, []);
 
   return (
     <main className="flex-1 bg-background">
@@ -120,46 +133,25 @@ export default async function Home() {
             </div>
           </div>
           <div className="mx-auto grid max-w-5xl items-stretch gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
-             {publishedCourses.slice(0, 1).map(course => { // Show only the first featured course
-                const Icon = courseIcons[course.id] || Rocket;
-                const href = `/tutorial/${course.id}`;
-                // Fetch tutorials for this course, but ensure they are fetched from the API
-                // For a server component, you could fetch them here or pass them as props.
-                // For now, let's keep it simple as this is the homepage.
-                const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
+             {isLoading ? (
+                 <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+             ) : (
+                 courses.slice(0, 1).map(course => {
+                    const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
+                    const lessonCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, t) => acc + t.lessons.length, 0);
 
-                return (
-                    <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
-                      <CardHeader>
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-primary/10 rounded-full">
-                            <Icon className="h-8 w-8 text-primary" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-2xl">{course.title}</CardTitle>
-                            <CardDescription>{course.description}</CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-grow">
-                         <p className="text-sm text-muted-foreground">
-                            Cette formation complète vous guide depuis les bases du contrôle de version jusqu'aux workflows de collaboration avancés sur GitHub.
-                         </p>
-                      </CardContent>
-                      <CardFooter className="flex-col items-start gap-4">
-                         <div className="flex flex-wrap gap-2">
-                            <Badge>Inclus</Badge>
-                            {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
-                            <Badge variant="secondary">Quiz Interactifs</Badge>
-                            <Badge variant="secondary">Projet Final</Badge>
-                        </div>
-                        <Link href={href} className="w-full">
-                          <Button className="w-full" size="lg">Commencer la formation</Button>
-                        </Link>
-                      </CardFooter>
-                    </Card>
-                )
-            })}
+                    return (
+                        <CourseCard
+                            key={course.id}
+                            course={course}
+                            chapterCount={chapterCount}
+                            lessonCount={lessonCount}
+                        />
+                    );
+                })
+             )}
           </div>
           <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 md:grid-cols-3 lg:grid-cols-5">
              {tools.map(tool => (

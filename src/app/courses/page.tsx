@@ -1,30 +1,23 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket, BrainCircuit } from 'lucide-react';
-import { getCourses } from '@/lib/courses';
-import { getTutorials } from '@/lib/tutorials';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { GitCommitHorizontal, KanbanSquare, Users, MessageSquare, BookMarked, Database, ArrowRight, Handshake, Sparkles, Rocket, BrainCircuit, Loader2 } from 'lucide-react';
+import type { CourseInfo } from '@/types/course.types';
+import type { Tutorial } from '@/types/tutorial.types';
+import { CourseCard } from './CourseCard';
 
-export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Formations - Katalyst',
-  description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
-};
-
-const courseIcons: Record<string, React.ElementType> = {
-  'git-github-tutorial': GitCommitHorizontal,
-  'le-closing-pour-debutants-de-prospect-a-client': Handshake,
-  'introduction-au-marketing-digital': Sparkles,
-  'ingenierie-des-prompts-pour-debutants': BrainCircuit,
-  'jira-de-zero-a-heros': KanbanSquare,
-  'automatisation-de-processus-informatique-pour-debutants-avec-n8n': Rocket,
-};
-
+// We can't use generateMetadata in a client component, but we can set the title.
+// export const metadata: Metadata = {
+//   title: 'Formations - Katalyst',
+//   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
+// };
 
 const futureCourses = [
   {
@@ -54,11 +47,33 @@ const futureCourses = [
   }
 ];
 
-export default async function CoursesPage() {
-  const { db } = await getFirebaseAdmin();
-  const courses = await getCourses(db);
-  const tutorials = await getTutorials(db);
-  const publishedCourses = courses.filter(c => c.status === 'Publié');
+export default function CoursesPage() {
+    const [courses, setCourses] = useState<CourseInfo[]>([]);
+    const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        document.title = 'Formations - Katalyst';
+        async function fetchData() {
+            setIsLoading(true);
+            try {
+                const [coursesRes, tutorialsRes] = await Promise.all([
+                    fetch('/api/courses'),
+                    fetch('/api/tutorials')
+                ]);
+                if (coursesRes.ok) {
+                    const allCourses: CourseInfo[] = await coursesRes.json();
+                    setCourses(allCourses.filter(c => c.status === 'Publié'));
+                }
+                if (tutorialsRes.ok) setTutorials(await tutorialsRes.json());
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
   return (
     <main className="flex-1 bg-background">
@@ -73,46 +88,25 @@ export default async function CoursesPage() {
             </div>
           </div>
           <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 md:grid-cols-1 lg:grid-cols-1">
-            {publishedCourses.map((course) => {
-              const Icon = courseIcons[course.id] || Rocket;
-              const href = `/tutorial/${course.id}`;
-              const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
-              const lessonCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, t) => acc + t.lessons.length, 0);
+             {isLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            ) : (
+                courses.map((course) => {
+                    const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
+                    const lessonCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, t) => acc + t.lessons.length, 0);
 
-              return (
-                <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Icon className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl">{course.title}</CardTitle>
-                        <CardDescription>{course.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                   <CardContent className="flex-grow">
-                     <p className="text-sm text-muted-foreground">
-                        Cette formation est conçue pour vous apporter des compétences pratiques et directement applicables dans votre quotidien professionnel.
-                     </p>
-                  </CardContent>
-                  <CardFooter className="flex-col items-start gap-4">
-                    <div className="flex flex-wrap gap-2">
-                        <Badge>Inclus</Badge>
-                        {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
-                        {lessonCount > 0 && <Badge variant="secondary">{lessonCount} Leçons</Badge>}
-                        <Badge variant="secondary">Quiz Interactifs</Badge>
-                    </div>
-                    <Link href={href} className="w-full">
-                      <Button className="w-full" size="lg">
-                        Commencer la formation <ArrowRight className="ml-2" />
-                      </Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
-              )
-            })}
+                    return (
+                        <CourseCard 
+                            key={course.id}
+                            course={course}
+                            chapterCount={chapterCount}
+                            lessonCount={lessonCount}
+                        />
+                    )
+                })
+            )}
           </div>
 
           <div className="mt-16">

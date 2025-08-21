@@ -26,7 +26,7 @@ import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
 
 export default function PricingPage() {
-    const { user, loading, plan, updateUserPlan } = useAuth();
+    const { user, loading, userPlan, updateUserPlan } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -48,7 +48,7 @@ export default function PricingPage() {
 
     const handleDowngrade = () => {
         if (updateUserPlan) {
-            updateUserPlan('Gratuit');
+            updateUserPlan('free');
             toast({
                 title: 'Changement de formule confirmé',
                 description: 'Votre abonnement a été annulé. Vous ne serez plus facturé à la prochaine échéance.',
@@ -108,7 +108,7 @@ export default function PricingPage() {
                             <Button variant="outline" className="w-full" asChild>
                                 <Link href="/login">Commencer gratuitement</Link>
                             </Button>
-                        ) : plan === 'Gratuit' ? (
+                        ) : userPlan?.id === 'free' ? (
                             <Button variant="outline" className="w-full" disabled>
                                 Votre formule actuelle
                             </Button>
@@ -178,7 +178,7 @@ export default function PricingPage() {
                                     Passer au Premium
                                 </Link>
                             </Button>
-                        ) : plan === 'Premium' ? (
+                        ) : userPlan?.id === 'premium' ? (
                             <Button className="w-full" size="lg" disabled>
                                 Votre formule actuelle
                             </Button>

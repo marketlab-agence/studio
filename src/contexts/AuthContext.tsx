@@ -7,19 +7,22 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import type { AppUser } from '@/lib/users';
+import type { SubscriptionPlan } from '@/types/plans.types';
+import { getPlansAction } from '@/actions/planActions';
+
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  plan: AppUser['plan'] | null;
+  userPlan: SubscriptionPlan | null;
   userRole: AppUser['role'] | null;
   isPremium: boolean;
-  updateUserPlan: ((newPlan: AppUser['plan']) => void) | null;
+  accessibleCourses: string[] | null;
+  updateUserPlan: ((newPlanId: SubscriptionPlan['id']) => void) | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to create a user document if it doesn't exist
 const createUserDocument = async (user: User) => {
     if (!db) return null;
     const userDocRef = doc(db, 'users', user.uid);
@@ -30,7 +33,7 @@ const createUserDocument = async (user: User) => {
         const newUser: Omit<AppUser, 'id'> = {
             name: user.displayName || user.email || 'Nouvel Utilisateur',
             email: user.email!,
-            plan: 'Gratuit',
+            planId: 'free',
             status: 'Actif',
             role: 'Utilisateur',
             joined: new Date().toISOString().split('T')[0],
@@ -51,54 +54,80 @@ const createUserDocument = async (user: User) => {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState<AppUser['plan'] | null>(null);
+  const [userPlan, setUserPlan] = useState<SubscriptionPlan | null>(null);
   const [userRole, setUserRole] = useState<AppUser['role'] | null>(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [accessibleCourses, setAccessibleCourses] = useState<string[] | null>(null);
+  const [allPlans, setAllPlans] = useState<SubscriptionPlan[]>([]);
 
   useEffect(() => {
+    async function fetchPlans() {
+        const plans = await getPlansAction();
+        setAllPlans(plans);
+    }
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    if (loading || allPlans.length === 0) return;
+
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser && db) {
-        // Ensure user document exists before setting up a listener
         await createUserDocument(authUser);
         
         const userDocRef = doc(db, 'users', authUser.uid);
         
-        // Use onSnapshot for real-time updates to user data (like plan changes)
         const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
                 const userData = doc.data() as AppUser;
-                setPlan(userData.plan);
+                const currentPlan = allPlans.find(p => p.id === userData.planId) || null;
+                
+                setUserPlan(currentPlan);
                 setUserRole(userData.role);
-                setIsPremium(userData.plan === 'Premium');
+                setIsPremium(currentPlan?.id === 'premium');
+
+                if (currentPlan?.id === 'premium') {
+                    // Premium users have access to all courses, we can signify this with a special value
+                    setAccessibleCourses(['ALL']);
+                } else {
+                    setAccessibleCourses(currentPlan?.courses || []);
+                }
+
             } else {
-                 // This case should be rare now, but as a fallback:
-                 setPlan('Gratuit');
+                 const freePlan = allPlans.find(p => p.id === 'free') || null;
+                 setUserPlan(freePlan);
                  setUserRole('Utilisateur');
                  setIsPremium(false);
+                 setAccessibleCourses(freePlan?.courses || []);
             }
         });
         
-        // This will be called when the auth state changes (e.g., user logs out)
         return () => unsubscribeSnapshot();
         
       } else {
-        setPlan(null);
+        setUserPlan(null);
         setUserRole(null);
         setIsPremium(false);
+        setAccessibleCourses(null);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [loading, allPlans]); // Rerun when plans are loaded
 
-  const updateUserPlan = useCallback(async (newPlan: AppUser['plan']) => {
+  useEffect(() => {
+      if(!auth.currentUser) {
+          setLoading(false);
+      }
+  }, [auth.currentUser]);
+
+  const updateUserPlan = useCallback(async (newPlanId: SubscriptionPlan['id']) => {
     if (user && db) {
         const userDocRef = doc(db, 'users', user.uid);
         try {
-            await setDoc(userDocRef, { plan: newPlan }, { merge: true });
-            // State will be updated by the onSnapshot listener, so no need to call setPlan here.
+            await setDoc(userDocRef, { planId: newPlanId }, { merge: true });
         } catch (error) {
             console.error("Failed to update user plan in Firestore:", error);
         }
@@ -114,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, plan, userRole, isPremium, updateUserPlan }}>
+    <AuthContext.Provider value={{ user, loading, userPlan, userRole, isPremium, accessibleCourses, updateUserPlan }}>
       {children}
     </AuthContext.Provider>
   );
