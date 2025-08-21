@@ -138,7 +138,7 @@ export default function Home() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
              ) : (
-                 courses.slice(0, 1).map(course => {
+                 courses.map(course => {
                     const chapterCount = tutorials.filter(t => t.courseId === course.id).length;
                     const lessonCount = tutorials.filter(t => t.courseId === course.id).reduce((acc, t) => acc + t.lessons.length, 0);
 
