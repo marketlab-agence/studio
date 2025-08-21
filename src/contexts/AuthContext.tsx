@@ -67,8 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setAllPlans(plans);
         } catch (error) {
             console.error("Failed to fetch subscription plans:", error);
-            // Even if plans fail to load, we might want to continue,
-            // so we don't block the app. Users might just not see plan details.
         }
     }
     fetchPlans();
@@ -115,13 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setIsPremium(false);
                  setAccessibleCourses(freePlan?.courses || []);
             }
-            if (allPlans.length > 0) {
-              setLoading(false);
-            }
         }, (error) => {
             console.error("Error with user snapshot listener:", error);
-            setLoading(false); // Stop loading even if listener fails
         });
+        
+        setLoading(false); // Set loading to false once auth state is known and listener is set up
         
         return () => unsubscribeSnapshot();
       } catch (error) {
