@@ -13,11 +13,12 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle serveur + routes + middleware faits* (T4.1, T4.2, T4.6, T4.7, provider de T4.4/T4.8) ; **restent** OAuth Google, SAML, endpoints MFA, fin du reset forcé, refonte `AuthContext` |
-| Prochaine tâche | **T4.8 (suite)** : endpoint `forgot-password`/`reset-password` + email + page — débloque la reconnexion des **10 comptes importés** |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **17 suites / 147** · tests DB **8 suites / 95** · **E2E 16** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware et reset forcé faits* (T4.1, T4.2, T4.6, T4.7, T4.8) ; **restent** OAuth Google, SAML, endpoints MFA, refonte `AuthContext`, pages login/signup/account |
+| Prochaine tâche | **T4.4 (suite)** : endpoints MFA `setup`/`verify`/`challenge`/`status` (la crypto est faite) — ou **T4.9/T4.10** (refonte `AuthContext`, où la **fuite de listener** de `AuthContext.tsx:124` attend depuis la phase 0) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **18 suites / 162** · tests DB **8 suites / 95** · **E2E 25** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
+| 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |
 | **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
 | **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage, **Auth** — **9 implémentés**. Reste `PaymentProvider` (phase 24) |
 
@@ -108,6 +109,17 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - **Limitation de débit** : une tentative **refusée n'est pas enregistrée**, sinon un client qui insiste repousserait indéfiniment sa propre échéance. `RATE_LIMIT_MULTIPLIER` existe pour les tests et la CI (les tests E2E partagent une seule IP et atteindraient la limite d'inscription) et est **ignoré en production** — le désactiver silencieusement ouvrirait le bourrage d'identifiants.
     - **`JWT_SECRET` vit dans `.env.local`** (gitignoré, vérifié via `git check-ignore`). Il est **absent** de `.env.example` en valeur : le serveur de développement refuse de signer sans lui, avec un message qui donne la commande de génération.
     - **Pièges de test rencontrés** : `process.env.NODE_ENV` est en **lecture seule** dans les types de Next (passer par un cast) ; `headersArray()` de Playwright renvoie des objets `{name, value}`, **pas** des tuples.
+41. **Phase 4 — reset forcé** (T4.8). Le point le plus important de la phase, parce qu'il conditionne tout :
+    - 🔴 **CONSTAT EN BASE : les 11 comptes réels ont `password_hash IS NULL`.** Les mots de passe Firebase n'ont pas pu être exportés, et le seed ne peut pas en inventer. **Aucun compte réel ne peut donc se connecter** — le parcours « mot de passe oublié » est **la seule voie d'entrée**, pas un cas particulier. Vérifier ce point avant de conclure quoi que ce soit sur l'authentification.
+    - **Non-énumération** : `forgot-password` répond **rigoureusement** la même chose que l'adresse existe ou non. Limite assumée : l'envoi n'ayant lieu que si le compte existe, le **temps de réponse diffère** légèrement ; le corriger supposerait un envoi en tâche de fond, au prix d'un échec silencieux.
+    - **Un lien d'email ne vaut pas authentification** : `reset-password` n'ouvre aucune session. L'utilisateur se connecte ensuite avec son nouveau mot de passe.
+    - **Gabarits d'email : toujours une version TEXTE complète.** Ce n'est pas un pis-aller — un email HTML seul est illisible en mode texte et pénalisé par les filtres anti-spam. Le lien y figure en clair, car certains clients neutralisent les boutons.
+    - **`APP_URL` : échec explicite en production** si absent, plutôt qu'un lien vers `localhost`. Un lien erroné dans un email est difficile à diagnostiquer : l'utilisateur reçoit, clique, et rien ne se passe.
+    - **`RESET_TTL_MINUTES` en source unique** : l'email annonce la durée, le stockage l'applique. Deux constantes divergeraient et l'email promettrait ce que le système ne tient pas.
+    - **`src/lib/auth/policy.ts`** : les constantes de politique sont extraites dans un module **sans dépendance**, importable par le navigateur. Importer `password.ts` depuis une page cliente embarquerait **bcryptjs dans le bundle**.
+    - **Accessibilité** : `CardTitle` (shadcn) produit un **`div`** — une page qui ne l'utilise que pour ses titres n'a **aucun titre** (WCAG 2.2 AA). Utiliser de vrais `h1`.
+    - **`EMAIL_PROVIDER=memory` en développement** : sans serveur SMTP, le transport `memory` retient les emails au lieu d'échouer. C'est exactement son usage.
+    - **Technique E2E pour un parcours par email** : le serveur ne conserve que le **hachage** du jeton, donc le test fabrique un jeton connu et insère son hachage en base — comme le ferait le provider. Le parcours HTTP, le provider et la base sont ainsi réellement traversés, sans accès à la boîte mail.
 
 ---
 

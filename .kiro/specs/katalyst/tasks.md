@@ -133,7 +133,7 @@ Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 - [ ] T4.5 — **Spike SAML** (Next sans Express) puis implémentation · REQ-AUTH-05 · vérif: gate G1 levé
 - [x] T4.6 — JWT en cookie **httpOnly** + middleware Next (pattern `authenticate.ts`) · REQ-AUTH-09 · ✅ `1a4f64a` — le refresh est **restreint à `/api/auth`** (il ne circule jamais sur une requête de page) ; le middleware est un **filtre** (Edge, sans base), pas une frontière d'autorisation
 - [x] T4.7 — Rate limiters + validation Zod par endpoint · REQ-AUTH-01 · ✅ `1a4f64a` — fenêtre glissante, règles par usage, `RATE_LIMIT_MULTIPLIER` **ignoré en production**
-- [~] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · **côté serveur fait** (`7bb11f8` : jeton à usage unique, haché, transactionnel) ; **restent l'endpoint, l'email et la page**.
+- [x] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · ✅ `7bb11f8` (provider) + `2c937e5` (endpoints, gabarits, pages, 9 tests E2E) — **c'est le seul chemin d'entrée des comptes importés** : constaté en base, les 11 comptes réels ont `password_hash IS NULL`. Reste la route `change-password` pour un utilisateur déjà authentifié (à raccorder à la page compte, T4.10).
 - [ ] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · vérif: 0 import `firebase/*` dans `contexts/`
 - [ ] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · vérif: `grep firebase/ src/app src/components` → 0
 - [ ] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · vérif: pages admin fonctionnelles
