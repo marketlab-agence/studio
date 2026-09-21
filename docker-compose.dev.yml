@@ -1,0 +1,36 @@
+# =============================================================================
+# Katalyst — Environnement de développement
+# =============================================================================
+# Lance UNIQUEMENT PostgreSQL (avec l'extension vectorielle pgvector).
+# L'application Next.js tourne en local pour le hot-reload.
+#
+# Usage :
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run dev:turbo
+#
+# Pattern repris de masterplan365 (lecture seule) : image pgvector/pgvector:pg16.
+# =============================================================================
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: katalyst-postgres
+    environment:
+      POSTGRES_DB: katalyst
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - katalyst_pgdata:/var/lib/postgresql/data
+      # Crée la base de test et active pgvector au premier démarrage.
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d katalyst"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  katalyst_pgdata:
