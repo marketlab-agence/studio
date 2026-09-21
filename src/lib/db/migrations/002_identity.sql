@@ -69,3 +69,16 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 
 CREATE INDEX IF NOT EXISTS refresh_tokens_user_idx ON refresh_tokens (user_id);
+
+-- Paramètres applicatifs : clé/valeur JSONB, **par organisation**.
+-- Placés ici (et non dans une migration antérieure) car ils référencent
+-- `organizations` : le nom du formateur, la marque, etc. diffèrent selon
+-- l'établissement (ADR 0007).
+CREATE TABLE IF NOT EXISTS settings (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  key             TEXT NOT NULL,
+  value           JSONB NOT NULL,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (organization_id, key)
+);

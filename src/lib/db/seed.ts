@@ -267,6 +267,22 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
   }
 }
 
+/**
+ * Paramètres applicatifs de l'organisation (table `settings`, clé `app`).
+ * Alignés sur `src/data/settings.json`.
+ */
+async function seedSettings(client: PoolClient, organizationId: string): Promise<void> {
+  const settings = readJson<Record<string, unknown>>('settings.json');
+
+  await client.query(
+    `INSERT INTO settings (organization_id, key, value)
+     VALUES ($1, 'app', $2)
+     ON CONFLICT (organization_id, key) DO UPDATE SET
+       value = EXCLUDED.value, updated_at = NOW()`,
+    [organizationId, JSON.stringify(settings)],
+  );
+}
+
 async function seedUsers(client: PoolClient, organizationId: string): Promise<number> {
   const users = readJson<SourceUser[]>('users.json');
   const allowedRoles = new Set(['Super Admin', 'Propriétaire', 'Admin', 'Modérateur', 'Utilisateur']);
@@ -309,6 +325,7 @@ async function run(): Promise<void> {
     // (organizations.plan_id référence plans.id), puis le contenu, puis les comptes.
     await seedPlans(client);
     const organizationId = await ensureOrganization(client);
+    await seedSettings(client, organizationId);
     await seedContent(client, organizationId);
     const userCount = await seedUsers(client, organizationId);
 

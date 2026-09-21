@@ -1,0 +1,428 @@
+import { query } from '@/lib/db/pool';
+import type { CourseInfo } from '@/types/course.types';
+import type { Lesson, Quiz } from '@/types/tutorial.types';
+import type { SubscriptionPlan } from '@/types/plans.types';
+import { assertScope, type OrgScope } from '../types';
+import type { ChapterWithLessons, ContentProvider } from '../content';
+
+/**
+ * Contenu pédagogique en PostgreSQL.
+ *
+ * RÈGLE D'ISOLATION : chaque requête filtre par `organization_id`. Pour les
+ * entités de contenu, le filtre passe par la formation propriétaire
+ * (`chapters` → `courses`, `lessons` → `chapters` → `courses`), car seul
+ * `courses` porte directement `organization_id`.
+ */
+
+type CourseRow = {
+  id: string;
+  title: string;
+  description: string;
+  status: CourseInfo['status'];
+  plan: unknown | null;
+  generation_params: unknown | null;
+}
+
+type ChapterRow = {
+  id: string;
+  course_id: string;
+  title: string;
+  week_id: string | null;
+  position: number;
+  unlock_rule_id: string | null;
+}
+
+type LessonRow = {
+  id: string;
+  chapter_id: string;
+  source_id: string | null;
+  title: string;
+  objective: string;
+  content: string;
+  type: string;
+  duration_minutes: number | null;
+  points: number;
+  media_ref: unknown | null;
+  interactive_component_name: string | null;
+  visual_component_name: string | null;
+  position: number;
+}
+
+function toCourseInfo(row: CourseRow): CourseInfo {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    plan: (row.plan ?? undefined) as CourseInfo['plan'],
+    generationParams: (row.generation_params ?? undefined) as CourseInfo['generationParams'],
+  };
+}
+
+function toLesson(row: LessonRow): Lesson {
+  return {
+    id: row.id,
+    title: row.title,
+    objective: row.objective,
+    content: row.content,
+    interactiveComponentName: row.interactive_component_name ?? undefined,
+    visualComponentName: row.visual_component_name ?? undefined,
+  };
+}
+
+export class PostgresContentProvider implements ContentProvider {
+  // --- Formations -----------------------------------------------------------
+
+  async listCourses(scope: OrgScope): Promise<CourseInfo[]> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows } = await query<CourseRow>(
+      `SELECT id, title, description, status, plan, generation_params
+       FROM courses
+       WHERE organization_id = $1
+       ORDER BY created_at, id`,
+      [organizationId],
+    );
+
+    return rows.map(toCourseInfo);
+  }
+
+  async getCourse(scope: OrgScope, id: string): Promise<CourseInfo | null> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows } = await query<CourseRow>(
+      `SELECT id, title, description, status, plan, generation_params
+       FROM courses
+       WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id],
+    );
+
+    return rows[0] ? toCourseInfo(rows[0]) : null;
+  }
+
+  async saveCourses(scope: OrgScope, courses: CourseInfo[]): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    for (const course of courses) {
+      await query(
+        `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title, description = EXCLUDED.description,
+           status = EXCLUDED.status, plan = EXCLUDED.plan,
+           generation_params = EXCLUDED.generation_params
+         WHERE courses.organization_id = EXCLUDED.organization_id`,
+        [
+          course.id, organizationId, course.title, course.description ?? '',
+          course.status ?? 'Brouillon',
+          course.plan ? JSON.stringify(course.plan) : null,
+          course.generationParams ? JSON.stringify(course.generationParams) : null,
+        ],
+      );
+    }
+  }
+
+  async createCourse(scope: OrgScope, course: Omit<CourseInfo, 'id'>): Promise<CourseInfo> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows } = await query<{ id: string }>(
+      `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params)
+       VALUES (
+         COALESCE($1, regexp_replace(lower($2), '[^a-z0-9]+', '-', 'g')),
+         $3, $2, $4, $5, $6, $7
+       )
+       RETURNING id`,
+      [
+        null, course.title, organizationId, course.description ?? '',
+        course.status ?? 'Brouillon',
+        course.plan ? JSON.stringify(course.plan) : null,
+        course.generationParams ? JSON.stringify(course.generationParams) : null,
+      ],
+    );
+
+    return { ...course, id: rows[0].id };
+  }
+
+  async updateCourse(scope: OrgScope, id: string, changes: Partial<CourseInfo>): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    await query(
+      `UPDATE courses SET
+         title = COALESCE($3, title),
+         description = COALESCE($4, description),
+         status = COALESCE($5, status),
+         plan = COALESCE($6, plan),
+         generation_params = COALESCE($7, generation_params)
+       WHERE organization_id = $1 AND id = $2`,
+      [
+        organizationId, id,
+        changes.title ?? null, changes.description ?? null, changes.status ?? null,
+        changes.plan ? JSON.stringify(changes.plan) : null,
+        changes.generationParams ? JSON.stringify(changes.generationParams) : null,
+      ],
+    );
+  }
+
+  async deleteCourse(scope: OrgScope, id: string): Promise<void> {
+    const { organizationId } = assertScope(scope);
+    // Les chapitres, leçons et quiz suivent par ON DELETE CASCADE.
+    await query('DELETE FROM courses WHERE organization_id = $1 AND id = $2', [organizationId, id]);
+  }
+
+  // --- Chapitres et leçons ---------------------------------------------------
+
+  async listChapters(scope: OrgScope, courseId?: string): Promise<ChapterWithLessons[]> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows: chapters } = await query<ChapterRow>(
+      `SELECT ch.id, ch.course_id, ch.title, ch.week_id, ch.position, ch.unlock_rule_id
+       FROM chapters ch
+       JOIN courses co ON co.id = ch.course_id
+       WHERE co.organization_id = $1
+         AND ($2::text IS NULL OR ch.course_id = $2)
+       ORDER BY ch.course_id, ch.position`,
+      [organizationId, courseId ?? null],
+    );
+
+    if (chapters.length === 0) return [];
+
+    const { rows: lessons } = await query<LessonRow>(
+      `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
+              l.duration_minutes, l.points, l.media_ref,
+              l.interactive_component_name, l.visual_component_name, l.position
+       FROM lessons l
+       JOIN chapters ch ON ch.id = l.chapter_id
+       JOIN courses co ON co.id = ch.course_id
+       WHERE co.organization_id = $1
+         AND ($2::text IS NULL OR ch.course_id = $2)
+       ORDER BY l.chapter_id, l.position`,
+      [organizationId, courseId ?? null],
+    );
+
+    const lessonsByChapter = new Map<string, Lesson[]>();
+    for (const lesson of lessons) {
+      const list = lessonsByChapter.get(lesson.chapter_id) ?? [];
+      list.push(toLesson(lesson));
+      lessonsByChapter.set(lesson.chapter_id, list);
+    }
+
+    return chapters.map((chapter) => ({
+      id: chapter.id,
+      courseId: chapter.course_id,
+      title: chapter.title,
+      description: '',
+      weekId: chapter.week_id,
+      position: chapter.position,
+      unlockRuleId: chapter.unlock_rule_id,
+      lessons: lessonsByChapter.get(chapter.id) ?? [],
+    }));
+  }
+
+  async getChapter(scope: OrgScope, id: string): Promise<ChapterWithLessons | null> {
+    const all = await this.listChapters(scope);
+    return all.find((chapter) => chapter.id === id) ?? null;
+  }
+
+  async saveChapters(scope: OrgScope, chapters: ChapterWithLessons[]): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    for (const chapter of chapters) {
+      // Vérifie que la formation cible appartient bien à l'organisation.
+      const owner = await query<{ id: string }>(
+        'SELECT id FROM courses WHERE organization_id = $1 AND id = $2',
+        [organizationId, chapter.courseId],
+      );
+      if (owner.rows.length === 0) {
+        throw new Error(
+          `Formation "${chapter.courseId}" introuvable dans cette organisation : écriture refusée.`,
+        );
+      }
+
+      await query(
+        `INSERT INTO chapters (id, course_id, week_id, title, position, unlock_rule_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (id) DO UPDATE SET
+           course_id = EXCLUDED.course_id, week_id = EXCLUDED.week_id,
+           title = EXCLUDED.title, position = EXCLUDED.position,
+           unlock_rule_id = EXCLUDED.unlock_rule_id`,
+        [
+          chapter.id, chapter.courseId, chapter.weekId, chapter.title,
+          chapter.position, chapter.unlockRuleId,
+        ],
+      );
+
+      await query('DELETE FROM lessons WHERE chapter_id = $1', [chapter.id]);
+
+      for (const [index, lesson] of chapter.lessons.entries()) {
+        await query(
+          `INSERT INTO lessons (
+             id, chapter_id, source_id, title, objective, content, type,
+             points, interactive_component_name, visual_component_name, position
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            lesson.id, chapter.id, null, lesson.title, lesson.objective ?? '',
+            lesson.content ?? '', 'TEXTE', 0,
+            lesson.interactiveComponentName ?? null,
+            lesson.visualComponentName ?? null,
+            index,
+          ],
+        );
+      }
+    }
+  }
+
+  async deleteChapter(scope: OrgScope, id: string): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    await query(
+      `DELETE FROM chapters ch
+       USING courses co
+       WHERE ch.id = $2 AND co.id = ch.course_id AND co.organization_id = $1`,
+      [organizationId, id],
+    );
+  }
+
+  // --- Quiz ------------------------------------------------------------------
+
+  async listQuizMap(scope: OrgScope): Promise<Record<string, Quiz>> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows } = await query<{
+      id: string; chapter_id: string; title: string; passing_score: number;
+      feedback_timing: string | null; questions: unknown;
+    }>(
+      `SELECT q.id, q.chapter_id, q.title, q.passing_score, q.feedback_timing,
+              COALESCE(
+                json_agg(
+                  json_build_object(
+                    'id', qu.id,
+                    'text', qu.text,
+                    'isMultipleChoice', qu.is_multiple_choice,
+                    'answers', COALESCE((
+                      SELECT json_agg(json_build_object(
+                        'id', a.id, 'text', a.text, 'isCorrect', a.is_correct
+                      ) ORDER BY a.position)
+                      FROM answers a WHERE a.question_id = qu.id
+                    ), '[]'::json)
+                  ) ORDER BY qu.position
+                ) FILTER (WHERE qu.id IS NOT NULL),
+                '[]'::json
+              ) AS questions
+       FROM quizzes q
+       JOIN chapters ch ON ch.id = q.chapter_id
+       JOIN courses co ON co.id = ch.course_id
+       LEFT JOIN questions qu ON qu.quiz_id = q.id
+       WHERE co.organization_id = $1
+       GROUP BY q.id, q.chapter_id, q.title, q.passing_score, q.feedback_timing`,
+      [organizationId],
+    );
+
+    const map: Record<string, Quiz> = {};
+    for (const row of rows) {
+      map[row.chapter_id] = {
+        id: row.id,
+        title: row.title,
+        passingScore: row.passing_score,
+        feedbackTiming: (row.feedback_timing ?? 'end') as Quiz['feedbackTiming'],
+        questions: (row.questions ?? []) as Quiz['questions'],
+      };
+    }
+    return map;
+  }
+
+  async getQuiz(scope: OrgScope, id: string): Promise<Quiz | null> {
+    const map = await this.listQuizMap(scope);
+    return map[id] ?? null;
+  }
+
+  async saveQuizMap(scope: OrgScope, quizzes: Record<string, Quiz>): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    for (const [chapterId, quiz] of Object.entries(quizzes)) {
+      const owner = await query<{ id: string }>(
+        `SELECT ch.id FROM chapters ch
+         JOIN courses co ON co.id = ch.course_id
+         WHERE co.organization_id = $1 AND ch.id = $2`,
+        [organizationId, chapterId],
+      );
+      if (owner.rows.length === 0) {
+        throw new Error(
+          `Chapitre "${chapterId}" introuvable dans cette organisation : écriture du quiz refusée.`,
+        );
+      }
+
+      await query(
+        `INSERT INTO quizzes (id, chapter_id, title, passing_score, feedback_timing)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title, passing_score = EXCLUDED.passing_score,
+           feedback_timing = EXCLUDED.feedback_timing`,
+        [quiz.id, chapterId, quiz.title, quiz.passingScore ?? 80, quiz.feedbackTiming ?? 'end'],
+      );
+
+      await query('DELETE FROM questions WHERE quiz_id = $1', [quiz.id]);
+
+      for (const [questionIndex, question] of (quiz.questions ?? []).entries()) {
+        await query(
+          `INSERT INTO questions (id, quiz_id, text, is_multiple_choice, position)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [question.id, quiz.id, question.text, question.isMultipleChoice ?? false, questionIndex],
+        );
+
+        for (const [answerIndex, answer] of (question.answers ?? []).entries()) {
+          await query(
+            `INSERT INTO answers (id, question_id, text, is_correct, position)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [answer.id, question.id, answer.text, answer.isCorrect ?? false, answerIndex],
+          );
+        }
+      }
+    }
+  }
+
+  async deleteQuiz(scope: OrgScope, id: string): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    await query(
+      `DELETE FROM quizzes q
+       USING chapters ch, courses co
+       WHERE q.id = $2 AND ch.id = q.chapter_id AND co.id = ch.course_id
+         AND co.organization_id = $1`,
+      [organizationId, id],
+    );
+  }
+
+  // --- Formules --------------------------------------------------------------
+
+  /**
+   * Les formules sont un **catalogue global** (comme un catalogue produit) :
+   * `organizations.plan_id` y référence une offre. Le `scope` est conservé pour
+   * l'uniformité de l'interface et pour permettre, plus tard, des offres
+   * propres à une organisation.
+   */
+  async listPlans(scope: OrgScope): Promise<SubscriptionPlan[]> {
+    assertScope(scope);
+
+    const { rows } = await query<{
+      id: string; name: string; description: string | null; price: string;
+      billing_period: string; features: unknown; courses: unknown; cta: string | null;
+      recommended: boolean;
+    }>(
+      `SELECT id, name, description, price, billing_period, features, courses, cta, recommended
+       FROM plans ORDER BY position`,
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description ?? '',
+      price: Number(row.price),
+      billingPeriod: row.billing_period,
+      features: (row.features ?? []) as string[],
+      courses: (row.courses ?? []) as string[],
+      cta: row.cta ?? '',
+      recommended: row.recommended,
+    })) as SubscriptionPlan[];
+  }
+}

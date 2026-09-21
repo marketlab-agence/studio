@@ -1,4 +1,4 @@
-import { getSettings } from '@/lib/providers/settings';
+import { getSettingsProvider, getRequestScope } from '@/lib/providers';
 import { getPool } from '@/lib/db/pool';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,8 @@ async function getDatabaseVersion(): Promise<string> {
 }
 
 export default async function HealthPage() {
-  const settings = await getSettings();
+  const scope = await getRequestScope();
+  const settings = await getSettingsProvider().getSettings(scope);
   const databaseVersion = await getDatabaseVersion();
 
   return (

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSettings } from '@/lib/providers/settings';
+import { getSettingsProvider, getRequestScope } from '@/lib/providers';
 
 /**
  * Première route de l'API versionnée (phase 9).
@@ -9,7 +9,8 @@ import { getSettings } from '@/lib/providers/settings';
  */
 export async function GET() {
   try {
-    const settings = await getSettings();
+    const scope = await getRequestScope();
+    const settings = await getSettingsProvider().getSettings(scope);
     return NextResponse.json(settings);
   } catch (error) {
     console.error('GET /api/v1/settings — échec :', error);
