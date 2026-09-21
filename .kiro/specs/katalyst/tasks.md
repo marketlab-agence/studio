@@ -134,8 +134,8 @@ Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 - [x] T4.6 — JWT en cookie **httpOnly** + middleware Next (pattern `authenticate.ts`) · REQ-AUTH-09 · ✅ `1a4f64a` — le refresh est **restreint à `/api/auth`** (il ne circule jamais sur une requête de page) ; le middleware est un **filtre** (Edge, sans base), pas une frontière d'autorisation
 - [x] T4.7 — Rate limiters + validation Zod par endpoint · REQ-AUTH-01 · ✅ `1a4f64a` — fenêtre glissante, règles par usage, `RATE_LIMIT_MULTIPLIER` **ignoré en production**
 - [x] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · ✅ `7bb11f8` (provider) + `2c937e5` (endpoints, gabarits, pages, 9 tests E2E) — **c'est le seul chemin d'entrée des comptes importés** : constaté en base, les 11 comptes réels ont `password_hash IS NULL`. Reste la route `change-password` pour un utilisateur déjà authentifié (à raccorder à la page compte, T4.10).
-- [ ] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · vérif: 0 import `firebase/*` dans `contexts/`
-- [ ] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · vérif: `grep firebase/ src/app src/components` → 0
+- [x] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · ✅ `fc2c176` — la fuite est **supprimée par construction** : plus d'abonnement du tout, donc rien à détacher. Un seul appel au montage. Le spinner d'attente est limité aux routes protégées.
+- [x] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · ✅ `fc2c176` — vérif satisfaite : **0 import `firebase`** dans `src/app`, `src/components`, `src/contexts` et `src/hooks`.
 - [ ] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · vérif: pages admin fonctionnelles
 - [ ] T4.12 — **Inscription libre-service** : créer un compte crée une organisation · REQ-ORG-04 · vérif: espace créé sans intervention
 - [ ] T4.13 — **Invitations** par email (formateurs, apprenants) · REQ-ORG-05 · vérif: invitation reçue et acceptée

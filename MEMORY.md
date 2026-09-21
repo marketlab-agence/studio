@@ -13,9 +13,9 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware, reset forcé et MFA faits* (T4.1, T4.2, T4.4, T4.6, T4.7, T4.8) ; **restent** OAuth Google, SAML, refonte `AuthContext`, pages login/signup/account |
-| Prochaine tâche | **T4.9/T4.10** — refonte `AuthContext` (la **fuite de listener** de `AuthContext.tsx:124` attend depuis la phase 0) et migration des pages `login`/`signup`/`account` hors de Firebase |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **19 suites / 175** · tests DB **9 suites / 113** · **E2E 32** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware, reset forcé, MFA et client faits* (T4.1, T4.2, T4.4, T4.6, T4.7, T4.8, T4.9, T4.10) ; **restent** OAuth Google, SAML, actions admin, invitations, rôles |
+| Prochaine tâche | **T4.3 — Google OAuth** (`/api/auth/google` + `/callback`) — les 2 comptes Google importés en dépendent pour se reconnecter sans friction |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **9 suites / 113** · **E2E 39** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |
@@ -127,6 +127,16 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - **`disableMfa` exige le mot de passe ET supprime le secret** (pas seulement le drapeau) : sans le mot de passe, un jeton volé retirerait le second facteur ; en conservant le secret, on pourrait réactiver la 2FA sans le re-saisir.
     - **`readTotpSecret` tolère une valeur non chiffrée** : refuser ces valeurs enfermerait dehors les utilisateurs dont le secret précède le chiffrement.
     - ⚠️ **Deux pièges E2E** : (1) `fullyParallel` répartit les tests d'un fichier entre plusieurs workers et `afterAll` s'exécute dans chacun → **ne pas fermer le pool `pg`** dans un spec Playwright ; (2) `reuseExistingServer` réutilise **n'importe quel** serveur à l'écoute — un serveur démarré *avant* l'ajout d'une variable d'environnement ne la connaît pas, et les tests échouent en **429** au lieu d'une erreur explicite. En cas de 429 inattendus : arrêter les `next dev` en cours.
+43. **Phase 4 — AuthContext et pages d'authentification** (T4.9/T4.10). **Le couplage Firebase côté client est terminé** : 0 import `firebase` dans `src/app`, `src/components`, `src/contexts`, `src/hooks` (vérifié).
+    - **La fuite de listener est supprimée par construction, pas réparée.** Plutôt que d'appeler correctement `unsubscribeSnapshot()`, l'abonnement a disparu : **un seul appel** au montage (`POST /api/auth/session`), donc rien à détacher. Une fuite devient impossible, pas seulement évitée.
+    - **`POST /api/auth/session` répond toujours 200** (`{user}` ou `{user:null}`). « Qui suis-je ? » → « personne » n'est pas une erreur : un 401 faisait apparaître une requête en échec dans la console de **chaque visiteur anonyme**, sur toutes les pages publiques. **POST et non GET** car l'opération peut faire tourner le refresh token.
+    - **Le spinner d'attente ne s'affiche que sur les routes protégées.** Attendre un aller-retour réseau avant de rendre une page publique dégrade l'affichage et le référencement. Le découpage des routes (`src/lib/auth/routes.ts`) est une **source unique**, partagée avec le middleware — deux listes divergeraient.
+    - **L'état vient du serveur**, jamais reconstruit côté client : le jeton porte une copie du rôle et de la formule, donc potentiellement périmée.
+    - **`isPremium` se déduit de `planId`**, ce qui a supprimé l'appel à `getPlansAction()` à chaque chargement de page.
+    - ⚠️ **Dégradation assumée et documentée** : la progression (`TutorialContext`, `useTutorialProgress`) n'est **plus persistée** (elle l'était dans Firestore). Elle reste en **mémoire** jusqu'à la phase 5 (T5.2/T5.3, `user_course_progress`). Un commentaire le dit explicitement, plutôt qu'un code qui prétend sauvegarder sans rien écrire.
+    - 🔴 **PIÈGE MAJEUR — `webServer.env` de Playwright REMPLACE l'environnement du serveur** au lieu de le compléter. Sans recopie de `process.env`, le serveur perd `NODE_ENV` et `.env.local` : la limite de débit retombe à sa valeur stricte et les tests échouent en **429 sans explication**. C'était la cause des échecs intermittents de la phase 4. Toujours écrire `{ ...process.env, MA_VARIABLE: '...' }`.
+    - ⚠️ **Ne pas conclure trop vite d'un `grep` trop étroit** : j'avais cherché les consommateurs de `userRole`/`accessibleCourses` dans 4 fichiers seulement, conclu qu'ils étaient morts, et supprimé des champs **utilisés ailleurs** (25 erreurs de typage). Balayer tout `src/**` avant de retirer une API.
+    - **`MEMORY.md` dépassait la limite de 200 lignes** (218) sans que ça se voie : `Measure-Object -Line` de PowerShell **ne compte pas comme** `ReadAllLines`. Les incidents et pièges sont désormais dans `@memory/incidents-et-pieges.md`.
 
 ---
 
@@ -142,29 +152,12 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 
 ---
 
-## Bugs résolus et leurs fixes
+## Incidents, pièges et blocages
 
-- `node_modules` corrompu — installation interrompue, paquet `firebase` sans fichiers `.mjs` → `Cannot resolve 'firebase/app'` en Turbopack. Fix : suppression de `node_modules/firebase` + `npm install --legacy-peer-deps` (`node_modules/firebase/app/dist/index.mjs`).
-- `npm run dev -- --turbopack` ignoré (npm traite le flag comme config) → ajout du script `dev:turbo` dans `package.json`.
-- `EPERM .next\trace` + « Port 3000 in use » → **deux instances `next dev` simultanées**. Un seul serveur à la fois sur ce dossier.
-- Firestore `7 PERMISSION_DENIED: requires billing` → le repli `src/data/*.json` (`src/lib/local-data.ts`) n'a plus lieu d'être : **le couplage Firestore est rompu** (phase 3). `local-data.ts` est désormais **du code mort**.
-- `AuthContext.tsx:124` — `onAuthStateChanged` ignore les valeurs de retour → `unsubscribeSnapshot()` jamais appelé (**fuite de listener**). À corriger en phase 4.
-- `src/lib/firebase.ts:18-29` — la config Firebase était loguée en clair (apiKey, projectId…) → **corrigé** (`ddcf893`), 5 `console.log` retirés, import `FirestoreSettings` inutilisé supprimé.
-- `src/app/pricing/page.tsx` — `AlertDialogTrigger` utilisé (L122) mais non importé : la page **plantait** au rendu du bouton de rétrogradation → **corrigé** (`c229f89`).
-- `src/components/tutorial/QuizView.tsx` — `useEffect` appelé après un `return` précoce : violation des règles des Hooks → **corrigé** (`c05a534`), valeurs dérivées et effet remontés avant le return (optional chaining).
-- **10 suites de tests ne s'exécutaient pas** (`Cannot find module 'msw/node'`) — 3 causes chaînées : (1) `msw/node` exposé avec `browser:null` → `customExportConditions: ['']` ; (2) jsdom n'implémente pas `fetch` (`Response is not defined`) → `jest-fixed-jsdom` ; (3) `msw` et `firebase` en ESM → **remplacement** de `transformIgnorePatterns` (next/jest ignore tout `node_modules` et jest combine les motifs en OU : un simple ajout ne peut pas « dé-ignorer » un paquet) → **corrigé** (`9938292`). Résultat : 8/10 suites, 15 tests passent.
-- `.env.example` masqué par la règle `.env*` du `.gitignore` → **corrigé** (`f46f1bb`), négation `!.env.example` ajoutée.
-- **Rebase interactif bloqué** (96 commits, 14 rejoués, 18 fichiers en conflit) laissé par Firebase Studio → **`rebase --abort`**, branche `master` restaurée, travail récupéré via stash + sauvegarde temp. Voir « Pièges ».
-
-### Blocages ouverts
-
-- **Port PostgreSQL 5433, pas 5432** : le port 5432 est occupé par `masterplan365-postgres-1` (projet tiers). **Ne jamais pointer `DATABASE_URL` sur 5432** — on écrirait dans la base d'un autre projet.
-- **Un « vert » de test n'est une preuve que si le test s'exécute réellement.** Les tests DB étaient passés à vide via un `return` gracieux : ils sont désormais **stricts** (base injoignable = échec). `SKIP_DB_IF_UNAVAILABLE=1` existe mais doit rester exceptionnel.
-- **[mineur]** Avertissement Jest sur le projet DB : `worker process failed to exit gracefully` — fuite de handle à investiguer (n'affecte pas les résultats).
-- **`src/queries/**` = code mort** : importé nulle part. Typé pour T0.2, à supprimer en phase 16.
-- **Modules Firebase = code mort** depuis la phase 3 : `src/lib/firebase-admin.ts`, `src/lib/firebase.ts`, `src/lib/local-data.ts` n'ont **plus aucun consommateur** (vérifié). À supprimer en phase 16, avec les dépendances `firebase` / `firebase-admin` de `package.json`.
-- **Le build Next n'est pas vérifié** : étape CI en report-only (script `npm run build` en syntaxe Windows `cmd`).
-- **Divergence de branche** : `master` a 96+ commits locaux contre 1 sur `origin/master`. Aucun push effectué.
+> Déplacés dans `@memory/incidents-et-pieges.md` : ils expliquent des symptômes
+> qu'on risque de rencontrer à nouveau, mais ne concernent pas l'état courant.
+> Contenu : bugs résolus, blocages ouverts, pièges identifiés (Next, Jest,
+> Playwright, Firebase, dépendances).
 
 ---
 
@@ -178,25 +171,6 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 
 ---
 
-## Pièges identifiés
-
-- **Deux `next dev` simultanés = EPERM + conflit de port.** Toujours tuer l'instance avant d'en relancer une.
-- ⚠️ **Un rebase interactif peut être laissé en plan par Firebase Studio.** Le dépôt a été trouvé à mi-rebase (96 commits, 14 rejoués). **Ne jamais commiter pendant un rebase**, et **`git rebase --abort` détruit les fichiers suivis modifiés** (les non suivis survivent). Toujours sauvegarder avant.
-- ⚠️ **La branche `master` a divergé de `origin/master`** : 96 commits locaux contre 1 distant. Aucun push effectué. La divergence est probablement l'origine du rebase abandonné — à trancher avant tout `git push`.
-- ⚠️ **OneDrive verrouille les fichiers** : `.git` et `node_modules` subissent des `Permission denied` lors des suppressions massives (`git stash -u`, `git clean`). Prévoir un backup avant toute opération destructrice.
-- ⚠️ **`node_modules` a été corrompu par une installation interrompue** : 4 paquets identifiés avec des fichiers manquants (`firebase` sans `.mjs`, `framer-motion` et `html2canvas` sans aucun `.d.ts`, `msw` sans `SetupApi.d.mts`). **Réinstallation complète propre effectuée** (1996 paquets). En cas de symptôme bizarre (`Cannot resolve`, `TS7016`, type manquant), **soupçonner la corruption avant le code** et réinstaller.
-- ⚠️ **Storybook était incohérent** : `@storybook/nextjs@10` avec tous les autres addons en `8.x` → peer deps contradictoires, et **le paquet cœur `storybook` n'était pas déclaré**. Aligné en 8 + cœur ajouté.
-- ⚠️ **`@types/react` était en 18 alors que `react` est en 19** → inférence cassée. Corrigé.
-- ⚠️ **`planId` vs `plan`** : le modèle utilisateur était incohérent (id `planId` dans le type et `AuthContext`, libellé `plan` dans les données et les pages admin). **Canonique : `planId`** (`free`/`premium`). Helper `planLabel()` dans `src/lib/users.ts` ; seed `users.json` normalisé.
-- ⚠️ **react-markdown v9 ne fournit plus la prop `inline`** dans le composant `code`. Détecter un bloc par langue déclarée (`language-x`) ou présence d'un retour à la ligne.
-- `npm run lint` était **interactif** (aucune config ESLint) → **résolu** (T0.1, commit `685213f`).
-- **Typecheck : 64 → 0 erreur** (T0.2). Aucune erreur de typage connue à ce jour.
-- `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
-- **Aucune capacité email dans Katalyst** → `EmailProvider` requis en phase 3, sinon le reset de mot de passe (phase 4) est infaisable.
-- Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** (+ semaine) → **ETL nécessaire** en phase 2.
-- **Isolation multi-tenant** : une requête de provider sans `scope` = fuite de données entre organisations. Le scope est **obligatoire dans l'interface** (ne compile pas sans) ; `assertScope()` le rejette aussi à l'exécution. 10 tests d'isolation couvrent **la lecture et l'écriture** (T3.12, `e1b2de1`).
-
----
 
 ## Préférences utilisateur
 
