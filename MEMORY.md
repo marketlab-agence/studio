@@ -12,10 +12,10 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0** (T0.1 → T0.10) et ✅ **Phase 0.5 — Walking Skeleton** (T0.5.1 → T0.5.6) |
+| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5 — Walking Skeleton**, ✅ **Phase 1 — Modèle & registre** |
 | Phase en cours | — |
-| Prochaine phase | **Phase 1 — Modèle de référence & registre de composants** |
-| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts · tests DB 2 suites / 7 verts |
+| Prochaine phase | **Phase 2 — Schéma, migrations & seed** |
+| Qualité | `typecheck` 0 erreur · `lint` 0 erreur · tests **10 suites / 37 verts** · tests DB 2 suites / 7 verts |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** (`katalyst`, `katalyst_test`) |
 | Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
@@ -57,6 +57,10 @@
 28. **Normes retenues** : OWASP ASVS, OWASP Top 10, OWASP API Top 10, **OWASP LLM Top 10**, RGPD, **WCAG 2.2 AA**, SOC 2, NIS2, ISO 27001 (réf.), AI Act, NIST AI RMF, PCI DSS SAQ A, ISO 25010. Référentiel : `@.kiro/steering/security-standards.md`.
 29. **Patterns réutilisés de masterplan365** (lecture seule) : `authenticate.ts`, `auth.ts`, `rateLimiter`/`sanitizeInput`/`validation`, `aiGuard`/`tierQuotaGuard`, `lib/audit`, `storageProvider`, `llmProvider`, `pgvector/pgvector:pg16`, `.gitleaks.toml`, workflows `deploy-{aws,gcp,azure}`, i18n `_t('fr','en')`.
 30. **Tarification** : modèle par organisation (Découverte 0 € · Formateur ~39 € · Institut ~149 € · CFA/Entreprise sur devis) + **crédits IA rechargeables**. Document sourcé : `@.kiro/specs/katalyst/pricing.md`. ⚠️ **Les tarifs de REWORK ne sont pas publics** — le positionnement repose sur les marchés Qualiopi (0-992 €/mois) et LMS (29-598 $/mois). Les montants Katalyst sont des **[PROPOSITION]** à valider.
+31. **Registre des composants** (`src/components/registry/`) : source unique pour le rendu, l'IA et la validation. Découpé en `catalog.ts` (**métadonnées seules, aucun import React** — utilisable serveur, IA, tests) et `index.ts` (liaison aux composants, réservée au rendu). 46 composants : **33 interactifs, 13 visuels**. `LessonView` : 173 → 96 lignes, 46 imports → 1.
+32. **Schémas Zod partagés** (`src/lib/schemas/content.ts`) : source unique des contrats du contenu (9 types de leçon, numérotation `S.n.J.m`, audit de conformité). **N'importe aucun composant React** — sinon le bundle client embarquerait les 46 composants.
+33. **Numérotation Semaine/Jour** : `formatWeekCode`, `formatChapterCode`, `parseChapterCode`, `DAYS_PER_WEEK = 5`. Types **inférés** des schémas (pas de duplication).
+34. 🔴 **13 des 33 composants « interactifs » sont des coquilles statiques** — mesuré : aucun `useState`/`onClick`/`onChange`/`onDrag`. Ex. `GitCommandSimulator` affiche un bouton « Exécuter » **sans handler** ; `WorkflowDesigner` affiche « glisser-déposer » sans implémentation. Marqués `status: 'placeholder'`, exclus des propositions de l'IA et refusés par `assertUsableComponent`. **La promesse produit « la compétence par la pratique » est donc partiellement non tenue** : les rendre réellement interactifs relève de la **phase 6**, et REQ-CNT-02 (100 % de leçons interactives) n'est pas atteignable avant.
 
 ---
 
