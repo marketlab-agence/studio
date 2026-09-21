@@ -1,0 +1,121 @@
+# MEMORY.md — Katalyst
+
+> Fichier de continuité. **À lire en premier au début de CHAQUE session.**
+> Règle des 200 lignes : au-delà, archiver dans `memory/[sujet].md` et remplacer par un lien.
+> Vérifier la fraîcheur par rapport à `AGENTS.md` et `VERSION`.
+
+---
+
+## État actuel du projet
+
+| Champ | Valeur |
+|---|---|
+| Version | `0.1.0` (voir `VERSION`) |
+| Branche Git active | à renseigner |
+| Dernière phase complétée | — (planification terminée) |
+| Phase en cours | **Phase 0 — Fondations & socle `.kiro`** |
+| Prochaine phase | Phase 0.5 — Walking Skeleton |
+| Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
+| Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
+| Plan | **29 phases** (0, 0.5, 1-27) — Couche 0 (fondations) · Couche 1 (migration) · Couche 2 (socle transverse : i18n, API, sécurité) · Couche 3 (produit REWORK + conformité + autonomie) |
+
+---
+
+## Décisions architecturales clés
+
+1. **Backend natif Next** — Postgres accédé côté serveur (RSC, server actions, route handlers). Pas de backend Express séparé.
+2. **PostgreSQL auto-hébergé**, agnostique. Voir `adr/0001-choix-postgresql.md`.
+3. **Auth : JWT + bcrypt + Google OAuth + refresh tokens + MFA/TOTP + SSO SAML**, remplaçant Firebase Auth. Voir `adr/0002-auth-jwt-remplace-firebase.md`.
+4. **Modèle de formation de référence** : profondeur du cours GitHub (11 chapitres, 37 leçons, seul cours avec quiz) + **100 % de leçons interactives**. Voir `adr/0003-modele-formation-reference.md`.
+5. **Hiérarchie pédagogique = Semaine / Jour** : `S.1.J.2` (S = semaine de formation, J = jour). Un chapitre se termine sur une semaine (lundi→vendredi). **PAS de « semestre »** — correction explicite de l'utilisateur.
+6. **Déblocage (drip)** : par **date de sortie** (badges type « 5 août ») ET par condition (chapitre précédent, quiz réussi).
+7. **Gamification** : points par leçon (ex. 20 pts), modal de fin de leçon (« Félicitations ! … Vous avez gagné ⭐ 20 points »), récapitulatif par type.
+8. **Cohortes** : multi-cohortes par apprenant, créées par l'admin (nommage type `IAFORMATEUR_20260803G1`). Chat formateur ↔ apprenants avec compteur de non-lus.
+9. **Temps réel : SSE natif Next** (pas Socket.IO, pas de tiers). Voir `adr/0004-temps-reel-sse.md`.
+10. **Paiement : Stripe** derrière une abstraction `PaymentProvider` (swappable).
+11. **Zero vendor lock-in** : abstractions `ContentProvider`, `UserProvider`, `SettingsProvider`, `AuthProvider`, `EmailProvider`, `StorageProvider`, `PaymentProvider`, `AICreditProvider`, `NotificationProvider`, `DocumentProvider`. Sélection par variables d'environnement.
+12. **Mobile : Capacitor** dès la Couche 2 (précédent masterplan365 : `android/`, `ios/`, `fastlane/`).
+13. **Aucune facturation GCP.** Contenu depuis `src/data/*.json`. Les **12 comptes** sont importés ; les **10 comptes email → reset forcé** (mots de passe non exportables).
+14. **Suivi : modèle `.kiro`** adapté de masterplan365 (lecture seule sur masterplan365, jamais modifié).
+15. **Registre de composants obligatoire** (`src/components/registry.ts`) : source unique pour l'UI, l'IA et l'outil de création. Aujourd'hui `LessonView.tsx` importe 37 composants en dur et l'IA reçoit une liste séparée → désynchronisation.
+16. **Méthodologie REWORK = moteur pédagogique** de Katalyst (CPA², ACTIF, Bloom, Identimètre, QQOQCCP, SAVI, déroulé 6 colonnes, fiche 17 rubriques, pipeline à gates). Voir `adr/0005-methodologie-rework.md` et `.kiro/steering/rework-methodology.md`. Source : `1. Consulting IA/Formation REWORK/`.
+17. **Conformité Qualiopi = objectif produit** ; dossier de preuves exportable. Socle disponible : référentiel C.1-C.8. **RNQ V10 identifié** : décret **n° 2026-728 du 1er août 2026**, **33 indicateurs**, en vigueur au **1er novembre 2026** (source Légifrance, lu le 2026-09-21). Gate **G5** = récupérer le guide de lecture V10. Voir `adr/0006-conformite-qualiopi.md`.
+18. **Multi-tenant léger (organisations)** — **révision de l'ancien non-goal NG-01**. Instituts/académies doivent être autonomes avec isolation des données et marque propre. Le `scope` (`OrgScope`) est **obligatoire** dans les providers. Voir `adr/0007-multi-tenant-organisations.md`.
+19. **Studio de génération IA + crédits** : TTT, TTI, TTS, STT, TTV, consommables par les formateurs, coût affiché avant génération, résultat éditable, mention de transparence IA.
+20. **Déblocage configurable par l'auteur** : cadence jour / semaine / mois / personnalisé + échéances, avec notifications d'ouverture, d'accès, d'inactivité et d'échéance.
+21. **Audio = contenu de première classe** (au même titre que texte, vidéo, image) + métadonnées d'accessibilité obligatoires sur tout média.
+22. **Internationalisation (transatlantique)** — **révision de l'ancien non-goal NG-04**. **FR + EN obligatoires**, ES optionnel. Routage `/fr` `/en`, zéro chaîne en dur, lint i18n bloquant, contenu multilingue. Voir `adr/0008-internationalisation.md`.
+23. **API centrale versionnée** `/api/v1/*` avec chaîne obligatoire : auth → scope → autorisation → validation Zod → handler. OpenAPI généré depuis Zod. Voir `adr/0009-api-centrale-securite.md`.
+24. **Sécurité** : en-têtes, CSRF, anti-force brute, journal d'audit, chiffrement, analyse de dépendances (`npm audit`, `gitleaks`), RGPD, procédure d'incident.
+25. **Défenses anti prompt-injection** — 7 niveaux (hiérarchie d'instructions, délimitation, validation de sortie Zod, aucune écriture directe, outils en liste blanche scopés, détection/journalisation, provenance). Normes : **OWASP LLM Top 10**. Voir `adr/0010-defense-prompt-injection.md`.
+26. **Conformité SOC 2 / NIS2 « le juste nécessaire »** : contrôles structurels documentés, **aucune certification revendiquée**. Voir `adr/0011-conformite-soc2-nis2.md`.
+27. **Base documentaire du formateur** (content prompting REWORK à **3 niveaux** : formation / chapitre / leçon, avec héritage) + **pgvector** pour la recherche sémantique + traçabilité des sources. Voir `adr/0012-base-documentaire.md`.
+28. **Normes retenues** : OWASP ASVS, OWASP Top 10, OWASP API Top 10, **OWASP LLM Top 10**, RGPD, **WCAG 2.2 AA**, SOC 2, NIS2, ISO 27001 (réf.), AI Act, NIST AI RMF, PCI DSS SAQ A, ISO 25010. Référentiel : `@.kiro/steering/security-standards.md`.
+29. **Patterns réutilisés de masterplan365** (lecture seule) : `authenticate.ts`, `auth.ts`, `rateLimiter`/`sanitizeInput`/`validation`, `aiGuard`/`tierQuotaGuard`, `lib/audit`, `storageProvider`, `llmProvider`, `pgvector/pgvector:pg16`, `.gitleaks.toml`, workflows `deploy-{aws,gcp,azure}`, i18n `_t('fr','en')`.
+30. **Tarification** : modèle par organisation (Découverte 0 € · Formateur ~39 € · Institut ~149 € · CFA/Entreprise sur devis) + **crédits IA rechargeables**. Document sourcé : `@.kiro/specs/katalyst/pricing.md`. ⚠️ **Les tarifs de REWORK ne sont pas publics** — le positionnement repose sur les marchés Qualiopi (0-992 €/mois) et LMS (29-598 $/mois). Les montants Katalyst sont des **[PROPOSITION]** à valider.
+
+---
+
+## Portes de décision ouvertes
+
+| Gate | Où | Décision | Repli |
+|---|---|---|---|
+| G1 | Avant phase 4 | Fournisseur SAML (recommandé : Google Workspace + Microsoft Entra ID) | SSO reporté en Couche 2 |
+| G2 | Avant phase 25 | o2switch supporte-t-il Docker + PostgreSQL ? (**non vérifié**) | VPS Docker (Hetzner/OVH/Scaleway) ou dédié |
+| G3 | Avant phase 4 | Fournisseur email (SMTP / Resend / SES) | SMTP générique via `nodemailer` |
+| G4 | Avant phase 17/24 | Fournisseurs IA + tarifs crédits + tarifs Stripe | Mode test |
+| G5 | Avant phase 20 | **RNQ Qualiopi** — décret **n° 2026-728** identifié (**33 indicateurs**, en vigueur 01/11/2026) ; reste à récupérer le **guide de lecture V10** | Guide V10 à obtenir |
+
+---
+
+## Bugs résolus et leurs fixes
+
+- `node_modules` corrompu — installation interrompue, paquet `firebase` sans fichiers `.mjs` → `Cannot resolve 'firebase/app'` en Turbopack. Fix : suppression de `node_modules/firebase` + `npm install --legacy-peer-deps` (`node_modules/firebase/app/dist/index.mjs`).
+- `npm run dev -- --turbopack` ignoré (npm traite le flag comme config) → ajout du script `dev:turbo` dans `package.json`.
+- `EPERM .next\trace` + « Port 3000 in use » → **deux instances `next dev` simultanées**. Un seul serveur à la fois sur ce dossier.
+- Firestore `7 PERMISSION_DENIED: requires billing` → repli `src/data/*.json` (`src/lib/local-data.ts`), temporaire jusqu'à la phase 7.
+- `AuthContext.tsx:124` — `onAuthStateChanged` ignore les valeurs de retour → `unsubscribeSnapshot()` jamais appelé (**fuite de listener**). À corriger en phase 4.
+- `src/lib/firebase.ts:18-29` — la config Firebase est loguée en clair. À retirer (T0.10).
+
+---
+
+## Patterns et conventions confirmés
+
+- `@/*` → `./src/*` (tsconfig + jest.config.mjs).
+- Serveur : RSC + server actions ; client : server actions + React Query.
+- shadcn/ui + Tailwind, variables CSS, base neutre. Charte cible : **1 seul accent (navy), fond blanc, neutres** — pas d'explosion de couleurs.
+- Tests : Jest 29 + MSW + Testing Library, `src/tests/` miroir de `src/`. **jsdom uniquement → infra DB à créer.**
+- Migrations : `.sql` numérotées, rejouables, réversibles.
+
+---
+
+## Pièges identifiés
+
+- **Deux `next dev` simultanés = EPERM + conflit de port.** Toujours tuer l'instance avant d'en relancer une.
+- `npm run lint` est **interactif** (aucune config ESLint) → à créer en phase 0.
+- `~60 erreurs typecheck` préexistantes (`framer-motion`, `msw`, types manquants) → à résorber en phase 0.
+- `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
+- **Aucune capacité email dans Katalyst** → `EmailProvider` requis en phase 3, sinon le reset de mot de passe (phase 4) est infaisable.
+- Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** (+ semaine) → **ETL nécessaire** en phase 2.
+- **Isolation multi-tenant** : une requête de provider sans `scope` = fuite de données entre organisations. Le scope est **obligatoire dans l'interface** (ne compile pas sans) + tests d'isolation dédiés (T3.11).
+
+---
+
+## Préférences utilisateur
+
+- Réponses **concises**, en français.
+- **Preuves avant affirmation** : pas de chiffre sans source.
+- Ne jamais modifier `masterplan365` (lecture seule).
+- L'utilisateur corrige et affine : ne pas inventer, demander si le silence est ambigu.
+- Mode build : agir avec expertise, tracer le plan **avant** de toucher au code.
+
+---
+
+## Références
+
+- Plan d'exécution : `@.kiro/specs/katalyst/tasks.md`
+- Exigences : `@.kiro/specs/katalyst/requirements.md`
+- Architecture : `@.kiro/specs/katalyst/design.md`
+- Fin de phase : `@.kiro/workflows/phase-completion.md`
+- Handoff : `@.kiro/hooks/session-handoff.md`
+- Prochaine étape : `@.kiro/hooks/next-phase.md`
