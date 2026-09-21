@@ -36,6 +36,9 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Les tests d'intégration DB vivent dans un projet Jest séparé
+  // (environnement node, sans jsdom ni MSW). Voir jest.config.db.mjs.
+  testPathIgnorePatterns: ['/node_modules/', '\\.db\\.test\\.ts$'],
 }
 
 // `next/jest` injecte un transformIgnorePatterns qui ignore TOUT `node_modules`.
