@@ -52,3 +52,5 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+# Stockage local des fichiers (STORAGE_LOCAL_DIR).
+.storage/

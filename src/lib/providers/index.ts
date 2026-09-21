@@ -1,6 +1,7 @@
 import type { ContentProvider } from './content';
 import type { EmailProvider } from './email';
 import type { SettingsProvider } from './settings';
+import type { StorageProvider } from './storage';
 import type { UserProvider } from './users';
 import { PostgresContentProvider } from './postgres/content';
 import { PostgresSettingsProvider } from './postgres/settings';
@@ -8,6 +9,8 @@ import { PostgresUserProvider } from './postgres/users';
 import { MemoryEmailProvider } from './email/memory';
 import { ResendEmailProvider } from './email/resend';
 import { SmtpEmailProvider } from './email/smtp';
+import { LocalStorageProvider } from './storage/local';
+import { S3StorageProvider } from './storage/s3';
 
 /**
  * Sélection des implémentations (zero vendor lock-in).
@@ -29,6 +32,7 @@ let contentProvider: ContentProvider | null = null;
 let userProvider: UserProvider | null = null;
 let settingsProvider: SettingsProvider | null = null;
 let emailProvider: EmailProvider | null = null;
+let storageProvider: StorageProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
   if (contentProvider) return contentProvider;
@@ -92,12 +96,33 @@ export function getEmailProvider(): EmailProvider {
   }
 }
 
+/**
+ * Stockage des fichiers. Défaut `local` (système de fichiers, aucun prérequis) ;
+ * `s3` pour tout service compatible S3, sans SDK.
+ */
+export function getStorageProvider(): StorageProvider {
+  if (storageProvider) return storageProvider;
+
+  const provider = process.env.STORAGE_PROVIDER ?? 'local';
+  switch (provider) {
+    case 'local':
+      storageProvider = new LocalStorageProvider();
+      return storageProvider;
+    case 's3':
+      storageProvider = new S3StorageProvider();
+      return storageProvider;
+    default:
+      return unknownProvider('STORAGE_PROVIDER', provider, ['local', 's3']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
   userProvider = null;
   settingsProvider = null;
   emailProvider = null;
+  storageProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
@@ -105,5 +130,6 @@ export * from './types';
 export * from './content';
 export * from './email';
 export * from './settings';
+export * from './storage';
 export * from './users';
 export { getRequestScope } from './scope';
