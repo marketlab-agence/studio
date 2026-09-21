@@ -13,9 +13,9 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware et reset forcé faits* (T4.1, T4.2, T4.6, T4.7, T4.8) ; **restent** OAuth Google, SAML, endpoints MFA, refonte `AuthContext`, pages login/signup/account |
-| Prochaine tâche | **T4.4 (suite)** : endpoints MFA `setup`/`verify`/`challenge`/`status` (la crypto est faite) — ou **T4.9/T4.10** (refonte `AuthContext`, où la **fuite de listener** de `AuthContext.tsx:124` attend depuis la phase 0) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **18 suites / 162** · tests DB **8 suites / 95** · **E2E 25** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware, reset forcé et MFA faits* (T4.1, T4.2, T4.4, T4.6, T4.7, T4.8) ; **restent** OAuth Google, SAML, refonte `AuthContext`, pages login/signup/account |
+| Prochaine tâche | **T4.9/T4.10** — refonte `AuthContext` (la **fuite de listener** de `AuthContext.tsx:124` attend depuis la phase 0) et migration des pages `login`/`signup`/`account` hors de Firebase |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **19 suites / 175** · tests DB **9 suites / 113** · **E2E 32** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |
@@ -120,6 +120,13 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - **Accessibilité** : `CardTitle` (shadcn) produit un **`div`** — une page qui ne l'utilise que pour ses titres n'a **aucun titre** (WCAG 2.2 AA). Utiliser de vrais `h1`.
     - **`EMAIL_PROVIDER=memory` en développement** : sans serveur SMTP, le transport `memory` retient les emails au lieu d'échouer. C'est exactement son usage.
     - **Technique E2E pour un parcours par email** : le serveur ne conserve que le **hachage** du jeton, donc le test fabrique un jeton connu et insère son hachage en base — comme le ferait le provider. Le parcours HTTP, le provider et la base sont ainsi réellement traversés, sans accès à la boîte mail.
+42. **Phase 4 — MFA/TOTP** (T4.4). Le secret TOTP est **chiffré au repos** (AES-256-GCM, clé hors base) : c'est un secret *partagé et durable*, donc le lire permet de générer des codes valides indéfiniment. Stocké en clair, une fuite de la base suffirait à annuler le second facteur. GCM plutôt que CBC : une valeur altérée est **rejetée** au lieu de produire un secret corrompu (donc des codes invalides indiagnosticables).
+    - **`beginMfaSetup` n'active rien** : `two_factor_enabled` reste à `false` jusqu'à confirmation par un premier code. Sans cette distinction, un utilisateur dont l'application n'a pas enregistré le secret serait **enfermé hors de son compte**. `configured` et `enabled` sont deux états distincts.
+    - **`login` a deux issues** : session, ou **défi** (aucun cookie posé). Le défi est un JWT d'**audience distincte** (`katalyst-mfa`) : un jeton d'accès ne peut pas tenir lieu de défi, ni l'inverse.
+    - **Les routes MFA sont limitées en débit** : un code à 6 chiffres n'a que 10⁶ possibilités. Sans limitation, la seconde authentification serait contournable par force brute — donc inutile.
+    - **`disableMfa` exige le mot de passe ET supprime le secret** (pas seulement le drapeau) : sans le mot de passe, un jeton volé retirerait le second facteur ; en conservant le secret, on pourrait réactiver la 2FA sans le re-saisir.
+    - **`readTotpSecret` tolère une valeur non chiffrée** : refuser ces valeurs enfermerait dehors les utilisateurs dont le secret précède le chiffrement.
+    - ⚠️ **Deux pièges E2E** : (1) `fullyParallel` répartit les tests d'un fichier entre plusieurs workers et `afterAll` s'exécute dans chacun → **ne pas fermer le pool `pg`** dans un spec Playwright ; (2) `reuseExistingServer` réutilise **n'importe quel** serveur à l'écoute — un serveur démarré *avant* l'ajout d'une variable d'environnement ne la connaît pas, et les tests échouent en **429** au lieu d'une erreur explicite. En cas de 429 inattendus : arrêter les `next dev` en cours.
 
 ---
 
