@@ -55,6 +55,15 @@ export interface CourseProgress {
 
 export type GlobalProgress = Record<string, CourseProgress>;
 
+/**
+ * Progression d'un apprenant sur un tutoriel, au niveau des étapes.
+ * Utilisé par la couche de requêtes React Query et les utilitaires de progression.
+ */
+export interface UserProgress {
+  completedSteps: Set<string>;
+  currentStepId: string | null;
+}
+
 export type GenerateLessonContentOutput = {
   illustrativeContent: string;
   interactiveComponentName?: string;

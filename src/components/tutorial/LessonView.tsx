@@ -129,9 +129,9 @@ export function LessonView({ lesson }: LessonViewProps) {
 
             <article className="prose dark:prose-invert max-w-none">
                 <ReactMarkdown components={{
-                    code({node, inline, className, children, ...props}) {
+                    code({node, className, children, ...props}) {
                         const match = /language-(\w+)/.exec(className || '')
-                        return !inline && match ? (
+                        return match ? (
                         <CodeBlock className="my-6">
                             {String(children).replace(/\n$/, '')}
                         </CodeBlock>

@@ -508,7 +508,7 @@ export default function CreateCoursePage() {
                                                     {'illustrativeContent' in generatedContent && (
                                                         <div>
                                                             <h3 className="font-bold text-lg mb-2">Contenu Illustratif</h3>
-                                                            <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, inline, className, children, ...props}) { return !inline ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
+                                                            <ReactMarkdown className="prose dark:prose-invert max-w-none" components={{ code({node, className, children, ...props}) { const isBlock = /language-(\w+)/.test(className || '') || String(children).includes('\n'); return isBlock ? (<CodeBlock className="my-4">{String(children).replace(/\n$/, '')}</CodeBlock>) : (<code className={className} {...props}>{children}</code>) } }}>
                                                                 {generatedContent.illustrativeContent}
                                                             </ReactMarkdown>
                                                         </div>

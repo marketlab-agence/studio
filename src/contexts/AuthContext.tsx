@@ -74,6 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setLoading(true);
+    if (!auth) {
+      // Firebase Auth indisponible (configuration absente) : on arrête le
+      // chargement sans planter plutôt que de passer null à onAuthStateChanged.
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (!authUser || !db) {

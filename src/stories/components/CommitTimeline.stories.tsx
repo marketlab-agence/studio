@@ -11,5 +11,5 @@ export default meta;
 type Story = StoryObj<typeof CommitTimeline>;
 
 export const Default: Story = {
-    render: (args) => <div className="w-full max-w-md mx-auto"><CommitTimeline {...args} /></div>,
+    render: () => <div className="w-full max-w-md mx-auto"><CommitTimeline /></div>,
 };

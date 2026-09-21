@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project, Workflow } from 'lucide-react';
+import { Workflow } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 

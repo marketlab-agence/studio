@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Users, ChevronRight, Shield } from 'lucide-react';
+import { planLabel } from '@/lib/users';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +83,7 @@ export default async function AdminUsersListPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell><Badge variant={roleBadgeVariants[user.role] || 'outline'}>{user.role}</Badge></TableCell>
-                  <TableCell><Badge variant={user.plan === 'Premium' ? 'secondary' : 'outline'}>{user.plan}</Badge></TableCell>
+                  <TableCell><Badge variant={user.planId === 'premium' ? 'secondary' : 'outline'}>{planLabel(user.planId)}</Badge></TableCell>
                   <TableCell><Badge variant={statusBadgeVariants[user.status]}>{user.status}</Badge></TableCell>
                   <TableCell>
                     <Button asChild variant="outline" size="sm">

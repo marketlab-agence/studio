@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
             
             if (initialUsers.length > 0) {
                 const totalUsers = initialUsers.length;
-                const premiumUsers = initialUsers.filter(u => u.plan === 'Premium').length;
+                const premiumUsers = initialUsers.filter(u => u.planId === 'premium').length;
                 const monthlyRevenue = premiumUsers * PREMIUM_PLAN_PRICE_EUR;
                 const activeUsers = initialUsers.filter(u => u.status === 'Actif').length;
                 

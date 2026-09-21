@@ -35,12 +35,11 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
   const [isSaving, setIsSaving] = useState(false);
   
   const handleQuizChange = (field: keyof Quiz, value: any) => {
-    setQuiz(prev => prev ? { ...prev, [field]: value } : null);
+    setQuiz(prev => ({ ...prev, [field]: value }));
   };
   
   const handleQuestionChange = (qIndex: number, field: keyof Question, value: any) => {
     setQuiz(prev => {
-        if (!prev) return null;
         const newQuestions = [...prev.questions];
         newQuestions[qIndex] = { ...newQuestions[qIndex], [field]: value };
         return { ...prev, questions: newQuestions };
@@ -49,7 +48,6 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
 
   const handleAnswerChange = (qIndex: number, aIndex: number, field: keyof Answer, value: any) => {
      setQuiz(prev => {
-        if (!prev) return null;
         const newQuestions = [...prev.questions];
         const newAnswers = [...newQuestions[qIndex].answers];
         newAnswers[aIndex] = { ...newAnswers[aIndex], [field]: value };
@@ -60,7 +58,6 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
 
   const addQuestion = () => {
     setQuiz(prev => {
-      if (!prev) return null;
       const questionId = `${chapterId}-q${Date.now()}`;
       const newQuestion: Question = {
         id: questionId,
@@ -74,7 +71,6 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
 
   const removeQuestion = (qIndex: number) => {
     setQuiz(prev => {
-      if (!prev) return null;
       const newQuestions = prev.questions.filter((_, i) => i !== qIndex);
       return {...prev, questions: newQuestions};
     });
@@ -82,7 +78,6 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
   
   const addAnswer = (qIndex: number) => {
     setQuiz(prev => {
-        if (!prev) return null;
         const newQuestions = [...prev.questions];
         const question = newQuestions[qIndex];
         const answerId = `${question.id}-a${Date.now()}`;
@@ -94,7 +89,6 @@ export function EditQuizForm({ initialQuiz, initialChapterTitle, courseId, chapt
 
   const removeAnswer = (qIndex: number, aIndex: number) => {
      setQuiz(prev => {
-        if (!prev) return null;
         const newQuestions = [...prev.questions];
         const newAnswers = newQuestions[qIndex].answers.filter((_, i) => i !== aIndex);
         newQuestions[qIndex] = {...newQuestions[qIndex], answers: newAnswers};

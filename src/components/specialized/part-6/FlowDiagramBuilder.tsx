@@ -30,10 +30,10 @@ export function FlowDiagramBuilder() {
     const addStep = (type: StepType) => {
         const count = steps.filter(s => s.type === type).length + 1;
         const newStep: WorkflowStep = {
+            ...stepBlueprints[type],
             id: Date.now(),
             type,
             name: `${type}-${count}`,
-            ...stepBlueprints[type]
         };
         setSteps(prev => [...prev, newStep]);
     };

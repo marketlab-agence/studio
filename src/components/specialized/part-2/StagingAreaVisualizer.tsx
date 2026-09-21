@@ -46,7 +46,7 @@ export function StagingAreaVisualizer() {
     
     const newCommitMessage = `Commit de ${stagingArea.map(f => f.path).join(', ')}`;
     
-    setRepository(prev => [...prev, ...stagingArea.map(f => ({ ...f, status: 'committed' }))]);
+    setRepository(prev => [...prev, ...stagingArea.map(f => ({ ...f, status: 'committed' as const }))]);
     setStagingArea([]);
     setCommits(prev => [newCommitMessage, ...prev]);
   }, [stagingArea]);

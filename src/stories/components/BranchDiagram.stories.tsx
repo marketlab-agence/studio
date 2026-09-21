@@ -17,5 +17,5 @@ export const Default: Story = {
   args: {
     // Les props par défaut pour votre composant
   },
-  render: (args) => <div className="w-full max-w-md mx-auto"><BranchDiagram {...args} /></div>,
+  render: () => <div className="w-full max-w-md mx-auto"><BranchDiagram /></div>,
 };

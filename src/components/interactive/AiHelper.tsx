@@ -108,8 +108,12 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
                     <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
                          <ReactMarkdown
                             components={{
-                                code({ node, inline, className, children, ...props }) {
-                                    return !inline ? (
+                                code({ node, className, children, ...props }) {
+                                    // react-markdown v9 ne fournit plus `inline`.
+                                    // Un bloc est détecté par une langue déclarée ou un retour à la ligne.
+                                    const isBlock = /language-(\w+)/.test(className || '')
+                                        || String(children).includes('\n');
+                                    return isBlock ? (
                                     <CodeBlock className="my-4 text-sm">{String(children).replace(/\n$/, '')}</CodeBlock>
                                     ) : (
                                     <code className={className} {...props}>

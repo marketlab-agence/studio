@@ -66,7 +66,7 @@ export default function SignupPage() {
             const newUser: Omit<AppUser, 'id'> = {
                 name: displayName,
                 email: user.email!,
-                plan: 'Gratuit',
+                planId: 'free',
                 status: 'Actif',
                 role: 'Utilisateur',
                 joined: new Date().toISOString().split('T')[0],

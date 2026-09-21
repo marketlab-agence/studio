@@ -11,5 +11,5 @@ export default meta;
 type Story = StoryObj<typeof GitGraph>;
 
 export const Default: Story = {
-    render: (args) => <div className="w-full max-w-md mx-auto"><GitGraph {...args} /></div>,
+    render: () => <div className="w-full max-w-md mx-auto"><GitGraph /></div>,
 };

@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
-import { AppUser } from '@/lib/users';
+import { AppUser, planLabel } from '@/lib/users';
 import { getAdminUserByIdAction, updateUserRoleAction } from '@/actions/adminActions';
 
 
@@ -198,7 +198,7 @@ export default function ManageUserPage() {
                     <Separator/>
                     <div>
                         <p className="font-semibold mb-1 text-sm">Abonnement Actuel</p>
-                        <Badge variant={user.plan === 'Premium' ? 'default' : 'secondary'}>{user.plan}</Badge>
+                        <Badge variant={user.planId === 'premium' ? 'default' : 'secondary'}>{planLabel(user.planId)}</Badge>
                     </div>
                      <Button variant="outline" size="sm" className="w-full">Gérer l'abonnement</Button>
                 </CardContent>

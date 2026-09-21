@@ -101,7 +101,7 @@ export function IssueTracker() {
                                 {label}
                             </Badge>
                         ))}
-                         {issue.assignee && <User className="h-4 w-4 text-muted-foreground" title={`Assigné à ${issue.assignee}`} />}
+                         {issue.assignee && <User className="h-4 w-4 text-muted-foreground" aria-label={`Assigné à ${issue.assignee}`} />}
                     </div>
                 </div>
             ))}

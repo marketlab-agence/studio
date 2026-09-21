@@ -1,7 +1,7 @@
 import { Folder, FileText, FileCode } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
-const fileTree = [
+const fileTree: FileNode[] = [
   { name: '.git', type: 'folder', children: [{ name: 'config', type: 'file' }, { name: 'HEAD', type: 'file' }] },
   { name: 'src', type: 'folder', children: [{ name: 'app.js', type: 'code' }] },
   { name: 'public', type: 'folder', children: [{ name: 'index.html', type: 'code' }] },

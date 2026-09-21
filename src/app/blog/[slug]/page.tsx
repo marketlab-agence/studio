@@ -59,9 +59,11 @@ export default function BlogPostPage({ params }: Props) {
         <div className="prose dark:prose-invert max-w-none">
           <ReactMarkdown
             components={{
-              code({ node, inline, className, children, ...props }) {
+              code({ node, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '');
-                return !inline ? (
+                // react-markdown v9 ne fournit plus `inline`.
+                const isBlock = Boolean(match) || String(children).includes('\n');
+                return isBlock ? (
                   <CodeBlock className="my-6 text-sm">{String(children).replace(/\n$/, '')}</CodeBlock>
                 ) : (
                   <code className={className} {...props}>
