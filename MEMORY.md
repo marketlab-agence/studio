@@ -12,13 +12,14 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed** |
-| Phase en cours | 🔄 **Phase 3 — Providers** · *couplage Firestore terminé* (T3.1-T3.4, T3.10-T3.12) ; **restent T3.5-T3.9** : `EmailProvider`, `StorageProvider`, `AICreditProvider`, `NotificationProvider`, `DocumentProvider` |
-| Prochaine tâche | **T3.5 — `EmailProvider`** (interface + SMTP `nodemailer` + Resend) · prérequis du reset de mot de passe en phase 4 · **gate G3** (fournisseur email) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **10 suites / 40** · tests DB **4 suites / 23** · **E2E 5** |
+| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
+| Phase en cours | — |
+| Prochaine phase | **Phase 4 — Authentification** (JWT + bcrypt + Google OAuth + refresh + MFA/TOTP + SAML) · dépend des gates **G1** (SAML) et **G3** (email) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **13 suites / 80** · tests DB **7 suites / 68** · **E2E 5** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **26 tables**, contenu seedé, 12 comptes importés |
 | **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
+| **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage — **8 implémentés**, sélection par variable d'environnement. Restent `AuthProvider` (phase 4), `PaymentProvider` (phase 24) |
 
 ### Commandes base de données
 
@@ -84,6 +85,12 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - `saveChapters` **ne supprime plus les leçons** (*upsert* + rejet des seules leçons disparues) : un `DELETE` emportait `user_lesson_progress` (`ON DELETE CASCADE`, `004_learning.sql:45`) à **chaque édition de contenu**. Test dédié : la progression survit à une réécriture de leçon.
     - `getRequestScope` utilise `cache()` de **React** (mémoïsation *par requête*) et non une variable de module : celle-ci aurait survécu entre requêtes et **figé la première organisation**, cassant l'isolation au moment de la phase 4.
     - `T3.10` (« conserver `providers/firestore/` comme filet ») est **obsolète** : le couplage est intégralement retiré, il n'y a plus de filet à garder.
+38. **Phase 3 (suite) — les cinq derniers providers** (T3.5→T3.9). Trois principes appliqués partout :
+    - **Aucun canal indisponible n'est passé sous silence.** `NotificationProvider.dispatch` retourne `delivered` **et** `skipped` avec un motif ; le push (sans transport avant la Couche 2) est donc déclaré, jamais silencieusement ignoré. Même logique pour le message d'erreur de configuration S3, qui **nomme les variables d'environnement** manquantes et non les champs internes.
+    - **Une opération multi-tables réussit ou échoue en bloc.** `withTransaction` (ajouté à `pool.ts`) porte l'ingestion d'un document et ses segments, ainsi que le débit de crédits et sa journalisation. Les lectures, elles, ne prennent **pas** de transaction : une instruction ne justifie pas de monopoliser une connexion.
+    - **Ce qui est délicat est isolé et prouvé indépendamment.** La signature SigV4 est un module pur, confronté au **vecteur officiel AWS** `get-vanilla` ; le reste du transport S3 est vérifié structurellement, faute de bucket réel. La recherche vectorielle est vérifiée avec des **vecteurs fabriqués à la main**, ce qu'un vrai modèle d'embedding ne permettrait pas de prédire.
+    - **Gate G3 non bloquant** : le repli documenté (SMTP générique) a été implémenté plutôt que d'attendre l'arbitrage. Le transport `memory` sert aux tests et au développement local. Le choix d'un fournisseur email reste ouvert **sans impact sur le code appelant**.
+    - **Bug réel trouvé par les tests** : les noms d'en-têtes HTTP sont insensibles à la casse, mais l'accès aux propriétés JavaScript ne l'est pas — un appelant passant `Host` ou `X-Amz-Date` voyait ses en-têtes **ignorés de la signature** (valeur `undefined`). Normalisation en minuscules avant toute recherche.
 
 ---
 
