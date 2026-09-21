@@ -1,0 +1,26 @@
+# =============================================================================
+# Katalyst — Configuration gitleaks (détection de secrets)
+# =============================================================================
+# Adapté du pattern masterplan365 (lecture seule).
+# Exécuté en CI : .github/workflows/ci.yml
+#
+# En local :
+#   gitleaks detect --config .gitleaks.toml --no-git -v
+# =============================================================================
+
+[extend]
+# Conserve les règles intégrées de gitleaks (clés AWS, GCP, Stripe, etc.)
+useDefault = true
+
+[allowlist]
+description = "Faux positifs connus : fichiers d'agents, exemples et documentation"
+paths = [
+    '''\.agents/''',
+    '''\.kiro/''',
+    '''\.env\.example$''',
+    '''MEMORY\.md$''',
+    '''CHANGELOG\.md$''',
+    '''AGENTS\.md$''',
+    '''\.gitleaks\.toml$''',
+    '''package-lock\.json$''',
+]

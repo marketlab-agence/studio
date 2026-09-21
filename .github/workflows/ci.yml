@@ -1,0 +1,70 @@
+# =============================================================================
+# Katalyst — Intégration continue
+# =============================================================================
+# Référence : .kiro/specs/katalyst/requirements.md (REQ-FND-03)
+#
+# DURCISSEMENT PROGRESSIF (voir commentaires ci-dessous) :
+# les étapes marquées « report-only » deviendront bloquantes au fil des tâches
+# de la phase 0. Le CI reste vert pendant la mise en place du socle.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Qualité
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # Le projet exige --legacy-peer-deps (conflits Storybook 8 / 10 déclarés).
+      - name: Installer les dépendances
+        run: npm ci --legacy-peer-deps
+
+      # --- Bloquant : ESLint est configuré et à 0 erreur depuis T0.1 ---
+      - name: Lint
+        run: npm run lint
+
+      # --- report-only : ~60 erreurs préexistantes — bloquant après T0.2 ---
+      - name: Typecheck (report-only)
+        continue-on-error: true
+        run: npm run typecheck
+
+      # --- report-only : 2 suites obsolètes à trancher — bloquant ensuite ---
+      - name: Tests (report-only)
+        continue-on-error: true
+        run: npm test
+
+      # --- report-only : le script `build` est en syntaxe Windows cmd.
+      #     On appelle next directement pour rester compatible Linux. ---
+      - name: Build (report-only)
+        continue-on-error: true
+        run: npx next build
+
+  secrets:
+    name: Détection de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
