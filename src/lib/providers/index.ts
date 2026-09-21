@@ -1,11 +1,13 @@
 import type { AiCreditProvider } from './ai-credits';
 import type { ContentProvider } from './content';
 import type { EmailProvider } from './email';
+import type { NotificationProvider } from './notification';
 import type { SettingsProvider } from './settings';
 import type { StorageProvider } from './storage';
 import type { UserProvider } from './users';
 import { PostgresAiCreditProvider } from './postgres/ai-credits';
 import { PostgresContentProvider } from './postgres/content';
+import { PostgresNotificationProvider } from './postgres/notification';
 import { PostgresSettingsProvider } from './postgres/settings';
 import { PostgresUserProvider } from './postgres/users';
 import { MemoryEmailProvider } from './email/memory';
@@ -36,6 +38,7 @@ let settingsProvider: SettingsProvider | null = null;
 let emailProvider: EmailProvider | null = null;
 let storageProvider: StorageProvider | null = null;
 let aiCreditProvider: AiCreditProvider | null = null;
+let notificationProvider: NotificationProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
   if (contentProvider) return contentProvider;
@@ -133,6 +136,24 @@ export function getAiCreditProvider(): AiCreditProvider {
   }
 }
 
+/**
+ * Notifications (in-app, email, push).
+ * Le transport email est passé de façon paresseuse : le provider de
+ * notifications n'a pas à le construire, et il reste substituable en test.
+ */
+export function getNotificationProvider(): NotificationProvider {
+  if (notificationProvider) return notificationProvider;
+
+  const provider = process.env.DATA_PROVIDER ?? 'postgres';
+  switch (provider) {
+    case 'postgres':
+      notificationProvider = new PostgresNotificationProvider(() => getEmailProvider());
+      return notificationProvider;
+    default:
+      return unknownProvider('DATA_PROVIDER', provider, ['postgres']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
@@ -141,6 +162,7 @@ export function resetProviders(): void {
   emailProvider = null;
   storageProvider = null;
   aiCreditProvider = null;
+  notificationProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
@@ -148,6 +170,7 @@ export * from './types';
 export * from './ai-credits';
 export * from './content';
 export * from './email';
+export * from './notification';
 export * from './settings';
 export * from './storage';
 export * from './users';
