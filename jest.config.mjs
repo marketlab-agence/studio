@@ -17,6 +17,7 @@ const ESM_DEPS = [
   'headers-polyfill',
   'firebase',
   '@firebase',
+  'yaml',
 ].join('|')
 
 /** @type {import('jest').Config} */

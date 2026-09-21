@@ -77,13 +77,15 @@ Dépend de : 0
 
 Dépend de : 0.5
 
-- [ ] T1.1 — Spec du modèle de formation dans `design.md` · REQ-MDL-05 · vérif: spec validée
-- [ ] T1.2 — `src/components/registry.ts` : 37 composants catalogués · REQ-MDL-01 · vérif: 37 entrées typées
-- [ ] T1.3 — `LessonView.tsx` résout via le registre (suppression des 37 imports) · REQ-MDL-02 · vérif: rendu identique sur les 6 formations
-- [ ] T1.4 — Schémas Zod partagés (`Lesson`, `LessonType`, `Chapter`, `Week`, `Course`) · REQ-MDL-04 · vérif: aucune duplication
-- [ ] T1.5 — `suggest-lesson-components-flow` branché sur le registre · REQ-MDL-03 · vérif: l'IA ne propose plus que des composants existants
-- [ ] T1.6 — Validation : composant inconnu → erreur explicite · REQ-MDL-03 · vérif: test avec nom bidon
-- [ ] T1.7 — Modèle Semaine/Jour (`S.1.J.2`) + règle « 1 chapitre = 1 semaine » · REQ-MDL-06 · vérif: numérotation correcte
+- [x] T1.1 — Spec du modèle de formation dans `design.md` · REQ-MDL-05 · vérif: spec validée · **fait** (design.md §3.1 hiérarchie, §3.2 schéma, §3.3 ETL, §5 types de leçon, §7 registre + ADR 0003)
+- [x] T1.2 — Registre des composants catalogués · REQ-MDL-01 · vérif: entrées typées · **fait** — **46 composants** (33 interactifs, 13 visuels) et non 37 : l'inventaire initial s'arrêtait à mi-liste. Découpé en `registry/catalog.ts` (métadonnées, sans React → serveur, IA, tests) et `registry/index.ts` (liaison aux composants, réservée au rendu)
+- [x] T1.3 — `LessonView.tsx` résout via le registre · REQ-MDL-02 · vérif: rendu identique · **fait** (173 → **96 lignes**, 46 imports → 1). Résolution **tolérante** au rendu (un nom inconnu n'empêche pas l'affichage) ; validation stricte à la création
+- [x] T1.4 — Schémas Zod partagés (`Lesson`, `LessonType`, `Chapter`, `Week`, `Course`) · REQ-MDL-04 · vérif: aucune duplication · **fait** (`src/lib/schemas/content.ts` : types inférés des schémas, 9 types de leçon, audit de conformité). Ce module n'importe volontairement aucun composant React
+- [x] T1.5 — Flow IA branché sur le registre · REQ-MDL-03 · vérif: l'IA ne propose que des composants existants · **fait** — `courseActions.ts` avait **deux listes en dur désynchronisées** du rendu. Remplacées par le catalogue ; seuls les interactifs **opérationnels** sont proposés
+- [x] T1.6 — Validation : composant inconnu → erreur explicite · REQ-MDL-03 · vérif: test avec nom bidon · **fait** (`assertKnownComponent` + `assertUsableComponent`, couverts par 12 tests)
+- [x] T1.7 — Modèle Semaine/Jour (`S.1.J.2`) + règle « 1 chapitre = 1 semaine » · REQ-MDL-06 · vérif: numérotation correcte · **fait** (`formatWeekCode`, `formatChapterCode`, `parseChapterCode`, `DAYS_PER_WEEK = 5`)
+
+> ⚠️ **Constat produit majeur (T1.2)** : **13 des 33 composants « interactifs » sont des coquilles statiques** — aucun gestionnaire d'événement, aucun état (mesuré le 2026-09-21). Ex. `GitCommandSimulator` affiche un bouton « Exécuter » **sans `onClick`** ; `WorkflowDesigner` affiche « glisser-déposer » sans implémentation. Ils sont marqués `status: 'placeholder'`, **exclus des propositions de l'IA** et refusés par `assertUsableComponent`. Les rendre réellement interactifs relève de la **phase 6** : la cible « 100 % de leçons interactives » (REQ-CNT-02) n'est pas atteignable tant qu'ils ne le sont pas.
 
 ## Phase 2 — Schéma, migrations & seed
 

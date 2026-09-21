@@ -12,6 +12,9 @@ import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flo
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { GlobalProgress } from '@/types/tutorial.types';
 import { FieldValue } from 'firebase-admin/firestore';
+// Métadonnées seules : éviter de tirer les 46 composants (et Genkit via AiHelper)
+// dans une action serveur qui n'a besoin que des noms et descriptions.
+import { listNames, listFunctionalInteractiveNames } from '@/components/registry/catalog';
 
 const slugify = (text: string) =>
   text
@@ -176,34 +179,21 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 }
 
 
-const INTERACTIVE_COMPONENTS = [
-    "AiHelper", "BranchCreator", "CollaborationSimulator", "ConflictResolver", 
-    "GitCommandSimulator", "GitDoctorTool", "GitRepositoryPlayground", "GitTimeTravel", 
-    "MergeSimulator", "PullRequestCreator", "WorkflowDesigner", "VersioningDemo", 
-    "StagingAreaVisualizer", "PushPullAnimator", "ForkVsCloneDemo", "PRWorkflowSimulator", 
-    "ConflictPlayground", "UndoCommandComparison", "TimelineNavigator", "ReflogExplorer", 
-    "GitHubInterfaceSimulator", "IssueTracker", "ActionsWorkflowBuilder", "OpenSourceSimulator", 
-    "ProjectDashboard", "WorkflowComparisonTable", "WorkflowSimulator", "CommitMessageLinter", 
-    "GitignoreTester", "AliasCreator", "SecurityScanner"
-];
-
-const VISUAL_COMPONENTS = [
-    "AnimatedFlow", "BranchDiagram", "CommitTimeline", "ConceptDiagram", "DiffViewer", 
-    "GitGraph", "RepoComparison", "StatisticsChart", "LanguagesChart", 
-    "TrunkBasedDevelopmentVisualizer", "ConflictVisualizer"
-];
-
-function getRelevantComponents(courseId: string): { interactive: string[], visual: string[] } {
-    const GENERIC_INTERACTIVE = [ "AiHelper" ];
-    const GENERIC_VISUAL = ["AnimatedFlow", "ConceptDiagram", "StatisticsChart"];
-
-    const TECHNICAL_COURSES = ["git-github-tutorial", "le-closing-pour-debutants-de-prospect-a-client", "introduction-au-marketing-digital", "jira-de-zero-a-heros", "automatisation-de-processus-informatique-pour-debutants-avec-n8n"];
-
-    if (TECHNICAL_COURSES.includes(courseId)) {
-        return { interactive: INTERACTIVE_COMPONENTS, visual: VISUAL_COMPONENTS };
-    }
-
-    return { interactive: GENERIC_INTERACTIVE, visual: GENERIC_VISUAL };
+/**
+ * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry.ts`).
+ *
+ * Seuls les composants interactifs **réellement opérationnels** sont proposés
+ * comme « mise en pratique » : les 13 placeholders (interface sans interaction)
+ * en sont exclus, sinon l'IA générerait des leçons pointant vers des coquilles.
+ *
+ * Auparavant, cette fonction maintenait deux listes en dur, désynchronisées du
+ * rendu (`LessonView`) : des composants y figuraient, d'autres manquaient.
+ */
+function getRelevantComponents(): { interactive: string[]; visual: string[] } {
+  return {
+    interactive: listFunctionalInteractiveNames(),
+    visual: listNames('visual'),
+  };
 }
 
 
@@ -267,7 +257,7 @@ export async function generateLessonContentAction(
 
     console.log('[generateLessonContentAction] Chapter context created.');
 
-    const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(courseId);
+    const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents();
     console.log('[generateLessonContentAction] Relevant components identified.', { relevantInteractive, relevantVisual });
 
     const input: GenerateLessonContentInput = {

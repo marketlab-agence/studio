@@ -6,113 +6,47 @@ import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Lightbulb } from 'lucide-react';
 import { useTutorial } from '@/contexts/TutorialContext';
+import { resolveComponent } from '@/components/registry';
 
-// Import all possible interactive components
-import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
-import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
-import { GitGraph } from '@/components/visualizations/GitGraph';
-import { ConceptExplanation } from '@/components/tutorial/ConceptExplanation';
-import { BranchCreator } from '@/components/interactive/BranchCreator';
-import { MergeSimulator } from '@/components/interactive/MergeSimulator';
-import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
-import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
-import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
-import { ConflictVisualizer } from '@/components/specialized/part-7/ConflictVisualizer';
-import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
-import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
-import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
-import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
-import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
-import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
-import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
-import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
-import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
-import { ProjectDashboard } from '@/components/specialized/part-10/ProjectDashboard';
-import { WorkflowComparisonTable } from '@/components/specialized/part-6/WorkflowComparisonTable';
-import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
-import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
-import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
-import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
-import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
-import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
-import { AiHelper } from '@/components/interactive/AiHelper';
-import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
-import { GitCommandSimulator } from '@/components/interactive/GitCommandSimulator';
-import { GitDoctorTool } from '@/components/interactive/GitDoctorTool';
-import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
-import { GitTimeTravel } from '@/components/interactive/GitTimeTravel';
-import { PullRequestCreator } from '@/components/interactive/PullRequestCreator';
-import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
-import { AnimatedFlow } from '@/components/visualizations/AnimatedFlow';
-import { BranchDiagram } from '@/components/visualizations/BranchDiagram';
-import { CommitTimeline } from '@/components/visualizations/CommitTimeline';
-import { ConceptDiagram } from '@/components/visualizations/ConceptDiagram';
-import { DiffViewer } from '@/components/visualizations/DiffViewer';
-import { LanguagesChart } from '@/components/visualizations/LanguagesChart';
-import { RepoComparison } from '@/components/visualizations/RepoComparison';
-import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
-import { FileTreeViewer } from '@/components/file-explorer';
-import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
-import { ConflictResolver } from '@/components/interactive/ConflictResolver';
-
-// Create a map from component name strings to actual components
-const componentMap: { [key: string]: React.ComponentType<any> } = {
-    StagingAreaVisualizer,
-    VersioningDemo,
-    GitGraph,
-    ConceptExplanation,
-    BranchCreator,
-    MergeSimulator,
-    PushPullAnimator,
-    ForkVsCloneDemo,
-    PRWorkflowSimulator,
-    ConflictVisualizer,
-    ResolutionGuide,
-    ConflictPlayground,
-    UndoCommandComparison,
-    TimelineNavigator,
-    ReflogExplorer,
-    GitHubInterfaceSimulator,
-    IssueTracker,
-    ActionsWorkflowBuilder,
-    OpenSourceSimulator,
-    ProjectDashboard,
-    WorkflowComparisonTable,
-    WorkflowSimulator,
-    CommitMessageLinter,
-    GitignoreTester,
-    AliasCreator,
-    SecurityScanner,
-    TrunkBasedDevelopmentVisualizer,
-    AiHelper,
-    CollaborationSimulator,
-    GitCommandSimulator,
-    GitDoctorTool,
-    GitRepositoryPlayground,
-    GitTimeTravel,
-    PullRequestCreator,
-    WorkflowDesigner,
-    AnimatedFlow,
-    BranchDiagram,
-    CommitTimeline,
-    ConceptDiagram,
-    DiffViewer,
-    LanguagesChart,
-    RepoComparison,
-    StatisticsChart,
-    FileTreeViewer,
-    FlowDiagramBuilder,
-    ConflictResolver,
-};
-
+/**
+ * Rend une leçon : contenu markdown, mise en pratique (composant interactif)
+ * et visualisation (composant visuel).
+ *
+ * Les composants sont résolus via le registre unique (`src/components/registry.ts`).
+ * La résolution est volontairement **tolérante** ici : un nom inconnu n'empêche
+ * pas l'affichage de la leçon (il est signalé en console). La validation stricte
+ * (nom connu + bonne nature) s'applique au moment de la **création**, pas du rendu —
+ * sinon un contenu existant cesserait de s'afficher.
+ */
 type LessonViewProps = {
     lesson: Lesson;
 };
 
 export function LessonView({ lesson }: LessonViewProps) {
     const { course } = useTutorial();
-    const InteractiveComponent = lesson.interactiveComponentName ? componentMap[lesson.interactiveComponentName] : null;
-    const VisualComponent = lesson.visualComponentName ? componentMap[lesson.visualComponentName] : null;
+
+    const interactiveEntry = lesson.interactiveComponentName
+        ? resolveComponent(lesson.interactiveComponentName)
+        : undefined;
+    const visualEntry = lesson.visualComponentName
+        ? resolveComponent(lesson.visualComponentName)
+        : undefined;
+
+    if (process.env.NODE_ENV !== 'production') {
+        if (lesson.interactiveComponentName && !interactiveEntry) {
+            console.warn(
+                `[LessonView] interactiveComponentName inconnu : "${lesson.interactiveComponentName}" (leçon ${lesson.id}).`,
+            );
+        }
+        if (lesson.visualComponentName && !visualEntry) {
+            console.warn(
+                `[LessonView] visualComponentName inconnu : "${lesson.visualComponentName}" (leçon ${lesson.id}).`,
+            );
+        }
+    }
+
+    const InteractiveComponent = interactiveEntry?.component ?? null;
+    const VisualComponent = visualEntry?.component ?? null;
 
     const componentProps = {
         lessonContext: lesson.title,
@@ -154,7 +88,7 @@ export function LessonView({ lesson }: LessonViewProps) {
                     }
                 }}>{lesson.content}</ReactMarkdown>
             </article>
-            
+
             {InteractiveComponent && (
                 <div className="mt-12">
                     <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Mise en Pratique</h2>
