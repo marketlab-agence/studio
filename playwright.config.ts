@@ -39,5 +39,12 @@ export default defineConfig({
         timeout: 180_000,
         stdout: 'ignore',
         stderr: 'pipe',
+        env: {
+          // Les tests E2E s'exécutent tous depuis la même adresse IP : la limite
+          // d'inscription (5 par heure) serait atteinte par les tests eux-mêmes.
+          // Les limites restent actives, mais élargies. Cette variable est
+          // **ignorée en production** (voir src/lib/rate-limit.ts).
+          RATE_LIMIT_MULTIPLIER: '200',
+        },
       },
 });
