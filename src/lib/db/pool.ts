@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 
 /**
  * Pool PostgreSQL singleton.
@@ -41,6 +41,35 @@ export function query<T extends Record<string, unknown>>(
   params?: unknown[],
 ) {
   return getPool().query<T>(text, params);
+}
+
+/**
+ * Exécute une série d'instructions dans une transaction.
+ *
+ * Indispensable dès qu'une opération touche plusieurs tables et doit réussir
+ * « tout ou rien » : un débit de crédits suivi de la journalisation de la
+ * génération ne doit jamais laisser l'un sans l'autre.
+ *
+ * Toute exception déclenche un `ROLLBACK` ; la connexion est **toujours** rendue
+ * au pool, y compris en cas d'échec du rollback lui-même.
+ */
+export async function withTransaction<T>(
+  callback: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await getPool().connect();
+
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    // Un rollback qui échoue ne doit pas masquer l'erreur d'origine.
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /** Ferme le pool (tests, arrêt propre). */
