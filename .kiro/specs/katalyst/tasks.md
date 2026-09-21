@@ -126,14 +126,14 @@ Dépend de : 2
 
 Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 
-- [ ] T4.1 — Colonnes auth (`password_hash`, `must_reset_password`, `two_factor_enabled`, `last_login`) · REQ-AUTH-01 · vérif: migration OK
-- [ ] T4.2 — Endpoints `register`/`login`/`logout`/`refresh` (+ rotation) — pattern `masterplan365/server/routes/auth.ts` · REQ-AUTH-01, REQ-AUTH-03 · vérif: curl 200/401
+- [x] T4.1 — Colonnes auth (`password_hash`, `must_reset_password`, `two_factor_enabled`, `last_login`) · REQ-AUTH-01 · vérif: migration OK ✅ **déjà satisfaite par la phase 2** (`002_identity.sql`) — plus `two_factor_secret` et `last_login`, non prévus par la tâche.
+- [~] T4.2 — Endpoints `register`/`login`/`logout`/`refresh` (+ rotation) — pattern `masterplan365/server/routes/auth.ts` · REQ-AUTH-01, REQ-AUTH-03 · **provider fait** (`7bb11f8`, 27 tests DB) ; **reste les route handlers**.
 - [ ] T4.3 — **Google OAuth** (`/api/auth/google` + `/callback`) · REQ-AUTH-02 · vérif: connexion réussie
-- [ ] T4.4 — **MFA/TOTP** (`setup`/`verify`/`challenge`/`status`) · REQ-AUTH-04 · vérif: code TOTP validé
+- [~] T4.4 — **MFA/TOTP** (`setup`/`verify`/`challenge`/`status`) · REQ-AUTH-04 · **briques crypto faites** (`7bb11f8` : Base32 + TOTP conformes aux vecteurs RFC 4226/6238, 17 tests) ; **restent les endpoints et le stockage du secret**.
 - [ ] T4.5 — **Spike SAML** (Next sans Express) puis implémentation · REQ-AUTH-05 · vérif: gate G1 levé
 - [ ] T4.6 — JWT en cookie **httpOnly** + middleware Next (pattern `authenticate.ts`) · REQ-AUTH-09 · vérif: route privée → redirection
 - [ ] T4.7 — Rate limiters + validation Zod par endpoint · REQ-AUTH-01 · vérif: abus bloqué
-- [ ] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · vérif: un compte importé se reconnecte
+- [~] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · **côté serveur fait** (`7bb11f8` : jeton à usage unique, haché, transactionnel) ; **restent l'endpoint, l'email et la page**.
 - [ ] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · vérif: 0 import `firebase/*` dans `contexts/`
 - [ ] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · vérif: `grep firebase/ src/app src/components` → 0
 - [ ] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · vérif: pages admin fonctionnelles

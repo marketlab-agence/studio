@@ -13,13 +13,13 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | — |
-| Prochaine phase | **Phase 4 — Authentification** (JWT + bcrypt + Google OAuth + refresh + MFA/TOTP + SAML) · dépend des gates **G1** (SAML) et **G3** (email) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **13 suites / 80** · tests DB **7 suites / 68** · **E2E 5** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle serveur fait* (T4.1, provider de T4.2, crypto de T4.4, serveur de T4.8) ; **restent les route handlers**, OAuth Google, SAML, middleware, rate limit |
+| Prochaine tâche | **T4.2 (suite) — route handlers** `/api/auth/{register,login,logout,refresh}` puis **T4.6** (cookie httpOnly + middleware) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **16 suites / 123** · tests DB **8 suites / 95** · **E2E 5** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
-| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **26 tables**, contenu seedé, 12 comptes importés |
+| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables** (dont `password_reset_tokens`), contenu seedé, 12 comptes importés |
 | **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
-| **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage — **8 implémentés**, sélection par variable d'environnement. Restent `AuthProvider` (phase 4), `PaymentProvider` (phase 24) |
+| **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage, **Auth** — **9 implémentés**. Reste `PaymentProvider` (phase 24) |
 
 ### Commandes base de données
 
@@ -91,6 +91,16 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - **Ce qui est délicat est isolé et prouvé indépendamment.** La signature SigV4 est un module pur, confronté au **vecteur officiel AWS** `get-vanilla` ; le reste du transport S3 est vérifié structurellement, faute de bucket réel. La recherche vectorielle est vérifiée avec des **vecteurs fabriqués à la main**, ce qu'un vrai modèle d'embedding ne permettrait pas de prédire.
     - **Gate G3 non bloquant** : le repli documenté (SMTP générique) a été implémenté plutôt que d'attendre l'arbitrage. Le transport `memory` sert aux tests et au développement local. Le choix d'un fournisseur email reste ouvert **sans impact sur le code appelant**.
     - **Bug réel trouvé par les tests** : les noms d'en-têtes HTTP sont insensibles à la casse, mais l'accès aux propriétés JavaScript ne l'est pas — un appelant passant `Host` ou `X-Amz-Date` voyait ses en-têtes **ignorés de la signature** (valeur `undefined`). Normalisation en minuscules avant toute recherche.
+39. **Phase 4 — socle d'authentification** (T4.1, provider de T4.2, crypto de T4.4, serveur de T4.8). Décisions et pièges :
+    - **`jose` et non `jsonwebtoken`** : le middleware Next s'exécute en **Edge runtime**, où les API Node (`crypto`, `Buffer`) n'existent pas. `jose` s'appuie sur Web Crypto et sert donc le middleware **et** les route handlers avec un seul code de vérification.
+    - **`bcryptjs` (JS pur) et non `bcrypt` natif** : aucune compilation, donc pas d'échec d'installation (antécédents de `node_modules` corrompu). **Coût mesuré sur ce projet** : 91 ms (10), 175 ms (11), **287 ms (12)** → coût 12 retenu.
+    - **TOTP sans dépendance** : RFC 6238 est bien spécifié et publie des vecteurs de test, donc l'implémentation est **prouvée** (RFC 4226 annexe D + RFC 6238 annexe B) — même approche que SigV4.
+    - **Rien de secret en clair** : mots de passe par bcrypt ; refresh tokens et jetons de réinitialisation par SHA-256. SHA-256 suffit ici (32 octets aléatoires, non devinables) : un KDF lent n'apporterait rien et ralentirait chaque requête.
+    - **Non-énumération des comptes** : message **et type** identiques pour « email inconnu » et « mot de passe erroné » ; le mot de passe est vérifié **même si le compte est introuvable**, sinon le temps de réponse révélerait quels emails existent.
+    - **Rotation + détection de réutilisation** : présenter un refresh token déjà révoqué révoque **toutes** les sessions de l'utilisateur. Corollaire contre-intuitif mais correct : le jeton de la session suivante déclenche alors lui aussi une détection de réutilisation, pas « jeton inconnu ».
+    - **Limite bcrypt de 72 octets** : au-delà, l'entrée est **tronquée en silence**. La politique refuse donc explicitement, en comptant les **octets** et non les caractères (40 caractères accentués = 80 octets).
+    - **Pièges d'infrastructure de test** : `jose` est ESM-only → à transformer dans **les deux** projets Jest (jsdom et DB) ; le test JWT tourne en **environnement Node** (jsdom n'a pas `crypto.subtle` et impose un realm où les `Uint8Array` échouent aux `instanceof` de `jose`) ; `JWT_SECRET` de test posé dans le setup DB.
+    - **Migration 006** (et non un ajout à 002) : les migrations sont **forward-only**, on ne réécrit pas une migration déjà appliquée.
 
 ---
 
