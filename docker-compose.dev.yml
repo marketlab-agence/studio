@@ -24,7 +24,9 @@ services:
       # Crée la base de test et active pgvector au premier démarrage.
       - ./docker/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "5432:5432"
+      # 5433 et non 5432 : le port 5432 est déjà occupé par un autre projet
+      # (masterplan365-postgres-1). Éviter tout chevauchement entre projets.
+      - "5433:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d katalyst"]
