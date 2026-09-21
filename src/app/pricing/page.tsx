@@ -20,6 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
