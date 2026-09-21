@@ -60,12 +60,14 @@ Dépend de : —
 
 Dépend de : 0
 
-- [ ] T0.5.1 — Pool Postgres singleton (compatible HMR Next) · REQ-FND-06 · vérif: pas de fuite de pool en dev
-- [ ] T0.5.2 — `SettingsProvider` (interface + impl. Postgres, 1 méthode) · REQ-FND-06 · vérif: lecture/écriture OK
-- [ ] T0.5.3 — 1 page RSC lisant une donnée Postgres · REQ-FND-06 · vérif: donnée affichée
-- [ ] T0.5.4 — 1 route handler API · REQ-FND-06 · vérif: HTTP 200
-- [ ] T0.5.5 — 1 test d'intégration `node` · REQ-FND-06 · vérif: vert
-- [ ] T0.5.6 — CI inclut le projet de test DB · REQ-FND-03 · vérif: CI verte
+- [x] T0.5.1 — Pool Postgres singleton (compatible HMR Next) · REQ-FND-06 · vérif: pas de fuite de pool en dev · **fait** (`src/lib/db/pool.ts`, référence sur `globalThis`)
+- [x] T0.5.2 — `SettingsProvider` (interface + impl. Postgres, 1 méthode) · REQ-FND-06 · vérif: lecture/écriture OK · **fait** (`src/lib/providers/settings.ts`, sélection par `DATA_PROVIDER`), vérifié par 4 tests d'intégration
+- [x] T0.5.3 — 1 page RSC lisant une donnée Postgres · REQ-FND-06 · vérif: donnée affichée · **fait** (`/health` → HTTP 200, affiche la valeur lue en base)
+- [x] T0.5.4 — 1 route handler API · REQ-FND-06 · vérif: HTTP 200 · **fait** (`GET /api/v1/settings` → 200 `{"instructorName":"Alex Dubois"}`)
+- [x] T0.5.5 — 1 test d'intégration `node` · REQ-FND-06 · vérif: vert · **fait** (7 tests, 2 suites)
+- [x] T0.5.6 — CI inclut le projet de test DB · REQ-FND-03 · vérif: CI verte · **fait** (job `db` : service pgvector, migrations sur la base de test, `test:db` strict)
+
+> **Découvert pendant la phase 0.5** : le port 5432 était occupé par un conteneur d'un **autre projet** — le conteneur Katalyst n'avait jamais démarré et les tests DB passaient **à vide** (report gracieux). Corrigé : port **5433**, et les tests sont désormais **stricts par défaut** (base injoignable = échec).
 
 ---
 

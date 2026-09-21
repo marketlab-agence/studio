@@ -8,6 +8,16 @@ import { getPool, closePool } from './pool';
 loadEnv({ path: '.env.local' });
 loadEnv({ path: '.env' });
 
+// `--test` cible la base de test (katalyst_test). Indispensable avant npm run test:db :
+// les tests d'intégration s'exécutent sur une base au schéma à jour.
+if (process.argv.includes('--test')) {
+  if (!process.env.TEST_DATABASE_URL) {
+    console.error('✖ --test demandé mais TEST_DATABASE_URL est absent.');
+    process.exit(1);
+  }
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+}
+
 /**
  * Applique les migrations SQL non encore exécutées.
  *

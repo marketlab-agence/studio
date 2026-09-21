@@ -12,11 +12,12 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0 — Fondations** (T0.1 → T0.10) |
+| Dernière phase complétée | ✅ **Phase 0** (T0.1 → T0.10) et ✅ **Phase 0.5 — Walking Skeleton** (T0.5.1 → T0.5.6) |
 | Phase en cours | — |
-| Prochaine phase | **Phase 0.5 — Walking Skeleton** (pool Postgres + SettingsProvider + 1 page RSC + 1 route + 1 test) |
-| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts · tests DB 3 verts |
+| Prochaine phase | **Phase 1 — Modèle de référence & registre de composants** |
+| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts · tests DB 2 suites / 7 verts |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB · report-only : build |
+| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** (`katalyst`, `katalyst_test`) |
 | Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
 | Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
@@ -87,9 +88,12 @@
 
 ### Blocages ouverts
 
-- **Dossier `src/queries/**` = code mort** : importé nulle part (vérifié). Il a été typé pour faire passer le typecheck, mais il devrait être supprimé en phase 16 (chasse au code mort). Arbitrage requis.
-- **Le build Next n'est pas vérifié** : l'étape CI est en report-only. Le script `npm run build` est en syntaxe Windows `cmd` (le CI appelle `npx next build` directement).
-- **Divergence de branche** : `master` a 96 commits locaux contre 1 sur `origin/master`. Aucun push effectué.
+- **Port PostgreSQL 5433, pas 5432** : le port 5432 est occupé par `masterplan365-postgres-1` (projet tiers). **Ne jamais pointer `DATABASE_URL` sur 5432** — on écrirait dans la base d'un autre projet.
+- **Un « vert » de test n'est une preuve que si le test s'exécute réellement.** Les tests DB étaient passés à vide via un `return` gracieux : ils sont désormais **stricts** (base injoignable = échec). `SKIP_DB_IF_UNAVAILABLE=1` existe mais doit rester exceptionnel.
+- **[mineur]** Avertissement Jest sur le projet DB : `worker process failed to exit gracefully` — fuite de handle à investiguer (n'affecte pas les résultats).
+- **`src/queries/**` = code mort** : importé nulle part. Typé pour T0.2, à supprimer en phase 16.
+- **Le build Next n'est pas vérifié** : étape CI en report-only (script `npm run build` en syntaxe Windows `cmd`).
+- **Divergence de branche** : `master` a 96+ commits locaux contre 1 sur `origin/master`. Aucun push effectué.
 
 ---
 

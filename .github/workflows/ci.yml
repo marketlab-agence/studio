@@ -102,6 +102,12 @@ jobs:
       - name: Activer pgvector
         run: psql "postgresql://postgres:postgres@localhost:5432/katalyst_test" -c 'CREATE EXTENSION IF NOT EXISTS vector;'
 
+      # Les tests s'exécutent sur une base au schéma à jour.
+      - name: Appliquer les migrations sur la base de test
+        run: npm run db:migrate:test
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/katalyst_test
+
       # Le test échoue si la base est injoignable (strict par défaut) :
       # un « vert » signifie que la base a réellement été testée.
       - name: Tests d'intégration

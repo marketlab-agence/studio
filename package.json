@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "check:version": "node scripts/check-version.mjs",
     "db:migrate": "tsx src/lib/db/migrate.ts",
+    "db:migrate:test": "tsx src/lib/db/migrate.ts --test",
     "test": "jest",
     "test:db": "jest --config jest.config.db.mjs",
     "storybook": "storybook dev -p 6006",

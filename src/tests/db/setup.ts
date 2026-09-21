@@ -12,6 +12,10 @@ export const TEST_DATABASE_URL =
 
 export const pool = new Pool({ connectionString: TEST_DATABASE_URL });
 
+// Les providers applicatifs lisent DATABASE_URL. En test, ils doivent viser la
+// base de test — jamais la base de développement.
+process.env.DATABASE_URL ??= TEST_DATABASE_URL;
+
 /** Indique si la base de test est joignable. */
 export async function isDatabaseAvailable(): Promise<boolean> {
   try {
