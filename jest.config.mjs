@@ -39,7 +39,8 @@ const customJestConfig = {
   },
   // Les tests d'intégration DB vivent dans un projet Jest séparé
   // (environnement node, sans jsdom ni MSW). Voir jest.config.db.mjs.
-  testPathIgnorePatterns: ['/node_modules/', '\\.db\\.test\\.ts$'],
+  // Les tests E2E (Playwright) sont hors de Jest. Voir playwright.config.ts.
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '\\.db\\.test\\.ts$'],
 }
 
 // `next/jest` injecte un transformIgnorePatterns qui ignore TOUT `node_modules`.

@@ -48,6 +48,25 @@ npm run test:db
 
 ---
 
+## Étape 4bis — Tests E2E (Playwright)
+
+```bash
+npm run test:e2e
+```
+
+**Critère** : vert. Le serveur est démarré automatiquement par Playwright
+(`webServer`), sauf si `E2E_BASE_URL` vise un environnement existant.
+
+**Pourquoi** : les tests unitaires (jsdom) et d'intégration (DB) ne prouvent pas
+que l'application **fonctionne dans un navigateur**. Les E2E vérifient le rendu
+réel, les statuts HTTP et **l'absence d'erreur console** — la classe de bug
+qu'aucun autre niveau ne rattrape.
+
+**Règle** : toute phase qui ajoute ou modifie un parcours utilisateur doit
+ajouter ou ajuster le test E2E correspondant dans `e2e/`.
+
+---
+
 ## Étape 5 — Vérification runtime
 
 Démarrer **une seule** instance (jamais deux : EPERM + conflit de port) :
@@ -98,8 +117,9 @@ docker exec -t <container> pg_dump -U postgres katalyst > backup_$(date +%Y%m%d_
 ```
 [ ] 1. npm run typecheck      → 0 erreur
 [ ] 2. npm run lint           → 0 erreur
-[ ] 3. npm test               → vert
-[ ] 4. npm run test:db        → vert
+[ ] 3. npm test               → vert (unitaires, jsdom)
+[ ] 4. npm run test:db        → vert (intégration, PostgreSQL)
+[ ] 4bis. npm run test:e2e    → vert (bout en bout, navigateur)
 [ ] 5. Vérif runtime          → critères de tasks.md observés
 [ ] 6. Dump + réversibilité   → migration testée up/down
 [ ] 7. tasks.md + MEMORY.md + CHANGELOG.md + VERSION
