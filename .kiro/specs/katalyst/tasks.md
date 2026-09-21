@@ -43,7 +43,7 @@ Couche 3  8 ─┬─> 11 ─┬─> 12 ─┬─> 13 ────────�
 Dépend de : —
 
 - [x] T0.1 — Créer `.eslintrc.json` (config Next) · REQ-FND-02 · vérif: `npm run lint` ne demande plus de configuration · **fait** (0 erreur, 251 warnings baseline ; 2 bugs réels révélés et corrigés : `pricing/page.tsx` import manquant, `QuizView.tsx` hook conditionnel)
-- [ ] T0.2 — Résorber les erreurs typecheck (`framer-motion`, `AppUser.plan`, `inline`, `UserProgress`, `TUTORIALS`) · REQ-FND-01 · vérif: `npm run typecheck` → 0 erreur
+- [x] T0.2 — Résorber les erreurs typecheck (`framer-motion`, `AppUser.plan`, `inline`, `UserProgress`, `TUTORIALS`) · REQ-FND-01 · vérif: `npm run typecheck` → 0 erreur · **fait** (64 → 0) — causes : corruption `node_modules` (4 paquets), `moduleResolution: node`, Storybook incohérent (8 vs 10 + cœur absent), `@types/react` 18 vs React 19, `planId` vs `plan`, react-markdown v9 (`inline`), 7 gardes mortes, chemin d'import erroné
 - [x] T0.3 — CI `.github/workflows/ci.yml` (typecheck + lint + test + build) · REQ-FND-03 · vérif: CI verte · **fait** (lint et gitleaks bloquants ; typecheck, tests et build en report-only — durcissement après T0.2 et arbitrage des suites obsolètes)
 - [x] T0.4 — `docker-compose.dev.yml` — **`pgvector/pgvector:pg16`** (pattern masterplan365) · REQ-FND-04 · vérif: `pg_isready` OK · **fait** (katalyst + katalyst_test, extension vector)
 - [x] T0.5 — `.env.example` + documentation de configuration · REQ-FND-05 · vérif: aucun secret versionné · **fait** (négation `!.env.example` ajoutée au `.gitignore`, valeurs locales uniquement)

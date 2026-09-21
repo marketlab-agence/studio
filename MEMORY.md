@@ -12,8 +12,9 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | Phase 0 (partielle) — T0.1, T0.3, T0.4, T0.5, T0.6, T0.8, T0.9 |
-| Phase en cours | **Phase 0 — Fondations** (restent T0.2, T0.7, T0.10) |
+| Dernière phase complétée | Phase 0 (presque) — T0.1, T0.2, T0.3, T0.4, T0.5, T0.6, T0.8, T0.9 |
+| Phase en cours | **Phase 0 — Fondations** (restent T0.7, T0.10) |
+| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts |
 | Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
 | Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
@@ -84,7 +85,9 @@
 
 ### Blocages ouverts
 
-- **2 suites de tests obsolètes** : `useGitSimulation.test.ts` (module inexistant) et `useTutorialProgress.test.ts` (signature périmée : 1 argument au lieu de 2, hook désormais lié à `useAuth` + Firestore). Arbitrage requis : suppression ou réécriture en phase 5.
+- **Dossier `src/queries/**` = code mort** : importé nulle part (vérifié). Il a été typé pour faire passer le typecheck, mais il devrait être supprimé en phase 16 (chasse au code mort). Arbitrage requis.
+- **Le build Next n'est pas vérifié** : l'étape CI est en report-only. Le script `npm run build` est en syntaxe Windows `cmd` (le CI appelle `npx next build` directement).
+- **Divergence de branche** : `master` a 96 commits locaux contre 1 sur `origin/master`. Aucun push effectué.
 
 ---
 
@@ -104,8 +107,13 @@
 - ⚠️ **Un rebase interactif peut être laissé en plan par Firebase Studio.** Le dépôt a été trouvé à mi-rebase (96 commits, 14 rejoués). **Ne jamais commiter pendant un rebase**, et **`git rebase --abort` détruit les fichiers suivis modifiés** (les non suivis survivent). Toujours sauvegarder avant.
 - ⚠️ **La branche `master` a divergé de `origin/master`** : 96 commits locaux contre 1 distant. Aucun push effectué. La divergence est probablement l'origine du rebase abandonné — à trancher avant tout `git push`.
 - ⚠️ **OneDrive verrouille les fichiers** : `.git` et `node_modules` subissent des `Permission denied` lors des suppressions massives (`git stash -u`, `git clean`). Prévoir un backup avant toute opération destructrice.
+- ⚠️ **`node_modules` a été corrompu par une installation interrompue** : 4 paquets identifiés avec des fichiers manquants (`firebase` sans `.mjs`, `framer-motion` et `html2canvas` sans aucun `.d.ts`, `msw` sans `SetupApi.d.mts`). **Réinstallation complète propre effectuée** (1996 paquets). En cas de symptôme bizarre (`Cannot resolve`, `TS7016`, type manquant), **soupçonner la corruption avant le code** et réinstaller.
+- ⚠️ **Storybook était incohérent** : `@storybook/nextjs@10` avec tous les autres addons en `8.x` → peer deps contradictoires, et **le paquet cœur `storybook` n'était pas déclaré**. Aligné en 8 + cœur ajouté.
+- ⚠️ **`@types/react` était en 18 alors que `react` est en 19** → inférence cassée. Corrigé.
+- ⚠️ **`planId` vs `plan`** : le modèle utilisateur était incohérent (id `planId` dans le type et `AuthContext`, libellé `plan` dans les données et les pages admin). **Canonique : `planId`** (`free`/`premium`). Helper `planLabel()` dans `src/lib/users.ts` ; seed `users.json` normalisé.
+- ⚠️ **react-markdown v9 ne fournit plus la prop `inline`** dans le composant `code`. Détecter un bloc par langue déclarée (`language-x`) ou présence d'un retour à la ligne.
 - `npm run lint` était **interactif** (aucune config ESLint) → **résolu** (T0.1, commit `685213f`).
-- Erreurs typecheck préexistantes → **inventaire à jour** : `framer-motion` (types manquants), `AppUser.plan`, `inline` (react-markdown), `UserProgress`, `TUTORIALS`. Le volet `msw` est résolu. À traiter en T0.2.
+- **Typecheck : 64 → 0 erreur** (T0.2). Aucune erreur de typage connue à ce jour.
 - `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
 - **Aucune capacité email dans Katalyst** → `EmailProvider` requis en phase 3, sinon le reset de mot de passe (phase 4) est infaisable.
 - Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** (+ semaine) → **ETL nécessaire** en phase 2.
