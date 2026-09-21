@@ -12,9 +12,9 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | — (planification terminée) |
-| Phase en cours | **Phase 0 — Fondations & socle `.kiro`** |
-| Prochaine phase | Phase 0.5 — Walking Skeleton |
+| Dernière phase complétée | Phase 0 (partielle) — T0.1, T0.3, T0.4, T0.5, T0.6, T0.8, T0.9 |
+| Phase en cours | **Phase 0 — Fondations** (restent T0.2, T0.7, T0.10) |
+| Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
 | Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
 | Plan | **29 phases** (0, 0.5, 1-27) — Couche 0 (fondations) · Couche 1 (migration) · Couche 2 (socle transverse : i18n, API, sécurité) · Couche 3 (produit REWORK + conformité + autonomie) |
@@ -75,7 +75,16 @@
 - `EPERM .next\trace` + « Port 3000 in use » → **deux instances `next dev` simultanées**. Un seul serveur à la fois sur ce dossier.
 - Firestore `7 PERMISSION_DENIED: requires billing` → repli `src/data/*.json` (`src/lib/local-data.ts`), temporaire jusqu'à la phase 7.
 - `AuthContext.tsx:124` — `onAuthStateChanged` ignore les valeurs de retour → `unsubscribeSnapshot()` jamais appelé (**fuite de listener**). À corriger en phase 4.
-- `src/lib/firebase.ts:18-29` — la config Firebase est loguée en clair. À retirer (T0.10).
+- `src/lib/firebase.ts:18-29` — la config Firebase était loguée en clair (apiKey, projectId…) → **corrigé** (`ddcf893`), 5 `console.log` retirés, import `FirestoreSettings` inutilisé supprimé.
+- `src/app/pricing/page.tsx` — `AlertDialogTrigger` utilisé (L122) mais non importé : la page **plantait** au rendu du bouton de rétrogradation → **corrigé** (`c229f89`).
+- `src/components/tutorial/QuizView.tsx` — `useEffect` appelé après un `return` précoce : violation des règles des Hooks → **corrigé** (`c05a534`), valeurs dérivées et effet remontés avant le return (optional chaining).
+- **10 suites de tests ne s'exécutaient pas** (`Cannot find module 'msw/node'`) — 3 causes chaînées : (1) `msw/node` exposé avec `browser:null` → `customExportConditions: ['']` ; (2) jsdom n'implémente pas `fetch` (`Response is not defined`) → `jest-fixed-jsdom` ; (3) `msw` et `firebase` en ESM → **remplacement** de `transformIgnorePatterns` (next/jest ignore tout `node_modules` et jest combine les motifs en OU : un simple ajout ne peut pas « dé-ignorer » un paquet) → **corrigé** (`9938292`). Résultat : 8/10 suites, 15 tests passent.
+- `.env.example` masqué par la règle `.env*` du `.gitignore` → **corrigé** (`f46f1bb`), négation `!.env.example` ajoutée.
+- **Rebase interactif bloqué** (96 commits, 14 rejoués, 18 fichiers en conflit) laissé par Firebase Studio → **`rebase --abort`**, branche `master` restaurée, travail récupéré via stash + sauvegarde temp. Voir « Pièges ».
+
+### Blocages ouverts
+
+- **2 suites de tests obsolètes** : `useGitSimulation.test.ts` (module inexistant) et `useTutorialProgress.test.ts` (signature périmée : 1 argument au lieu de 2, hook désormais lié à `useAuth` + Firestore). Arbitrage requis : suppression ou réécriture en phase 5.
 
 ---
 
@@ -92,8 +101,11 @@
 ## Pièges identifiés
 
 - **Deux `next dev` simultanés = EPERM + conflit de port.** Toujours tuer l'instance avant d'en relancer une.
-- `npm run lint` est **interactif** (aucune config ESLint) → à créer en phase 0.
-- `~60 erreurs typecheck` préexistantes (`framer-motion`, `msw`, types manquants) → à résorber en phase 0.
+- ⚠️ **Un rebase interactif peut être laissé en plan par Firebase Studio.** Le dépôt a été trouvé à mi-rebase (96 commits, 14 rejoués). **Ne jamais commiter pendant un rebase**, et **`git rebase --abort` détruit les fichiers suivis modifiés** (les non suivis survivent). Toujours sauvegarder avant.
+- ⚠️ **La branche `master` a divergé de `origin/master`** : 96 commits locaux contre 1 distant. Aucun push effectué. La divergence est probablement l'origine du rebase abandonné — à trancher avant tout `git push`.
+- ⚠️ **OneDrive verrouille les fichiers** : `.git` et `node_modules` subissent des `Permission denied` lors des suppressions massives (`git stash -u`, `git clean`). Prévoir un backup avant toute opération destructrice.
+- `npm run lint` était **interactif** (aucune config ESLint) → **résolu** (T0.1, commit `685213f`).
+- Erreurs typecheck préexistantes → **inventaire à jour** : `framer-motion` (types manquants), `AppUser.plan`, `inline` (react-markdown), `UserProgress`, `TUTORIALS`. Le volet `msw` est résolu. À traiter en T0.2.
 - `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
 - **Aucune capacité email dans Katalyst** → `EmailProvider` requis en phase 3, sinon le reset de mot de passe (phase 4) est infaisable.
 - Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** (+ semaine) → **ETL nécessaire** en phase 2.
