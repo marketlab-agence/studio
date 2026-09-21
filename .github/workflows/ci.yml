@@ -43,6 +43,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # --- Bloquant : VERSION est la source unique de vérité ---
+      - name: Cohérence de version
+        run: npm run check:version
+
       # --- Bloquant : suite verte depuis la suppression des 2 suites obsolètes ---
       - name: Tests
         run: npm test
@@ -66,3 +70,41 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
+
+  db:
+    name: Tests d'intégration DB
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: katalyst_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Activer pgvector
+        run: psql "postgresql://postgres:postgres@localhost:5432/katalyst_test" -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+
+      # REQUIRE_DB=1 : l'absence de base est une erreur (pas de report gracieux).
+      - name: Tests d'intégration
+        run: npm run test:db
+        env:
+          REQUIRE_DB: '1'
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/katalyst_test
