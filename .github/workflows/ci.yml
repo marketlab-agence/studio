@@ -44,9 +44,8 @@ jobs:
         continue-on-error: true
         run: npm run typecheck
 
-      # --- report-only : 2 suites obsolètes à trancher — bloquant ensuite ---
-      - name: Tests (report-only)
-        continue-on-error: true
+      # --- Bloquant : suite verte depuis la suppression des 2 suites obsolètes ---
+      - name: Tests
         run: npm test
 
       # --- report-only : le script `build` est en syntaxe Windows cmd.
