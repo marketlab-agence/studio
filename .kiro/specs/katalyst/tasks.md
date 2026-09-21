@@ -44,16 +44,17 @@ Dépend de : —
 
 - [x] T0.1 — Créer `.eslintrc.json` (config Next) · REQ-FND-02 · vérif: `npm run lint` ne demande plus de configuration · **fait** (0 erreur, 251 warnings baseline ; 2 bugs réels révélés et corrigés : `pricing/page.tsx` import manquant, `QuizView.tsx` hook conditionnel)
 - [x] T0.2 — Résorber les erreurs typecheck (`framer-motion`, `AppUser.plan`, `inline`, `UserProgress`, `TUTORIALS`) · REQ-FND-01 · vérif: `npm run typecheck` → 0 erreur · **fait** (64 → 0) — causes : corruption `node_modules` (4 paquets), `moduleResolution: node`, Storybook incohérent (8 vs 10 + cœur absent), `@types/react` 18 vs React 19, `planId` vs `plan`, react-markdown v9 (`inline`), 7 gardes mortes, chemin d'import erroné
-- [x] T0.3 — CI `.github/workflows/ci.yml` (typecheck + lint + test + build) · REQ-FND-03 · vérif: CI verte · **fait** (lint et gitleaks bloquants ; typecheck, tests et build en report-only — durcissement après T0.2 et arbitrage des suites obsolètes)
+- [x] T0.3 — CI `.github/workflows/ci.yml` (typecheck + lint + test + build) · REQ-FND-03 · vérif: CI verte · **fait** — bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB. Reste en report-only : le build (script `npm run build` en syntaxe Windows `cmd`, le CI appelle `npx next build`).
+
+> **Résolu** : les 2 suites obsolètes (`useGitSimulation` — module inexistant ; `useTutorialProgress` — signature périmée) ont été supprimées. Le test de `useTutorialProgress` sera réécrit en phase 5 (migration Postgres), en TDD.
+> **Reporté** : `src/queries/**` est du code mort (importé nulle part) — typé pour faire passer T0.2, à supprimer en phase 16.
 - [x] T0.4 — `docker-compose.dev.yml` — **`pgvector/pgvector:pg16`** (pattern masterplan365) · REQ-FND-04 · vérif: `pg_isready` OK · **fait** (katalyst + katalyst_test, extension vector)
 - [x] T0.5 — `.env.example` + documentation de configuration · REQ-FND-05 · vérif: aucun secret versionné · **fait** (négation `!.env.example` ajoutée au `.gitignore`, valeurs locales uniquement)
 - [x] T0.6 — Retirer le `console.log` de la config Firebase (`src/lib/firebase.ts:18-29`) · REQ-FND-05 · vérif: plus de config dans les logs · **fait**
-- [ ] T0.7 — Infra de test DB : 2ᵉ projet Jest `node` + base `katalyst_test` · REQ-FND-06 · vérif: `npm run test:db` s'exécute
+- [x] T0.7 — Infra de test DB : 2ᵉ projet Jest `node` + base `katalyst_test` · REQ-FND-06 · vérif: `npm run test:db` s'exécute · **fait** (3 tests verts : connexion, pgvector, table temporaire ; `REQUIRE_DB=1` en CI)
 - [x] T0.8 — Socle `.kiro` : `VERSION`, `MEMORY.md`, `CHANGELOG.md`, `steering/`, `specs/`, `workflows/`, `hooks/` · REQ-FND-06 · vérif: fichiers présents
 - [x] T0.9 — `.gitleaks.toml` + scan de secrets en CI (pattern masterplan365) · REQ-SEC-06 · vérif: CI échoue sur secret détecté · **fait** (job `secrets`, règles par défaut + liste blanche)
-- [ ] T0.10 — Hook `check:version` (détection de dérive SSoT) · REQ-FND-03 · vérif: drift détecté
-
-> **Blocage ouvert** : 2 suites de tests obsolètes (`useGitSimulation` — module inexistant ; `useTutorialProgress` — signature périmée). Arbitrage requis : suppression ou réécriture (cette dernière relevant de la phase 5).
+- [x] T0.10 — Hook `check:version` (détection de dérive SSoT) · REQ-FND-03 · vérif: drift détecté · **fait** (`npm run check:version`, code de sortie 1 en cas de dérive)
 
 ## Phase 0.5 — Walking Skeleton
 

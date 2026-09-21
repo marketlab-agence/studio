@@ -12,9 +12,11 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | Phase 0 (presque) — T0.1, T0.2, T0.3, T0.4, T0.5, T0.6, T0.8, T0.9 |
-| Phase en cours | **Phase 0 — Fondations** (restent T0.7, T0.10) |
-| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts |
+| Dernière phase complétée | ✅ **Phase 0 — Fondations** (T0.1 → T0.10) |
+| Phase en cours | — |
+| Prochaine phase | **Phase 0.5 — Walking Skeleton** (pool Postgres + SettingsProvider + 1 page RSC + 1 route + 1 test) |
+| Qualité | `typecheck` 0 erreur · `lint` 0 erreur (248 warnings) · tests 8 suites / 15 verts · tests DB 3 verts |
+| CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB · report-only : build |
 | Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
 | Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
