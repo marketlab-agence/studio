@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, FirestoreSettings, type Firestore } from "firebase/firestore";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,20 +13,14 @@ const firebaseConfig = {
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
-let db: Firestore | null = null; // Initialize Firestore instance
-
-console.log("Firebase config:", firebaseConfig);
+let db: Firestore | null = null;
 
 // Initialize Firebase only if necessary config is provided
 if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId) {
   try {
-    console.log("Initializing Firebase app...");
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    console.log("Firebase app initialized:", app);
     auth = getAuth(app);
-    console.log("Firebase Auth initialized:", auth);
-    db = getFirestore(app); // Initialize Firestore
-    console.log("Firebase Firestore initialized:", db);
+    db = getFirestore(app);
   } catch (e) {
     console.error("Failed to initialize Firebase", e);
     // Keep app, auth, and db as null if initialization fails
@@ -38,4 +32,4 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId) {
   console.warn("Firebase config is missing, so Firebase features will be disabled. Please check your .env file.");
 }
 
-export { app, auth, db }; // Export db
+export { app, auth, db };
