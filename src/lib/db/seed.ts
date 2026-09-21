@@ -39,9 +39,6 @@ const DEFAULT_ORGANIZATION = {
   planId: 'premium',
 };
 
-/** Jours de formation par semaine : lundi → vendredi. */
-const DAYS_PER_WEEK = 5;
-
 /** Points attribués par défaut à une leçon (aligné sur la référence REWORK). */
 const DEFAULT_LESSON_POINTS = 20;
 
@@ -186,36 +183,17 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
 
     const courseChapters = tutorials.filter((tutorial) => tutorial.courseId === course.id);
 
-    // Modèle REWORK : une semaine (S1) contient jusqu'à 5 jours (J1 → J5), un
-    // chapitre par jour. Au-delà de 5 chapitres, une nouvelle semaine s'ouvre.
-    const weekIds = new Map<number, string>();
-
+    // AUCUN regroupement n'est créé : les sources n'en contiennent pas, et
+    // l'intitulé d'un regroupement est une décision du formateur. Les chapitres
+    // sont donc rattachés directement à la formation (`week_id = NULL`).
     for (const [chapterIndex, tutorial] of courseChapters.entries()) {
-      const weekNumber = Math.floor(chapterIndex / DAYS_PER_WEEK) + 1;
-      const dayNumber = (chapterIndex % DAYS_PER_WEEK) + 1;
-
-      let weekId = weekIds.get(weekNumber);
-      if (!weekId) {
-        const { rows } = await client.query<{ id: string }>(
-          `INSERT INTO weeks (course_id, code, title, position)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (course_id, code) DO UPDATE SET title = EXCLUDED.title
-           RETURNING id`,
-          [course.id, `S${weekNumber}`, `Semaine ${weekNumber}`, weekNumber],
-        );
-        weekId = rows[0].id;
-        weekIds.set(weekNumber, weekId);
-      }
-
-      const code = `S.${weekNumber}.J.${dayNumber}`;
-
       await client.query(
-        `INSERT INTO chapters (id, week_id, code, title, position)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO chapters (id, course_id, week_id, title, position)
+         VALUES ($1, $2, NULL, $3, $4)
          ON CONFLICT (id) DO UPDATE SET
-           week_id = EXCLUDED.week_id, code = EXCLUDED.code,
-           title = EXCLUDED.title, position = EXCLUDED.position`,
-        [tutorial.id, weekId, code, tutorial.title, chapterIndex],
+           course_id = EXCLUDED.course_id, title = EXCLUDED.title,
+           position = EXCLUDED.position`,
+        [tutorial.id, course.id, tutorial.title, chapterIndex],
       );
 
       const lessons = tutorial.lessons ?? [];
@@ -224,12 +202,13 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
 
         await client.query(
           `INSERT INTO lessons (
-             id, chapter_id, code, title, objective, content, type,
+             id, chapter_id, source_id, title, objective, content, type,
              points, interactive_component_name, visual_component_name, position
            )
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            ON CONFLICT (id) DO UPDATE SET
-             code = EXCLUDED.code, title = EXCLUDED.title, objective = EXCLUDED.objective,
+             source_id = EXCLUDED.source_id, title = EXCLUDED.title,
+             objective = EXCLUDED.objective,
              content = EXCLUDED.content, type = EXCLUDED.type, points = EXCLUDED.points,
              interactive_component_name = EXCLUDED.interactive_component_name,
              visual_component_name = EXCLUDED.visual_component_name,

@@ -73,6 +73,13 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 32. **Schémas Zod partagés** (`src/lib/schemas/content.ts`) : source unique des contrats du contenu (9 types de leçon, numérotation `S.n.J.m`, audit de conformité). **N'importe aucun composant React** — sinon le bundle client embarquerait les 46 composants.
 33. **Numérotation Semaine/Jour** : `formatWeekCode`, `formatChapterCode`, `parseChapterCode`, `DAYS_PER_WEEK = 5`. Types **inférés** des schémas (pas de duplication).
 34. 🔴 **13 des 33 composants « interactifs » sont des coquilles statiques** — mesuré : aucun `useState`/`onClick`/`onChange`/`onDrag`. Ex. `GitCommandSimulator` affiche un bouton « Exécuter » **sans handler** ; `WorkflowDesigner` affiche « glisser-déposer » sans implémentation. Marqués `status: 'placeholder'`, exclus des propositions de l'IA et refusés par `assertUsableComponent`. **La promesse produit « la compétence par la pratique » est donc partiellement non tenue** : les rendre réellement interactifs relève de la **phase 6**, et REQ-CNT-02 (100 % de leçons interactives) n'est pas atteignable avant.
+35. 🔴 **CORRECTION UTILISATEUR (2026-09-21) — « S » et « J » ne sont PAS des données.** Ce sont des **libellés de titrage** décidés par le formateur. Conséquences, toutes appliquées :
+   - colonnes `weeks.code` et `chapters.code` **supprimées** ; plus aucun code `S.n.J.m` en base ;
+   - helpers `formatWeekCode` / `formatChapterCode` / `parseChapterCode` / `DAYS_PER_WEEK` **supprimés** ;
+   - règle « 5 chapitres par semaine » **supprimée** : **une leçon peut couvrir plusieurs jours** ;
+   - l'ETL **n'invente plus de regroupement** (`weeks` est vide au seed) ;
+   - `weeks` reste comme **regroupement visuel facultatif** à intitulé libre ; `chapters.week_id` est nullable.
+36. **Accès par période conservé et étendu** : `unlock_rule_id` existe sur **`courses`, `chapters` ET `lessons`**. Une règle d'accès peut donc viser la formation, le chapitre ou la leçon — ouverture à une date, échéance, cadence (`DAY`/`WEEK`/`MONTH`/`CUSTOM`) ou condition (`COMPLETION`/`QUIZ_PASSED`). C'est ce mécanisme qui porte le rythme, **pas** un découpage en semaines.
 
 ---
 

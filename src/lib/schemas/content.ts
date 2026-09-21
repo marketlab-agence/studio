@@ -3,14 +3,21 @@ import { z } from 'zod';
 /**
  * Modèle de contenu de Katalyst — **source unique des contrats**.
  *
- * Hiérarchie : Formation → Semaine → Chapitre → Leçon (+ Quiz).
- * Numérotation : `S.n` pour une semaine, `S.n.J.m` pour un chapitre
- * (S = semaine de formation, J = jour de la semaine, du lundi au vendredi).
+ * Hiérarchie : Formation → [regroupement libre] → Chapitre → Leçon (+ Quiz).
  *
- * ⚠️ Ce module ne doit PAS importer le registre de composants (qui embarque des
- * composants React) : un schéma partagé est susceptible d'être importé côté
- * client, et tirerait les 46 composants dans le bundle. La validation des noms
- * de composants se fait séparément, à la création (voir `assertKnownComponent`).
+ * ⚠️ « S » et « J » dans les intitulés ne sont PAS des données.
+ * Le formateur titre librement les regroupements, chapitres et leçons : il
+ * peut y écrire « S1.J2 » s'il le souhaite, mais aucune colonne ne porte de code
+ * `S.n.J.m`, et aucune règle « 1 leçon = 1 jour » n'existe — **une leçon peut
+ * couvrir plusieurs jours**.
+ *
+ * L'ORGANISATION DU RYTHME (accès par période, comme dans REWORK) passe par
+ * `UnlockRuleSchema`, applicable à la formation, au chapitre ou à la leçon.
+ *
+ * ⚠️ Ce module ne doit PAS importer le catalogue de composants (qui embarque des
+ * composants React) : un schéma partagé peut être importé côté client, et
+ * tirerait les 46 composants dans le bundle. La validation des noms de
+ * composants se fait séparément, à la création (`assertKnownComponent`).
  */
 
 // --- Types de leçon ----------------------------------------------------------
@@ -43,6 +50,42 @@ export const MediaRefSchema = z.object({
 });
 export type MediaRef = z.infer<typeof MediaRefSchema>;
 
+// --- Accès programmé ---------------------------------------------------------
+
+/** Nature de la règle d'accès. */
+export const UNLOCK_KINDS = ['DATE', 'COMPLETION', 'QUIZ_PASSED'] as const;
+export const UnlockKindSchema = z.enum(UNLOCK_KINDS);
+export type UnlockKind = z.infer<typeof UnlockKindSchema>;
+
+/**
+ * Cadence proposée à l'auteur : ouverture jour après jour, semaine après
+ * semaine, mois après mois, ou selon des dates choisies.
+ * C'est une **commodité de programmation** de l'auteur — pas un découpage
+ * imposé du contenu.
+ */
+export const UNLOCK_CADENCES = ['DAY', 'WEEK', 'MONTH', 'CUSTOM'] as const;
+export const UnlockCadenceSchema = z.enum(UNLOCK_CADENCES);
+export type UnlockCadence = z.infer<typeof UnlockCadenceSchema>;
+
+/**
+ * Règle d'accès à une formation, un chapitre ou une leçon.
+ * S'applique indifféremment aux trois niveaux (`unlockRuleId` sur chacun).
+ */
+export const UnlockRuleSchema = z.object({
+  id: z.string().min(1).optional(),
+  kind: UnlockKindSchema,
+  cadence: UnlockCadenceSchema.optional(),
+  /** Date de mise à disposition (badge « 5 août » dans l'interface). */
+  releaseAt: z.coerce.date().optional(),
+  /** Échéance de fin de période — déclenche les rappels (phase 15). */
+  dueAt: z.coerce.date().optional(),
+  /** Chapitre préalable requis (pour `COMPLETION`). */
+  dependsOnChapterId: z.string().min(1).optional(),
+  /** Score minimal en pourcentage (pour `QUIZ_PASSED`). */
+  minScore: z.number().min(0).max(100).optional(),
+});
+export type UnlockRule = z.infer<typeof UnlockRuleSchema>;
+
 // --- Quiz --------------------------------------------------------------------
 
 export const AnswerSchema = z.object({
@@ -68,106 +111,50 @@ export const QuizSchema = z.object({
 });
 export type Quiz = z.infer<typeof QuizSchema>;
 
-// --- Numérotation Semaine / Jour ---------------------------------------------
-
-/** Code d'une semaine : `S1`, `S2`… */
-export const WEEK_CODE_REGEX = /^S\d+$/;
-
-/** Code d'un chapitre : `S.1.J.2`, `S.1.J.3.1`… */
-export const CHAPTER_CODE_REGEX = /^S\.\d+\.J\.\d+(\.\d+)*$/;
-
-export const WeekCodeSchema = z.string().regex(WEEK_CODE_REGEX, {
-  message: 'Code de semaine attendu : « S1 », « S2 »…',
-});
-
-export const ChapterCodeSchema = z.string().regex(CHAPTER_CODE_REGEX, {
-  message: 'Code de chapitre attendu : « S.1.J.2 » (Semaine 1, Jour 2).',
-});
-
-/** Jours de formation d'une semaine : lundi (1) → vendredi (5). */
-export const DAYS_PER_WEEK = 5;
-
-export function formatWeekCode(weekNumber: number): string {
-  return `S${weekNumber}`;
-}
-
-/**
- * Construit le code d'un chapitre.
- * @param weekNumber Numéro de semaine (1-based)
- * @param dayNumber  Jour dans la semaine (1 = lundi … 5 = vendredi)
- * @param position   Position optionnelle dans la journée (sous-chapitre)
- */
-export function formatChapterCode(weekNumber: number, dayNumber: number, position?: number): string {
-  if (!Number.isInteger(weekNumber) || weekNumber < 1) {
-    throw new Error(`Numéro de semaine invalide : ${weekNumber} (entier ≥ 1 attendu).`);
-  }
-  if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > DAYS_PER_WEEK) {
-    throw new Error(
-      `Numéro de jour invalide : ${dayNumber} (entier entre 1 et ${DAYS_PER_WEEK} attendu — lundi à vendredi).`,
-    );
-  }
-
-  const base = `S.${weekNumber}.J.${dayNumber}`;
-  return position === undefined ? base : `${base}.${position}`;
-}
-
-export interface ParsedChapterCode {
-  weekNumber: number;
-  dayNumber: number;
-  /** Sous-parties après le jour (ex. `S.1.J.3.1` → [1]). */
-  parts: number[];
-}
-
-/** Analyse un code de chapitre. Retourne `null` si le format est invalide. */
-export function parseChapterCode(code: string): ParsedChapterCode | null {
-  if (!CHAPTER_CODE_REGEX.test(code)) return null;
-
-  // Forme attendue : S . <semaine> . J . <jour> [ . <partie>… ]
-  // Le motif est vérifié ci-dessus, les segments sont donc sûrs à indexer.
-  const [, week, , day, ...rest] = code.split('.');
-  return {
-    weekNumber: Number(week),
-    dayNumber: Number(day),
-    parts: rest.map(Number),
-  };
-}
-
-// --- Chapitre, Semaine, Formation -------------------------------------------
+// --- Leçon, chapitre, regroupement, formation --------------------------------
 
 export const LessonSchema = z.object({
   id: z.string().min(1),
-  code: z.string().min(1).optional(),
+  /** Identifiant d'origine, conservé pour la traçabilité de la reprise de données. */
+  sourceId: z.string().min(1).optional(),
+  /** Intitulé libre : le formateur y écrit ce qu'il veut (y compris « S1.J2 »). */
   title: z.string().min(1),
   objective: z.string().min(1),
   content: z.string(),
   type: LessonTypeSchema,
+  /**
+   * Durée indicative. Une leçon peut couvrir **plusieurs jours** : il n'existe
+   * aucune correspondance fixe entre une leçon et un jour.
+   */
   durationMinutes: z.number().int().positive().optional(),
   points: z.number().int().min(0).default(0),
   mediaRef: MediaRefSchema.optional(),
-  /** Nom d'un composant du registre, de nature `interactive`. */
+  /** Nom d'un composant du catalogue, de nature `interactive`. */
   interactiveComponentName: z.string().min(1).optional(),
-  /** Nom d'un composant du registre, de nature `visual`. */
+  /** Nom d'un composant du catalogue, de nature `visual`. */
   visualComponentName: z.string().min(1).optional(),
+  unlockRuleId: z.string().min(1).optional(),
   position: z.number().int().min(0),
 });
 export type Lesson = z.infer<typeof LessonSchema>;
 
 export const ChapterSchema = z.object({
   id: z.string().min(1),
-  code: ChapterCodeSchema,
+  /** Regroupement facultatif (ex. « Semaine 1 ») ; absent si non regroupé. */
+  weekId: z.string().min(1).optional(),
   title: z.string().min(1),
   position: z.number().int().min(0),
+  unlockRuleId: z.string().min(1).optional(),
   lessons: z.array(LessonSchema),
   quiz: QuizSchema.optional(),
 });
 export type Chapter = z.infer<typeof ChapterSchema>;
 
+/** Regroupement visuel facultatif. L'intitulé est libre et décidé par le formateur. */
 export const WeekSchema = z.object({
   id: z.string().min(1),
-  code: WeekCodeSchema,
-  title: z.string().min(1).optional(),
+  title: z.string().min(1),
   position: z.number().int().min(1),
-  chapters: z.array(ChapterSchema),
 });
 export type Week = z.infer<typeof WeekSchema>;
 
@@ -178,7 +165,11 @@ export const CourseSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
   status: CourseStatusSchema,
+  unlockRuleId: z.string().min(1).optional(),
+  /** Regroupements facultatifs. */
   weeks: z.array(WeekSchema),
+  /** Tous les chapitres ; `weekId` indique le regroupement éventuel. */
+  chapters: z.array(ChapterSchema),
 });
 export type CourseContent = z.infer<typeof CourseSchema>;
 
@@ -199,14 +190,12 @@ export interface ContentComplianceReport {
  * **100 % des leçons dotées d'un composant interactif** (REQ-CNT-02).
  */
 export function auditCourseContent(course: CourseContent): ContentComplianceReport {
-  const lessons = course.weeks.flatMap((week) => week.chapters.flatMap((chapter) => chapter.lessons));
-  const quizzes = course.weeks.flatMap((week) =>
-    week.chapters.filter((chapter) => chapter.quiz !== undefined),
-  ).length;
+  const lessons = course.chapters.flatMap((chapter) => chapter.lessons);
+  const quizzes = course.chapters.filter((chapter) => chapter.quiz !== undefined).length;
 
   const lessonsWithoutInteractive = lessons
     .filter((lesson) => !lesson.interactiveComponentName)
-    .map((lesson) => lesson.code ?? lesson.id);
+    .map((lesson) => lesson.title);
 
   const interactiveLessons = lessons.filter((lesson) => lesson.interactiveComponentName).length;
   const visualLessons = lessons.filter((lesson) => lesson.visualComponentName).length;

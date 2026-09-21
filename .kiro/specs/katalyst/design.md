@@ -88,13 +88,23 @@ export interface PaymentProvider {
 
 ```
 courses
- └─ weeks            (S — semaine de formation)
-     └─ chapters     (numéroté S.n.J.m)
+ └─ weeks            (regroupement visuel FACULTATIF — intitulé libre)
+     └─ chapters     (peut aussi être rattaché directement à la formation)
          ├─ lessons  (typées, datées, pointées)
          └─ quizzes
 ```
 
-**Numérotation** : `S.1.J.2` = Semaine 1, Jour 2. Un chapitre se termine sur **une semaine (lundi→vendredi)**.
+**⚠️ « S » et « J » ne sont pas des données.** Le formateur titri(e) librement les
+regroupements, chapitres et leçons ; il peut y écrire « S1.J2 », mais :
+- aucune colonne ne porte de code `S.n.J.m` ;
+- aucune règle « 1 leçon = 1 jour » ni « 5 chapitres par semaine » n'existe ;
+- **une leçon peut couvrir plusieurs jours** (seule `duration_minutes` est indicative).
+
+**Le rythme est porté par les règles d'accès** (`unlock_rules`), applicables à la
+**formation, au chapitre ou à la leçon** : ouverture à une date (`release_at`),
+échéance (`due_at`), cadence proposée à l'auteur (`DAY`/`WEEK`/`MONTH`/`CUSTOM`),
+ou condition (`COMPLETION`, `QUIZ_PASSED`). C'est ce mécanisme — et non un
+découpage en semaines — qui organise la progression, comme dans REWORK.
 
 ### 3.2 Schéma (extrait)
 

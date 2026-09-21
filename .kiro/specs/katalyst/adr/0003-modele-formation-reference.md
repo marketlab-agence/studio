@@ -30,7 +30,15 @@ Adopter un **modèle de référence composite** :
 1. **Profondeur du cours GitHub** — granularité fine : ~11 chapitres, ~37 leçons.
 2. **100 % des leçons dotées d'un composant interactif** — exigence non négociable (REQ-CNT-02).
 3. **Typage des leçons** inspiré de REWORK : `VIDEO`, `CAPSULE`, `MISE_EN_PRATIQUE`, `EVALUATION`, `TEXTE`, `IMAGE`, `MEDIA`, `LIEN`.
-4. **Hiérarchie Semaine / Jour** : `S.n.J.m` (S = semaine de formation, J = jour). Un chapitre se termine sur une semaine (lundi→vendredi). **Jamais « semestre »** — correction explicite du propriétaire.
+4. **Hiérarchie Formation → [regroupement facultatif] → Chapitre → Leçon.**
+   ⚠️ **Retiré le 2026-09-21 — « S » et « J » ne sont PAS des données.** Ce sont des
+   **libellés de titrage** décidés par le formateur : il peut écrire « S1.J2 » dans
+   un intitulé, mais **aucune colonne ne porte de code `S.n.J.m`** et **aucune
+   règle « 1 leçon = 1 jour » ou « 5 chapitres par semaine »** n'existe. **Une leçon
+   peut couvrir plusieurs jours.** L'**accès par période** — toujours souhaité — est
+   porté par `unlock_rules`, applicable à la formation, au chapitre ou à la leçon.
+   Le regroupement (`weeks`) reste comme **bloc visuel facultatif à intitulé libre**.
+   **Jamais « semestre »** — correction explicite du propriétaire.
 5. **Registre de composants unique** (`src/components/registry.ts`) : source unique pour l'UI, l'IA et l'outil de création.
 6. **Métadonnées IA obligatoires** : `plan` et `generationParams` sur toute formation.
 
@@ -58,6 +66,7 @@ Le modèle est encodé dans le schéma Postgres (ADR 0001) — le schéma **doit
 | **jira/n8n comme référence** | Ne résout pas l'absence de quiz ; profondeur moindre que GitHub |
 | **Statu quo** | Divergence non maîtrisable ; l'IA reste imprévisible |
 | **« Semestre » au lieu de « Semaine »** | Contredit la correction explicite du propriétaire et les captures (`S.1.J.2`) |
+| **Faire de « S »/« J » des données** (colonnes de code, dérivation depuis la position) | Contredit la correction du 2026-09-21 : ce sont des libellés de titrage, et une leçon peut durer plusieurs jours |
 
 ## Références
 

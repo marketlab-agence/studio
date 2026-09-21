@@ -7,14 +7,22 @@
 | Terme | Définition | Convention |
 |---|---|---|
 | **Formation** | Ensemble pédagogique complet sur un outil (ex. « Git & GitHub : Le Guide Complet »). | `Course` en code |
-| **Semaine** | Unité de progression d'une formation. Un chapitre se termine sur une semaine (lundi → vendredi). | **`S`** dans la numérotation, `Week` en code |
-| **Jour** | Jour de formation dans une semaine (J1 → J5, lundi → vendredi). | **`J`** dans la numérotation, `Day` en code |
-| **Chapitre** | Section d'une semaine contenant des leçons et un quiz. | `Chapter` en code |
-| **Leçon** | Plus petite unité d'apprentissage, typée. | `Lesson` en code |
+| **Regroupement** | Bloc visuel **facultatif** rassemblant des chapitres (ex. « Semaine 1 », « Module A »). L'intitulé est **libre** et décidé par le formateur. | `Week` en code (table `weeks`) |
+| **Chapitre** | Section contenant des leçons et un quiz. Peut être rattaché à un regroupement, ou directement à la formation. | `Chapter` en code |
+| **Leçon** | Plus petite unité d'apprentissage, typée. **Peut couvrir plusieurs jours.** | `Lesson` en code |
 
-**Numérotation** : `S.1.J.2` = Semaine 1, Jour 2, chapitre/leçon 2. `S.1.J.3.1` = Semaine 1, Jour 3, sous-partie 1.
+> ⚠️ **« S » (semaine) et « J » (jour) sont des LIBELLÉS, pas des données.**
+> Le formateur écrit ce qu'il veut dans les intitulés — il peut y mettre « S1.J2 ».
+> **Aucune colonne ne porte de code `S.n.J.m`**, et il n'existe **aucune règle**
+> « 1 leçon = 1 jour » ni « 5 chapitres par semaine » : **une leçon peut durer
+> plusieurs jours**. Ne jamais dériver de numérotation depuis la position.
+>
+> ⚠️ **Ne jamais utiliser « semestre »** (correction explicite de l'utilisateur).
 
-> ⚠️ **Ne jamais utiliser « semestre ».** L'utilisateur a explicitement corrigé : c'est **semaine** (`S`) et **jour** (`J`).
+**Ce qui structure le rythme** : les **règles d'accès** (`unlock_rules`),
+applicables à la formation, au chapitre ou à la leçon — ouverture à une date,
+échéance, cadence (`DAY`/`WEEK`/`MONTH`/`CUSTOM`) ou condition (`COMPLETION`,
+`QUIZ_PASSED`). Voir `@.kiro/specs/katalyst/design.md` §3.1 et §12.
 
 ## Types de leçon
 

@@ -93,7 +93,7 @@ Dépend de : 1
 
 - [x] T2.1 — Schéma complet · REQ-DAT-01, REQ-ORG-01 · vérif: application sans erreur · **fait** — **26 tables métier** en 4 migrations (002 identité, 003 contenu, 004 apprentissage, 005 engagement/IA). **Identifiants de contenu en TEXT** (slugs sources) plutôt qu'en UUID : stables, lisibles, et le seed devient idempotent
 - [x] T2.2 — Migrations numérotées + table `migrations` · REQ-DAT-02 · vérif: rejouer 2× idempotent · **fait** (transaction par fichier, échec = rollback complet ; `migrate`, `migrate:test`)
-- [x] T2.3 — ETL `src/data/*.json` (2 niveaux) → modèle 3 niveaux · REQ-DAT-04 · vérif: contenu intact · **fait** — les sources sont à 2 niveaux, le modèle en a 3 : **la semaine est dérivée** (`S1`, `S2`…) avec **5 chapitres par semaine** (`S.n.J.1` → `S.n.J.5`), conformément au modèle REWORK. Le cours Git (11 chapitres) occupe donc **3 semaines**
+- [x] T2.3 — ETL `src/data/*.json` (2 niveaux) → modèle 3 niveaux · REQ-DAT-04 · vérif: contenu intact · **fait** — les sources sont à 2 niveaux, le modèle en a 3 (la troisième étant un **regroupement facultatif**). **Aucun regroupement n'est créé** : les sources n'en contiennent pas, et l'intitulé est une décision du formateur. Les 26 chapitres sont rattachés directement aux formations (`week_id = NULL`)
 - [x] T2.4 — Seed complet · REQ-DAT-03 · vérif: 6 formations / 26 chapitres / 26 quiz / 2 formules · **fait** — 6 formations, 8 semaines, 26 chapitres, **80 leçons**, 26 quiz, 76 questions, 240 réponses, 2 formules. **Idempotence vérifiée** (rejeu = mêmes comptes)
 - [x] T2.5 — Import des **12 comptes** Firebase Auth · REQ-DAT-05 · vérif: 12 lignes · **fait** — 12 comptes lus, 2 insérés, 10 mis à jour. **10 comptes à mot de passe → reset forcé** (Firebase n'exporte pas les hachages) ; **2 comptes Google** se reconnectent directement
 - [x] T2.6 — Seed `settings` + rôle admin · REQ-DAT-05 · vérif: 1 admin · **fait** (migration 001 pour `settings` ; le compte « Admin Katalyst » conserve `Super Admin` — le rôle n'est jamais écrasé par l'import)
@@ -101,7 +101,9 @@ Dépend de : 1
 - [x] T2.8 — Organisation par défaut + rattachement du contenu et des comptes · REQ-ORG-01 · vérif: sans orphelin · **fait** (slug `katalyst`, formule `premium` ; tout le contenu et les comptes y sont rattachés)
 - [x] T2.9 — Extension **pgvector** + colonnes vectorielles · REQ-DOC-06 · vérif: index vectoriel créé · **fait** (`vector(1536)` sur `document_chunks.embedding`, index `ivfflat` en cosinus)
 
-> ⚠️ **Deux erreurs attrapées par les contraintes de la base, pas par relecture** : (1) `organizations.plan_id` référençait `premium` avant que les formules existent → FK violée, ordre du seed corrigé ; (2) l'ETL plaçait d'abord les 11 chapitres du cours Git dans **une seule** semaine → `UNIQUE (week_id, code)` violée, d'où la répartition en 5 chapitres par semaine. Ces deux garde-fous ont évité des données silencieusement fausses.
+> ⚠️ **Une erreur attrapée par la contrainte, pas par relecture** : `organizations.plan_id` référençait `premium` avant que les formules existent → FK violée, ordre du seed corrigé.
+>
+> 🔴 **CORRECTION UTILISATEUR (2026-09-21)** — la seconde erreur (`UNIQUE (week_id, code)` : 11 chapitres dans une seule semaine) m'a fait **sur-modéliser** : j'avais fait de « S » et « J » des **données** (colonnes de code, table de semaines, helpers de numérotation, règle « 5 chapitres par semaine »). Or **ce sont des libellés de titrage décidés par le formateur**, et **une leçon peut couvrir plusieurs jours**. Toutes les colonnes de code et la dérivation ont été supprimées ; `weeks` devient un **regroupement visuel facultatif à intitulé libre**. L'**accès par période** (souhaité) est porté par `unlock_rules`, étendu aux trois niveaux (formation, chapitre, leçon).
 
 ## Phase 3 — Providers (fin du couplage)
 

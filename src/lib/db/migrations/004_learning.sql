@@ -4,25 +4,39 @@
 -- ADR 0004 (SSE pour la messagerie) et design.md §12 (déblocage configurable).
 -- =============================================================================
 
--- Règles de déblocage : par date (« 5 août ») ou par condition.
--- La cadence (jour/semaine/mois/personnalisé) est définie par l'auteur du cours.
+-- Règles d'accès programmé : ouverture à une date, ou conditionnelle.
+-- La cadence (jour / semaine / mois / personnalisé) est décidée par l'auteur.
+-- C'est CE mécanisme — et non un découpage en semaines — qui organise le rythme
+-- d'une formation, comme dans REWORK.
 CREATE TABLE IF NOT EXISTS unlock_rules (
   id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   kind                  TEXT NOT NULL CHECK (kind IN ('DATE', 'COMPLETION', 'QUIZ_PASSED')),
   cadence               TEXT CHECK (cadence IS NULL OR cadence IN ('DAY', 'WEEK', 'MONTH', 'CUSTOM')),
+  -- Ouverture : date de mise à disposition (« 5 août »).
   release_at            TIMESTAMPTZ,
   -- Échéance de fin de période (déclenche les rappels, phase 15).
   due_at                TIMESTAMPTZ,
-  -- TEXT : les chapitres portent des identifiants issus des données sources.
+  -- Condition : chapitre préalable et/ou score minimal au quiz.
   depends_on_chapter_id TEXT REFERENCES chapters(id) ON DELETE SET NULL,
   min_score             INT CHECK (min_score IS NULL OR min_score BETWEEN 0 AND 100)
 );
 
--- `chapters.unlock_rule_id` était déclarée sans FK (table pas encore créée).
-ALTER TABLE chapters
-  DROP CONSTRAINT IF EXISTS chapters_unlock_rule_fk;
+-- Une règle peut viser la FORMATION, le CHAPITRE ou la LEÇON : les trois
+-- colonnes `unlock_rule_id` sont déclarées en 003, leurs FK sont posées ici
+-- (la table vient d'être créée).
+ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_unlock_rule_fk;
+ALTER TABLE courses
+  ADD CONSTRAINT courses_unlock_rule_fk
+  FOREIGN KEY (unlock_rule_id) REFERENCES unlock_rules(id) ON DELETE SET NULL;
+
+ALTER TABLE chapters DROP CONSTRAINT IF EXISTS chapters_unlock_rule_fk;
 ALTER TABLE chapters
   ADD CONSTRAINT chapters_unlock_rule_fk
+  FOREIGN KEY (unlock_rule_id) REFERENCES unlock_rules(id) ON DELETE SET NULL;
+
+ALTER TABLE lessons DROP CONSTRAINT IF EXISTS lessons_unlock_rule_fk;
+ALTER TABLE lessons
+  ADD CONSTRAINT lessons_unlock_rule_fk
   FOREIGN KEY (unlock_rule_id) REFERENCES unlock_rules(id) ON DELETE SET NULL;
 
 -- Progression par leçon.

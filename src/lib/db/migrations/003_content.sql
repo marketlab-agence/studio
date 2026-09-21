@@ -1,15 +1,24 @@
 -- =============================================================================
--- 003 — Contenu : formations, semaines, chapitres, leçons, quiz, formules
+-- 003 — Contenu : formations, regroupements, chapitres, leçons, quiz, formules
 -- =============================================================================
--- Modèle de référence (ADR 0003, design.md §3) :
---   Formation → Semaine (S.n) → Chapitre (S.n.J.m) → Leçon (+ Quiz)
--- Numérotation : S = semaine de formation, J = jour (lundi → vendredi).
+-- Modèle de référence (ADR 0003) :
+--   Formation → [regroupement libre] → Chapitre → Leçon (+ Quiz)
 --
--- IDENTIFIANTS : les entités de contenu portent des identifiants **TEXT issus
--- des données sources** (slugs, ex. « intro-to-git »), et non des UUID générés.
--- Raison : ils sont stables, lisibles, et rendent le seed **idempotent** —
--- le rejouer ne duplique rien. Les entités dynamiques (utilisateurs, cohortes,
--- messages, documents) gardent des UUID.
+-- Le regroupement (« Semaine 1 », « Module A »…) est **facultatif** et son
+-- intitulé est **libre** : c'est le formateur qui décide du titrage.
+--
+-- ⚠️ « S » et « J » dans les intitulés ne sont PAS des données.
+-- Aucune colonne ne porte de code S.n.J.m, aucune règle « 1 leçon = 1 jour » ou
+-- « 5 chapitres par semaine » : une leçon peut couvrir plusieurs jours. Le
+-- formateur écrit ce qu'il veut dans `weeks.title`, `chapters.title`,
+-- `lessons.title`.
+--
+-- L'ACCÈS PAR PÉRIODE (comme dans REWORK) est porté par `unlock_rules`, et peut
+-- viser **la formation, le chapitre ou la leçon** (`unlock_rule_id` à chacun de
+-- ces trois niveaux ; la FK est ajoutée en 004, quand la table existe).
+--
+-- IDENTIFIANTS : TEXT issus des données sources (slugs) — stables, lisibles,
+-- et le seed reste idempotent.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS plans (
@@ -43,6 +52,8 @@ CREATE TABLE IF NOT EXISTS courses (
   description       TEXT NOT NULL DEFAULT '',
   status            TEXT NOT NULL DEFAULT 'Brouillon'
                       CHECK (status IN ('Brouillon', 'Plan', 'Publié')),
+  -- Accès programmé au niveau de la formation (FK ajoutée en 004).
+  unlock_rule_id    UUID,
   -- Traçabilité IA (REQ-MTH-09) : plan généré et paramètres de génération.
   plan              JSONB,
   generation_params JSONB,
@@ -51,37 +62,37 @@ CREATE TABLE IF NOT EXISTS courses (
 
 CREATE INDEX IF NOT EXISTS courses_organization_idx ON courses (organization_id);
 
+-- Regroupement visuel FACULTATIF : l'intitulé est libre (« Semaine 1 »,
+-- « Module A »…). Aucun code, aucune contrainte de période.
 CREATE TABLE IF NOT EXISTS weeks (
   id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-  -- Code « S1 », « S2 »… (voir formatWeekCode dans src/lib/schemas/content.ts)
-  code      TEXT NOT NULL,
-  title     TEXT,
+  title     TEXT NOT NULL,
   position  INT NOT NULL,
-  UNIQUE (course_id, code)
+  UNIQUE (course_id, position)
 );
 
 CREATE INDEX IF NOT EXISTS weeks_course_idx ON weeks (course_id);
 
--- Un chapitre se déroule sur une semaine (lundi → vendredi).
 CREATE TABLE IF NOT EXISTS chapters (
   id             TEXT PRIMARY KEY,
-  week_id        UUID NOT NULL REFERENCES weeks(id) ON DELETE CASCADE,
-  -- Code « S.1.J.2 » (formatChapterCode)
-  code           TEXT NOT NULL,
+  course_id      TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  -- Rattaché à un regroupement, ou directement à la formation (NULL).
+  week_id        UUID REFERENCES weeks(id) ON DELETE SET NULL,
   title          TEXT NOT NULL,
   position       INT NOT NULL,
   unlock_rule_id UUID,
-  UNIQUE (week_id, code)
+  UNIQUE (course_id, position)
 );
 
+CREATE INDEX IF NOT EXISTS chapters_course_idx ON chapters (course_id);
 CREATE INDEX IF NOT EXISTS chapters_week_idx ON chapters (week_id);
 
 CREATE TABLE IF NOT EXISTS lessons (
   id                         TEXT PRIMARY KEY,
   chapter_id                 TEXT NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
   -- Identifiant d'origine, conservé pour la traçabilité de la reprise de données.
-  code                       TEXT,
+  source_id                  TEXT,
   title                      TEXT NOT NULL,
   objective                  TEXT NOT NULL,
   content                    TEXT NOT NULL DEFAULT '',
@@ -91,13 +102,17 @@ CREATE TABLE IF NOT EXISTS lessons (
                                  'EVALUATION', 'TEXTE', 'IMAGE', 'MEDIA', 'LIEN'
                                )
                              ),
+  -- Durée indicative en minutes : une leçon peut couvrir plusieurs jours.
   duration_minutes           INT CHECK (duration_minutes IS NULL OR duration_minutes > 0),
   points                     INT NOT NULL DEFAULT 0 CHECK (points >= 0),
   media_ref                  JSONB,
   -- Noms issus du catalogue de composants (src/components/registry/catalog.ts).
   interactive_component_name TEXT,
   visual_component_name      TEXT,
-  position                   INT NOT NULL
+  -- Accès programmé au niveau de la leçon (FK ajoutée en 004).
+  unlock_rule_id             UUID,
+  position                   INT NOT NULL,
+  UNIQUE (chapter_id, position)
 );
 
 CREATE INDEX IF NOT EXISTS lessons_chapter_idx ON lessons (chapter_id);

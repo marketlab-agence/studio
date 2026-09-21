@@ -1,47 +1,11 @@
 import {
-  formatWeekCode,
-  formatChapterCode,
-  parseChapterCode,
-  WEEK_CODE_REGEX,
-  CHAPTER_CODE_REGEX,
   LessonSchema,
   ChapterSchema,
-  DAYS_PER_WEEK,
+  UnlockRuleSchema,
+  CourseSchema,
   auditCourseContent,
   type CourseContent,
 } from '@/lib/schemas/content';
-
-describe('Numérotation Semaine / Jour', () => {
-  it('formate un code de semaine', () => {
-    expect(formatWeekCode(1)).toBe('S1');
-    expect(formatWeekCode(12)).toBe('S12');
-    expect(WEEK_CODE_REGEX.test('S1')).toBe(true);
-    expect(WEEK_CODE_REGEX.test('Semaine 1')).toBe(false);
-  });
-
-  it('formate un code de chapitre S.n.J.m', () => {
-    expect(formatChapterCode(1, 2)).toBe('S.1.J.2');
-    expect(formatChapterCode(1, 3, 1)).toBe('S.1.J.3.1');
-    expect(CHAPTER_CODE_REGEX.test('S.1.J.2')).toBe(true);
-    expect(CHAPTER_CODE_REGEX.test('1.2')).toBe(false);
-  });
-
-  it('refuse un jour hors lundi-vendredi', () => {
-    expect(() => formatChapterCode(1, 0)).toThrow(/jour invalide/);
-    expect(() => formatChapterCode(1, DAYS_PER_WEEK + 1)).toThrow(/jour invalide/);
-    expect(() => formatChapterCode(1, 5)).not.toThrow();
-  });
-
-  it('refuse une semaine invalide', () => {
-    expect(() => formatChapterCode(0, 1)).toThrow(/semaine invalide/);
-  });
-
-  it('analyse un code de chapitre', () => {
-    expect(parseChapterCode('S.1.J.2')).toEqual({ weekNumber: 1, dayNumber: 2, parts: [] });
-    expect(parseChapterCode('S.1.J.3.1')).toEqual({ weekNumber: 1, dayNumber: 3, parts: [1] });
-    expect(parseChapterCode('invalide')).toBeNull();
-  });
-});
 
 describe('Schémas de contenu', () => {
   it('refuse une leçon sans objectif', () => {
@@ -69,15 +33,101 @@ describe('Schémas de contenu', () => {
     if (result.success) expect(result.data.points).toBe(0);
   });
 
-  it('refuse un code de chapitre hors format S.n.J.m', () => {
+  it("accepte une durée libre — une leçon peut couvrir plusieurs jours", () => {
+    const result = LessonSchema.safeParse({
+      id: 'l1',
+      title: 'Leçon longue',
+      objective: 'Objectif',
+      content: 'x',
+      type: 'MISE_EN_PRATIQUE',
+      durationMinutes: 240,
+      position: 0,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepte un chapitre sans regroupement (weekId absent)', () => {
     const result = ChapterSchema.safeParse({
       id: 'c1',
-      code: 'chapitre-1',
-      title: 'Titre',
+      title: 'Chapitre libre',
       position: 0,
       lessons: [],
     });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte un intitulé libre contenant « S1.J2 » (libellé, pas donnée)", () => {
+    const result = ChapterSchema.safeParse({
+      id: 'c1',
+      title: 'S.1.J.2 — Démystifions la boîte noire',
+      position: 0,
+      lessons: [],
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("Accès programmé (accès par période, comme REWORK)", () => {
+  it('accepte une ouverture à une date avec cadence hebdomadaire', () => {
+    const result = UnlockRuleSchema.safeParse({
+      kind: 'DATE',
+      cadence: 'WEEK',
+      releaseAt: '2026-08-05',
+      dueAt: '2026-08-12',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.releaseAt).toBeInstanceOf(Date);
+      expect(result.data.cadence).toBe('WEEK');
+    }
+  });
+
+  it('accepte un déblocage conditionnel avec score minimal', () => {
+    const result = UnlockRuleSchema.safeParse({
+      kind: 'QUIZ_PASSED',
+      dependsOnChapterId: 'intro-to-git',
+      minScore: 80,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('refuse une cadence inconnue', () => {
+    const result = UnlockRuleSchema.safeParse({ kind: 'DATE', cadence: 'TRIMESTRE' });
     expect(result.success).toBe(false);
+  });
+
+  it('refuse un score hors bornes', () => {
+    expect(UnlockRuleSchema.safeParse({ kind: 'QUIZ_PASSED', minScore: 120 }).success).toBe(false);
+  });
+});
+
+describe('Formation', () => {
+  it('accepte une formation sans aucun regroupement', () => {
+    const result = CourseSchema.safeParse({
+      id: 'c',
+      title: 'Formation',
+      description: '',
+      status: 'Publié',
+      weeks: [],
+      chapters: [
+        { id: 'ch1', title: 'Chapitre 1', position: 0, lessons: [] },
+        { id: 'ch2', title: 'Chapitre 2', position: 1, lessons: [] },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepte une formation avec regroupements libres', () => {
+    const result = CourseSchema.safeParse({
+      id: 'c',
+      title: 'Formation',
+      description: '',
+      status: 'Publié',
+      weeks: [{ id: 'w1', title: 'Semaine 1', position: 1 }],
+      chapters: [{ id: 'ch1', weekId: 'w1', title: 'Chapitre 1', position: 0, lessons: [] }],
+    });
+    expect(result.success).toBe(true);
   });
 });
 
@@ -87,30 +137,22 @@ describe('Audit de conformité du contenu', () => {
     title: 'Formation',
     description: '',
     status: 'Publié',
-    weeks: [
+    weeks: [],
+    chapters: [
       {
-        id: 'w1',
-        code: 'S1',
-        position: 1,
-        chapters: [
+        id: 'c1',
+        title: 'Chapitre',
+        position: 0,
+        lessons: [
           {
-            id: 'c1',
-            code: 'S.1.J.1',
-            title: 'Chapitre',
+            id: 'l1',
+            title: 'Leçon',
+            objective: 'Objectif',
+            content: '',
+            type: 'MISE_EN_PRATIQUE',
+            points: 0,
             position: 0,
-            lessons: [
-              {
-                id: 'l1',
-                code: 'S.1.J.1.1',
-                title: 'Leçon',
-                objective: 'Objectif',
-                content: '',
-                type: 'MISE_EN_PRATIQUE',
-                points: 0,
-                position: 0,
-                ...(withInteractive ? { interactiveComponentName: 'MergeSimulator' } : {}),
-              },
-            ],
+            ...(withInteractive ? { interactiveComponentName: 'MergeSimulator' } : {}),
           },
         ],
       },
@@ -127,6 +169,6 @@ describe('Audit de conformité du contenu', () => {
   it('signale les leçons sans composant interactif', () => {
     const report = auditCourseContent(course(false));
     expect(report.compliant).toBe(false);
-    expect(report.lessonsWithoutInteractive).toEqual(['S.1.J.1.1']);
+    expect(report.lessonsWithoutInteractive).toEqual(['Leçon']);
   });
 });
