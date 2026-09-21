@@ -1,6 +1,7 @@
 
 import { AppSettings } from '@/types/settings.types';
 import { getFirebaseAdmin } from './firebase-admin';
+import { withLocalFallback } from './local-data';
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SETTINGS_ID = 'default';
@@ -17,16 +18,22 @@ const defaultSettings: AppSettings = {
  */
 export async function getSettings(): Promise<AppSettings> {
   try {
-    const { db } = await getFirebaseAdmin();
-    const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
-    const doc = await docRef.get();
+    return await withLocalFallback(
+      'settings',
+      async () => {
+        const { db } = await getFirebaseAdmin();
+        const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
+        const doc = await docRef.get();
 
-    if (!doc.exists) {
-      console.log('No settings document found, returning default settings.');
-      return defaultSettings;
-    }
+        if (!doc.exists) {
+          console.log('No settings document found, returning default settings.');
+          return defaultSettings;
+        }
 
-    return doc.data() as AppSettings;
+        return doc.data() as AppSettings;
+      },
+      (local) => local as AppSettings,
+    );
   } catch (error) {
     console.error("Error getting settings: ", error);
     // En cas d'erreur, il est plus sûr de retourner les paramètres par défaut

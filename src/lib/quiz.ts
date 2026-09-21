@@ -1,6 +1,7 @@
 
 import { Quiz } from '@/types/tutorial.types';
 import type { Firestore } from 'firebase-admin/firestore'; // Import only the type
+import { withLocalFallback } from './local-data';
 
 const QUIZZES_COLLECTION = 'quizzes';
 
@@ -11,21 +12,22 @@ const QUIZZES_COLLECTION = 'quizzes';
  * @returns {Promise<Record<string, Quiz>>} A promise that resolves to an object where keys are quiz IDs.
  */
 export async function getQuizzes(db: Firestore): Promise<Record<string, Quiz>> {
-  try {
-    const snapshot = await db.collection(QUIZZES_COLLECTION).get();
-    if (snapshot.empty) {
-      console.log('No quizzes found.');
-      return {};
-    }
-    const quizzes: Record<string, Quiz> = {};
-    snapshot.docs.forEach(doc => {
-      quizzes[doc.id] = { id: doc.id, ...doc.data() } as Quiz;
-    });
-    return quizzes;
-  } catch (error) {
-    console.error("Error getting quizzes: ", error);
-    throw new Error("Could not fetch quizzes from Firestore.");
-  }
+  return withLocalFallback(
+    'quizzes',
+    async () => {
+      const snapshot = await db.collection(QUIZZES_COLLECTION).get();
+      if (snapshot.empty) {
+        console.log('No quizzes found.');
+        return {};
+      }
+      const quizzes: Record<string, Quiz> = {};
+      snapshot.docs.forEach(doc => {
+        quizzes[doc.id] = { id: doc.id, ...doc.data() } as Quiz;
+      });
+      return quizzes;
+    },
+    (local) => local as Record<string, Quiz>,
+  );
 }
 
 /**
@@ -56,7 +58,6 @@ export async function saveQuizzes(db: Firestore, quizzes: Record<string, Quiz>):
     }
 }
 
-
 /**
  * Retrieves a single quiz by its ID from the Firestore 'quizzes' collection.
  * @param {Firestore} db - The Firestore database instance.
@@ -64,20 +65,21 @@ export async function saveQuizzes(db: Firestore, quizzes: Record<string, Quiz>):
  * @returns {Promise<Quiz | null>} A promise that resolves to the quiz or null if not found.
  */
 export async function getQuizById(db: Firestore, id: string): Promise<Quiz | null> {
-    try {
-      const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
-      const doc = await docRef.get();
-  
-      if (!doc.exists) {
-        console.log(`No quiz found with id: ${id}`);
-        return null;
-      }
-  
-      return { id: doc.id, ...doc.data() } as Quiz;
-    } catch (error) {
-      console.error(`Error getting quiz by id ${id}: `, error);
-      throw new Error("Could not fetch quiz from Firestore.");
-    }
+    return withLocalFallback(
+      'quizzes',
+      async () => {
+        const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+          console.log(`No quiz found with id: ${id}`);
+          return null;
+        }
+
+        return { id: doc.id, ...doc.data() } as Quiz;
+      },
+      (local) => (local as Record<string, Quiz>)[id] ?? null,
+    );
 }
 
 /**

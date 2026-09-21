@@ -1,6 +1,7 @@
 
 import { CourseInfo } from '@/types/course.types';
 import type { Firestore } from 'firebase-admin/firestore'; // Import only the type
+import { withLocalFallback } from './local-data';
 
 const COURSES_COLLECTION = 'courses';
 
@@ -11,21 +12,21 @@ const COURSES_COLLECTION = 'courses';
  * @returns {Promise<CourseInfo[]>} A promise that resolves to an array of courses.
  */
 export async function getCourses(db: Firestore): Promise<CourseInfo[]> {
-  try {
-    const snapshot = await db.collection(COURSES_COLLECTION).get();
-    if (snapshot.empty) {
-      console.log('No courses found.');
-      return [];
-    }
-    const courses: CourseInfo[] = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CourseInfo));
-    return courses;
-  } catch (error) {
-    console.error("Error getting courses: ", error);
-    throw new Error("Could not fetch courses from Firestore.");
-  }
+  return withLocalFallback(
+    'courses',
+    async () => {
+      const snapshot = await db.collection(COURSES_COLLECTION).get();
+      if (snapshot.empty) {
+        console.log('No courses found.');
+        return [];
+      }
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as CourseInfo));
+    },
+    (local) => local as CourseInfo[],
+  );
 }
 
 /**
@@ -35,20 +36,21 @@ export async function getCourses(db: Firestore): Promise<CourseInfo[]> {
  * @returns {Promise<CourseInfo | null>} A promise that resolves to the course or null if not found.
  */
 export async function getCourseById(db: Firestore, id: string): Promise<CourseInfo | null> {
-    try {
+  return withLocalFallback(
+    'courses',
+    async () => {
       const docRef = db.collection(COURSES_COLLECTION).doc(id);
       const doc = await docRef.get();
-  
+
       if (!doc.exists) {
         console.log(`No course found with id: ${id}`);
         return null;
       }
-  
+
       return { id: doc.id, ...doc.data() } as CourseInfo;
-    } catch (error) {
-      console.error(`Error getting course by id ${id}: `, error);
-      throw new Error("Could not fetch course from Firestore.");
-    }
+    },
+    (local) => (local as CourseInfo[]).find(course => course.id === id) ?? null,
+  );
 }
 
 
