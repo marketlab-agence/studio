@@ -127,12 +127,12 @@ Dépend de : 2
 Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 
 - [x] T4.1 — Colonnes auth (`password_hash`, `must_reset_password`, `two_factor_enabled`, `last_login`) · REQ-AUTH-01 · vérif: migration OK ✅ **déjà satisfaite par la phase 2** (`002_identity.sql`) — plus `two_factor_secret` et `last_login`, non prévus par la tâche.
-- [~] T4.2 — Endpoints `register`/`login`/`logout`/`refresh` (+ rotation) — pattern `masterplan365/server/routes/auth.ts` · REQ-AUTH-01, REQ-AUTH-03 · **provider fait** (`7bb11f8`, 27 tests DB) ; **reste les route handlers**.
+- [x] T4.2 — Endpoints `register`/`login`/`logout`/`refresh` (+ rotation) — pattern `masterplan365/server/routes/auth.ts` · REQ-AUTH-01, REQ-AUTH-03 · ✅ `7bb11f8` (provider, 27 tests DB) + `1a4f64a` (4 route handlers, 11 tests E2E)
 - [ ] T4.3 — **Google OAuth** (`/api/auth/google` + `/callback`) · REQ-AUTH-02 · vérif: connexion réussie
 - [~] T4.4 — **MFA/TOTP** (`setup`/`verify`/`challenge`/`status`) · REQ-AUTH-04 · **briques crypto faites** (`7bb11f8` : Base32 + TOTP conformes aux vecteurs RFC 4226/6238, 17 tests) ; **restent les endpoints et le stockage du secret**.
 - [ ] T4.5 — **Spike SAML** (Next sans Express) puis implémentation · REQ-AUTH-05 · vérif: gate G1 levé
-- [ ] T4.6 — JWT en cookie **httpOnly** + middleware Next (pattern `authenticate.ts`) · REQ-AUTH-09 · vérif: route privée → redirection
-- [ ] T4.7 — Rate limiters + validation Zod par endpoint · REQ-AUTH-01 · vérif: abus bloqué
+- [x] T4.6 — JWT en cookie **httpOnly** + middleware Next (pattern `authenticate.ts`) · REQ-AUTH-09 · ✅ `1a4f64a` — le refresh est **restreint à `/api/auth`** (il ne circule jamais sur une requête de page) ; le middleware est un **filtre** (Edge, sans base), pas une frontière d'autorisation
+- [x] T4.7 — Rate limiters + validation Zod par endpoint · REQ-AUTH-01 · ✅ `1a4f64a` — fenêtre glissante, règles par usage, `RATE_LIMIT_MULTIPLIER` **ignoré en production**
 - [~] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · **côté serveur fait** (`7bb11f8` : jeton à usage unique, haché, transactionnel) ; **restent l'endpoint, l'email et la page**.
 - [ ] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · vérif: 0 import `firebase/*` dans `contexts/`
 - [ ] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · vérif: `grep firebase/ src/app src/components` → 0

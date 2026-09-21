@@ -13,11 +13,11 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle serveur fait* (T4.1, provider de T4.2, crypto de T4.4, serveur de T4.8) ; **restent les route handlers**, OAuth Google, SAML, middleware, rate limit |
-| Prochaine tâche | **T4.2 (suite) — route handlers** `/api/auth/{register,login,logout,refresh}` puis **T4.6** (cookie httpOnly + middleware) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **16 suites / 123** · tests DB **8 suites / 95** · **E2E 5** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle serveur + routes + middleware faits* (T4.1, T4.2, T4.6, T4.7, provider de T4.4/T4.8) ; **restent** OAuth Google, SAML, endpoints MFA, fin du reset forcé, refonte `AuthContext` |
+| Prochaine tâche | **T4.8 (suite)** : endpoint `forgot-password`/`reset-password` + email + page — débloque la reconnexion des **10 comptes importés** |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **17 suites / 147** · tests DB **8 suites / 95** · **E2E 16** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
-| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables** (dont `password_reset_tokens`), contenu seedé, 12 comptes importés |
+| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
 | **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage, **Auth** — **9 implémentés**. Reste `PaymentProvider` (phase 24) |
 
@@ -101,6 +101,13 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - **Limite bcrypt de 72 octets** : au-delà, l'entrée est **tronquée en silence**. La politique refuse donc explicitement, en comptant les **octets** et non les caractères (40 caractères accentués = 80 octets).
     - **Pièges d'infrastructure de test** : `jose` est ESM-only → à transformer dans **les deux** projets Jest (jsdom et DB) ; le test JWT tourne en **environnement Node** (jsdom n'a pas `crypto.subtle` et impose un realm où les `Uint8Array` échouent aux `instanceof` de `jose`) ; `JWT_SECRET` de test posé dans le setup DB.
     - **Migration 006** (et non un ajout à 002) : les migrations sont **forward-only**, on ne réécrit pas une migration déjà appliquée.
+40. **Phase 4 — routes, cookies et middleware** (T4.2, T4.6, T4.7). Trois points à retenir :
+    - **Deux cookies, pas un.** L'accès va partout (`path: /`) ; le refresh est **restreint à `/api/auth`** : il ne circule donc jamais sur une requête de page ordinaire. Les deux sont `httpOnly` (vol par XSS neutralisé), `secure` **en production seulement** (sinon le cookie ne serait jamais posé en HTTP local). Conséquence utile : le middleware **ne voit pas** le refresh token, une session expirée y est donc traitée comme une absence de session.
+    - **Le middleware est un filtre, pas une frontière d'autorisation.** Il tourne en **Edge**, sans accès à la base : il vérifie le jeton d'accès (sans état) et rien d'autre. Le contrôle réel (rôle, appartenance à l'organisation) reste dans chaque route et server action. Ne pas s'appuyer sur le middleware pour de l'autorisation.
+    - **Redirection ouverte** : `?redirect=` est une faille d'autant plus convaincante que l'utilisateur vient de saisir ses identifiants **sur le bon domaine**. Sont refusés : URL absolues, `//exemple` (relative au protocole), antislashs (normalisés en `/` par certains navigateurs), caractères de contrôle.
+    - **Limitation de débit** : une tentative **refusée n'est pas enregistrée**, sinon un client qui insiste repousserait indéfiniment sa propre échéance. `RATE_LIMIT_MULTIPLIER` existe pour les tests et la CI (les tests E2E partagent une seule IP et atteindraient la limite d'inscription) et est **ignoré en production** — le désactiver silencieusement ouvrirait le bourrage d'identifiants.
+    - **`JWT_SECRET` vit dans `.env.local`** (gitignoré, vérifié via `git check-ignore`). Il est **absent** de `.env.example` en valeur : le serveur de développement refuse de signer sans lui, avec un message qui donne la commande de génération.
+    - **Pièges de test rencontrés** : `process.env.NODE_ENV` est en **lecture seule** dans les types de Next (passer par un cast) ; `headersArray()` de Playwright renvoie des objets `{name, value}`, **pas** des tuples.
 
 ---
 
