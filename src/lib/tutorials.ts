@@ -1,93 +1,72 @@
-
-import { Tutorial } from '@/types/tutorial.types';
-import type { Firestore } from 'firebase-admin/firestore';
-import { withLocalFallback } from './local-data';
-
-const TUTORIALS_COLLECTION = 'tutorials';
+import type { Tutorial } from '@/types/tutorial.types';
+import { getContentProvider, getRequestScope, type ChapterWithLessons } from '@/lib/providers';
 
 /**
- * Retrieves all tutorials from the Firestore 'tutorials' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @returns {Promise<Tutorial[]>} A promise that resolves to an array of tutorials.
+ * Chapitres de l'organisation courante (« tutorials » dans l'ancien modèle
+ * Firestore). Un `Tutorial` est un chapitre accompagné de ses leçons.
+ *
+ * Ce module ne connaît plus Firestore : il passe par `ContentProvider` (ADR 0001).
  */
-export async function getTutorials(db: Firestore): Promise<Tutorial[]> {
-  return withLocalFallback(
-    'tutorials',
-    async () => {
-      const snapshot = await db.collection(TUTORIALS_COLLECTION).get();
-      if (snapshot.empty) {
-        console.log('No tutorials found.');
-        return [];
-      }
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Tutorial));
-    },
-    (local) => local as Tutorial[],
-  );
+
+function toTutorial(chapter: ChapterWithLessons): Tutorial {
+  return {
+    id: chapter.id,
+    courseId: chapter.courseId,
+    title: chapter.title,
+    description: chapter.description,
+    lessons: chapter.lessons,
+  };
 }
 
 /**
- * Saves an array of tutorials to the Firestore 'tutorials' collection.
- * This function uses a batch write to set each tutorial, overwriting if it exists.
- * @param {Firestore} db - The Firestore database instance.
- * @param {Tutorial[]} tutorials - An array of tutorial objects to save.
- * @returns {Promise<void>}
+ * `position` et `weekId` sont recalculés/normalisés côté provider :
+ * `saveChapters` déduit la position de l'ordre du tableau reçu, par formation.
+ * Les valeurs posées ici sont donc des valeurs de passage.
  */
-export async function saveTutorials(db: Firestore, tutorials: Tutorial[]): Promise<void> {
-  const batch = db.batch();
-  
-  tutorials.forEach(tutorial => {
-    const docRef = db.collection(TUTORIALS_COLLECTION).doc(tutorial.id);
-    batch.set(docRef, tutorial);
-  });
-
-  try {
-    await batch.commit();
-    console.log("Tutorials saved successfully to Firestore.");
-  } catch (error) {
-    console.error("Error saving tutorials to Firestore: ", error);
-    throw new Error("Could not save tutorials to Firestore.");
-  }
+function fromTutorial(tutorial: Tutorial): ChapterWithLessons {
+  return {
+    id: tutorial.id,
+    courseId: tutorial.courseId,
+    title: tutorial.title,
+    description: tutorial.description ?? '',
+    weekId: null,
+    position: 0,
+    unlockRuleId: null,
+    lessons: tutorial.lessons ?? [],
+  };
 }
 
 /**
- * Retrieves a single tutorial by its ID from the Firestore 'tutorials' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @param {string} id - The ID of the tutorial to retrieve.
- * @returns {Promise<Tutorial | null>} A promise that resolves to the tutorial or null if not found.
+ * Récupère tous les chapitres de l'organisation courante.
+ * L'ordre est celui des positions définies pour chaque formation.
  */
-export async function getTutorialById(db: Firestore, id: string): Promise<Tutorial | null> {
-    return withLocalFallback(
-      'tutorials',
-      async () => {
-        const docRef = db.collection(TUTORIALS_COLLECTION).doc(id);
-        const doc = await docRef.get();
+export async function getTutorials(): Promise<Tutorial[]> {
+  const scope = await getRequestScope();
+  const chapters = await getContentProvider().listChapters(scope);
+  return chapters.map(toTutorial);
+}
 
-        if (!doc.exists) {
-          console.log(`No tutorial found with id: ${id}`);
-          return null;
-        }
-
-        return { id: doc.id, ...doc.data() } as Tutorial;
-      },
-      (local) => (local as Tutorial[]).find(tutorial => tutorial.id === id) ?? null,
-    );
+/** Récupère un chapitre par son identifiant, ou `null` si absent. */
+export async function getTutorialById(id: string): Promise<Tutorial | null> {
+  const scope = await getRequestScope();
+  const chapter = await getContentProvider().getChapter(scope, id);
+  return chapter ? toTutorial(chapter) : null;
 }
 
 /**
- * Deletes a tutorial from the Firestore 'tutorials' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @param {string} id - The ID of the tutorial to delete.
- * @returns {Promise<void>}
+ * Enregistre une liste de chapitres.
+ *
+ * ⚠️ Les positions sont recalculées à partir de l'ordre du tableau, formation
+ * par formation : l'ordre reçu fait foi. Les leçons ne sont **pas** supprimées
+ * puis réinsérées — la progression des apprenants est préservée.
  */
-export async function deleteTutorial(db: Firestore, id: string): Promise<void> {
-    try {
-        const docRef = db.collection(TUTORIALS_COLLECTION).doc(id);
-        await docRef.delete();
-    } catch (error) {
-        console.error(`Error deleting tutorial ${id}: `, error);
-        throw new Error("Could not delete tutorial from Firestore.");
-    }
+export async function saveTutorials(tutorials: Tutorial[]): Promise<void> {
+  const scope = await getRequestScope();
+  await getContentProvider().saveChapters(scope, tutorials.map(fromTutorial));
+}
+
+/** Supprime un chapitre ; ses leçons et son quiz suivent en cascade. */
+export async function deleteTutorial(id: string): Promise<void> {
+  const scope = await getRequestScope();
+  await getContentProvider().deleteChapter(scope, id);
 }

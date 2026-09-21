@@ -497,4 +497,36 @@ export class PostgresContentProvider implements ContentProvider {
       recommended: row.recommended,
     })) as SubscriptionPlan[];
   }
+
+  async upsertPlan(scope: OrgScope, plan: SubscriptionPlan): Promise<SubscriptionPlan> {
+    assertScope(scope);
+
+    // `position` est volontairement absent du DO UPDATE : il fixe l'ordre
+    // d'affichage du catalogue et ne doit pas être réinitialisé par une édition.
+    await query(
+      `INSERT INTO plans (id, name, description, price, billing_period, features, courses, cta, recommended)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         description = EXCLUDED.description,
+         price = EXCLUDED.price,
+         billing_period = EXCLUDED.billing_period,
+         features = EXCLUDED.features,
+         courses = EXCLUDED.courses,
+         cta = EXCLUDED.cta,
+         recommended = EXCLUDED.recommended`,
+      [
+        plan.id, plan.name, plan.description ?? '', plan.price ?? 0,
+        plan.billingPeriod ?? 'monthly', JSON.stringify(plan.features ?? []),
+        JSON.stringify(plan.courses ?? []), plan.cta ?? '', plan.recommended ?? false,
+      ],
+    );
+
+    return plan;
+  }
+
+  async deletePlan(scope: OrgScope, id: string): Promise<void> {
+    assertScope(scope);
+    await query('DELETE FROM plans WHERE id = $1', [id]);
+  }
 }

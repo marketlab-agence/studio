@@ -76,4 +76,4 @@ export * from './types';
 export * from './content';
 export * from './settings';
 export * from './users';
-export { getRequestScope, resetRequestScope } from './scope';
+export { getRequestScope } from './scope';

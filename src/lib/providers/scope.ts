@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { query } from '@/lib/db/pool';
 import { assertScope, type OrgScope } from './types';
 
@@ -11,17 +12,15 @@ import { assertScope, type OrgScope } from './types';
  *
  * En phase 4, cette fonction lira l'utilisateur et son organisation depuis la
  * session — **aucun appelant n'aura à changer**, puisque tous passent déjà par
- * elle. C'est précisément l'intérêt de la passer par une fonction dédiée plutôt
+ * elle. C'est précisément l'intérêt de passer par une fonction dédiée plutôt
  * que de coder une organisation en dur dans les providers.
+ *
+ * ⚠️ `cache()` (React) et NON une variable de module : une variable de module
+ * survit d'une requête à l'autre dans le runtime serveur, ce qui figerait la
+ * première organisation résolue et **casserait l'isolation multi-tenant** dès
+ * la phase 4. `cache()` mémoïse uniquement le temps d'une requête.
  */
-
-const FALLBACK_ROLE = 'Super Admin' as const;
-
-let cachedScope: OrgScope | null = null;
-
-export async function getRequestScope(): Promise<OrgScope> {
-  if (cachedScope) return cachedScope;
-
+export const getRequestScope = cache(async (): Promise<OrgScope> => {
   const { rows } = await query<{ organization_id: string; user_id: string; role: string }>(
     `SELECT o.id AS organization_id, u.id AS user_id, u.role
      FROM organizations o
@@ -39,16 +38,9 @@ export async function getRequestScope(): Promise<OrgScope> {
     );
   }
 
-  cachedScope = assertScope({
+  return assertScope({
     organizationId: rows[0].organization_id,
     userId: rows[0].user_id,
-    role: (rows[0].role as OrgScope['role']) ?? FALLBACK_ROLE,
+    role: rows[0].role as OrgScope['role'],
   });
-
-  return cachedScope;
-}
-
-/** Réinitialise le cache (tests, changement de session). */
-export function resetRequestScope(): void {
-  cachedScope = null;
-}
+});

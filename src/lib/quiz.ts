@@ -1,123 +1,41 @@
-
-import { Quiz } from '@/types/tutorial.types';
-import type { Firestore } from 'firebase-admin/firestore'; // Import only the type
-import { withLocalFallback } from './local-data';
-
-const QUIZZES_COLLECTION = 'quizzes';
+import type { Quiz } from '@/types/tutorial.types';
+import { getContentProvider, getRequestScope } from '@/lib/providers';
 
 /**
- * Retrieves all quizzes from the Firestore 'quizzes' collection.
- * This function can be called from server components or actions.
- * @param {Firestore} db - The Firestore database instance.
- * @returns {Promise<Record<string, Quiz>>} A promise that resolves to an object where keys are quiz IDs.
+ * Quiz de l'organisation courante, indexés par identifiant de chapitre.
+ * Ce module ne connaît plus Firestore : il passe par `ContentProvider` (ADR 0001).
  */
-export async function getQuizzes(db: Firestore): Promise<Record<string, Quiz>> {
-  return withLocalFallback(
-    'quizzes',
-    async () => {
-      const snapshot = await db.collection(QUIZZES_COLLECTION).get();
-      if (snapshot.empty) {
-        console.log('No quizzes found.');
-        return {};
-      }
-      const quizzes: Record<string, Quiz> = {};
-      snapshot.docs.forEach(doc => {
-        quizzes[doc.id] = { id: doc.id, ...doc.data() } as Quiz;
-      });
-      return quizzes;
-    },
-    (local) => local as Record<string, Quiz>,
-  );
+
+/** Récupère tous les quiz, indexés par identifiant de chapitre. */
+export async function getQuizzes(): Promise<Record<string, Quiz>> {
+  const scope = await getRequestScope();
+  return getContentProvider().listQuizMap(scope);
+}
+
+/** Enregistre une carte de quiz (clé = identifiant de chapitre). */
+export async function saveQuizzes(quizzes: Record<string, Quiz>): Promise<void> {
+  const scope = await getRequestScope();
+  await getContentProvider().saveQuizMap(scope, quizzes);
+}
+
+/** Récupère un quiz par l'identifiant de son chapitre, ou `null` si absent. */
+export async function getQuizById(id: string): Promise<Quiz | null> {
+  const scope = await getRequestScope();
+  return getContentProvider().getQuiz(scope, id);
 }
 
 /**
- * Saves a map of quizzes to the Firestore 'quizzes' collection.
- * This will overwrite the entire collection with the new data.
- * @param {Firestore} db - The Firestore database instance.
- * @param {Record<string, Quiz>} quizzes - The map of quizzes to save.
- * @returns {Promise<void>}
+ * Crée ou met à jour un quiz.
+ * Convention de l'application : `quiz.id` est l'identifiant du chapitre porteur.
  */
-export async function saveQuizzes(db: Firestore, quizzes: Record<string, Quiz>): Promise<void> {
-    const batch = db.batch();
-    
-    // Optional: To delete all existing quizzes first if you want a clean slate
-    // const snapshot = await db.collection(QUIZZES_COLLECTION).get();
-    // snapshot.docs.forEach(doc => batch.delete(doc.ref));
-
-    Object.keys(quizzes).forEach(quizId => {
-        const docRef = db.collection(QUIZZES_COLLECTION).doc(quizId);
-        batch.set(docRef, quizzes[quizId]);
-    });
-
-    try {
-        await batch.commit();
-        console.log("Quizzes saved successfully to Firestore.");
-    } catch (error) {
-        console.error("Error saving quizzes to Firestore: ", error);
-        throw new Error("Could not save quizzes to Firestore.");
-    }
+export async function createOrUpdateQuiz(quiz: Quiz): Promise<Quiz> {
+  const scope = await getRequestScope();
+  await getContentProvider().saveQuizMap(scope, { [quiz.id]: quiz });
+  return quiz;
 }
 
-/**
- * Retrieves a single quiz by its ID from the Firestore 'quizzes' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @param {string} id - The ID of the quiz to retrieve.
- * @returns {Promise<Quiz | null>} A promise that resolves to the quiz or null if not found.
- */
-export async function getQuizById(db: Firestore, id: string): Promise<Quiz | null> {
-    return withLocalFallback(
-      'quizzes',
-      async () => {
-        const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
-        const doc = await docRef.get();
-
-        if (!doc.exists) {
-          console.log(`No quiz found with id: ${id}`);
-          return null;
-        }
-
-        return { id: doc.id, ...doc.data() } as Quiz;
-      },
-      (local) => (local as Record<string, Quiz>)[id] ?? null,
-    );
-}
-
-/**
- * Creates or updates a quiz in the Firestore 'quizzes' collection.
- * If the quiz object has an ID, it will update the existing document.
- * If not, it will create a new one.
- * @param {Firestore} db - The Firestore database instance.
- * @param {Quiz} quiz - The quiz object to save.
- * @returns {Promise<Quiz>} The saved quiz object with its ID.
- */
-export async function createOrUpdateQuiz(db: Firestore, quiz: Quiz): Promise<Quiz> {
-  const docRef = quiz.id
-    ? db.collection(QUIZZES_COLLECTION).doc(quiz.id)
-    : db.collection(QUIZZES_COLLECTION).doc();
-
-  const quizData = { ...quiz, id: docRef.id };
-
-  try {
-    await docRef.set(quizData, { merge: true }); // merge: true to avoid overwriting fields not in quizData
-    return quizData;
-  } catch (error) {
-    console.error(`Error saving quiz ${docRef.id}: `, error);
-    throw new Error("Could not save quiz to Firestore.");
-  }
-}
-
-/**
- * Deletes a quiz from the Firestore 'quizzes' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @param {string} id - The ID of the quiz to delete.
- * @returns {Promise<void>}
- */
-export async function deleteQuiz(db: Firestore, id: string): Promise<void> {
-    try {
-        const docRef = db.collection(QUIZZES_COLLECTION).doc(id);
-        await docRef.delete();
-    } catch (error) {
-        console.error(`Error deleting quiz ${id}: `, error);
-        throw new Error("Could not delete quiz from Firestore.");
-    }
+/** Supprime un quiz ; ses questions et réponses suivent en cascade. */
+export async function deleteQuiz(id: string): Promise<void> {
+  const scope = await getRequestScope();
+  await getContentProvider().deleteQuiz(scope, id);
 }

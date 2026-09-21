@@ -1,24 +1,15 @@
 import type { SubscriptionPlan } from '@/types/plans.types';
-import type { Firestore } from 'firebase-admin/firestore';
-import { withLocalFallback } from './local-data';
-
-const PLANS_COLLECTION = 'plans';
+import { getContentProvider, getRequestScope } from '@/lib/providers';
 
 /**
- * Retrieves all subscription plans from the Firestore 'plans' collection.
- * @param {Firestore} db - The Firestore database instance.
- * @returns {Promise<SubscriptionPlan[]>} A promise that resolves to an array of plans.
+ * Formules d'abonnement.
+ *
+ * Le catalogue des formules est **global** (une offre est partagée par toutes
+ * les organisations, qui la référencent via `organizations.plan_id`). L'accès
+ * passe malgré tout par le provider, afin que le stockage reste remplaçable
+ * (ADR 0001) et pour permettre plus tard des offres propres à une organisation.
  */
-export async function getPlans(db: Firestore): Promise<SubscriptionPlan[]> {
-  return withLocalFallback(
-    'plans',
-    async () => {
-      const snapshot = await db.collection(PLANS_COLLECTION).get();
-      if (snapshot.empty) {
-        return [];
-      }
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SubscriptionPlan));
-    },
-    (local) => local as SubscriptionPlan[],
-  );
+export async function getPlans(): Promise<SubscriptionPlan[]> {
+  const scope = await getRequestScope();
+  return getContentProvider().listPlans(scope);
 }

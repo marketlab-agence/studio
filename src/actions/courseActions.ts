@@ -1,17 +1,13 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { type CreateCourseOutput, type CreateCourseInput } from '@/ai/flows/create-course-flow';
-import { getCourses, saveCourses } from '@/lib/courses';
+import { getCourses, saveCourses, deleteCourse } from '@/lib/courses';
 import { getTutorials, saveTutorials } from '@/lib/tutorials';
 import { getQuizzes, saveQuizzes } from '@/lib/quiz';
 import type { Tutorial, Lesson, Quiz, Question, GenerateLessonContentOutput } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
-import type { GlobalProgress } from '@/types/tutorial.types';
-import { FieldValue } from 'firebase-admin/firestore';
 // Métadonnées seules : éviter de tirer les 46 composants (et Genkit via AiHelper)
 // dans une action serveur qui n'a besoin que des noms et descriptions.
 import { listNames, listFunctionalInteractiveNames } from '@/components/registry/catalog';
@@ -28,8 +24,7 @@ const slugify = (text: string) =>
     .replace(/--+/g, '-');
 
 export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
-    const { db } = await getFirebaseAdmin();
-    const courses = await getCourses(db);
+    const courses = await getCourses();
     
     const courseId = slugify(plan.title);
     
@@ -50,29 +45,28 @@ export async function savePlanAction(plan: CreateCourseOutput, params: CreateCou
         courses.push(newCourseData);
     }
 
-    await saveCourses(db, courses);
+    await saveCourses(courses);
     revalidatePath('/admin/courses');
     return { courseId };
 }
 
 
 export async function buildCourseFromPlanAction(courseId: string) {
-    const { db } = await getFirebaseAdmin();
-    // 1. Get the most up-to-date data from Firestore
-    const courses = await getCourses(db);
+    // 1. Récupérer les données à jour
+    const courses = await getCourses();
     const course = courses.find(c => c.id === courseId);
 
     if (!course || !course.plan) {
-        throw new Error("Course or its plan not found in Firestore.");
+        throw new Error("Course or its plan not found.");
     }
 
     const plan = course.plan;
     
-    // 2. Fetch existing tutorials and quizzes
-    let tutorials = await getTutorials(db);
-    let quizzes = await getQuizzes(db);
+    // 2. Récupérer les chapitres (« tutorials ») et quiz existants
+    let tutorials = await getTutorials();
+    let quizzes = await getQuizzes();
 
-    // 3. Build structure based on the reliable plan from Firestore
+    // 3. Construire la structure à partir du plan
     plan.chapters.forEach((chapterPlan, chapterIndex) => {
         const chapterId = `${courseId}-ch${chapterIndex + 1}`;
         
@@ -129,9 +123,9 @@ export async function buildCourseFromPlanAction(courseId: string) {
         };
     }
     
-    await saveCourses(db, courses);
-    await saveTutorials(db, tutorials);
-    await saveQuizzes(db, quizzes);
+    await saveCourses(courses);
+    await saveTutorials(tutorials);
+    await saveQuizzes(quizzes);
 
     revalidatePath('/admin');
     revalidatePath('/admin/courses');
@@ -140,12 +134,11 @@ export async function buildCourseFromPlanAction(courseId: string) {
 
 
 export async function publishCourseAction(courseId: string) {
-    const { db } = await getFirebaseAdmin();
-    const courses = await getCourses(db);
+    const courses = await getCourses();
     const course = courses.find(c => c.id === courseId);
     if (course) {
         course.status = 'Publié';
-        await saveCourses(db, courses);
+        await saveCourses(courses);
         revalidatePath('/admin');
         revalidatePath('/admin/courses');
         revalidatePath(`/admin/courses/${courseId}`);
@@ -153,17 +146,15 @@ export async function publishCourseAction(courseId: string) {
 }
 
 export async function getCourseAndChaptersAction(courseId: string): Promise<{ course: CourseInfo | undefined, chapters: Tutorial[] }> {
-    const { db } = await getFirebaseAdmin();
-    const courses = await getCourses(db);
-    const tutorials = await getTutorials(db);
+    const courses = await getCourses();
+    const tutorials = await getTutorials();
     const course = courses.find(c => c.id === courseId);
     const chapters = tutorials.filter(t => t.courseId === courseId);
     return { course, chapters };
 }
 
 export async function updateLessonContentAction(courseId: string, chapterId: string, updatedLesson: Lesson) {
-    const { db } = await getFirebaseAdmin();
-    const tutorials = await getTutorials(db);
+    const tutorials = await getTutorials();
     const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
         throw new Error('Chapter not found');
@@ -173,7 +164,7 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
         throw new Error('Lesson not found');
     }
     tutorials[chapterIndex].lessons[lessonIndex] = updatedLesson;
-    await saveTutorials(db, tutorials);
+    await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${updatedLesson.id}`);
 }
@@ -202,43 +193,29 @@ export async function generateLessonContentAction(
   chapterIndex: number,
   lessonIndex: number
 ): Promise<GenerateLessonContentOutput> {
-  console.log(`[generateLessonContentAction] Starting for courseId: ${courseId}, chapterIndex: ${chapterIndex}, lessonIndex: ${lessonIndex}`);
   try {
-    const { db } = await getFirebaseAdmin();
-    console.log('[generateLessonContentAction] Firebase Admin SDK obtained.');
-
-    const courses = await getCourses(db);
-    const tutorials = await getTutorials(db);
-    console.log('[generateLessonContentAction] Courses and Tutorials fetched.');
+    const courses = await getCourses();
+    const tutorials = await getTutorials();
 
     const course = courses.find((c) => c.id === courseId);
     if (!course || !course.plan) {
-      console.error('[generateLessonContentAction] Course or course plan not found.', { courseExists: !!course, planExists: !!course?.plan });
       throw new Error('Course or course plan not found.');
     }
-    console.log('[generateLessonContentAction] Course and plan found.');
 
     const generationParams = course.generationParams;
-    if (!generationParams) {
-      console.warn('[generateLessonContentAction] No generationParams found for course.');
-    }
 
     const chapterPlan = course.plan.chapters[chapterIndex];
     const lessonPlan = chapterPlan?.lessons[lessonIndex];
-    console.log('[generateLessonContentAction] Chapter and lesson plans accessed.', { chapterPlanExists: !!chapterPlan, lessonPlanExists: !!lessonPlan });
 
     const chapterId = `${courseId}-ch${chapterIndex + 1}`;
     const lessonId = `${chapterId}-l${lessonIndex + 1}`;
 
     const tutorialChapterIndex = tutorials.findIndex((t) => t.id === chapterId);
     const tutorialLessonIndex = tutorials[tutorialChapterIndex]?.lessons.findIndex((l) => l.id === lessonId);
-    console.log('[generateLessonContentAction] Tutorial chapter and lesson indices found.', { tutorialChapterIndex, tutorialLessonIndex });
 
     if (!lessonPlan || tutorialChapterIndex === -1 || typeof tutorialLessonIndex === 'undefined' || tutorialLessonIndex === -1) {
-      console.error('[generateLessonContentAction] Lesson plan or tutorial structure mismatch.', { lessonPlanExists: !!lessonPlan, tutorialChapterIndex, tutorialLessonIndex });
       throw new Error('Lesson plan or tutorial lesson structure not found.');
     }
-    console.log('[generateLessonContentAction] Tutorial structure matched with plan.');
 
     const contextLines = [
       'Contexte du cours:',
@@ -255,10 +232,7 @@ export async function generateLessonContentAction(
 
     const chapterContext = contextLines.join('\n');
 
-    console.log('[generateLessonContentAction] Chapter context created.');
-
     const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents();
-    console.log('[generateLessonContentAction] Relevant components identified.', { relevantInteractive, relevantVisual });
 
     const input: GenerateLessonContentInput = {
       lessonTitle: lessonPlan.title,
@@ -271,20 +245,15 @@ export async function generateLessonContentAction(
       availableInteractiveComponents: relevantInteractive,
       availableVisualComponents: relevantVisual,
     };
-    console.log('[generateLessonContentAction] Input for AI model prepared.', input);
 
-    console.log('[generateLessonContentAction] Calling AI model...');
     const result = await generateLessonContent(input);
     const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
-    console.log('[generateLessonContentAction] AI model call complete. Result:', result);
 
     tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
     tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
     tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
-    console.log('[generateLessonContentAction] Tutorial data updated with generated content.');
 
-    await saveTutorials(db, tutorials);
-    console.log('[generateLessonContentAction] Tutorials saved to Firestore.');
+    await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
@@ -298,67 +267,29 @@ export async function generateLessonContentAction(
 
 
 export async function updateQuizAction(courseId: string, chapterId: string, updatedQuiz: Quiz) {
-    const { db } = await getFirebaseAdmin();
-    const quizzes = await getQuizzes(db);
+    const quizzes = await getQuizzes();
     if (!quizzes[chapterId]) {
         throw new Error('Quiz not found');
     }
     quizzes[chapterId] = updatedQuiz;
-    await saveQuizzes(db, quizzes);
+    await saveQuizzes(quizzes);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/quiz`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
 }
 
 export async function deleteCourseAction(courseId: string) {
-    const { db } = await getFirebaseAdmin();
-
     try {
-        await db.runTransaction(async (transaction) => {
-            // 1. Get all tutorials for the course to find their IDs
-            const tutorialsSnapshot = await transaction.get(
-                db.collection('tutorials').where('courseId', '==', courseId)
-            );
-            const tutorialIds = tutorialsSnapshot.docs.map(doc => doc.id);
+        // La cascade en base remplace l'ancienne transaction Firestore, qui
+        // nettoyait manuellement chapitres, leçons, quiz et progression.
+        // Sont supprimés par `ON DELETE CASCADE` : chapters, lessons, quizzes,
+        // questions, answers, user_lesson_progress et user_course_progress.
+        await deleteCourse(courseId);
 
-            // 2. Delete the course document
-            transaction.delete(db.collection('courses').doc(courseId));
-            console.log(`Course ${courseId} marked for deletion.`);
-
-            // 3. Delete associated tutorials
-            tutorialsSnapshot.docs.forEach(doc => {
-                transaction.delete(doc.ref);
-            });
-            console.log(`Tutorials for course ${courseId} marked for deletion.`);
-
-            // 4. Delete associated quizzes
-            tutorialIds.forEach(id => {
-                transaction.delete(db.collection('quizzes').doc(id));
-            });
-            console.log(`Quizzes for course ${courseId} marked for deletion.`);
-
-            // 5. Clean up user progress data
-            const usersSnapshot = await transaction.get(db.collection('users'));
-            if (!usersSnapshot.empty) {
-                usersSnapshot.docs.forEach(userDoc => {
-                    const progressDocRef = db.collection('users').doc(userDoc.id).collection('progress').doc('all');
-                     // We use an update with FieldValue.delete() to remove a specific field from the document
-                    transaction.update(progressDocRef, {
-                      [courseId]: FieldValue.delete()
-                    });
-                });
-                console.log(`User progress for course ${courseId} marked for cleanup.`);
-            }
-        });
-
-        console.log(`Transaction successfully committed for deleting course ${courseId}.`);
         revalidatePath('/admin/courses');
         revalidatePath('/dashboard');
     } catch (error) {
-        console.error(`Transaction failed for deleting course ${courseId}: `, error);
+        console.error(`Failed to delete course ${courseId}: `, error);
         throw new Error("Failed to delete course and associated data.");
     }
 }
-    
-
-    

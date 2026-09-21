@@ -1,6 +1,5 @@
 import { getTutorials } from '@/lib/tutorials';
 import { NextResponse, NextRequest } from 'next/server';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function GET(
   request: NextRequest,
@@ -10,10 +9,9 @@ export async function GET(
   const { courseId } = await params;
 
   try {
-    const { db } = await getFirebaseAdmin();
 
     // Récupération des tutoriels
-    const allTutorials = await getTutorials(db);
+    const allTutorials = await getTutorials();
 
     // Filtrage par courseId
     const tutorialsForCourse = allTutorials.filter(t => t.courseId === courseId);

@@ -49,4 +49,14 @@ export interface ContentProvider {
 
   // --- Formules --------------------------------------------------------------
   listPlans(scope: OrgScope): Promise<SubscriptionPlan[]>;
+  /**
+   * Crée ou met à jour une formule.
+   *
+   * ⚠️ Le catalogue des formules est **global** : cette écriture affecte toutes
+   * les organisations. Elle devra être réservée à l'administration plateforme
+   * (contrôle d'autorisation en phase 4, REQ-SEC).
+   */
+  upsertPlan(scope: OrgScope, plan: SubscriptionPlan): Promise<SubscriptionPlan>;
+  /** Supprime une formule du catalogue global. Mêmes réserves d'autorisation. */
+  deletePlan(scope: OrgScope, id: string): Promise<void>;
 }

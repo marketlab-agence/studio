@@ -1,7 +1,6 @@
 
 'use server';
 
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { savePlanAction } from '@/actions/courseActions';
 import { buildCourseFromPlanAction } from '@/actions/courseActions';
 import { generateLessonContentAction } from '@/actions/courseActions';
@@ -18,7 +17,7 @@ export async function startFullCourseGenerationAction(plan: CreateCourseOutput, 
         courseId = savePlanResult.courseId;
         console.log(`Plan saved, courseId: ${courseId}`);
 
-        // Step 2: Build the basic course structure in Firestore
+        // Step 2: Build the basic course structure
         console.log(`Step 2: Building course structure for ${courseId}...`);
         await buildCourseFromPlanAction(courseId);
         console.log('Course structure built.');
