@@ -1,0 +1,380 @@
+import { createHash, randomBytes } from 'node:crypto';
+import { query, withTransaction } from '@/lib/db/pool';
+import { REFRESH_TTL_SECONDS, signAccessToken, ACCESS_TTL_SECONDS } from '@/lib/auth/jwt';
+import { assertPasswordPolicy, hashPassword, verifyPassword } from '@/lib/auth/password';
+import {
+  AccountDisabledError,
+  InvalidCredentialsError,
+  InvalidRefreshTokenError,
+  InvalidResetTokenError,
+  RefreshTokenReuseError,
+  type AuthProvider,
+  type AuthenticatedUser,
+  type LoginInput,
+  type RegisterInput,
+  type Session,
+} from '../auth';
+import type { OrgScope } from '../types';
+
+/**
+ * Authentification JWT sur PostgreSQL (ADR 0002).
+ *
+ * Deux principes de sécurité structurent ce module :
+ *
+ * 1. **Rien de secret n'est stocké en clair.** Les mots de passe sont hachés par
+ *    bcrypt ; les refresh tokens et les jetons de réinitialisation sont hachés
+ *    par SHA-256 (ils sont aléatoires sur 32 octets, donc non devinables : un
+ *    KDF lent n'apporterait rien).
+ *
+ * 2. **Un refresh token ne sert qu'une fois.** Chaque rafraîchissement révoque
+ *    le jeton présenté et en émet un nouveau. Présenter un jeton **déjà révoqué**
+ *    est traité comme un vol probable : toutes les sessions de l'utilisateur
+ *    sont alors révoquées.
+ */
+
+/** Durée de vie d'un lien de réinitialisation, en minutes. */
+const RESET_TTL_MINUTES = 60;
+
+type UserRow = {
+  id: string;
+  organization_id: string;
+  email: string;
+  name: string;
+  role: string;
+  status: 'Actif' | 'Inactif';
+  avatar_url: string | null;
+  password_hash: string | null;
+  must_reset_password: boolean;
+  two_factor_enabled: boolean;
+};
+
+const USER_COLUMNS = `
+  id, organization_id, email, name, role, status, avatar_url,
+  password_hash, must_reset_password, two_factor_enabled
+`;
+
+function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    status: row.status,
+    avatarUrl: row.avatar_url ?? undefined,
+    mustResetPassword: row.must_reset_password,
+    twoFactorEnabled: row.two_factor_enabled,
+  };
+}
+
+/** Jeton aléatoire opaque (32 octets → 43 caractères base64url). */
+function generateOpaqueToken(): string {
+  return randomBytes(32).toString('base64url');
+}
+
+/**
+ * Empreinte d'un jeton opaque.
+ * SHA-256 (et non bcrypt) : le jeton est déjà imprévisible, il n'y a donc rien
+ * à ralentir — et la vérification doit rester rapide à chaque requête.
+ */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'organisation';
+}
+
+export class JwtAuthProvider implements AuthProvider {
+  /** Normalise l'email : la casse ne doit pas créer de comptes distincts. */
+  private static normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private async findByEmail(email: string): Promise<UserRow | null> {
+    const { rows } = await query<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE lower(email) = lower($1)`,
+      [JwtAuthProvider.normalizeEmail(email)],
+    );
+    return rows[0] ?? null;
+  }
+
+  private async findById(userId: string): Promise<UserRow | null> {
+    const { rows } = await query<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = $1`, [
+      userId,
+    ]);
+    return rows[0] ?? null;
+  }
+
+  /** Émet une session et enregistre le refresh token (haché). */
+  private async issueSession(user: UserRow): Promise<Session> {
+    const accessToken = await signAccessToken({
+      userId: user.id,
+      organizationId: user.organization_id,
+      role: user.role,
+      email: user.email,
+    });
+
+    const refreshToken = generateOpaqueToken();
+    const expiresAt = new Date(Date.now() + REFRESH_TTL_SECONDS * 1000);
+
+    await query(
+      `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+      [user.id, hashToken(refreshToken), expiresAt],
+    );
+
+    return {
+      user: toAuthenticatedUser(user),
+      accessToken,
+      refreshToken,
+      accessTokenExpiresIn: ACCESS_TTL_SECONDS,
+    };
+  }
+
+  async register(input: RegisterInput): Promise<Session> {
+    const email = JwtAuthProvider.normalizeEmail(input.email);
+
+    // La politique est vérifiée AVANT toute écriture : pas d'organisation
+    // orpheline si le mot de passe est refusé.
+    assertPasswordPolicy(input.password);
+    const passwordHash = await hashPassword(input.password);
+
+    const existing = await this.findByEmail(email);
+    if (existing) {
+      throw new Error(`Un compte existe déjà pour ${email}.`);
+    }
+
+    const userId = await withTransaction(async (client) => {
+      let organizationId = input.organizationId;
+
+      if (!organizationId) {
+        // Inscription libre-service (REQ-ORG-04) : créer un compte crée
+        // l'organisation, l'inscrit devient Propriétaire.
+        const slug = `${slugify(input.name)}-${randomBytes(3).toString('hex')}`;
+        const created = await client.query<{ id: string }>(
+          `INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+          [input.name, slug],
+        );
+        organizationId = created.rows[0].id;
+      }
+
+      const inserted = await client.query<{ id: string }>(
+        `INSERT INTO users (organization_id, email, name, role, password_hash)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [
+          organizationId,
+          email,
+          input.name,
+          input.organizationId ? 'Utilisateur' : 'Propriétaire',
+          passwordHash,
+        ],
+      );
+
+      const createdUserId = inserted.rows[0].id;
+
+      // `organizations.owner_id` référence users : renseigné après création.
+      if (!input.organizationId) {
+        await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [
+          createdUserId,
+          organizationId,
+        ]);
+      }
+
+      return createdUserId;
+    });
+
+    const user = await this.findById(userId);
+    if (!user) throw new Error('Compte introuvable après création.');
+
+    return this.issueSession(user);
+  }
+
+  async login(input: LoginInput): Promise<Session> {
+    const user = await this.findByEmail(input.email);
+
+    // Le mot de passe est vérifié même si le compte est introuvable : sans cela,
+    // le temps de réponse révélerait quels emails existent. `verifyPassword`
+    // retourne `false` sur un hachage absent, ce qui couvre les comptes OAuth.
+    const passwordOk = await verifyPassword(input.password, user?.password_hash ?? null);
+
+    if (!user || !passwordOk) {
+      throw new InvalidCredentialsError();
+    }
+
+    if (user.status !== 'Actif') {
+      throw new AccountDisabledError();
+    }
+
+    await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+
+    return this.issueSession(user);
+  }
+
+  async refresh(refreshToken: string): Promise<Session> {
+    const tokenHash = hashToken(refreshToken);
+
+    const { rows } = await query<{
+      id: string;
+      user_id: string;
+      expires_at: Date;
+      revoked_at: Date | null;
+    }>('SELECT id, user_id, expires_at, revoked_at FROM refresh_tokens WHERE token = $1', [
+      tokenHash,
+    ]);
+
+    const stored = rows[0];
+    if (!stored) {
+      throw new InvalidRefreshTokenError();
+    }
+
+    // Jeton déjà utilisé : on ne peut pas distinguer un vol d'une simple
+    // reprise, donc on révoque tout par précaution (détection de réutilisation).
+    if (stored.revoked_at) {
+      await query(
+        'UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL',
+        [stored.user_id],
+      );
+      throw new RefreshTokenReuseError();
+    }
+
+    if (stored.expires_at.getTime() <= Date.now()) {
+      throw new InvalidRefreshTokenError();
+    }
+
+    const user = await this.findById(stored.user_id);
+    if (!user) {
+      throw new InvalidRefreshTokenError();
+    }
+    if (user.status !== 'Actif') {
+      throw new AccountDisabledError();
+    }
+
+    // Rotation : l'ancien jeton est révoqué, un nouveau est émis.
+    await query('UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1', [stored.id]);
+
+    return this.issueSession(user);
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    // Idempotent : se déconnecter deux fois n'est pas une erreur.
+    await query(
+      'UPDATE refresh_tokens SET revoked_at = NOW() WHERE token = $1 AND revoked_at IS NULL',
+      [hashToken(refreshToken)],
+    );
+  }
+
+  async revokeAllSessions(scope: OrgScope, userId: string): Promise<void> {
+    // Le filtre par organisation empêche de révoquer les sessions d'un
+    // utilisateur appartenant à une autre organisation.
+    await query(
+      `UPDATE refresh_tokens SET revoked_at = NOW()
+       WHERE revoked_at IS NULL
+         AND user_id IN (SELECT id FROM users WHERE organization_id = $1 AND id = $2)`,
+      [scope.organizationId, userId],
+    );
+  }
+
+  async requestPasswordReset(
+    email: string,
+  ): Promise<{ token: string; user: AuthenticatedUser } | null> {
+    const user = await this.findByEmail(email);
+
+    // Email inconnu : on retourne `null` sans lever. L'endpoint répondra la même
+    // chose que pour un email connu, afin de ne pas énumérer les comptes.
+    if (!user) return null;
+
+    const token = generateOpaqueToken();
+    const expiresAt = new Date(Date.now() + RESET_TTL_MINUTES * 60 * 1000);
+
+    await query(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+      [user.id, hashToken(token), expiresAt],
+    );
+
+    // Seul moment où le jeton existe en clair : l'appelant doit l'envoyer.
+    return { token, user: toAuthenticatedUser(user) };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<AuthenticatedUser> {
+    assertPasswordPolicy(newPassword);
+    const passwordHash = await hashPassword(newPassword);
+    const tokenHash = hashToken(token);
+
+    const userId = await withTransaction(async (client) => {
+      const { rows } = await client.query<{
+        id: string;
+        user_id: string;
+        expires_at: Date;
+        used_at: Date | null;
+      }>(
+        'SELECT id, user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = $1 FOR UPDATE',
+        [tokenHash],
+      );
+
+      const stored = rows[0];
+      if (!stored) throw new InvalidResetTokenError();
+      if (stored.used_at) throw new InvalidResetTokenError('lien déjà utilisé');
+      if (stored.expires_at.getTime() <= Date.now()) throw new InvalidResetTokenError('lien expiré');
+
+      // Le lien est consommé et le mot de passe posé dans la même transaction :
+      // jamais de lien brûlé sans mot de passe changé, ni l'inverse.
+      await client.query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1', [
+        stored.id,
+      ]);
+
+      await client.query(
+        `UPDATE users SET password_hash = $2, must_reset_password = false WHERE id = $1`,
+        [stored.user_id, passwordHash],
+      );
+
+      // Un mot de passe changé invalide les sessions ouvertes avec l'ancien.
+      await client.query(
+        'UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL',
+        [stored.user_id],
+      );
+
+      return stored.user_id;
+    });
+
+    const user = await this.findById(userId);
+    if (!user) throw new InvalidResetTokenError('compte introuvable');
+    return toAuthenticatedUser(user);
+  }
+
+  async changePassword(
+    scope: OrgScope,
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    assertPasswordPolicy(newPassword);
+
+    const { rows } = await query<{ password_hash: string | null }>(
+      'SELECT password_hash FROM users WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+
+    const stored = rows[0];
+    if (!stored) throw new Error(`Utilisateur "${userId}" introuvable dans cette organisation.`);
+
+    // Le mot de passe actuel est exigé : sans cela, un jeton d'accès volé
+    // suffirait à s'approprier définitivement le compte.
+    if (!(await verifyPassword(currentPassword, stored.password_hash))) {
+      throw new InvalidCredentialsError();
+    }
+
+    const newHash = await hashPassword(newPassword);
+
+    await query('UPDATE users SET password_hash = $2, must_reset_password = false WHERE id = $1', [
+      userId,
+      newHash,
+    ]);
+  }
+}

@@ -1,4 +1,5 @@
 import type { AiCreditProvider } from './ai-credits';
+import type { AuthProvider } from './auth';
 import type { ContentProvider } from './content';
 import type { DocumentProvider } from './document';
 import type { EmailProvider } from './email';
@@ -6,6 +7,7 @@ import type { NotificationProvider } from './notification';
 import type { SettingsProvider } from './settings';
 import type { StorageProvider } from './storage';
 import type { UserProvider } from './users';
+import { JwtAuthProvider } from './auth/jwt';
 import { PostgresAiCreditProvider } from './postgres/ai-credits';
 import { PostgresContentProvider } from './postgres/content';
 import { PostgresDocumentProvider } from './postgres/document';
@@ -42,6 +44,7 @@ let storageProvider: StorageProvider | null = null;
 let aiCreditProvider: AiCreditProvider | null = null;
 let notificationProvider: NotificationProvider | null = null;
 let documentProvider: DocumentProvider | null = null;
+let authProvider: AuthProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
   if (contentProvider) return contentProvider;
@@ -171,6 +174,20 @@ export function getDocumentProvider(): DocumentProvider {
   }
 }
 
+/** Authentification (JWT + bcrypt + refresh rotatif). */
+export function getAuthProvider(): AuthProvider {
+  if (authProvider) return authProvider;
+
+  const provider = process.env.AUTH_PROVIDER ?? 'jwt';
+  switch (provider) {
+    case 'jwt':
+      authProvider = new JwtAuthProvider();
+      return authProvider;
+    default:
+      return unknownProvider('AUTH_PROVIDER', provider, ['jwt']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
@@ -181,11 +198,13 @@ export function resetProviders(): void {
   aiCreditProvider = null;
   notificationProvider = null;
   documentProvider = null;
+  authProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
 export * from './types';
 export * from './ai-credits';
+export * from './auth';
 export * from './content';
 export * from './document';
 export * from './email';

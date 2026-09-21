@@ -16,6 +16,10 @@ export const pool = new Pool({ connectionString: TEST_DATABASE_URL });
 // base de test — jamais la base de développement.
 process.env.DATABASE_URL ??= TEST_DATABASE_URL;
 
+// Le provider d'authentification signe des jetons JWT : un secret est requis.
+// Valeur de test uniquement, jamais utilisée hors de cette suite.
+process.env.JWT_SECRET ??= 'secret-de-test-uniquement-pour-la-base-de-test-2026';
+
 /** Indique si la base de test est joignable. */
 export async function isDatabaseAvailable(): Promise<boolean> {
   try {

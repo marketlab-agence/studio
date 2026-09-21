@@ -18,6 +18,8 @@ const ESM_DEPS = [
   'firebase',
   '@firebase',
   'yaml',
+  // `jose` est publie en ESM uniquement (Web Crypto, compatible Edge runtime).
+  'jose',
 ].join('|')
 
 /** @type {import('jest').Config} */
