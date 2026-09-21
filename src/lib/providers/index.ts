@@ -1,9 +1,13 @@
 import type { ContentProvider } from './content';
+import type { EmailProvider } from './email';
 import type { SettingsProvider } from './settings';
 import type { UserProvider } from './users';
 import { PostgresContentProvider } from './postgres/content';
 import { PostgresSettingsProvider } from './postgres/settings';
 import { PostgresUserProvider } from './postgres/users';
+import { MemoryEmailProvider } from './email/memory';
+import { ResendEmailProvider } from './email/resend';
+import { SmtpEmailProvider } from './email/smtp';
 
 /**
  * Sélection des implémentations (zero vendor lock-in).
@@ -24,6 +28,7 @@ function unknownProvider(variable: string, value: string, supported: string[]): 
 let contentProvider: ContentProvider | null = null;
 let userProvider: UserProvider | null = null;
 let settingsProvider: SettingsProvider | null = null;
+let emailProvider: EmailProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
   if (contentProvider) return contentProvider;
@@ -64,16 +69,41 @@ export function getSettingsProvider(): SettingsProvider {
   }
 }
 
+/**
+ * Transport d'emails. Défaut `smtp` (repli du gate G3, sans engagement) ;
+ * `memory` n'envoie rien et convient aux tests et au développement local.
+ */
+export function getEmailProvider(): EmailProvider {
+  if (emailProvider) return emailProvider;
+
+  const provider = process.env.EMAIL_PROVIDER ?? 'smtp';
+  switch (provider) {
+    case 'smtp':
+      emailProvider = new SmtpEmailProvider();
+      return emailProvider;
+    case 'resend':
+      emailProvider = new ResendEmailProvider();
+      return emailProvider;
+    case 'memory':
+      emailProvider = new MemoryEmailProvider();
+      return emailProvider;
+    default:
+      return unknownProvider('EMAIL_PROVIDER', provider, ['smtp', 'resend', 'memory']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
   userProvider = null;
   settingsProvider = null;
+  emailProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
 export * from './types';
 export * from './content';
+export * from './email';
 export * from './settings';
 export * from './users';
 export { getRequestScope } from './scope';
