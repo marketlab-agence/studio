@@ -61,8 +61,30 @@ export const changePasswordSchema = z.object({
   newPassword: password,
 });
 
+/** Code TOTP : 6 chiffres, format produit par les applications d'authentification. */
+const totpCode = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, 'Le code doit comporter 6 chiffres.');
+
+export const mfaCodeSchema = z.object({
+  code: totpCode,
+});
+
+export const mfaChallengeSchema = z.object({
+  challengeToken: z.string().trim().min(1, 'Le défi est requis.'),
+  code: totpCode,
+});
+
+export const disableMfaSchema = z.object({
+  password: z.string().min(1, 'Le mot de passe est requis.'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type MfaCodeInput = z.infer<typeof mfaCodeSchema>;
+export type MfaChallengeInput = z.infer<typeof mfaChallengeSchema>;
+export type DisableMfaInput = z.infer<typeof disableMfaSchema>;

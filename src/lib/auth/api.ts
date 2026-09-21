@@ -3,11 +3,16 @@ import type { z } from 'zod';
 import {
   AccountDisabledError,
   InvalidCredentialsError,
+  InvalidMfaCodeError,
   InvalidRefreshTokenError,
   InvalidResetTokenError,
+  MfaNotConfiguredError,
   RefreshTokenReuseError,
 } from '@/lib/providers/auth';
 import { PasswordPolicyError } from '@/lib/auth/password';
+import type { OrgScope } from '@/lib/providers/types';
+import { tryVerifyAccessToken, type AccessTokenClaims } from '@/lib/auth/jwt';
+import { ACCESS_COOKIE } from '@/lib/auth/cookies';
 import { checkRateLimit, clientKey, type RateLimitResult, type RateLimitRule } from '@/lib/rate-limit';
 
 /**
@@ -95,6 +100,8 @@ export function mapAuthError(error: unknown, context: string): NextResponse {
   if (error instanceof InvalidRefreshTokenError) return errorResponse(error.message, 401);
   if (error instanceof InvalidResetTokenError) return errorResponse(error.message, 400);
   if (error instanceof PasswordPolicyError) return errorResponse(error.message, 400);
+  if (error instanceof InvalidMfaCodeError) return errorResponse(error.message, 401);
+  if (error instanceof MfaNotConfiguredError) return errorResponse(error.message, 409);
 
   // Un compte déjà existant est une erreur d'usage, pas une panne.
   if (error instanceof Error && /existe déjà/.test(error.message)) {
@@ -103,4 +110,34 @@ export function mapAuthError(error: unknown, context: string): NextResponse {
 
   console.error(`[auth] ${context} — échec inattendu :`, error);
   return errorResponse('Une erreur interne est survenue.', 500);
+}
+
+/**
+ * Construit le scope d'organisation à partir des informations de session.
+ *
+ * Le rôle provient du jeton, dont la signature a été vérifiée : il est donc
+ * digne de confiance pour filtrer par organisation. L'autorisation fine (qui a
+ * le droit de faire quoi) reste à la charge de chaque route.
+ */
+export function scopeFromClaims(claims: AccessTokenClaims): OrgScope {
+  return {
+    organizationId: claims.organizationId,
+    userId: claims.userId,
+    role: claims.role as OrgScope['role'],
+  };
+}
+export async function requireSession(
+  request: Request,
+): Promise<
+  { claims: AccessTokenClaims; response?: never } | { claims?: never; response: NextResponse }
+> {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${ACCESS_COOKIE}=([^;]+)`));
+
+  const claims = await tryVerifyAccessToken(match?.[1]);
+  if (!claims) {
+    return { response: errorResponse('Authentification requise.', 401) };
+  }
+
+  return { claims };
 }

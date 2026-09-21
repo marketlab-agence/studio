@@ -1,17 +1,36 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { query, withTransaction } from '@/lib/db/pool';
-import { REFRESH_TTL_SECONDS, signAccessToken, ACCESS_TTL_SECONDS } from '@/lib/auth/jwt';
+import {
+  ACCESS_TTL_SECONDS,
+  MFA_CHALLENGE_TTL_SECONDS,
+  REFRESH_TTL_SECONDS,
+  signAccessToken,
+  signMfaChallenge,
+  verifyMfaChallenge,
+} from '@/lib/auth/jwt';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from '@/lib/auth/password';
+import { decryptSecret, encryptSecret, looksEncrypted } from '@/lib/auth/crypto';
+import {
+  buildTotpUri,
+  generateTotpSecret,
+  verifyTotp,
+  TOTP_PERIOD_SECONDS,
+} from '@/lib/auth/totp';
 import {
   AccountDisabledError,
   InvalidCredentialsError,
+  InvalidMfaCodeError,
   InvalidRefreshTokenError,
   InvalidResetTokenError,
+  MfaNotConfiguredError,
   RefreshTokenReuseError,
   RESET_TTL_MINUTES,
   type AuthProvider,
   type AuthenticatedUser,
   type LoginInput,
+  type LoginResult,
+  type MfaSetup,
+  type MfaStatus,
   type RegisterInput,
   type Session,
 } from '../auth';
@@ -46,11 +65,12 @@ type UserRow = {
   password_hash: string | null;
   must_reset_password: boolean;
   two_factor_enabled: boolean;
+  two_factor_secret: string | null;
 };
 
 const USER_COLUMNS = `
   id, organization_id, email, name, role, status, avatar_url,
-  password_hash, must_reset_password, two_factor_enabled
+  password_hash, must_reset_password, two_factor_enabled, two_factor_secret
 `;
 
 function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
@@ -196,7 +216,7 @@ export class JwtAuthProvider implements AuthProvider {
     return this.issueSession(user);
   }
 
-  async login(input: LoginInput): Promise<Session> {
+  async login(input: LoginInput): Promise<LoginResult> {
     const user = await this.findByEmail(input.email);
 
     // Le mot de passe est vérifié même si le compte est introuvable : sans cela,
@@ -210,6 +230,143 @@ export class JwtAuthProvider implements AuthProvider {
 
     if (user.status !== 'Actif') {
       throw new AccountDisabledError();
+    }
+
+    // Second facteur exigé : le mot de passe seul ne suffit pas, aucune session
+    // n'est ouverte. On retourne un défi à courte durée de vie.
+    if (user.two_factor_enabled) {
+      return {
+        mfaRequired: true,
+        challengeToken: await signMfaChallenge(user.id),
+        expiresInSeconds: MFA_CHALLENGE_TTL_SECONDS,
+      };
+    }
+
+    await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+
+    return this.issueSession(user);
+  }
+
+  // --- Double authentification ----------------------------------------------
+
+  /**
+   * Déchiffre le secret TOTP stocké.
+   *
+   * Tolère une valeur non chiffrée : c'est le cas d'un secret posé avant la
+   * mise en place du chiffrement. Refuser ces valeurs enfermerait dehors les
+   * utilisateurs concernés.
+   */
+  private static readTotpSecret(stored: string | null): string | null {
+    if (!stored) return null;
+    return looksEncrypted(stored) ? decryptSecret(stored) : stored;
+  }
+
+  async mfaStatus(scope: OrgScope, userId: string): Promise<MfaStatus> {
+    const { rows } = await query<{ two_factor_enabled: boolean; two_factor_secret: string | null }>(
+      'SELECT two_factor_enabled, two_factor_secret FROM users WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+
+    const row = rows[0];
+    if (!row) throw new Error(`Utilisateur "${userId}" introuvable dans cette organisation.`);
+
+    return {
+      configured: row.two_factor_secret !== null,
+      enabled: row.two_factor_enabled,
+    };
+  }
+
+  async beginMfaSetup(scope: OrgScope, userId: string): Promise<MfaSetup> {
+    const user = await query<{ email: string; name: string }>(
+      'SELECT email, name FROM users WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+
+    const account = user.rows[0];
+    if (!account) throw new Error(`Utilisateur "${userId}" introuvable dans cette organisation.`);
+
+    const secret = generateTotpSecret();
+
+    // Le secret est stocké chiffré, mais `two_factor_enabled` reste à false :
+    // l'activation attend la preuve que l'application d'authentification
+    // enregistre bien ce secret (voir `confirmMfaSetup`).
+    await query(
+      `UPDATE users SET two_factor_secret = $3, two_factor_enabled = false
+       WHERE organization_id = $1 AND id = $2`,
+      [scope.organizationId, userId, encryptSecret(secret)],
+    );
+
+    return {
+      secret,
+      uri: buildTotpUri({
+        secretBase32: secret,
+        accountName: account.email,
+        issuer: process.env.MFA_ISSUER ?? 'Katalyst',
+      }),
+    };
+  }
+
+  async confirmMfaSetup(scope: OrgScope, userId: string, code: string): Promise<void> {
+    const { rows } = await query<{ two_factor_secret: string | null }>(
+      'SELECT two_factor_secret FROM users WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+
+    const stored = rows[0]?.two_factor_secret;
+    if (!stored) throw new MfaNotConfiguredError();
+
+    const secret = JwtAuthProvider.readTotpSecret(stored);
+    if (!secret || !verifyTotp(secret, code)) {
+      throw new InvalidMfaCodeError();
+    }
+
+    await query(
+      'UPDATE users SET two_factor_enabled = true WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+  }
+
+  async disableMfa(scope: OrgScope, userId: string, password: string): Promise<void> {
+    const { rows } = await query<{ password_hash: string | null }>(
+      'SELECT password_hash FROM users WHERE organization_id = $1 AND id = $2',
+      [scope.organizationId, userId],
+    );
+
+    const stored = rows[0];
+    if (!stored) throw new Error(`Utilisateur "${userId}" introuvable dans cette organisation.`);
+
+    // Le mot de passe est exigé : sans lui, un jeton d'accès volé suffirait à
+    // retirer le second facteur — c'est-à-dire à affaiblir le compte.
+    if (!(await verifyPassword(password, stored.password_hash))) {
+      throw new InvalidCredentialsError();
+    }
+
+    await query(
+      `UPDATE users SET two_factor_enabled = false, two_factor_secret = NULL
+       WHERE organization_id = $1 AND id = $2`,
+      [scope.organizationId, userId],
+    );
+  }
+
+  async completeMfaChallenge(challengeToken: string, code: string): Promise<Session> {
+    // Un défi invalide ou expiré ne doit pas révéler s'il correspond à un compte.
+    let userId: string;
+    try {
+      ({ userId } = await verifyMfaChallenge(challengeToken));
+    } catch {
+      throw new InvalidMfaCodeError();
+    }
+
+    const user = await this.findById(userId);
+    if (!user || user.status !== 'Actif') {
+      throw new InvalidMfaCodeError();
+    }
+
+    const secret = JwtAuthProvider.readTotpSecret(user.two_factor_secret);
+    if (!secret) throw new MfaNotConfiguredError();
+
+    if (!verifyTotp(secret, code, { period: TOTP_PERIOD_SECONDS })) {
+      throw new InvalidMfaCodeError();
     }
 
     await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);

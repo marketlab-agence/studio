@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getAuthProvider } from '@/lib/providers';
+import { getAuthProvider, isMfaChallenge } from '@/lib/providers';
 import { loginSchema } from '@/lib/schemas/auth';
 import { enforceRateLimit, errorResponse, mapAuthError, parseBody } from '@/lib/auth/api';
 import { setSessionCookies } from '@/lib/auth/cookies';
 import { RATE_LIMITS } from '@/lib/rate-limit';
 
 /**
- * POST /api/auth/login — connexion (REQ-AUTH-01, REQ-AUTH-06).
+ * POST /api/auth/login — connexion (REQ-AUTH-01, REQ-AUTH-04, REQ-AUTH-06).
+ *
+ * Deux issues possibles :
+ *
+ * 1. **Session complète** — cookies posés, comme attendu.
+ * 2. **Second facteur exigé** (`mfaRequired`) — dans ce cas **aucun cookie n'est
+ *    posé** : le mot de passe seul ne suffit pas. Le client doit présenter le
+ *    défi et le code TOTP sur `/api/auth/mfa/challenge`.
  *
  * Réponse identique pour un email inconnu et un mot de passe erroné : le
  * provider garantit déjà l'égalité du message et du type d'erreur, et cette
  * route se contente de la relayer sans l'enrichir.
- *
- * `user.mustResetPassword` est transmis au client : les comptes repris de
- * Firebase Auth se connectent, mais doivent définir un nouveau mot de passe
- * (REQ-AUTH-06).
  */
 export async function POST(request: Request) {
   const limited = enforceRateLimit(request, 'login', RATE_LIMITS.login);
@@ -24,16 +27,27 @@ export async function POST(request: Request) {
   if (body.response) return body.response;
 
   try {
-    const session = await getAuthProvider().login(body.data);
+    const result = await getAuthProvider().login(body.data);
+
+    if (isMfaChallenge(result)) {
+      return NextResponse.json(
+        {
+          mfaRequired: true,
+          challengeToken: result.challengeToken,
+          expiresInSeconds: result.expiresInSeconds,
+        },
+        { status: 200 },
+      );
+    }
 
     return setSessionCookies(
       NextResponse.json({
-        user: session.user,
-        accessTokenExpiresIn: session.accessTokenExpiresIn,
+        user: result.user,
+        accessTokenExpiresIn: result.accessTokenExpiresIn,
         // Indique au client où rediriger : changement de mot de passe imposé.
-        redirectTo: session.user.mustResetPassword ? '/forgot-password' : null,
+        redirectTo: result.user.mustResetPassword ? '/forgot-password' : null,
       }),
-      session,
+      result,
     );
   } catch (error) {
     return mapAuthError(error, 'POST /api/auth/login');

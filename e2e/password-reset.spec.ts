@@ -22,16 +22,20 @@ import { Pool } from 'pg';
 const DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5433/katalyst';
 
+/**
+ * Connexion directe à la base, pour fabriquer un jeton de réinitialisation.
+ *
+ * ⚠️ On ne ferme **pas** ce pool : avec `fullyParallel`, les tests d'un même
+ * fichier sont répartis entre plusieurs workers, et `afterAll` s'exécute dans
+ * chacun. Fermer le pool y provoquerait « Called end on pool more than once ».
+ * Le processus du worker meurt de toute façon, et l'OS récupère les connexions.
+ */
 const pool = new Pool({ connectionString: DATABASE_URL });
 
 const RUN = Date.now().toString(36);
 const EMAIL = `reset-${RUN}@e2e.local`;
 const MOT_DE_PASSE_INITIAL = 'mot-de-passe-initial-e2e-2026';
 const MOT_DE_PASSE_NOUVEAU = 'mot-de-passe-nouveau-e2e-2026';
-
-test.afterAll(async () => {
-  await pool.end();
-});
 
 test.describe('réinitialisation de mot de passe', () => {
   test('ne permet pas de savoir si une adresse correspond à un compte', async ({ request }) => {

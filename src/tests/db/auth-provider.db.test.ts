@@ -4,9 +4,11 @@ import {
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   InvalidResetTokenError,
+  isMfaChallenge,
   RefreshTokenReuseError,
   resetProviders,
   type AuthProvider,
+  type Session,
 } from '@/lib/providers';
 import { verifyAccessToken } from '@/lib/auth/jwt';
 import { pool, requireDatabaseOrSkip } from './setup';
@@ -29,6 +31,22 @@ const TEST_DOMAIN = '@auth-test.local';
 const PASSWORD = 'un-mot-de-passe-solide-2026';
 
 let provider: AuthProvider;
+
+/**
+ * Connexion en attendant une session complète.
+ *
+ * Les comptes de ces tests n'ont pas de double authentification : `login`
+ * retourne donc toujours une session. Ce garde-fou rend l'hypothèse explicite —
+ * si un jour elle ne tient plus, le test échoue franchement au lieu de lire
+ * `undefined` avec un message obscur.
+ */
+async function loginSession(input: { email: string; password: string }): Promise<Session> {
+  const result = await provider.login(input);
+  if (isMfaChallenge(result)) {
+    throw new Error('Défi MFA inattendu : ces comptes de test n’ont pas de double authentification.');
+  }
+  return result;
+}
 
 function email(local: string): string {
   return `${local}${TEST_DOMAIN}`;
@@ -151,7 +169,7 @@ describe('JwtAuthProvider', () => {
       if (!(await requireDatabaseOrSkip())) return;
 
       await provider.register({ email: email('login'), password: PASSWORD, name: 'Login' });
-      const session = await provider.login({ email: email('login'), password: PASSWORD });
+      const session = await loginSession({ email: email('login'), password: PASSWORD });
 
       expect(session.user.email).toBe(email('login'));
 
@@ -219,7 +237,7 @@ describe('JwtAuthProvider', () => {
         session.user.id,
       ]);
 
-      const relogin = await provider.login({ email: email('importe'), password: PASSWORD });
+      const relogin = await loginSession({ email: email('importe'), password: PASSWORD });
 
       expect(relogin.user.mustResetPassword).toBe(true);
       expect(relogin.accessToken).toBeTruthy();

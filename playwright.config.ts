@@ -30,6 +30,13 @@ export default defineConfig({
   ],
 
   // Pas de serveur à démarrer si l'on vise une URL existante.
+  //
+  // ⚠️ PIÈGE : `reuseExistingServer` réutilise N'IMPORTE QUEL serveur déjà à
+  // l'écoute sur le port. Si ce serveur a été démarré AVANT l'ajout d'une
+  // variable d'environnement (ici RATE_LIMIT_MULTIPLIER), il ne la connaît pas,
+  // et les tests échouent avec des « 429 » déroutants au lieu d'une erreur
+  // explicite. En cas d'échecs 429 inattendus : arrêter les `next dev` en cours
+  // avant de relancer.
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {

@@ -102,3 +102,51 @@ export async function tryVerifyAccessToken(
     return null;
   }
 }
+
+// --- Défi MFA -----------------------------------------------------------------
+
+/**
+ * Durée de vie d'un défi MFA, en secondes.
+ *
+ * Court volontairement : le défi ne sert qu'à couvrir le temps de saisie du code
+ * TOTP. Le prolonger multiplierait les fenêtres où un jeton de défi intercepté
+ * resterait exploitable.
+ */
+export const MFA_CHALLENGE_TTL_SECONDS = 300;
+
+/**
+ * Audience **distincte** de celle du jeton d'accès.
+ *
+ * Un défi MFA atteste seulement « le mot de passe a été vérifié, le second
+ * facteur reste à fournir ». Il ne doit en aucun cas pouvoir être présenté comme
+ * un jeton d'accès : l'audience différente rend les deux jetons
+ * interchangeables dans aucun sens.
+ */
+const MFA_AUDIENCE = 'katalyst-mfa';
+
+/** Signe un défi MFA (mot de passe validé, second facteur en attente). */
+export async function signMfaChallenge(userId: string): Promise<string> {
+  return new SignJWT({ userId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer(ISSUER)
+    .setAudience(MFA_AUDIENCE)
+    .setExpirationTime(`${MFA_CHALLENGE_TTL_SECONDS}s`)
+    .sign(secretKey());
+}
+
+/** Vérifie un défi MFA et retourne l'utilisateur concerné. Lève si invalide ou expiré. */
+export async function verifyMfaChallenge(token: string): Promise<{ userId: string }> {
+  const { payload } = await jwtVerify(token, secretKey(), {
+    issuer: ISSUER,
+    audience: MFA_AUDIENCE,
+    algorithms: ['HS256'],
+  });
+
+  const { userId } = payload as { userId?: string };
+  if (!userId) {
+    throw new Error('Défi MFA dépourvu d’identifiant d’utilisateur.');
+  }
+
+  return { userId };
+}

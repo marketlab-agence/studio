@@ -20,6 +20,10 @@ process.env.DATABASE_URL ??= TEST_DATABASE_URL;
 // Valeur de test uniquement, jamais utilisée hors de cette suite.
 process.env.JWT_SECRET ??= 'secret-de-test-uniquement-pour-la-base-de-test-2026';
 
+// Clé de chiffrement des secrets TOTP (32 octets en base64).
+// Valeur de test uniquement : elle ne doit jamais servir ailleurs.
+process.env.MFA_ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString('base64');
+
 /** Indique si la base de test est joignable. */
 export async function isDatabaseAvailable(): Promise<boolean> {
   try {
