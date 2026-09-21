@@ -18,8 +18,8 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
     const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
-        if (user?.displayName) {
-            setName(user.displayName);
+        if (user?.name) {
+            setName(user.name);
         }
     }, [user]);
 
@@ -93,14 +93,14 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
             <div className="flex flex-col sm:flex-row gap-4 items-center">
                  <div className="flex-1 w-full sm:w-auto">
                     <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground text-sm h-10 flex items-center">
-                        {loading || !user?.displayName ? (
+                        {loading || !user?.name ? (
                             <span className="italic">Chargement...</span>
                         ) : (
-                            <span className="font-medium text-foreground">{user.displayName}</span>
+                            <span className="font-medium text-foreground">{user.name}</span>
                         )}
                     </div>
                 </div>
-                <Button onClick={handleGenerate} disabled={loading || !user?.displayName} className="w-full sm:w-auto">
+                <Button onClick={handleGenerate} disabled={loading || !user?.name} className="w-full sm:w-auto">
                     Générer mon certificat
                 </Button>
             </div>

@@ -11,8 +11,6 @@ import React,
   useEffect
 } from 'react';
 import { useAuth } from './AuthContext';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type
 {
   CourseProgress,
@@ -83,48 +81,26 @@ export function TutorialProvider({ children }: { children: ReactNode })
   const [globalProgress, setGlobalProgress] = useState<GlobalProgress>({});
   const [isProgressLoading, setIsProgressLoading] = useState(true);
 
-  // Load progress from Firestore on user login
+  /**
+   * ⚠️ La progression n'est plus persistée ici.
+   *
+   * Elle l'était dans Firestore, dont le couplage est rompu. La persistance
+   * revient en **phase 5** (`T5.2`/`T5.3`) via `user_course_progress` et
+   * `user_lesson_progress`, exposées par `ContentProvider`.
+   *
+   * En attendant, la progression reste **en mémoire** : elle fonctionne pendant
+   * la session et se réinitialise au rechargement. C'est une dégradation
+   * assumée et visible, préférable à un code qui prétendrait sauvegarder sans
+   * que rien ne soit écrit.
+   */
   useEffect(() => {
-    const loadProgress = async () => {
-      if (user && db) {
-        setIsProgressLoading(true);
-        const progressDocRef = doc(db, 'users', user.uid, 'progress', 'all');
-        const progressDoc = await getDoc(progressDocRef);
-        if (progressDoc.exists()) {
-          const rawData = progressDoc.data();
-          const parsedData = JSON.parse(JSON.stringify(rawData), reviver);
-          setGlobalProgress(parsedData);
-        } else {
-          setGlobalProgress({});
-        }
-        setIsProgressLoading(false);
-      } else if (!user) {
-        setGlobalProgress({});
-        setIsProgressLoading(false);
-      }
-    };
-    if(!authLoading) {
-        loadProgress();
-    }
-  }, [user, authLoading]);
+    if (authLoading) return;
 
-  // Save progress to Firestore whenever it changes
-  useEffect(() => {
-    const saveProgress = async () => {
-      if (user && db && Object.keys(globalProgress).length > 0 && !isProgressLoading) {
-        const progressDocRef = doc(db, 'users', user.uid, 'progress', 'all');
-        // We need to convert Sets to arrays for Firestore
-        const serializedProgress = JSON.parse(JSON.stringify(globalProgress, (key, value) => {
-            if (value instanceof Set) {
-                return Array.from(value);
-            }
-            return value;
-        }));
-        await setDoc(progressDocRef, serializedProgress, { merge: true });
-      }
-    };
-    saveProgress();
-  }, [globalProgress, user, isProgressLoading]);
+    // Changement d'utilisateur : on repart d'une ardoise vierge plutôt que de
+    // laisser la progression du précédent.
+    setGlobalProgress({});
+    setIsProgressLoading(false);
+  }, [user, authLoading]);
 
 
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);

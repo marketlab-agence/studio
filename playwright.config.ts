@@ -47,10 +47,16 @@ export default defineConfig({
         stdout: 'ignore',
         stderr: 'pipe',
         env: {
+          // ⚠️ Playwright REMPLACE l'environnement du serveur par cet objet, il
+          // ne le complète pas : sans la recopie de `process.env`, le serveur
+          // perdrait PATH, NODE_ENV et les variables de `.env.local`, et la
+          // limite de débit retomberait à sa valeur stricte (5 inscriptions par
+          // heure) — les tests échoueraient alors en 429 sans explication.
+          ...process.env,
           // Les tests E2E s'exécutent tous depuis la même adresse IP : la limite
-          // d'inscription (5 par heure) serait atteinte par les tests eux-mêmes.
-          // Les limites restent actives, mais élargies. Cette variable est
-          // **ignorée en production** (voir src/lib/rate-limit.ts).
+          // d'inscription serait atteinte par les tests eux-mêmes. Les limites
+          // restent actives, mais élargies. Cette variable est **ignorée en
+          // production** (voir src/lib/rate-limit.ts).
           RATE_LIMIT_MULTIPLIER: '200',
         },
       },

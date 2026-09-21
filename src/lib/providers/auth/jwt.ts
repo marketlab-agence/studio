@@ -61,7 +61,9 @@ type UserRow = {
   name: string;
   role: string;
   status: 'Actif' | 'Inactif';
+  plan_id: string | null;
   avatar_url: string | null;
+  phone: string | null;
   password_hash: string | null;
   must_reset_password: boolean;
   two_factor_enabled: boolean;
@@ -69,7 +71,7 @@ type UserRow = {
 };
 
 const USER_COLUMNS = `
-  id, organization_id, email, name, role, status, avatar_url,
+  id, organization_id, email, name, role, status, plan_id, avatar_url, phone,
   password_hash, must_reset_password, two_factor_enabled, two_factor_secret
 `;
 
@@ -81,7 +83,9 @@ function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
     name: row.name,
     role: row.role,
     status: row.status,
+    planId: row.plan_id ?? 'free',
     avatarUrl: row.avatar_url ?? undefined,
+    phone: row.phone ?? undefined,
     mustResetPassword: row.must_reset_password,
     twoFactorEnabled: row.two_factor_enabled,
   };
@@ -248,6 +252,17 @@ export class JwtAuthProvider implements AuthProvider {
   }
 
   // --- Double authentification ----------------------------------------------
+
+  async currentUser(scope: OrgScope, userId: string): Promise<AuthenticatedUser | null> {
+    // Filtré par organisation : un identifiant valide d'une autre organisation
+    // retourne `null`, jamais la ligne.
+    const { rows } = await query<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE organization_id = $1 AND id = $2`,
+      [scope.organizationId, userId],
+    );
+
+    return rows[0] ? toAuthenticatedUser(rows[0]) : null;
+  }
 
   /**
    * Déchiffre le secret TOTP stocké.

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE } from '@/lib/auth/cookies';
 import { tryVerifyAccessToken } from '@/lib/auth/jwt';
+import { isGuestOnlyPath, isProtectedPath } from '@/lib/auth/routes';
 
 /**
  * Protection des routes privées (T4.6, REQ-AUTH-09).
@@ -11,41 +12,24 @@ import { tryVerifyAccessToken } from '@/lib/auth/jwt';
  *
  * Le **refresh token n'est pas visible ici**, et c'est voulu : son cookie est
  * restreint à `path: /api/auth`. Une session expirée est donc traitée comme une
- * absence de session — le client peut la restaurer en appelant
- * `POST /api/auth/refresh`, qui est la seule route à recevoir ce cookie.
+ * absence de session — le client la restaure via `POST /api/auth/session`, qui
+ * est la seule route à recevoir ce cookie.
  *
  * Conséquence à garder en tête : ce middleware est un **filtre**, pas une
  * frontière d'autorisation. Le contrôle réel (rôle, appartenance à
  * l'organisation) se fait dans chaque route et server action, où la base est
  * accessible.
+ *
+ * Le découpage des routes vient de `@/lib/auth/routes` : la même source sert au
+ * fournisseur d'authentification côté client, ce qui évite que les deux listes
+ * divergent.
  */
-
-/** Préfixes exigeant une session. */
-const PROTECTED_PREFIXES = [
-  '/dashboard',
-  '/admin',
-  '/account',
-  '/certificate',
-  '/ai-assistant',
-  '/subscribe',
-  '/tutorial',
-];
-
-/** Pages réservées aux visiteurs : un utilisateur connecté n'y a rien à faire. */
-const GUEST_ONLY_PREFIXES = ['/login', '/signup'];
-
-function matches(pathname: string, prefixes: string[]): boolean {
-  return prefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const claims = await tryVerifyAccessToken(request.cookies.get(ACCESS_COOKIE)?.value);
 
-  if (!claims && matches(pathname, PROTECTED_PREFIXES)) {
+  if (!claims && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.search = '';
@@ -55,7 +39,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (claims && matches(pathname, GUEST_ONLY_PREFIXES)) {
+  if (claims && isGuestOnlyPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     url.search = '';

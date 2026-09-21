@@ -14,20 +14,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from '@/contexts/AuthContext';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { logoutRequest } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
 
 export function Header() {
-  const { user, isPremium, userRole } = useAuth();
+  const { user, isPremium, userRole, refreshSession } = useAuth();
   const router = useRouter();
   const isAdmin = userRole === 'Admin' || userRole === 'Super Admin';
 
   const handleSignOut = async () => {
-    if (auth) {
-        await signOut(auth);
-    }
+    // Le serveur révoque le refresh token en base, puis efface les cookies.
+    // L'état local est ensuite rechargé depuis le serveur plutôt que forcé à
+    // `null` : c'est la source de vérité qui décide, pas le client.
+    await logoutRequest();
+    await refreshSession();
     router.push('/');
   };
 
@@ -70,18 +71,18 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
-                  {user.photoURL ? (
-                    <AvatarImage src={user.photoURL} alt={user.displayName || 'User Avatar'} />
+                  {user.avatarUrl ? (
+                    <AvatarImage src={user.avatarUrl} alt={user.name || 'User Avatar'} />
                   ) : null}
                   <AvatarFallback className="bg-primary/20">
-                    {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
+                    {user.name ? user.name.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
+              <DropdownMenuLabel>{user.name || user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/dashboard">Tableau de bord</Link>

@@ -21,8 +21,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { updateProfileRequest } from '@/lib/auth/client';
 
 const accountFormSchema = z.object({
   firstName: z.string().min(2, { message: 'Le prénom doit contenir au moins 2 caractères.' }),
@@ -34,7 +33,7 @@ const accountFormSchema = z.object({
 type AccountFormValues = z.infer<typeof accountFormSchema>;
 
 export default function AccountPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshSession } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -60,32 +59,50 @@ export default function AccountPage() {
   // Populate form with user data once available
   useEffect(() => {
     if (user) {
-      const [firstName, ...lastNameParts] = (user.displayName || '').split(' ');
+      const [firstName, ...lastNameParts] = (user.name || '').split(' ');
       const lastName = lastNameParts.join(' ');
 
       form.reset({
         firstName: firstName || '',
         lastName: lastName || '',
         email: user.email || '',
-        phone: user.phoneNumber || '',
+        phone: user.phone || '',
       });
     }
   }, [user, form]);
 
   async function onSubmit(data: AccountFormValues) {
-    if (!user || !auth?.currentUser) return;
+    if (!user) return;
     setIsSaving(true);
-    
+
     try {
-        await updateProfile(auth.currentUser, {
-            displayName: `${data.firstName} ${data.lastName}`.trim(),
+        // Le nom et le téléphone sont enregistrés côté serveur. L'email n'est
+        // **pas** modifiable ici : en changer exige de vérifier la nouvelle
+        // adresse par un lien, sans quoi on pourrait s'approprier l'identité
+        // d'un tiers ou verrouiller un compte par erreur.
+        const result = await updateProfileRequest({
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            phone: data.phone,
         });
+
+        if (!result.ok) {
+            toast({
+                variant: 'destructive',
+                title: 'Erreur',
+                description: result.message,
+            });
+            return;
+        }
+
+        // L'état local est rechargé depuis le serveur, plutôt que corrigé à la
+        // main : c'est la base qui fait foi.
+        await refreshSession();
 
         toast({
             title: 'Profil mis à jour',
             description: 'Vos informations ont été sauvegardées avec succès.',
         });
-        
+
         router.refresh();
 
     } catch (error) {

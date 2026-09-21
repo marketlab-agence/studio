@@ -21,7 +21,10 @@ export interface AuthenticatedUser {
   name: string;
   role: string;
   status: 'Actif' | 'Inactif';
+  /** Formule d'abonnement : détermine l'accès aux formations. */
+  planId: string;
   avatarUrl?: string;
+  phone?: string;
   /**
    * `true` pour les comptes repris de Firebase Auth : la connexion aboutit mais
    * l'application doit imposer un nouveau mot de passe (REQ-AUTH-06).
@@ -178,6 +181,15 @@ export interface AuthProvider {
    * **défi** à compléter. Le mot de passe seul ne suffit alors pas.
    */
   login(input: LoginInput): Promise<LoginResult>;
+
+  /**
+   * État actuel d'un utilisateur, **lu en base**.
+   *
+   * Le jeton d'accès porte une copie du rôle et de l'organisation au moment de
+   * son émission : il peut donc être périmé (rôle changé, compte désactivé,
+   * formule modifiée). Cette méthode retourne l'état réel.
+   */
+  currentUser(scope: OrgScope, userId: string): Promise<AuthenticatedUser | null>;
 
   // --- Double authentification (REQ-AUTH-04) --------------------------------
 

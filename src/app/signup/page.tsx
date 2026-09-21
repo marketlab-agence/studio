@@ -1,199 +1,181 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, FieldErrors } from 'react-hook-form'; // Import FieldErrors
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react';
 import Link from 'next/link';
-import type { AppUser } from '@/lib/users';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { registerRequest } from '@/lib/auth/client';
+import { MIN_PASSWORD_LENGTH } from '@/lib/auth/policy';
 
-const signupSchema = z.object({
-    email: z.string().email({
-        message: "Veuillez entrer une adresse email valide.",
-    }),
-    password: z.string().min(6, {
-        message: "Le mot de passe doit contenir au moins 6 caractères.",
-    }),
-    displayName: z.string().min(2, {
-      message: "Le nom à afficher doit contenir au moins 2 caractères."
-    }),
-    acceptTerms: z.boolean().refine(val => val === true, {
-      message: "Vous devez accepter les termes et conditions."
-    }),
-});
-
-type SignupFormValues = z.infer<typeof signupSchema>;
-
+/**
+ * Inscription (REQ-AUTH-01, REQ-ORG-04).
+ *
+ * **Inscription libre-service** : créer un compte crée l'**organisation** de
+ * l'inscrit, qui en devient Propriétaire. Il peut ensuite inviter ses formateurs
+ * et apprenants (T4.13). C'est ce qui rend un institut autonome sans
+ * intervention de l'éditeur.
+ *
+ * **Sans Firebase** : la session est établie par `POST /api/auth/register`, qui
+ * pose des cookies `httpOnly`.
+ */
 export default function SignupPage() {
-    const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const { refreshSession } = useAuth();
 
-    const { register, handleSubmit, formState: { errors }, setError } = useForm<SignupFormValues>({
-        resolver: zodResolver(signupSchema),
-    });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [accepted, setAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<{ champ: string; message: string }[]>([]);
 
-    const { toast } = useToast();
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setIssues([]);
 
-    const onSubmit = async ({ email, password, displayName }: SignupFormValues) => {
-        setIsSubmitting(true);
-        if (!auth || !db) {
-             toast({ variant: 'destructive', title: 'Erreur de configuration', description: "Le service d'authentification n'est pas disponible." });
-             setIsSubmitting(false);
-             return;
-        }
+    // Vérifié ici pour éviter un aller-retour inutile ; le serveur revalide.
+    if (password !== confirmation) {
+      setError('Les deux mots de passe ne correspondent pas.');
+      return;
+    }
 
-        try {
-            // 1. Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+    setIsSubmitting(true);
 
-            // 2. Update Auth profile
-            await updateProfile(user, { displayName: displayName });
-            
-            // 3. Create user document in Firestore
-            const userDocRef = doc(db, 'users', user.uid);
-            const newUser: Omit<AppUser, 'id'> = {
-                name: displayName,
-                email: user.email!,
-                planId: 'free',
-                status: 'Actif',
-                role: 'Utilisateur',
-                joined: new Date().toISOString().split('T')[0],
-                phone: user.phoneNumber || '',
-            };
-            await setDoc(userDocRef, newUser);
-            
-            toast({ title: "Inscription réussie !", description: "Votre compte a été créé avec succès." });
-            router.push('/dashboard');
-        } catch (error: any) {
-            console.error(error);
-            let errorMessage = "Une erreur est survenue lors de l'inscription.";
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = "Cette adresse email est déjà utilisée.";
-            } else if (error.code === 'auth/weak-password') {
-                 errorMessage = "Le mot de passe est trop faible.";
-            } else if (error.code === 'auth/invalid-email') {
-                 errorMessage = "L'adresse email n'est pas valide.";
-            }
-            // Set a form error for a general message or specific field
-             setError('email', { type: 'manual', message: errorMessage });
+    const result = await registerRequest({ name, email, password });
 
-            toast({
-                variant: 'destructive',
-                title: "Erreur d'inscription",
-                description: errorMessage,
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    if (!result.ok) {
+      setError(result.message);
+      // Le serveur détaille les champs refusés : les afficher évite à
+      // l'utilisateur de deviner ce qui ne va pas.
+      setIssues(result.issues ?? []);
+      setIsSubmitting(false);
+      return;
+    }
 
-     // Add a useEffect to show validation errors from Zod after first render/submit attempt
-     useEffect(() => {
-        if (Object.keys(errors).length > 0) {
-            // You can choose to toast the first error or iterate through all of them
-            const firstErrorKey = Object.keys(errors)[0] as keyof SignupFormValues; // Explicitly type the key
-            const errorMessage = errors[firstErrorKey]?.message;
-            if (errorMessage) {
-                toast({
-                    variant: "destructive",
-                    title: "Erreur de validation",
-                    description: errorMessage,
-                });
-            }
-        }
-    }, [errors, toast]); // Depend on errors object and toast function
+    await refreshSession();
+    router.push('/dashboard');
+  }
 
-
-    return (
-        <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Créer un compte</h2>
-                </div>
-                <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
-                    <div className="-space-y-px rounded-md shadow-sm">
-                         <div>
-                            <Label htmlFor="displayName" className="sr-only">Nom à afficher</Label>
-                            <Input
-                                id="displayName"
-                                type="text"
-                                autoComplete="name"
-                                required
-                                className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                placeholder="Nom à afficher"
-                                {...register('displayName')}
-                            />
-                            {errors.displayName && <p className="mt-2 text-sm text-red-600">{errors.displayName.message}</p>}
-                        </div>
-                        <div>
-                            <Label htmlFor="email-address" className="sr-only">Adresse email</Label>
-                            <Input
-                                id="email-address"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                placeholder="Adresse email"
-                                {...register('email')}
-                            />
-                             {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
-                        </div>
-                        <div>
-                            <Label htmlFor="password" className="sr-only">Mot de passe</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                placeholder="Mot de passe"
-                                {...register('password')}
-                            />
-                            {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center">
-                         <Checkbox
-                            id="acceptTerms"
-                            {...register('acceptTerms')}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <Label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                            J'accepte les <Link href="/terms" className="underline">termes et conditions</Link>.
-                        </Label>
-                         {errors.acceptTerms && <p className="mt-2 text-sm text-red-600">{errors.acceptTerms.message}</p>}
-                    </div>
-
-                    <div>
-                        <Button
-                            type="submit"
-                            className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Création...' : 'Créer un compte'}
-                        </Button>
-                    </div>
-                </form>
-                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-                    Déjà un compte ? {' '}
-                    <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-                        Connectez-vous
-                    </Link>
-                </div>
+  return (
+    <main className="flex-1 flex flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">Créer un compte</h1>
+          <CardDescription>
+            Votre espace de formation est créé automatiquement : vous en serez le propriétaire.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom à afficher</Label>
+              <Input
+                id="name"
+                type="text"
+                autoComplete="name"
+                required
+                minLength={2}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                disabled={isSubmitting}
+              />
             </div>
-        </div>
-    );
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Adresse email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-muted-foreground">
+                Au moins {MIN_PASSWORD_LENGTH} caractères.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmation">Confirmer le mot de passe</Label>
+              <Input
+                id="confirmation"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="flex items-start gap-2">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                required
+                checked={accepted}
+                onChange={(event) => setAccepted(event.target.checked)}
+                disabled={isSubmitting}
+                className="mt-1"
+              />
+              <Label htmlFor="acceptTerms" className="text-sm font-normal">
+                J’accepte les conditions d’utilisation et la politique de confidentialité.
+              </Label>
+            </div>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            {issues.length > 0 && (
+              <ul className="text-sm text-destructive list-disc pl-5">
+                {issues.map((issue) => (
+                  <li key={issue.champ}>{issue.message}</li>
+                ))}
+              </ul>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isSubmitting || !accepted}>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
+            </Button>
+          </form>
+
+          <div className="text-center text-sm">
+            Vous avez déjà un compte ?{' '}
+            <Link href="/login" className="underline">
+              Connectez-vous
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </main>
+  );
 }
