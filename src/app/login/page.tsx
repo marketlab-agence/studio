@@ -184,6 +184,9 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="text-center text-sm">
+            <Link href="/forgot-password" className="underline">Mot de passe oublié ?</Link>
+          </div>
+          <div className="text-center text-sm">
             Vous n'avez pas de compte ? <Link href="/signup" className="underline">Inscrivez-vous</Link>
           </div>
         </CardContent>

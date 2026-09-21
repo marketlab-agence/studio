@@ -104,6 +104,15 @@ export class InvalidRefreshTokenError extends Error {
   }
 }
 
+/**
+ * Durée de vie d'un lien de réinitialisation, en minutes.
+ *
+ * Source unique : l'email annonce cette durée et le stockage l'applique. Deux
+ * constantes séparées finiraient par diverger, et l'utilisateur lirait une
+ * promesse que le système ne tient pas.
+ */
+export const RESET_TTL_MINUTES = 60;
+
 export interface AuthProvider {
   /** Crée un compte. L'organisation est créée si `organizationId` est absent. */
   register(input: RegisterInput): Promise<Session>;

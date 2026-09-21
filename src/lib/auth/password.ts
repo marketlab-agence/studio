@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH } from './policy';
 
 /**
  * Hachage des mots de passe (REQ-AUTH-01 : « bcrypt vérifié »).
@@ -7,7 +8,14 @@ import bcrypt from 'bcryptjs';
  * native, donc pas de risque d'échec d'installation (les antécédents de
  * `node_modules` corrompu sur ce projet plaident pour ce choix). Le surcoût en
  * temps de calcul est acceptable : le hachage ne se produit qu'à la connexion.
+ *
+ * ⚠️ Les bornes de la politique vivent dans `./policy` — un module **sans
+ * dépendance**, importable par le navigateur. Ce fichier-ci ne doit jamais
+ * l'être : il embarquerait `bcryptjs` côté client.
  */
+
+// Ré-exportées pour que les appelants serveur n'aient qu'un seul import.
+export { MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH };
 
 /**
  * Coût bcrypt.
@@ -21,12 +29,6 @@ import bcrypt from 'bcryptjs';
  * pas les mots de passe existants.
  */
 export const BCRYPT_COST = 12;
-
-/** Longueur maximale acceptée par bcrypt (au-delà, l'entrée est tronquée). */
-export const MAX_PASSWORD_BYTES = 72;
-
-/** Longueur minimale exigée pour un mot de passe. */
-export const MIN_PASSWORD_LENGTH = 12;
 
 export class PasswordPolicyError extends Error {
   constructor(message: string) {

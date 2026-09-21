@@ -8,6 +8,7 @@ import {
   InvalidRefreshTokenError,
   InvalidResetTokenError,
   RefreshTokenReuseError,
+  RESET_TTL_MINUTES,
   type AuthProvider,
   type AuthenticatedUser,
   type LoginInput,
@@ -32,8 +33,7 @@ import type { OrgScope } from '../types';
  *    sont alors révoquées.
  */
 
-/** Durée de vie d'un lien de réinitialisation, en minutes. */
-const RESET_TTL_MINUTES = 60;
+/** Durée de vie d'un lien de réinitialisation : voir `RESET_TTL_MINUTES`. */
 
 type UserRow = {
   id: string;
