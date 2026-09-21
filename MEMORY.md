@@ -13,11 +13,12 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed** |
-| Phase en cours | — |
-| Prochaine phase | **Phase 3 — Providers (fin du couplage Firestore)** |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **10 suites / 37** · tests DB **7** · **E2E 5** |
+| Phase en cours | 🔄 **Phase 3 — Providers** · *couplage Firestore terminé* (T3.1-T3.4, T3.10-T3.12) ; **restent T3.5-T3.9** : `EmailProvider`, `StorageProvider`, `AICreditProvider`, `NotificationProvider`, `DocumentProvider` |
+| Prochaine tâche | **T3.5 — `EmailProvider`** (interface + SMTP `nodemailer` + Resend) · prérequis du reset de mot de passe en phase 4 · **gate G3** (fournisseur email) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **10 suites / 40** · tests DB **4 suites / 23** · **E2E 5** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **26 tables**, contenu seedé, 12 comptes importés |
+| **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
 
 ### Commandes base de données
 
@@ -28,10 +29,7 @@ npm run db:seed             # rejoue src/data/*.json (idempotent)
 npm run db:seed:test        # seed sur la base de test
 npm run db:import-auth      # importe les comptes Firebase Auth (12)
 ```
-| CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB · report-only : build |
-| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** (`katalyst`, `katalyst_test`) |
-| Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
-| Stack actuelle | Next.js 15, React 19, TypeScript, Firestore (à remplacer) |
+| Stack actuelle | Next.js 15, React 19, TypeScript, **PostgreSQL** (Firestore dé-couplé, modules encore présents mais morts) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
 | Plan | **29 phases** (0, 0.5, 1-27) — Couche 0 (fondations) · Couche 1 (migration) · Couche 2 (socle transverse : i18n, API, sécurité) · Couche 3 (produit REWORK + conformité + autonomie) |
 
@@ -43,7 +41,7 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 2. **PostgreSQL auto-hébergé**, agnostique. Voir `adr/0001-choix-postgresql.md`.
 3. **Auth : JWT + bcrypt + Google OAuth + refresh tokens + MFA/TOTP + SSO SAML**, remplaçant Firebase Auth. Voir `adr/0002-auth-jwt-remplace-firebase.md`.
 4. **Modèle de formation de référence** : profondeur du cours GitHub (11 chapitres, 37 leçons, seul cours avec quiz) + **100 % de leçons interactives**. Voir `adr/0003-modele-formation-reference.md`.
-5. **Hiérarchie pédagogique = Semaine / Jour** : `S.1.J.2` (S = semaine de formation, J = jour). Un chapitre se termine sur une semaine (lundi→vendredi). **PAS de « semestre »** — correction explicite de l'utilisateur.
+5. 🔴 ~~**Hiérarchie pédagogique = Semaine / Jour** : `S.1.J.2`~~ → **ANNULÉE par la décision 35** (2026-09-21). « S » et « J » ne sont pas des données mais des **libellés de titrage** décidés par le formateur, et **une leçon peut couvrir plusieurs jours**. Ce qui subsiste : **pas de « semestre »**, et un **regroupement facultatif** (`weeks`) à intitulé libre.
 6. **Déblocage (drip)** : par **date de sortie** (badges type « 5 août ») ET par condition (chapitre précédent, quiz réussi).
 7. **Gamification** : points par leçon (ex. 20 pts), modal de fin de leçon (« Félicitations ! … Vous avez gagné ⭐ 20 points »), récapitulatif par type.
 8. **Cohortes** : multi-cohortes par apprenant, créées par l'admin (nommage type `IAFORMATEUR_20260803G1`). Chat formateur ↔ apprenants avec compteur de non-lus.
@@ -80,6 +78,12 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
    - l'ETL **n'invente plus de regroupement** (`weeks` est vide au seed) ;
    - `weeks` reste comme **regroupement visuel facultatif** à intitulé libre ; `chapters.week_id` est nullable.
 36. **Accès par période conservé et étendu** : `unlock_rule_id` existe sur **`courses`, `chapters` ET `lessons`**. Une règle d'accès peut donc viser la formation, le chapitre ou la leçon — ouverture à une date, échéance, cadence (`DAY`/`WEEK`/`MONTH`/`CUSTOM`) ou condition (`COMPLETION`/`QUIZ_PASSED`). C'est ce mécanisme qui porte le rythme, **pas** un découpage en semaines.
+37. **Phase 3 — quatre arbitrages d'expert sur la couche providers** (tranchés faute de règle préalable, chacun **verrouillé par un test**) :
+    - `chapters.description` **ajoutée** (`003_content.sql`) : sans la colonne, chaque enregistrement de chapitre **perdait silencieusement** la description au round-trip.
+    - `saveChapters` **libère la plage de positions** avant de les réassigner (`+10000`, puis position définitive) : respecte `UNIQUE (course_id, position)` **sans** contrainte `DEFERRABLE` ni transaction explicite. Vérifié par un test de réordonnancement complet.
+    - `saveChapters` **ne supprime plus les leçons** (*upsert* + rejet des seules leçons disparues) : un `DELETE` emportait `user_lesson_progress` (`ON DELETE CASCADE`, `004_learning.sql:45`) à **chaque édition de contenu**. Test dédié : la progression survit à une réécriture de leçon.
+    - `getRequestScope` utilise `cache()` de **React** (mémoïsation *par requête*) et non une variable de module : celle-ci aurait survécu entre requêtes et **figé la première organisation**, cassant l'isolation au moment de la phase 4.
+    - `T3.10` (« conserver `providers/firestore/` comme filet ») est **obsolète** : le couplage est intégralement retiré, il n'y a plus de filet à garder.
 
 ---
 
@@ -100,7 +104,7 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 - `node_modules` corrompu — installation interrompue, paquet `firebase` sans fichiers `.mjs` → `Cannot resolve 'firebase/app'` en Turbopack. Fix : suppression de `node_modules/firebase` + `npm install --legacy-peer-deps` (`node_modules/firebase/app/dist/index.mjs`).
 - `npm run dev -- --turbopack` ignoré (npm traite le flag comme config) → ajout du script `dev:turbo` dans `package.json`.
 - `EPERM .next\trace` + « Port 3000 in use » → **deux instances `next dev` simultanées**. Un seul serveur à la fois sur ce dossier.
-- Firestore `7 PERMISSION_DENIED: requires billing` → repli `src/data/*.json` (`src/lib/local-data.ts`), temporaire jusqu'à la phase 7.
+- Firestore `7 PERMISSION_DENIED: requires billing` → le repli `src/data/*.json` (`src/lib/local-data.ts`) n'a plus lieu d'être : **le couplage Firestore est rompu** (phase 3). `local-data.ts` est désormais **du code mort**.
 - `AuthContext.tsx:124` — `onAuthStateChanged` ignore les valeurs de retour → `unsubscribeSnapshot()` jamais appelé (**fuite de listener**). À corriger en phase 4.
 - `src/lib/firebase.ts:18-29` — la config Firebase était loguée en clair (apiKey, projectId…) → **corrigé** (`ddcf893`), 5 `console.log` retirés, import `FirestoreSettings` inutilisé supprimé.
 - `src/app/pricing/page.tsx` — `AlertDialogTrigger` utilisé (L122) mais non importé : la page **plantait** au rendu du bouton de rétrogradation → **corrigé** (`c229f89`).
@@ -115,6 +119,7 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 - **Un « vert » de test n'est une preuve que si le test s'exécute réellement.** Les tests DB étaient passés à vide via un `return` gracieux : ils sont désormais **stricts** (base injoignable = échec). `SKIP_DB_IF_UNAVAILABLE=1` existe mais doit rester exceptionnel.
 - **[mineur]** Avertissement Jest sur le projet DB : `worker process failed to exit gracefully` — fuite de handle à investiguer (n'affecte pas les résultats).
 - **`src/queries/**` = code mort** : importé nulle part. Typé pour T0.2, à supprimer en phase 16.
+- **Modules Firebase = code mort** depuis la phase 3 : `src/lib/firebase-admin.ts`, `src/lib/firebase.ts`, `src/lib/local-data.ts` n'ont **plus aucun consommateur** (vérifié). À supprimer en phase 16, avec les dépendances `firebase` / `firebase-admin` de `package.json`.
 - **Le build Next n'est pas vérifié** : étape CI en report-only (script `npm run build` en syntaxe Windows `cmd`).
 - **Divergence de branche** : `master` a 96+ commits locaux contre 1 sur `origin/master`. Aucun push effectué.
 
@@ -146,7 +151,7 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 - `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
 - **Aucune capacité email dans Katalyst** → `EmailProvider` requis en phase 3, sinon le reset de mot de passe (phase 4) est infaisable.
 - Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** (+ semaine) → **ETL nécessaire** en phase 2.
-- **Isolation multi-tenant** : une requête de provider sans `scope` = fuite de données entre organisations. Le scope est **obligatoire dans l'interface** (ne compile pas sans) + tests d'isolation dédiés (T3.11).
+- **Isolation multi-tenant** : une requête de provider sans `scope` = fuite de données entre organisations. Le scope est **obligatoire dans l'interface** (ne compile pas sans) ; `assertScope()` le rejette aussi à l'exécution. 10 tests d'isolation couvrent **la lecture et l'écriture** (T3.12, `e1b2de1`).
 
 ---
 

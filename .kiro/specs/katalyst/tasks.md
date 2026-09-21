@@ -109,18 +109,18 @@ Dépend de : 1
 
 Dépend de : 2
 
-- [ ] T3.1 — Interfaces `ContentProvider`, `UserProvider`, `SettingsProvider` · REQ-DAT-07 · vérif: aucun type `Firestore` dans les signatures
-- [ ] T3.2 — Impl. `providers/postgres/` (pool, SQL ciblé, transactions) · REQ-DAT-06 · vérif: requêtes OK
-- [ ] T3.3 — Migrer `lib/{courses,tutorials,quiz,plans,settings}.ts` · REQ-DAT-06 · vérif: accueil, `/courses`, `/api/*` sur Postgres
-- [ ] T3.4 — Migrer 5 routes API + 6 RSC + 4 server actions · REQ-DAT-06 · vérif: `grep firebase-admin src/` → uniquement `providers/firestore/`
+- [x] T3.1 — Interfaces `ContentProvider`, `UserProvider`, `SettingsProvider` · REQ-DAT-07 · vérif: aucun type `Firestore` dans les signatures ✅ `e1b2de1`
+- [x] T3.2 — Impl. `providers/postgres/` (pool, SQL ciblé, transactions) · REQ-DAT-06 · vérif: requêtes OK ✅ `e1b2de1`
+- [x] T3.3 — Migrer `lib/{courses,tutorials,quiz,plans,settings}.ts` · REQ-DAT-06 · vérif: accueil, `/courses`, `/api/*` sur Postgres ✅ `8dbd53a`
+- [x] T3.4 — Migrer 5 routes API + 6 RSC + 4 server actions · REQ-DAT-06 · vérif: `grep firebase-admin src/` → uniquement `providers/firestore/` ✅ `8dbd53a` — bilan réel : **9 pages/routes + 4 server actions** ; `firebase-admin` n'a **aucun consommateur** (mieux que le critère : il n'y a même pas de `providers/firestore/` à conserver)
 - [ ] T3.5 — **`EmailProvider`** (interface + SMTP `nodemailer` + Resend) · REQ-AUTH-10 · vérif: email de test reçu
 - [ ] T3.6 — **`StorageProvider`** (local + S3-compatible via fetch, **sans SDK** — pattern masterplan365) · REQ-LRN-04 · vérif: upload/download OK
 - [ ] T3.7 — **`AICreditProvider`** (solde, débit, historique) · REQ-AIC-03 · vérif: débit/recharge tracés
 - [ ] T3.8 — **`NotificationProvider`** (in-app, email, push) · REQ-NOT-05 · vérif: envoi multi-canal
 - [ ] T3.9 — **`DocumentProvider`** (ingestion, segments, recherche vectorielle) · REQ-DOC-06 · vérif: recherche sémantique opérationnelle
-- [ ] T3.10 — Conserver `providers/firestore/` comme filet (Strangler Fig) · REQ-DAT-07 · vérif: bascule par `DATA_PROVIDER`
-- [ ] T3.11 — **`scope` obligatoire** dans l'interface des providers (`OrgScope`) · REQ-ORG-03 · vérif: une méthode sans `scope` ne compile pas
-- [ ] T3.12 — **Tests d'isolation inter-organisations** sur chaque entité · REQ-ORG-02 · vérif: org A ne lit aucune ligne d'org B
+- [x] ~~T3.10 — Conserver `providers/firestore/` comme filet (Strangler Fig)~~ · **obsolète** : le couplage Firestore est intégralement retiré (`firebase-admin`, `firebase.ts`, `local-data.ts` n'ont plus aucun consommateur). Il n'y a pas de filet à conserver — garder Firestore en repli aurait maintenu une seconde source de vérité sans nécessité.
+- [x] T3.11 — **`scope` obligatoire** dans l'interface des providers (`OrgScope`) · REQ-ORG-03 · vérif: une méthode sans `scope` ne compile pas ✅ `e1b2de1` — `assertScope()` rejette aussi l'absence de scope **à l'exécution** (test dédié)
+- [x] T3.12 — **Tests d'isolation inter-organisations** sur chaque entité · REQ-ORG-02 · vérif: org A ne lit aucune ligne d'org B ✅ `e1b2de1` — 10 tests, en **lecture ET en écriture** (`getById` inter-org → `null` ; `delete`/`setRole` inter-org → sans effet)
 
 ## Phase 4 — Authentification
 
