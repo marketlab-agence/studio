@@ -91,15 +91,17 @@ Dépend de : 0.5
 
 Dépend de : 1
 
-- [ ] T2.1 — `schema.sql` : **organizations**, users, courses, weeks, chapters, lessons, quizzes, questions, answers, plans, settings, unlock_rules, points_ledger, user_lesson_progress, user_course_progress, cohorts, cohort_members, messages, refresh_tokens, notifications, ai_credits, ai_generations, documents, document_chunks · REQ-DAT-01, REQ-ORG-01 · vérif: application sans erreur
-- [ ] T2.2 — Migrations numérotées + table `migrations` (rejouables, réversibles) · REQ-DAT-02 · vérif: rejouer 2× idempotent
-- [ ] T2.3 — ETL `src/data/*.json` (2 niveaux) → modèle 3 niveaux (+ semaine `S1`) · REQ-DAT-04 · vérif: `audit:content` → 6/6 intactes
-- [ ] T2.4 — Seed complet (`npm run seed`) · REQ-DAT-03 · vérif: 6 formations / 26 chapitres / 26 quiz / 2 formules
-- [ ] T2.5 — Import des **12 comptes** Firebase Auth (`listUsers`), `password_hash = NULL`, `must_reset_password = true` · REQ-DAT-05 · vérif: 12 lignes
-- [ ] T2.6 — Seed `settings` + rôle admin sur le compte réel · REQ-DAT-05 · vérif: 1 admin
-- [ ] T2.7 — `organization_id` sur toutes les entités cloisonnées + contraintes · REQ-ORG-01 · vérif: aucune table cloisonnée sans `organization_id`
-- [ ] T2.8 — Organisation par défaut + rattachement des 12 comptes et du contenu · REQ-ORG-01 · vérif: migration sans orphelin
-- [ ] T2.9 — Extension **pgvector** activée + colonnes vectorielles · REQ-DOC-06 · vérif: index vectoriel créé
+- [x] T2.1 — Schéma complet · REQ-DAT-01, REQ-ORG-01 · vérif: application sans erreur · **fait** — **26 tables métier** en 4 migrations (002 identité, 003 contenu, 004 apprentissage, 005 engagement/IA). **Identifiants de contenu en TEXT** (slugs sources) plutôt qu'en UUID : stables, lisibles, et le seed devient idempotent
+- [x] T2.2 — Migrations numérotées + table `migrations` · REQ-DAT-02 · vérif: rejouer 2× idempotent · **fait** (transaction par fichier, échec = rollback complet ; `migrate`, `migrate:test`)
+- [x] T2.3 — ETL `src/data/*.json` (2 niveaux) → modèle 3 niveaux · REQ-DAT-04 · vérif: contenu intact · **fait** — les sources sont à 2 niveaux, le modèle en a 3 : **la semaine est dérivée** (`S1`, `S2`…) avec **5 chapitres par semaine** (`S.n.J.1` → `S.n.J.5`), conformément au modèle REWORK. Le cours Git (11 chapitres) occupe donc **3 semaines**
+- [x] T2.4 — Seed complet · REQ-DAT-03 · vérif: 6 formations / 26 chapitres / 26 quiz / 2 formules · **fait** — 6 formations, 8 semaines, 26 chapitres, **80 leçons**, 26 quiz, 76 questions, 240 réponses, 2 formules. **Idempotence vérifiée** (rejeu = mêmes comptes)
+- [x] T2.5 — Import des **12 comptes** Firebase Auth · REQ-DAT-05 · vérif: 12 lignes · **fait** — 12 comptes lus, 2 insérés, 10 mis à jour. **10 comptes à mot de passe → reset forcé** (Firebase n'exporte pas les hachages) ; **2 comptes Google** se reconnectent directement
+- [x] T2.6 — Seed `settings` + rôle admin · REQ-DAT-05 · vérif: 1 admin · **fait** (migration 001 pour `settings` ; le compte « Admin Katalyst » conserve `Super Admin` — le rôle n'est jamais écrasé par l'import)
+- [x] T2.7 — `organization_id` sur toutes les entités cloisonnées · REQ-ORG-01 · vérif: aucune table cloisonnée sans `organization_id` · **fait** (organizations, users, courses, cohorts, notifications, ai_credits, ai_generations, documents)
+- [x] T2.8 — Organisation par défaut + rattachement du contenu et des comptes · REQ-ORG-01 · vérif: sans orphelin · **fait** (slug `katalyst`, formule `premium` ; tout le contenu et les comptes y sont rattachés)
+- [x] T2.9 — Extension **pgvector** + colonnes vectorielles · REQ-DOC-06 · vérif: index vectoriel créé · **fait** (`vector(1536)` sur `document_chunks.embedding`, index `ivfflat` en cosinus)
+
+> ⚠️ **Deux erreurs attrapées par les contraintes de la base, pas par relecture** : (1) `organizations.plan_id` référençait `premium` avant que les formules existent → FK violée, ordre du seed corrigé ; (2) l'ETL plaçait d'abord les 11 chapitres du cours Git dans **une seule** semaine → `UNIQUE (week_id, code)` violée, d'où la répartition en 5 chapitres par semaine. Ces deux garde-fous ont évité des données silencieusement fausses.
 
 ## Phase 3 — Providers (fin du couplage)
 

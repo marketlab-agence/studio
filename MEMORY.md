@@ -12,10 +12,22 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5 — Walking Skeleton**, ✅ **Phase 1 — Modèle & registre** |
+| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed** |
 | Phase en cours | — |
-| Prochaine phase | **Phase 2 — Schéma, migrations & seed** |
-| Qualité | `typecheck` 0 erreur · `lint` 0 erreur · tests **10 suites / 37 verts** · tests DB 2 suites / 7 verts |
+| Prochaine phase | **Phase 3 — Providers (fin du couplage Firestore)** |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **10 suites / 37** · tests DB **7** · **E2E 5** |
+| CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
+| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **26 tables**, contenu seedé, 12 comptes importés |
+
+### Commandes base de données
+
+```
+npm run db:migrate          # applique les migrations (dev, port 5433)
+npm run db:migrate:test     # applique les migrations sur katalyst_test
+npm run db:seed             # rejoue src/data/*.json (idempotent)
+npm run db:seed:test        # seed sur la base de test
+npm run db:import-auth      # importe les comptes Firebase Auth (12)
+```
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** (`katalyst`, `katalyst_test`) |
 | Prochaine phase | Phase 0.5 — Walking Skeleton (`0.5` après clôture de la phase 0) |
