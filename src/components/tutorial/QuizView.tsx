@@ -77,6 +77,17 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         }
     }, [quiz.id, progress.quizScores, progress.quizAnswers, quiz.passingScore, resetQuiz]);
     
+    // Tous les hooks doivent précéder tout `return` conditionnel (règle des Hooks).
+    const isQuizPassed = calculatedScore >= (quiz?.passingScore ?? 0);
+    const isFirstChapterQuiz = courseChapters[0]?.id === quiz?.id;
+    const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
+
+    useEffect(() => {
+        if (showResults && showUpgradePrompt) {
+            setShowUpgradeDialog(true);
+        }
+    }, [showResults, showUpgradePrompt]);
+
     if (!quiz || !quiz.questions || quiz.questions.length === 0) {
         return <div>Chargement du quiz...</div>;
     }
@@ -137,16 +148,6 @@ export function QuizView({ quiz, onQuizComplete, onFinishQuiz }: QuizViewProps) 
         }
     };
     
-    const isQuizPassed = calculatedScore >= quiz.passingScore;
-    const isFirstChapterQuiz = courseChapters[0]?.id === quiz.id;
-    const showUpgradePrompt = isQuizPassed && isFirstChapterQuiz && !isPremium;
-
-     useEffect(() => {
-        if (showResults && showUpgradePrompt) {
-            setShowUpgradeDialog(true);
-        }
-    }, [showResults, showUpgradePrompt]);
-
     if (showResults) {
         return (
             <>
