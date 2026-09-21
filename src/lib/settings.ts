@@ -1,59 +1,31 @@
-
-import { AppSettings } from '@/types/settings.types';
-import { getFirebaseAdmin } from './firebase-admin';
-import { withLocalFallback } from './local-data';
-
-const SETTINGS_COLLECTION = 'settings';
-const DEFAULT_SETTINGS_ID = 'default';
-
-const defaultSettings: AppSettings = {
-  instructorName: 'Instructeur par défaut',
-  // Ajoutez d'autres valeurs par défaut ici
-};
+import type { AppSettings } from '@/types/settings.types';
+import { getRequestScope, getSettingsProvider } from '@/lib/providers';
 
 /**
- * Retrieves the application settings from Firestore.
- * If no settings document exists, it will return default settings.
- * @returns {Promise<AppSettings>} A promise that resolves to the application settings.
+ * Paramètres applicatifs de l'organisation courante.
+ *
+ * Ces fonctions ne connaissent que l'interface `SettingsProvider` : le stockage
+ * réel (PostgreSQL aujourd'hui) est choisi par `DATA_PROVIDER`. Voir ADR 0001.
+ *
+ * Conservées pour ne pas casser les appelants existants (`adminActions`) ;
+ * elles seront remplacées par un accès direct au provider lorsque la résolution
+ * du scope sera définitive (phase 4 : auth).
+ */
+
+/**
+ * Lit les paramètres de l'organisation courante.
+ * Retourne les valeurs par défaut si l'organisation n'a rien configuré.
  */
 export async function getSettings(): Promise<AppSettings> {
-  try {
-    return await withLocalFallback(
-      'settings',
-      async () => {
-        const { db } = await getFirebaseAdmin();
-        const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
-        const doc = await docRef.get();
-
-        if (!doc.exists) {
-          console.log('No settings document found, returning default settings.');
-          return defaultSettings;
-        }
-
-        return doc.data() as AppSettings;
-      },
-      (local) => local as AppSettings,
-    );
-  } catch (error) {
-    console.error("Error getting settings: ", error);
-    // En cas d'erreur, il est plus sûr de retourner les paramètres par défaut
-    return defaultSettings;
-  }
+  const scope = await getRequestScope();
+  return getSettingsProvider().getSettings(scope);
 }
 
 /**
- * Saves the application settings to Firestore.
- * This will overwrite the existing settings.
- * @param {AppSettings} settings - The settings object to save.
- * @returns {Promise<void>}
+ * Enregistre les paramètres de l'organisation courante.
+ * @param settings - Les paramètres à enregistrer (remplace les précédents).
  */
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  try {
-    const { db } = await getFirebaseAdmin();
-    const docRef = db.collection(SETTINGS_COLLECTION).doc(DEFAULT_SETTINGS_ID);
-    await docRef.set(settings);
-  } catch (error) {
-    console.error("Error saving settings: ", error);
-    throw new Error("Could not save settings to Firestore.");
-  }
+  const scope = await getRequestScope();
+  await getSettingsProvider().saveSettings(scope, settings);
 }

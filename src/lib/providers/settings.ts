@@ -1,9 +1,7 @@
+import type { AppSettings } from '@/types/settings.types';
 import type { OrgScope } from './types';
 
-/** Paramètres applicatifs d'une organisation. */
-export interface AppSettings {
-  instructorName: string;
-}
+export type { AppSettings };
 
 /**
  * Accès aux paramètres de l'organisation.
