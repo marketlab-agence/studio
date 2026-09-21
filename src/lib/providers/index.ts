@@ -1,5 +1,6 @@
 import type { AiCreditProvider } from './ai-credits';
 import type { ContentProvider } from './content';
+import type { DocumentProvider } from './document';
 import type { EmailProvider } from './email';
 import type { NotificationProvider } from './notification';
 import type { SettingsProvider } from './settings';
@@ -7,6 +8,7 @@ import type { StorageProvider } from './storage';
 import type { UserProvider } from './users';
 import { PostgresAiCreditProvider } from './postgres/ai-credits';
 import { PostgresContentProvider } from './postgres/content';
+import { PostgresDocumentProvider } from './postgres/document';
 import { PostgresNotificationProvider } from './postgres/notification';
 import { PostgresSettingsProvider } from './postgres/settings';
 import { PostgresUserProvider } from './postgres/users';
@@ -39,6 +41,7 @@ let emailProvider: EmailProvider | null = null;
 let storageProvider: StorageProvider | null = null;
 let aiCreditProvider: AiCreditProvider | null = null;
 let notificationProvider: NotificationProvider | null = null;
+let documentProvider: DocumentProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
   if (contentProvider) return contentProvider;
@@ -154,6 +157,20 @@ export function getNotificationProvider(): NotificationProvider {
   }
 }
 
+/** Base documentaire (ingestion, segments, recherche vectorielle). */
+export function getDocumentProvider(): DocumentProvider {
+  if (documentProvider) return documentProvider;
+
+  const provider = process.env.DATA_PROVIDER ?? 'postgres';
+  switch (provider) {
+    case 'postgres':
+      documentProvider = new PostgresDocumentProvider();
+      return documentProvider;
+    default:
+      return unknownProvider('DATA_PROVIDER', provider, ['postgres']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
@@ -163,12 +180,14 @@ export function resetProviders(): void {
   storageProvider = null;
   aiCreditProvider = null;
   notificationProvider = null;
+  documentProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
 export * from './types';
 export * from './ai-credits';
 export * from './content';
+export * from './document';
 export * from './email';
 export * from './notification';
 export * from './settings';
