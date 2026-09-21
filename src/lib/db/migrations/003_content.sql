@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS chapters (
   -- Rattaché à un regroupement, ou directement à la formation (NULL).
   week_id        UUID REFERENCES weeks(id) ON DELETE SET NULL,
   title          TEXT NOT NULL,
+  description    TEXT NOT NULL DEFAULT '',
   position       INT NOT NULL,
   unlock_rule_id UUID,
   UNIQUE (course_id, position)

@@ -27,6 +27,7 @@ type ChapterRow = {
   id: string;
   course_id: string;
   title: string;
+  description: string;
   week_id: string | null;
   position: number;
   unlock_rule_id: string | null;
@@ -175,7 +176,7 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows: chapters } = await query<ChapterRow>(
-      `SELECT ch.id, ch.course_id, ch.title, ch.week_id, ch.position, ch.unlock_rule_id
+      `SELECT ch.id, ch.course_id, ch.title, ch.description, ch.week_id, ch.position, ch.unlock_rule_id
        FROM chapters ch
        JOIN courses co ON co.id = ch.course_id
        WHERE co.organization_id = $1
@@ -210,7 +211,7 @@ export class PostgresContentProvider implements ContentProvider {
       id: chapter.id,
       courseId: chapter.course_id,
       title: chapter.title,
-      description: '',
+      description: chapter.description,
       weekId: chapter.week_id,
       position: chapter.position,
       unlockRuleId: chapter.unlock_rule_id,
@@ -223,53 +224,124 @@ export class PostgresContentProvider implements ContentProvider {
     return all.find((chapter) => chapter.id === id) ?? null;
   }
 
+  /** Décalage temporaire libérant la plage de positions 0..n. Doit rester > au
+   * nombre réel d'éléments (un chapitre compte quelques dizaines de leçons). */
+  private static readonly POSITION_OFFSET = 10000;
+
   async saveChapters(scope: OrgScope, chapters: ChapterWithLessons[]): Promise<void> {
     const { organizationId } = assertScope(scope);
 
+    // La position est relative à la formation : on traite formation par formation.
+    const byCourse = new Map<string, ChapterWithLessons[]>();
     for (const chapter of chapters) {
+      const list = byCourse.get(chapter.courseId) ?? [];
+      list.push(chapter);
+      byCourse.set(chapter.courseId, list);
+    }
+
+    for (const [courseId, courseChapters] of byCourse) {
       // Vérifie que la formation cible appartient bien à l'organisation.
       const owner = await query<{ id: string }>(
         'SELECT id FROM courses WHERE organization_id = $1 AND id = $2',
-        [organizationId, chapter.courseId],
+        [organizationId, courseId],
       );
       if (owner.rows.length === 0) {
         throw new Error(
-          `Formation "${chapter.courseId}" introuvable dans cette organisation : écriture refusée.`,
+          `Formation "${courseId}" introuvable dans cette organisation : écriture refusée.`,
         );
       }
 
+      // `UNIQUE (course_id, position)` est vérifiée à chaque instruction : on
+      // décale d'abord tout le monde, puis on repose les positions définitives.
+      // Cela évite une contrainte DEFERRABLE et une transaction explicite.
       await query(
-        `INSERT INTO chapters (id, course_id, week_id, title, position, unlock_rule_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (id) DO UPDATE SET
-           course_id = EXCLUDED.course_id, week_id = EXCLUDED.week_id,
-           title = EXCLUDED.title, position = EXCLUDED.position,
-           unlock_rule_id = EXCLUDED.unlock_rule_id`,
-        [
-          chapter.id, chapter.courseId, chapter.weekId, chapter.title,
-          chapter.position, chapter.unlockRuleId,
-        ],
+        'UPDATE chapters SET position = position + $2 WHERE course_id = $1',
+        [courseId, PostgresContentProvider.POSITION_OFFSET],
       );
 
-      await query('DELETE FROM lessons WHERE chapter_id = $1', [chapter.id]);
-
-      for (const [index, lesson] of chapter.lessons.entries()) {
+      for (const [index, chapter] of courseChapters.entries()) {
         await query(
-          `INSERT INTO lessons (
-             id, chapter_id, source_id, title, objective, content, type,
-             points, interactive_component_name, visual_component_name, position
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          `INSERT INTO chapters (id, course_id, week_id, title, description, position, unlock_rule_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO UPDATE SET
+             course_id = EXCLUDED.course_id, week_id = EXCLUDED.week_id,
+             title = EXCLUDED.title, description = EXCLUDED.description,
+             position = EXCLUDED.position, unlock_rule_id = EXCLUDED.unlock_rule_id`,
           [
-            lesson.id, chapter.id, null, lesson.title, lesson.objective ?? '',
-            lesson.content ?? '', 'TEXTE', 0,
-            lesson.interactiveComponentName ?? null,
-            lesson.visualComponentName ?? null,
-            index,
+            chapter.id, courseId, chapter.weekId, chapter.title,
+            chapter.description ?? '', index, chapter.unlockRuleId,
           ],
         );
+
+        await this.saveLessons(chapter.id, chapter.lessons);
       }
+
+      // Chapitres absents de la liste : conservés, repoussés à la suite plutôt
+      // que supprimés (leur suppression emporterait leurs quiz et la
+      // progression des apprenants — voir user_lesson_progress).
+      await query(
+        `WITH leftovers AS (
+           SELECT id, ROW_NUMBER() OVER (ORDER BY position) AS rn
+           FROM chapters
+           WHERE course_id = $1 AND position >= $3
+         )
+         UPDATE chapters c SET position = $2 + l.rn - 1
+         FROM leftovers l
+         WHERE c.id = l.id`,
+        [courseId, courseChapters.length, PostgresContentProvider.POSITION_OFFSET],
+      );
     }
+  }
+
+  /**
+   * Écrit les leçons d'un chapitre **sans les supprimer**.
+   *
+   * ⚠️ Ne jamais revenir à un `DELETE` puis réinsertion : `user_lesson_progress`
+   * référence `lessons(id)` avec `ON DELETE CASCADE`, et une simple édition de
+   * contenu effacerait la progression des apprenants.
+   */
+  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {
+    await query(
+      'UPDATE lessons SET position = position + $2 WHERE chapter_id = $1',
+      [chapterId, PostgresContentProvider.POSITION_OFFSET],
+    );
+
+    for (const [index, lesson] of lessons.entries()) {
+      // `type` et `points` ne figurent pas dans `Lesson` : ils sont posés à la
+      // création et **préservés** en mise à jour (absents du DO UPDATE).
+      await query(
+        `INSERT INTO lessons (
+           id, chapter_id, source_id, title, objective, content, type, points,
+           interactive_component_name, visual_component_name, position
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET
+           chapter_id = EXCLUDED.chapter_id,
+           title = EXCLUDED.title,
+           objective = EXCLUDED.objective,
+           content = EXCLUDED.content,
+           interactive_component_name = EXCLUDED.interactive_component_name,
+           visual_component_name = EXCLUDED.visual_component_name,
+           position = EXCLUDED.position`,
+        [
+          lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
+          lesson.content ?? '', lesson.interactiveComponentName ?? null,
+          lesson.visualComponentName ?? null, index,
+        ],
+      );
+    }
+
+    await query(
+      `WITH leftovers AS (
+         SELECT id, ROW_NUMBER() OVER (ORDER BY position) AS rn
+         FROM lessons
+         WHERE chapter_id = $1 AND position >= $3
+       )
+       UPDATE lessons l SET position = $2 + r.rn - 1
+       FROM leftovers r
+       WHERE l.id = r.id`,
+      [chapterId, lessons.length, PostgresContentProvider.POSITION_OFFSET],
+    );
   }
 
   async deleteChapter(scope: OrgScope, id: string): Promise<void> {
