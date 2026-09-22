@@ -120,6 +120,22 @@ export class GoogleAccountConflictError extends Error {
 }
 
 /**
+ * Levée quand le SSO est valide mais qu'aucun compte correspondant n'existe.
+ *
+ * Le message est explicite pour l'utilisateur — il doit savoir à qui s'adresser
+ * — sans révéler si l'adresse existe ailleurs.
+ */
+export class SamlAccountNotFoundError extends Error {
+  constructor() {
+    super(
+      'Votre identité a bien été vérifiée, mais aucun compte ne lui correspond dans ' +
+        'cette organisation. Demandez à un administrateur de vous inviter.',
+    );
+    this.name = 'SamlAccountNotFoundError';
+  }
+}
+
+/**
  * Levée quand un refresh token est inconnu ou expiré (mais pas réutilisé).
  */
 export class InvalidRefreshTokenError extends Error {
@@ -298,6 +314,23 @@ export interface AuthProvider {
    * conservé pour retrouver le compte même si l'adresse change.
    */
   loginWithGoogle(profile: GoogleProfileInput): Promise<Session>;
+
+  /**
+   * Connexion par SSO SAML (REQ-AUTH-05).
+   *
+   * Le profil est **déjà validé** : la signature de l'assertion a été vérifiée
+   * contre le certificat du fournisseur d'identité (`src/lib/auth/saml.ts`).
+   *
+   * ⚠️ **Le compte doit préexister dans l'organisation.** Une assertion prouve
+   * une adresse email, pas un droit d'accès : provisionner automatiquement
+   * permettrait à un administrateur du fournisseur d'identité de créer des
+   * comptes dans l'organisation à volonté. C'est le choix du modèle
+   * masterplan365, et il est plus prudent.
+   */
+  loginWithSaml(
+    organizationId: string,
+    identity: { email: string; name: string },
+  ): Promise<Session>;
 
   /**
    * État actuel d'un utilisateur, **lu en base**.

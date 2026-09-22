@@ -28,6 +28,7 @@ import {
   InvalidResetTokenError,
   MfaNotConfiguredError,
   RefreshTokenReuseError,
+  SamlAccountNotFoundError,
   INVITATION_TTL_DAYS,
   isOrganizationRole,
   RESET_TTL_MINUTES,
@@ -285,6 +286,39 @@ export class JwtAuthProvider implements AuthProvider {
         expiresInSeconds: MFA_CHALLENGE_TTL_SECONDS,
       };
     }
+
+    await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+
+    return this.issueSession(user);
+  }
+
+  // --- SSO SAML -------------------------------------------------------------
+
+  async loginWithSaml(
+    organizationId: string,
+    identity: { email: string; name: string },
+  ): Promise<Session> {
+    const email = JwtAuthProvider.normalizeEmail(identity.email);
+
+    // Recherche **dans cette organisation uniquement** : l'assertion du
+    // fournisseur d'identité atteste une adresse, pas une appartenance. Sans ce
+    // filtre, un utilisateur d'une autre organisation pourrait se connecter chez
+    // celle-ci en présentant une adresse qu'il contrôle.
+    const { rows } = await query<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE organization_id = $1 AND lower(email) = $2`,
+      [organizationId, email],
+    );
+
+    const user = rows[0];
+    if (!user) {
+      // Pas de provisionnement automatique : une assertion prouve une identité,
+      // pas un droit d'accès. Créer le compte ici permettrait à un
+      // administrateur du fournisseur d'identité d'ouvrir des accès dans
+      // l'organisation à volonté.
+      throw new SamlAccountNotFoundError();
+    }
+
+    if (user.status !== 'Actif') throw new AccountDisabledError();
 
     await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
