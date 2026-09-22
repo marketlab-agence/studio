@@ -192,6 +192,89 @@ export class MfaNotConfiguredError extends Error {
   }
 }
 
+// --- Invitations (REQ-ORG-05) -------------------------------------------------
+
+/**
+ * Rôles qu'une organisation peut attribuer.
+ *
+ * `Super Admin` est **exclu** : c'est un rôle *plateforme* (administration de
+ * Katalyst lui-même), pas un rôle qu'un client s'attribue. L'y inclure
+ * permettrait à un institut de s'octroyer des droits sur l'ensemble du service.
+ */
+export type OrganizationRole = 'Propriétaire' | 'Admin' | 'Modérateur' | 'Utilisateur';
+
+/** Rôles attribuables par une organisation. Source unique, partagée avec l'email. */
+export const ORGANIZATION_ROLES: readonly OrganizationRole[] = [
+  'Propriétaire',
+  'Admin',
+  'Modérateur',
+  'Utilisateur',
+];
+
+/** Vérifie qu'un rôle est attribuable par une organisation. */
+export function isOrganizationRole(role: string): role is OrganizationRole {
+  return (ORGANIZATION_ROLES as readonly string[]).includes(role);
+}
+
+/**
+ * Durée de vie d'une invitation, en jours.
+ *
+ * Plus longue qu'un lien de réinitialisation (1 heure) : une invitation attend
+ * dans une boîte mail, alors qu'une réinitialisation répond à une action
+ * immédiate.
+ */
+export const INVITATION_TTL_DAYS = 7;
+
+export interface InvitationInput {
+  email: string;
+  role: OrganizationRole;
+}
+
+export interface InvitationInfo {
+  id: string;
+  email: string;
+  role: OrganizationRole;
+  organizationId: string;
+  /** Nom de l'organisation, pour l'afficher à l'invité. */
+  organizationName: string;
+  expiresAt: Date;
+}
+
+export interface CreatedInvitation {
+  /** Jeton **en clair** : seul moment où il existe sous cette forme. */
+  token: string;
+  invitation: InvitationInfo;
+}
+
+/** Levée quand une invitation est inconnue, expirée, révoquée ou déjà utilisée. */
+export class InvalidInvitationError extends Error {
+  constructor(reason = 'invitation inconnue, expirée ou déjà utilisée') {
+    super(`Invitation invalide : ${reason}. Demandez une nouvelle invitation.`);
+    this.name = 'InvalidInvitationError';
+  }
+}
+
+/** Levée quand l'adresse invitée correspond déjà à un compte. */
+export class InvitationEmailTakenError extends Error {
+  constructor() {
+    super(
+      'Un compte existe déjà pour cette adresse. Connectez-vous, ou utilisez une autre adresse.',
+    );
+    this.name = 'InvitationEmailTakenError';
+  }
+}
+
+/** Levée quand un rôle hors périmètre d'organisation est demandé. */
+export class InvalidRoleError extends Error {
+  constructor(role: string) {
+    super(
+      `Rôle « ${role} » invalide pour une organisation. ` +
+        'Rôles possibles : Propriétaire, Admin, Modérateur, Utilisateur.',
+    );
+    this.name = 'InvalidRoleError';
+  }
+}
+
 export interface AuthProvider {
   /** Crée un compte. L'organisation est créée si `organizationId` est absent. */
   register(input: RegisterInput): Promise<Session>;
@@ -288,4 +371,37 @@ export interface AuthProvider {
     currentPassword: string,
     newPassword: string,
   ): Promise<void>;
+
+  // --- Invitations (REQ-ORG-05) ---------------------------------------------
+
+  /**
+   * Crée une invitation et retourne son jeton **en clair**, à envoyer par email.
+   *
+   * Les invitations précédentes non acceptées pour la même adresse sont
+   * **révoquées** : plusieurs liens valides en parallèle multiplieraient les
+   * façons d'entrer, et l'émetteur croirait avoir annulé ce qu'il n'a pas annulé.
+   */
+  createInvitation(scope: OrgScope, input: InvitationInput): Promise<CreatedInvitation>;
+
+  /** Invitations d'une organisation, de la plus récente à la plus ancienne. */
+  listInvitations(scope: OrgScope): Promise<InvitationInfo[]>;
+
+  /** Révoque une invitation non acceptée. */
+  revokeInvitation(scope: OrgScope, invitationId: string): Promise<void>;
+
+  /**
+   * Informations d'une invitation à partir de son jeton, pour l'afficher à
+   * l'invité **avant** qu'il ne crée son compte.
+   * Retourne `null` si le jeton est inconnu, expiré, révoqué ou déjà utilisé.
+   */
+  getInvitationByToken(token: string): Promise<InvitationInfo | null>;
+
+  /**
+   * Accepte une invitation : crée le compte dans l'organisation d'accueil, avec
+   * le rôle prévu, et ouvre une session.
+   */
+  acceptInvitation(
+    token: string,
+    details: { name: string; password: string },
+  ): Promise<Session>;
 }

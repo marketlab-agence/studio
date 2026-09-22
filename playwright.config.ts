@@ -31,27 +31,30 @@ export default defineConfig({
 
   // Pas de serveur à démarrer si l'on vise une URL existante.
   //
-  // ⚠️ PIÈGE : `reuseExistingServer` réutilise N'IMPORTE QUEL serveur déjà à
-  // l'écoute sur le port. Si ce serveur a été démarré AVANT l'ajout d'une
-  // variable d'environnement (ici RATE_LIMIT_MULTIPLIER), il ne la connaît pas,
-  // et les tests échouent avec des « 429 » déroutants au lieu d'une erreur
-  // explicite. En cas d'échecs 429 inattendus : arrêter les `next dev` en cours
-  // avant de relancer.
+  // ⚠️ `reuseExistingServer: false` VOLONTAIREMENT, y compris en local.
+  //
+  // La réutilisation d'un serveur déjà à l'écoute produit des **résultats faux
+  // silencieux** : un serveur démarré avant l'ajout d'une variable
+  // d'environnement (ici RATE_LIMIT_MULTIPLIER) ne la connaît pas, la limite de
+  // débit retombe à sa valeur stricte, et les tests échouent en « 429 » sans que
+  // rien n'indique la cause. C'est arrivé quatre fois.
+  //
+  // Avec `false`, un serveur déjà présent provoque une erreur explicite
+  // (« port déjà utilisé ») : on perd quelques secondes de démarrage, on gagne
+  // des diagnostics justes. Arrêter les `next dev` en cours avant de lancer.
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
         command: 'npm run dev:turbo',
         url: BASE_URL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 180_000,
         stdout: 'ignore',
         stderr: 'pipe',
         env: {
           // ⚠️ Playwright REMPLACE l'environnement du serveur par cet objet, il
           // ne le complète pas : sans la recopie de `process.env`, le serveur
-          // perdrait PATH, NODE_ENV et les variables de `.env.local`, et la
-          // limite de débit retomberait à sa valeur stricte (5 inscriptions par
-          // heure) — les tests échoueraient alors en 429 sans explication.
+          // perdrait PATH, NODE_ENV et les variables de `.env.local`.
           ...process.env,
           // Les tests E2E s'exécutent tous depuis la même adresse IP : la limite
           // d'inscription serait atteinte par les tests eux-mêmes. Les limites

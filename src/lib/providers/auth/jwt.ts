@@ -20,13 +20,22 @@ import {
   AccountDisabledError,
   GoogleAccountConflictError,
   InvalidCredentialsError,
+  InvalidInvitationError,
+  InvitationEmailTakenError,
+  InvalidRoleError,
   InvalidMfaCodeError,
   InvalidRefreshTokenError,
   InvalidResetTokenError,
   MfaNotConfiguredError,
   RefreshTokenReuseError,
+  INVITATION_TTL_DAYS,
+  isOrganizationRole,
   RESET_TTL_MINUTES,
   type AuthProvider,
+  type CreatedInvitation,
+  type InvitationInfo,
+  type InvitationInput,
+  type OrganizationRole,
   type AuthenticatedUser,
   type GoogleProfileInput,
   type LoginInput,
@@ -36,7 +45,7 @@ import {
   type RegisterInput,
   type Session,
 } from '../auth';
-import type { OrgScope } from '../types';
+import { assertScope, type OrgScope } from '../types';
 
 /**
  * Authentification JWT sur PostgreSQL (ADR 0002).
@@ -677,5 +686,208 @@ export class JwtAuthProvider implements AuthProvider {
       userId,
       newHash,
     ]);
+  }
+
+  // --- Invitations ----------------------------------------------------------
+
+  async createInvitation(scope: OrgScope, input: InvitationInput): Promise<CreatedInvitation> {
+    const { organizationId, userId } = assertScope(scope);
+
+    // Un rôle hors périmètre d'organisation (« Super Admin ») est refusé : il
+    // donnerait à un client des droits sur l'ensemble du service.
+    if (!isOrganizationRole(input.role)) {
+      throw new InvalidRoleError(input.role);
+    }
+
+    const email = JwtAuthProvider.normalizeEmail(input.email);
+
+    const organization = await query<{ name: string }>(
+      'SELECT name FROM organizations WHERE id = $1',
+      [organizationId],
+    );
+    if (!organization.rows[0]) {
+      throw new Error(`Organisation "${organizationId}" introuvable.`);
+    }
+
+    // Un compte existe déjà : l'inviter n'a pas de sens, il doit se connecter.
+    if (await this.findByEmail(email)) {
+      throw new InvitationEmailTakenError();
+    }
+
+    const token = generateOpaqueToken();
+    const expiresAt = new Date(Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+    const invitationId = await withTransaction(async (client) => {
+      // Révoquer les invitations en attente pour la même adresse : plusieurs
+      // liens valides en parallèle multiplieraient les façons d'entrer, et
+      // l'émetteur croirait avoir annulé ce qu'il n'a pas annulé.
+      await client.query(
+        `UPDATE invitations SET revoked_at = NOW()
+         WHERE organization_id = $1 AND lower(email) = $2
+           AND accepted_at IS NULL AND revoked_at IS NULL`,
+        [organizationId, email],
+      );
+
+      const inserted = await client.query<{ id: string }>(
+        `INSERT INTO invitations (organization_id, email, role, token_hash, expires_at, invited_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [organizationId, email, input.role, hashToken(token), expiresAt, userId],
+      );
+
+      return inserted.rows[0].id;
+    });
+
+    return {
+      token,
+      invitation: {
+        id: invitationId,
+        email,
+        role: input.role,
+        organizationId,
+        organizationName: organization.rows[0].name,
+        expiresAt,
+      },
+    };
+  }
+
+  async listInvitations(scope: OrgScope): Promise<InvitationInfo[]> {
+    const { organizationId } = assertScope(scope);
+
+    const { rows } = await query<{
+      id: string;
+      email: string;
+      role: string;
+      organization_id: string;
+      organization_name: string;
+      expires_at: Date;
+    }>(
+      `SELECT i.id, i.email, i.role, i.organization_id, o.name AS organization_name, i.expires_at
+       FROM invitations i
+       JOIN organizations o ON o.id = i.organization_id
+       WHERE i.organization_id = $1
+         AND i.accepted_at IS NULL
+         AND i.revoked_at IS NULL
+       ORDER BY i.created_at DESC`,
+      [organizationId],
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role as OrganizationRole,
+      organizationId: row.organization_id,
+      organizationName: row.organization_name,
+      expiresAt: row.expires_at,
+    }));
+  }
+
+  async revokeInvitation(scope: OrgScope, invitationId: string): Promise<void> {
+    const { organizationId } = assertScope(scope);
+
+    // Filtré par organisation : un identifiant d'invitation d'une autre
+    // organisation ne doit rien révoquer.
+    await query(
+      `UPDATE invitations SET revoked_at = NOW()
+       WHERE organization_id = $1 AND id = $2
+         AND accepted_at IS NULL AND revoked_at IS NULL`,
+      [organizationId, invitationId],
+    );
+  }
+
+  async getInvitationByToken(token: string): Promise<InvitationInfo | null> {
+    const { rows } = await query<{
+      id: string;
+      email: string;
+      role: string;
+      organization_id: string;
+      organization_name: string;
+      expires_at: Date;
+    }>(
+      `SELECT i.id, i.email, i.role, i.organization_id, o.name AS organization_name, i.expires_at
+       FROM invitations i
+       JOIN organizations o ON o.id = i.organization_id
+       WHERE i.token_hash = $1
+         AND i.accepted_at IS NULL
+         AND i.revoked_at IS NULL
+         AND i.expires_at > NOW()`,
+      [hashToken(token)],
+    );
+
+    const row = rows[0];
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      email: row.email,
+      role: row.role as OrganizationRole,
+      organizationId: row.organization_id,
+      organizationName: row.organization_name,
+      expiresAt: row.expires_at,
+    };
+  }
+
+  async acceptInvitation(
+    token: string,
+    details: { name: string; password: string },
+  ): Promise<Session> {
+    assertPasswordPolicy(details.password);
+    const passwordHash = await hashPassword(details.password);
+    const tokenHash = hashToken(token);
+
+    let userId: string;
+    try {
+      userId = await withTransaction(async (client) => {
+        // `FOR UPDATE` : deux clics simultanés sur le même lien ne doivent pas
+        // créer deux comptes. Le verrou sérialise les deux transactions.
+        const { rows } = await client.query<{
+          id: string;
+          email: string;
+          role: string;
+          organization_id: string;
+          expires_at: Date;
+          accepted_at: Date | null;
+          revoked_at: Date | null;
+        }>(
+          `SELECT id, email, role, organization_id, expires_at, accepted_at, revoked_at
+           FROM invitations WHERE token_hash = $1 FOR UPDATE`,
+          [tokenHash],
+        );
+
+        const invitation = rows[0];
+        if (!invitation) throw new InvalidInvitationError();
+        if (invitation.accepted_at) throw new InvalidInvitationError('déjà utilisée');
+        if (invitation.revoked_at) throw new InvalidInvitationError('révoquée');
+        if (invitation.expires_at.getTime() <= Date.now()) {
+          throw new InvalidInvitationError('expirée');
+        }
+
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO users (organization_id, email, name, role, password_hash)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [invitation.organization_id, invitation.email, details.name, invitation.role, passwordHash],
+        );
+
+        // Consommée dans la même transaction que la création du compte : jamais
+        // un lien brûlé sans compte, ni un compte sans lien consommé.
+        await client.query('UPDATE invitations SET accepted_at = NOW() WHERE id = $1', [
+          invitation.id,
+        ]);
+
+        return inserted.rows[0].id;
+      });
+    } catch (error) {
+      // L'adresse a été enregistrée entre-temps : conflit d'usage, pas panne.
+      if (isUniqueViolation(error, 'users_email_key')) {
+        throw new InvitationEmailTakenError();
+      }
+      throw error;
+    }
+
+    const user = await this.findById(userId);
+    if (!user) throw new InvalidInvitationError('compte introuvable après création');
+
+    return this.issueSession(user);
   }
 }
