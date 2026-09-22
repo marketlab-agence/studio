@@ -13,9 +13,9 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *T4.1, T4.2, T4.3, T4.4, T4.6, T4.7, T4.8, T4.9, T4.10 faits* ; **restent** SAML (gate G1), actions admin, invitations, rôles |
-| Prochaine tâche | **T4.11** — `getSettingsAction`/`getAdmin*Action` sur les providers, ou **T4.12-T4.14** (inscription libre-service déjà en place, invitations par email, rôles) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **11 suites / 127** · **E2E 47** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *T4.1-T4.4 et T4.6-T4.13 faits* ; **restent** T4.14 (rôles) et T4.5 (SAML, gate G1) |
+| Prochaine tâche | **T4.14** — appliquer `src/lib/auth/authorization.ts` (déjà écrit, sert aux invitations) aux autres routes et à `/admin/roles` |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **12 suites / 147** · **E2E 57** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |

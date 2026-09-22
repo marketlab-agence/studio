@@ -136,10 +136,10 @@ Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 - [x] T4.8 — **Reset forcé** de bout en bout (email → lien → nouveau mot de passe) · REQ-AUTH-06 · ✅ `7bb11f8` (provider) + `2c937e5` (endpoints, gabarits, pages, 9 tests E2E) — **c'est le seul chemin d'entrée des comptes importés** : constaté en base, les 11 comptes réels ont `password_hash IS NULL`. Reste la route `change-password` pour un utilisateur déjà authentifié (à raccorder à la page compte, T4.10).
 - [x] T4.9 — Refonte `AuthContext` + **correction de la fuite de listener** · REQ-AUTH-08 · ✅ `fc2c176` — la fuite est **supprimée par construction** : plus d'abonnement du tout, donc rien à détacher. Un seul appel au montage. Le spinner d'attente est limité aux routes protégées.
 - [x] T4.10 — Migrer `login`, `signup`, `account`, `layout/Header` · REQ-AUTH-08 · ✅ `fc2c176` — vérif satisfaite : **0 import `firebase`** dans `src/app`, `src/components`, `src/contexts` et `src/hooks`.
-- [ ] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · vérif: pages admin fonctionnelles
-- [ ] T4.12 — **Inscription libre-service** : créer un compte crée une organisation · REQ-ORG-04 · vérif: espace créé sans intervention
-- [ ] T4.13 — **Invitations** par email (formateurs, apprenants) · REQ-ORG-05 · vérif: invitation reçue et acceptée
-- [ ] T4.14 — **Rôles** Propriétaire / Admin / Modérateur / Utilisateur + Super Admin · REQ-ORG-06 · vérif: permissions distinctes
+- [x] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · ✅ **déjà satisfaite** (migrée en phase 3) : `adminActions` et `planActions` passent par les providers, plus aucun `getFirebaseAdmin` (vérifié).
+- [x] T4.12 — **Inscription libre-service** : créer un compte crée une organisation · REQ-ORG-04 · ✅ **déjà satisfaite** (`7bb11f8`, `dc99c4f`) : `register` et `loginWithGoogle` créent l'organisation, l'inscrit devient Propriétaire.
+- [x] T4.13 — **Invitations** par email (formateurs, apprenants) · REQ-ORG-05 · ✅ `7b35183` (migration 008, provider, gabarit, 20 tests DB) + `297bbb8` (routes, page, 10 tests E2E) — le jeton n'est **jamais** renvoyé par l'API ; `canAssignRole` interdit d'attribuer un rôle supérieur au sien.
+- [ ] T4.14 — **Rôles** Propriétaire / Admin / Modérateur / Utilisateur + Super Admin · REQ-ORG-06 · vérif: permissions distinctes — *le module `src/lib/auth/authorization.ts` existe déjà et sert aux invitations ; reste à l'appliquer aux autres routes et à la page `/admin/roles`*
 
 ## Phase 5 — Progression
 
