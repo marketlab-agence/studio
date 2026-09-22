@@ -12,11 +12,11 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers**, ✅ **Phase 4 — Authentification** |
+| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers**, ✅ **Phase 4 — Authentification** (hors T4.5), ✅ **Phase 5 — Progression** |
 | Phase en cours | — |
-| Prochaine phase | **Phase 5 — Progression** · commence par **rétablir la persistance** (T5.2/T5.3), dégradée en phase 4 (`user_course_progress`) |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **21 suites / 202** · tests DB **12 suites / 147** · **E2E 68** |
-| Reste de la phase 4 | **T4.5 — SAML**, seul point bloqué : **gate G1** (fournisseur à trancher, `passport-saml` conçu pour Express) |
+| Prochaine phase | **Phase 6 — Conformité des formations** (T6.1 à T6.8) · dépend de 1 et 3, déjà faites. ⚠️ **T6.3-T6.5** supposent de rendre interactifs les **13 composants placeholder** |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **21 suites / 202** · tests DB **13 suites / 158** · **E2E 76** |
+| Reste en suspens | **T4.5 — SAML** : seul point bloqué, par le **gate G1** (fournisseur à trancher). Question posée, en attente de décision. |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |

@@ -145,9 +145,9 @@ Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 
 Dépend de : 4
 
-- [ ] T5.1 — API `GET/POST /api/v1/progress` · REQ-PROG-01 · vérif: 200 + persistance
-- [ ] T5.2 — Migrer `useTutorialProgress.ts` + `TutorialContext.tsx` · REQ-PROG-01 · vérif: coché → persistant
-- [ ] T5.3 — `user_course_progress` (reprise au bon endroit) · REQ-PROG-02 · vérif: reprise correcte
+- [x] T5.1 — API `GET/POST /api/v1/progress` · REQ-PROG-01 · ✅ `d149a10` — vérif « 200 + persistance » satisfaite : 11 tests DB + 8 tests E2E. `saveCourse` **synchronise** les leçons (ajout **et retrait**) ; aucune méthode ne reçoit d'identifiant d'utilisateur (il vient du scope).
+- [x] T5.2 — Migrer `useTutorialProgress.ts` + `TutorialContext.tsx` · REQ-PROG-01 · ✅ `d149a10` — vérif « coché → persistant » satisfaite, **prouvée après reconnexion**. `useTutorialProgress` est **réécrit en vue dérivée** : il maintenait un second `Set` en mémoire, donc deux sources pour la même donnée.
+- [x] T5.3 — `user_course_progress` (reprise au bon endroit) · REQ-PROG-02 · ✅ `d149a10` — `current_chapter_id`, `current_lesson_id` et `current_view` enregistrés et restaurés.
 
 ## Phase 6 — Conformité des formations
 

@@ -91,3 +91,15 @@ Résolu en passant `reuseExistingServer` à **`false`**, y compris en local : un
 - ⚠️ **Une interface qui prétend modifier des permissions sans les modifier est pire qu'une interface absente** : un administrateur croirait avoir restreint un accès qui reste ouvert. La page `/admin/roles` simulait l'enregistrement ; elle décrit maintenant les règles réellement appliquées, en appelant les mêmes fonctions — elle ne peut pas mentir.
 - **Se protéger d'une auto-rétrogradation** : un Propriétaire qui retirerait ses propres droits laisserait l'organisation sans administrateur.
 - ⚠️ **Le rôle est porté par le jeton** : le modifier en base n'a d'effet qu'à la prochaine connexion (ou à l'expiration du jeton, 15 min). Les tests doivent donc **se reconnecter** après un changement de rôle, sinon ils valident un jeton périmé.
+
+---
+
+## Progression — la régression de la phase 4 (corrigée en phase 5, `d149a10`)
+
+- 🔴 **Sortir d'un stockage ne suffit pas : il faut rebrancher celui qui le remplace.** La rupture avec Firestore a laissé la progression **en mémoire** pendant toute la phase 4 — les apprenants perdaient tout au rechargement. Le commit de rupture ne l'a pas signalé comme une régression fonctionnelle ; c'est en écrivant `MEMORY.md` que le manque est apparu.
+- **Deux niveaux de progression, à ne pas fusionner** : `user_lesson_progress` = ce qui est **terminé** ; `user_course_progress` = **où l'on en est**. Les fusionner obligerait à inventer une ligne de progression pour chaque leçon.
+- ⚠️ **Un `Set` ne survit pas à `JSON.stringify`** : il devient `{}`. La conversion tableau ↔ `Set` doit se faire à **un seul endroit** (`src/lib/progress/client.ts`), sinon elle s'oublie quelque part.
+- ⚠️ **Ne pas persister depuis un `useEffect` qui observe l'état** : l'effet se déclenche aussi au **chargement initial** et réécrit ce qu'on vient de lire. Persister depuis le **point de mutation** (une action de l'utilisateur).
+- ⚠️ **Une seconde source de vérité pour la même donnée diverge toujours.** `useTutorialProgress` maintenait son propre `Set` et sa propre lecture Firestore, en parallèle du contexte : une leçon pouvait être cochée dans un écran et décochée dans un autre. Réécrit en **vue dérivée**.
+- ⚠️ **Décocher doit RETIRER en base.** Le serveur supprime les lignes `user_lesson_progress` absentes de la liste reçue. Sans ce retrait, une leçon décochée resterait comptée comme terminée et l'affichage mentirait.
+- 🔎 **Constat produit** : une **inscription libre-service crée une organisation VIDE** (REQ-ORG-04). Le contenu seedé appartient à l'organisation `katalyst`, donc un nouvel inscrit n'y a **légitimement pas accès** (403). Trois tests E2E ont échoué sur ce point : le cloisonnement fonctionnait, c'est le test qui était en tort. **Conséquence à traiter un jour** : un inscrit seul voit un espace vide, sans contenu de démarrage.
