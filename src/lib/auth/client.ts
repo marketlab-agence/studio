@@ -180,6 +180,54 @@ export function updateProfileRequest(changes: {
   });
 }
 
+// --- Invitations (REQ-ORG-05) -------------------------------------------------
+
+export interface InvitationView {
+  email: string;
+  role: string;
+  organizationName: string;
+  expiresAt: string;
+}
+
+/** Informations publiques d'une invitation, avant création du compte. */
+export function fetchInvitation(
+  token: string,
+): Promise<ApiResult<{ invitation: InvitationView }>> {
+  return request(`/api/auth/invitation?token=${encodeURIComponent(token)}`);
+}
+
+/** Accepte une invitation : crée le compte et ouvre la session. */
+export function acceptInvitationRequest(
+  token: string,
+  details: { name: string; password: string },
+): Promise<ApiResult<SessionUserResponse>> {
+  return request('/api/auth/invitation', {
+    method: 'POST',
+    body: JSON.stringify({ token, ...details }),
+  });
+}
+
+/** Invite une personne dans l'organisation. Réservé à l'administration. */
+export function createInvitationRequest(input: {
+  email: string;
+  role: string;
+}): Promise<ApiResult<{ invitation: InvitationView; message: string }>> {
+  return request('/api/v1/invitations', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+/** Liste les invitations en attente de l'organisation. */
+export function listInvitationsRequest(): Promise<ApiResult<{ invitations: InvitationView[] }>> {
+  return request('/api/v1/invitations');
+}
+
+/** Révoque une invitation en attente. */
+export function revokeInvitationRequest(id: string): Promise<ApiResult<{ message: string }>> {
+  return request(`/api/v1/invitations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 /**
  * Récupère la session courante, en un seul appel.
  *

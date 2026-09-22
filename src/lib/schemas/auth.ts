@@ -80,6 +80,31 @@ export const disableMfaSchema = z.object({
   password: z.string().min(1, 'Le mot de passe est requis.'),
 });
 
+/**
+ * Rôles qu'une organisation peut attribuer.
+ *
+ * `Super Admin` est **absent** : c'est un rôle plateforme. Le laisser passer ici
+ * serait une porte dérobée — le schéma est la première barrière, avant même le
+ * contrôle du provider.
+ */
+export const organizationRoleSchema = z.enum([
+  'Propriétaire',
+  'Admin',
+  'Modérateur',
+  'Utilisateur',
+]);
+
+export const invitationCreateSchema = z.object({
+  email,
+  role: organizationRoleSchema,
+});
+
+export const invitationAcceptSchema = z.object({
+  token: z.string().trim().min(1, 'Le jeton est requis.'),
+  name: name,
+  password,
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

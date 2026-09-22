@@ -3,9 +3,12 @@ import type { z } from 'zod';
 import {
   AccountDisabledError,
   InvalidCredentialsError,
+  InvalidInvitationError,
   InvalidMfaCodeError,
   InvalidRefreshTokenError,
   InvalidResetTokenError,
+  InvalidRoleError,
+  InvitationEmailTakenError,
   MfaNotConfiguredError,
   RefreshTokenReuseError,
 } from '@/lib/providers/auth';
@@ -90,8 +93,10 @@ export async function parseBody<T>(
 /**
  * Traduit une erreur du provider en réponse HTTP.
  *
- * Les erreurs d'authentification ont un statut précis ; tout le reste devient un
- * 500 générique, la cause étant journalisée.
+ * ⚠️ **Tout nouveau type d'erreur du provider doit être déclaré ici.** Une
+ * erreur non reconnue tombe dans le `500` générique : le client reçoit « erreur
+ * interne » pour ce qui est un simple refus d'usage, et le motif réel n'est
+ * visible que dans les journaux du serveur.
  */
 export function mapAuthError(error: unknown, context: string): NextResponse {
   if (error instanceof InvalidCredentialsError) return errorResponse(error.message, 401);
@@ -102,6 +107,9 @@ export function mapAuthError(error: unknown, context: string): NextResponse {
   if (error instanceof PasswordPolicyError) return errorResponse(error.message, 400);
   if (error instanceof InvalidMfaCodeError) return errorResponse(error.message, 401);
   if (error instanceof MfaNotConfiguredError) return errorResponse(error.message, 409);
+  if (error instanceof InvalidInvitationError) return errorResponse(error.message, 400);
+  if (error instanceof InvalidRoleError) return errorResponse(error.message, 400);
+  if (error instanceof InvitationEmailTakenError) return errorResponse(error.message, 409);
 
   // Un compte déjà existant est une erreur d'usage, pas une panne.
   if (error instanceof Error && /existe déjà/.test(error.message)) {
