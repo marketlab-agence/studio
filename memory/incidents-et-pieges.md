@@ -61,3 +61,22 @@
 - `passport-saml` est **conçu pour Express** ; les route handlers Next ne sont pas un drop-in → **spike obligatoire avant G1**.
 - Le JSON est à **2 niveaux** (cours → chapitre → leçon) ; le modèle cible en a **3** → **ETL** effectué en phase 2.
 - **Isolation multi-tenant** : une requête de provider sans `scope` = fuite de données entre organisations. Le scope est **obligatoire dans l'interface** (ne compile pas sans) ; `assertScope()` le rejette aussi à l'exécution. 10 tests d'isolation couvrent **la lecture et l'écriture** (T3.12, `e1b2de1`).
+
+---
+
+## Invitations — décisions et garde-fous (phase 4, `7b35183`)
+
+- **Le jeton d'invitation est stocké haché** (SHA-256). Une fuite de la base ne doit pas permettre de rejoindre une organisation. SHA-256 suffit : le jeton est aléatoire sur 32 octets.
+- **Réinviter révoque l'invitation en attente** pour la même adresse. Sans cela, plusieurs liens resteraient valides en parallèle et l'émetteur croirait avoir remplacé ce qu'il n'a pas remplacé. C'est pourquoi il n'y a **pas** de contrainte d'unicité sur `(organization_id, email)` : un `UNIQUE` empêcherait de réinviter sans détruire l'historique.
+- **Le rôle « Super Admin » est refusé** à la création d'une invitation : c'est un rôle *plateforme*. L'autoriser permettrait à un institut de s'octroyer des droits sur l'ensemble du service.
+- **`FOR UPDATE` sur le jeton à l'acceptation** : deux clics simultanés sur le même lien ne doivent pas créer deux comptes. Vérifié par un test qui déclenche réellement la course.
+- **L'invitation est consommée dans la même transaction que la création du compte** : jamais un lien brûlé sans compte, ni un compte sans lien consommé.
+- **L'email nomme qui invite et quel rôle** : sans ces deux informations, le destinataire ne peut pas distinguer une invitation légitime d'un message frauduleux, et accepterait à l'aveugle.
+
+## Piège récurrent — serveur E2E réutilisé (résolu)
+
+`reuseExistingServer: true` produisait des **résultats faux silencieux** : un serveur démarré *avant* l'ajout d'une variable d'environnement ne la connaît pas, la limite de débit retombe à sa valeur stricte, et les tests échouent en **429 sans cause visible**. C'est arrivé **quatre fois** dans la phase 4.
+
+Résolu en passant `reuseExistingServer` à **`false`**, y compris en local : un serveur déjà présent provoque désormais une erreur explicite (« port déjà utilisé ») au lieu d'un échec incompréhensible. On perd quelques secondes de démarrage, on gagne des diagnostics justes.
+
+**Règle** : préférer une erreur franche à un résultat faux. Un test qui passe sur un état périmé ne prouve rien.
