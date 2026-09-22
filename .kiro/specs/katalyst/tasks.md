@@ -139,7 +139,7 @@ Dépend de : 3 · **Gates G1 (SAML), G3 (email)**
 - [x] T4.11 — `getPlansAction`/`getSettingsAction`/`getAdmin*Action` sur providers · REQ-DAT-06 · ✅ **déjà satisfaite** (migrée en phase 3) : `adminActions` et `planActions` passent par les providers, plus aucun `getFirebaseAdmin` (vérifié).
 - [x] T4.12 — **Inscription libre-service** : créer un compte crée une organisation · REQ-ORG-04 · ✅ **déjà satisfaite** (`7bb11f8`, `dc99c4f`) : `register` et `loginWithGoogle` créent l'organisation, l'inscrit devient Propriétaire.
 - [x] T4.13 — **Invitations** par email (formateurs, apprenants) · REQ-ORG-05 · ✅ `7b35183` (migration 008, provider, gabarit, 20 tests DB) + `297bbb8` (routes, page, 10 tests E2E) — le jeton n'est **jamais** renvoyé par l'API ; `canAssignRole` interdit d'attribuer un rôle supérieur au sien.
-- [ ] T4.14 — **Rôles** Propriétaire / Admin / Modérateur / Utilisateur + Super Admin · REQ-ORG-06 · vérif: permissions distinctes — *le module `src/lib/auth/authorization.ts` existe déjà et sert aux invitations ; reste à l'appliquer aux autres routes et à la page `/admin/roles`*
+- [x] T4.14 — **Rôles** Propriétaire / Admin / Modérateur / Utilisateur + Super Admin · REQ-ORG-06 · ✅ `41c9520` — vérif « permissions distinctes » satisfaite : 19 tests unitaires de la matrice + 11 tests E2E (403 pour les rôles insuffisants, redirection de `/admin`). **Trou d'autorisation corrigé** : les server actions admin ne contrôlaient pas le rôle, alors qu'elles sont joignables directement. **Défaut corrigé** : le layout admin excluait « Propriétaire », enfermant le propriétaire hors de son espace.
 
 ## Phase 5 — Progression
 

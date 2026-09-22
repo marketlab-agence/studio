@@ -80,3 +80,14 @@
 Résolu en passant `reuseExistingServer` à **`false`**, y compris en local : un serveur déjà présent provoque désormais une erreur explicite (« port déjà utilisé ») au lieu d'un échec incompréhensible. On perd quelques secondes de démarrage, on gagne des diagnostics justes.
 
 **Règle** : préférer une erreur franche à un résultat faux. Un test qui passe sur un état périmé ne prouve rien.
+
+---
+
+## Autorisation — le trou et le verrouillage (phase 4, `41c9520`)
+
+- 🔴 **Une server action est un point d'entrée HTTP.** Elle est joignable directement, sans passer par la page qui l'affiche. Vérifier le rôle dans un composant React ne protège donc **rien**. Le `layout` admin ne contrôlait le rôle que côté client : n'importe quel utilisateur connecté pouvait appeler `updateUserRoleAction` et s'octroyer les droits d'admin. **Tout contrôle d'accès doit être dans l'action ou la route**, à l'endroit où elle s'exécute.
+- 🔴 **Une liste de rôles codée en dur dérive toujours.** Le `layout` admin listait `['Super Admin', 'Admin', 'Modérateur']` et **omettait « Propriétaire »** : le propriétaire d'une organisation était enfermé hors de son propre espace. Le middleware le laissait passer, le layout bloquait le rendu, et **la page restait vide sans aucune erreur** — un symptôme très difficile à relier à sa cause. La liste vient désormais d'une source unique (`src/lib/auth/routes.ts`).
+- ⚠️ **Ne pas avaler un refus d'autorisation dans un `try/catch`.** Le transformer en « aucune donnée » masque un problème de droits derrière un écran vide, sans trace exploitable. Un `ForbiddenError` doit remonter.
+- ⚠️ **Une interface qui prétend modifier des permissions sans les modifier est pire qu'une interface absente** : un administrateur croirait avoir restreint un accès qui reste ouvert. La page `/admin/roles` simulait l'enregistrement ; elle décrit maintenant les règles réellement appliquées, en appelant les mêmes fonctions — elle ne peut pas mentir.
+- **Se protéger d'une auto-rétrogradation** : un Propriétaire qui retirerait ses propres droits laisserait l'organisation sans administrateur.
+- ⚠️ **Le rôle est porté par le jeton** : le modifier en base n'a d'effet qu'à la prochaine connexion (ou à l'expiration du jeton, 15 min). Les tests doivent donc **se reconnecter** après un changement de rôle, sinon ils valident un jeton périmé.

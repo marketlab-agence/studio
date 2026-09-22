@@ -12,10 +12,11 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *T4.1-T4.4 et T4.6-T4.13 faits* ; **restent** T4.14 (rôles) et T4.5 (SAML, gate G1) |
-| Prochaine tâche | **T4.14** — appliquer `src/lib/auth/authorization.ts` (déjà écrit, sert aux invitations) aux autres routes et à `/admin/roles` |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **12 suites / 147** · **E2E 57** |
+| Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers**, ✅ **Phase 4 — Authentification** |
+| Phase en cours | — |
+| Prochaine phase | **Phase 5 — Progression** · commence par **rétablir la persistance** (T5.2/T5.3), dégradée en phase 4 (`user_course_progress`) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **21 suites / 202** · tests DB **12 suites / 147** · **E2E 68** |
+| Reste de la phase 4 | **T4.5 — SAML**, seul point bloqué : **gate G1** (fournisseur à trancher, `passport-saml` conçu pour Express) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |
