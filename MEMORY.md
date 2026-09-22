@@ -13,9 +13,9 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phase 0**, ✅ **Phase 0.5**, ✅ **Phase 1**, ✅ **Phase 2 — Schéma, migrations & seed**, ✅ **Phase 3 — Providers** |
-| Phase en cours | 🔄 **Phase 4 — Authentification** · *socle, routes, middleware, reset forcé, MFA et client faits* (T4.1, T4.2, T4.4, T4.6, T4.7, T4.8, T4.9, T4.10) ; **restent** OAuth Google, SAML, actions admin, invitations, rôles |
-| Prochaine tâche | **T4.3 — Google OAuth** (`/api/auth/google` + `/callback`) — les 2 comptes Google importés en dépendent pour se reconnecter sans friction |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **9 suites / 113** · **E2E 39** |
+| Phase en cours | 🔄 **Phase 4 — Authentification** · *T4.1, T4.2, T4.3, T4.4, T4.6, T4.7, T4.8, T4.9, T4.10 faits* ; **restent** SAML (gate G1), actions admin, invitations, rôles |
+| Prochaine tâche | **T4.11** — `getSettingsAction`/`getAdmin*Action` sur les providers, ou **T4.12-T4.14** (inscription libre-service déjà en place, invitations par email, rôles) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **20 suites / 183** · tests DB **11 suites / 127** · **E2E 47** |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | 🔴 **Aucun compte réel ne peut se connecter** | Les **11 comptes réels ont `password_hash IS NULL`** (mots de passe Firebase non exportables). Le parcours « mot de passe oublié » est donc **la seule voie d'entrée**, pas un cas particulier. Débloqué par T4.8 (`2c937e5`). |
@@ -137,6 +137,10 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     - 🔴 **PIÈGE MAJEUR — `webServer.env` de Playwright REMPLACE l'environnement du serveur** au lieu de le compléter. Sans recopie de `process.env`, le serveur perd `NODE_ENV` et `.env.local` : la limite de débit retombe à sa valeur stricte et les tests échouent en **429 sans explication**. C'était la cause des échecs intermittents de la phase 4. Toujours écrire `{ ...process.env, MA_VARIABLE: '...' }`.
     - ⚠️ **Ne pas conclure trop vite d'un `grep` trop étroit** : j'avais cherché les consommateurs de `userRole`/`accessibleCourses` dans 4 fichiers seulement, conclu qu'ils étaient morts, et supprimé des champs **utilisés ailleurs** (25 erreurs de typage). Balayer tout `src/**` avant de retirer une API.
     - **`MEMORY.md` dépassait la limite de 200 lignes** (218) sans que ça se voie : `Measure-Object -Line` de PowerShell **ne compte pas comme** `ReadAllLines`. Les incidents et pièges sont désormais dans `@memory/incidents-et-pieges.md`.
+44. **Phase 4 — Google OAuth** (T4.3). Le jeton d'identité Google est **vérifié** (JWKS, émetteur, audience), jamais simplement décodé — le décoder reviendrait à faire confiance à une valeur fournie par le navigateur. Une **adresse non vérifiée est refusée** : la lier permettrait de prendre la main sur le compte existant portant cette adresse, puisque la liaison se fait par email. L'**identifiant stable** (`sub`) est conservé : une adresse peut changer côté Google, et sans lui un changement d'adresse créerait un second compte. La connexion Google **lève `must_reset_password`** (Google a vérifié l'adresse), ce qui rend REQ-AUTH-07 effectif pour les 2 comptes Google importés.
+45. 🔴 **« Vérifier puis insérer » est racé par nature** (trouvé en analysant un `500` intermittent, pas en le devinant). Deux requêtes concurrentes passent le contrôle d'existence, puis l'une viole la contrainte d'unicité → **`500` au lieu d'un `409`**. La contrainte est le vrai garde-fou ; sa violation (`23505`) doit être **traduite** en conflit d'usage. Vérifié par un test qui déclenche réellement la course (5 inscriptions simultanées → 1 succès, 4 « existe déjà », aucune organisation orpheline). À appliquer partout où l'on fait un contrôle avant écriture.
+    - Corollaire de journalisation : une **condition de configuration** (Google non configuré) ne doit pas être journalisée avec une pile d'appels — elle apparaît comme un plantage et noie les vraies erreurs. Une ligne de mise en garde suffit.
+    - Corollaire de méthode : quand un test échoue de façon **intermittente**, chercher la course ou l'état partagé, pas la lenteur.
 
 ---
 
