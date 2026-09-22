@@ -19,38 +19,47 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('démarrage du parcours Google', () => {
-  test('redirige vers Google et pose un jeton d’état', async ({ request }) => {
+  /**
+   * ⚠️ Ce test est **déterministe** parce que Playwright fournit une
+   * configuration Google de test (voir `playwright.config.ts`).
+   *
+   * Il acceptait auparavant **les deux branches** — configuré ou non — et
+   * passait donc même quand Google était débranché : il ne prouvait rien. Une
+   * assertion qui accepte deux issues opposées n'est pas une assertion.
+   *
+   * Le `client_id` attendu est celui du serveur de test, jamais un secret réel :
+   * aucun appel n'est fait à Google, seul l'assemblage de l'URL est vérifié.
+   */
+  test('construit l’URL d’autorisation Google et pose un jeton d’état', async ({ request }) => {
     const response = await request.get('/api/auth/google', { maxRedirects: 0 });
 
-    // Sans configuration Google, le serveur revient sur /login avec un motif :
-    // c'est un comportement voulu, pas une panne.
-    if (response.status() === 307 || response.status() === 302) {
-      const location = response.headers()['location'] ?? '';
+    // Sans configuration Google, la route reviendrait sur /login avec un motif.
+    // Ce n'est plus le cas : la configuration de test est fournie.
+    expect(response.status()).toBe(307);
 
-      if (location.includes('accounts.google.com')) {
-        const url = new URL(location);
-        expect(url.searchParams.get('client_id')).toBeTruthy();
-        expect(url.searchParams.get('response_type')).toBe('code');
-        expect(url.searchParams.get('state')).toBeTruthy();
-        // Portées minimales : identité seule.
-        expect(url.searchParams.get('scope')).toBe('openid email profile');
+    const location = response.headers()['location'] ?? '';
+    expect(
+      location,
+      `Google devrait être configuré sur le serveur de test, or /api/auth/google a renvoyé : ${location}`,
+    ).toContain('accounts.google.com');
 
-        // Le jeton d'état est aussi posé en cookie, pour comparaison au retour.
-        const setCookie = response
-          .headersArray()
-          .filter((header) => header.name.toLowerCase() === 'set-cookie')
-          .map((header) => header.value)
-          .join('\n');
-        expect(setCookie).toContain('katalyst_oauth_state=');
-        expect(setCookie).toContain('HttpOnly');
-      } else {
-        // Google non configuré : retour explicite vers la connexion.
-        expect(location).toContain('/login');
-        expect(location).toContain('error=google_indisponible');
-      }
-    } else {
-      throw new Error(`Statut inattendu au démarrage du parcours : ${response.status()}`);
-    }
+    const url = new URL(location);
+    expect(url.searchParams.get('client_id')).toBe('test-client-id.apps.googleusercontent.com');
+    expect(url.searchParams.get('response_type')).toBe('code');
+    expect(url.searchParams.get('redirect_uri')).toContain('/api/auth/google/callback');
+    // Portées minimales : identité seule, aucune donnée métier Google.
+    expect(url.searchParams.get('scope')).toBe('openid email profile');
+    expect(url.searchParams.get('state')).toBeTruthy();
+
+    // Le jeton d'état est aussi posé en cookie, pour comparaison au retour.
+    const setCookie = response
+      .headersArray()
+      .filter((header) => header.name.toLowerCase() === 'set-cookie')
+      .map((header) => header.value)
+      .join('\n');
+
+    expect(setCookie).toContain('katalyst_oauth_state=');
+    expect(setCookie).toContain('HttpOnly');
   });
 });
 

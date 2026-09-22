@@ -61,6 +61,18 @@ export default defineConfig({
           // restent actives, mais élargies. Cette variable est **ignorée en
           // production** (voir src/lib/rate-limit.ts).
           RATE_LIMIT_MULTIPLIER: '200',
+
+          // Configuration Google **factice mais présente**, pour que le test du
+          // parcours OAuth soit DÉTERMINISTE.
+          //
+          // Sans elle, le test dépendait de la configuration locale du
+          // développeur : il acceptait les deux branches (configuré ou non) et
+          // passait donc même quand Google était débranché — il ne prouvait
+          // rien. Ces valeurs ne servent qu'à vérifier la CONSTRUCTION de l'URL
+          // d'autorisation ; aucun appel n'est fait à Google.
+          GOOGLE_CLIENT_ID: 'test-client-id.apps.googleusercontent.com',
+          GOOGLE_CLIENT_SECRET: 'test-client-secret',
+          GOOGLE_REDIRECT_URI: `${BASE_URL}/api/auth/google/callback`,
         },
       },
 });
