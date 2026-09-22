@@ -1,12 +1,29 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { canAccessAdminUi } from '@/lib/auth/routes';
 
+/**
+ * Enveloppe de la zone d'administration.
+ *
+ * ⚠️ **La liste des rôles vient de `@/lib/auth/routes`**, et n'est plus codée en
+ * dur ici. Elle y était — `['Super Admin', 'Admin', 'Modérateur']` — et **omettait
+ * « Propriétaire »** : le propriétaire d'une organisation, celui qui l'a créée,
+ * était enfermé hors de son propre espace d'administration. Le middleware le
+ * laissait passer, ce layout bloquait le rendu, et la page restait vide sans
+ * aucune erreur.
+ *
+ * Cette vérification reste **côté client**, donc cosmétique : elle évite
+ * d'afficher une coquille vide. Le contrôle qui fait foi est côté serveur
+ * (`@/lib/auth/server`), dans chaque server action.
+ *
+ * Le rendu n'attend plus `isAdmin` : la redirection suffit, et attendre un état
+ * dérivé faisait clignoter un écran de chargement sur une page déjà autorisée.
+ */
 export default function AdminLayout({
   children,
 }: {
@@ -14,25 +31,42 @@ export default function AdminLayout({
 }) {
   const { user, loading, userRole } = useAuth();
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  const allowed = canAccessAdminUi(userRole ?? '');
 
   useEffect(() => {
-    if (!loading) {
-      if (!user || !userRole || !['Super Admin', 'Admin', 'Modérateur'].includes(userRole)) {
-        router.push('/login');
-      } else {
-        setIsAdmin(true);
-      }
-    }
-  }, [user, loading, userRole, router]);
+    if (loading) return;
 
-  if (loading || !isAdmin) {
+    if (!user || !allowed) {
+      // Vers /login (et non /dashboard) : le middleware y renvoie déjà les
+      // visiteurs sans session, et une page privée inconnue se traite de même.
+      router.push('/login');
+    }
+  }, [user, loading, allowed, router]);
+
+  // Tant que la session n'est pas résolue, on n'affiche pas la zone
+  // d'administration : elle clignoterait vers un contenu non autorisé.
+  if (loading) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">
-          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          <span>Vérification des accès...</span>
+          <span>Vérification des accès…</span>
         </div>
+      </main>
+    );
+  }
+
+  // Refus : la redirection est en cours. On n'affiche pas le contenu entre-temps.
+  if (!user || !allowed) {
+    return (
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Cette zone est réservée à l’administration. Redirection en cours…
+          </AlertDescription>
+        </Alert>
       </main>
     );
   }
@@ -44,7 +78,7 @@ export default function AdminLayout({
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Zone Administrateur</AlertTitle>
                 <AlertDescription>
-                    Vous êtes dans la zone d'administration. Les modifications ici peuvent affecter l'ensemble de l'application.
+                    Vous êtes dans la zone d&apos;administration. Les modifications ici peuvent affecter l&apos;ensemble de l&apos;application.
                 </AlertDescription>
             </Alert>
             {children}

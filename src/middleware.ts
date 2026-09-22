@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE } from '@/lib/auth/cookies';
 import { tryVerifyAccessToken } from '@/lib/auth/jwt';
-import { isGuestOnlyPath, isProtectedPath } from '@/lib/auth/routes';
+import { canAccessAdminUi, isAdminPath, isGuestOnlyPath, isProtectedPath } from '@/lib/auth/routes';
 
 /**
  * Protection des routes privées (T4.6, REQ-AUTH-09).
@@ -40,6 +40,20 @@ export async function middleware(request: NextRequest) {
   }
 
   if (claims && isGuestOnlyPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
+
+  // Barrière de rôle sur l'interface d'administration.
+  //
+  // ⚠️ C'est un CONFORT, pas la sécurité : le rôle provient du jeton et peut
+  // refléter une situation périmée (rétrogradation il y a moins de 15 minutes).
+  // Le contrôle qui fait foi est dans les server actions (`@/lib/auth/server`),
+  // seuls endroits où l'organisation et la base sont accessibles. Ici, on évite
+  // surtout à un apprenant de tomber sur une page admin en erreur.
+  if (claims && isAdminPath(pathname) && !canAccessAdminUi(claims.role)) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     url.search = '';
