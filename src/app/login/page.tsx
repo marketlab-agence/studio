@@ -7,10 +7,33 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { completeMfaRequest, loginRequest } from '@/lib/auth/client';
 import { safeRedirectPath } from '@/lib/auth/redirect';
+
+/**
+ * Messages associés aux échecs du parcours Google.
+ *
+ * Le rappel OAuth redirige ici avec un code dans l'URL : sans traduction,
+ * l'utilisateur ne verrait qu'une page de connexion inchangée après avoir cliqué
+ * sur « Continuer avec Google », sans savoir ce qui s'est passé.
+ */
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  google_indisponible:
+    'La connexion Google n’est pas configurée sur ce serveur. Utilisez votre adresse email.',
+  google_etat_invalide:
+    'La demande de connexion a expiré ou n’est pas valide. Merci de réessayer.',
+  google_refuse: 'Vous avez refusé l’accès à votre compte Google.',
+  google_sans_code: 'Google n’a pas renvoyé d’autorisation. Merci de réessayer.',
+  google_jeton_invalide: 'La réponse de Google n’a pas pu être vérifiée. Connexion refusée.',
+  google_erreur: 'La connexion Google a échoué. Merci de réessayer.',
+  google_deja_rattache:
+    'Ce compte Google est déjà rattaché à un autre utilisateur. Contactez un administrateur.',
+  compte_desactive: 'Ce compte est désactivé. Contactez un administrateur.',
+  google_connexion_impossible: 'La connexion Google n’a pas pu aboutir. Merci de réessayer.',
+};
 
 /**
  * Connexion (REQ-AUTH-01, REQ-AUTH-04, REQ-AUTH-06).
@@ -41,6 +64,10 @@ function LoginForm() {
   // (voir safeRedirectPath) pour éviter une redirection vers un site tiers après
   // une connexion bien réelle.
   const destination = safeRedirectPath(searchParams.get('redirect'));
+
+  // Un échec du parcours Google revient ici sous forme de code.
+  const oauthError = OAUTH_ERROR_MESSAGES[searchParams.get('error') ?? ''] ?? null;
+  const displayedError = error ?? oauthError;
 
   async function finish() {
     await refreshSession();
@@ -163,6 +190,28 @@ function LoginForm() {
         <CardDescription>Connectez-vous pour continuer.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/*
+          Navigation complète (et non `fetch`) : le parcours OAuth exige une
+          redirection du navigateur vers Google, qui ne peut pas se faire en
+          arrière-plan. Le bouton n'est pas conditionné à la configuration : le
+          serveur répond par un message clair si Google n'est pas configuré,
+          plutôt que de dupliquer la configuration côté client.
+        */}
+        <Button variant="outline" className="w-full" asChild>
+          <a href={`/api/auth/google?redirect=${encodeURIComponent(destination)}`}>
+            Continuer avec Google
+          </a>
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">Ou par email</span>
+          </div>
+        </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -190,9 +239,9 @@ function LoginForm() {
             />
           </div>
 
-          {error && (
+          {displayedError && (
             <p role="alert" className="text-sm text-destructive">
-              {error}
+              {displayedError}
             </p>
           )}
 

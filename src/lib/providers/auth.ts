@@ -54,6 +54,15 @@ export interface LoginInput {
   password: string;
 }
 
+/** Profil Google **déjà vérifié** (signature du jeton contrôlée en amont). */
+export interface GoogleProfileInput {
+  /** Identifiant stable du compte Google (`sub`). */
+  subject: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
 /**
  * Levée quand les identifiants sont refusés.
  *
@@ -99,7 +108,20 @@ export class InvalidResetTokenError extends Error {
   }
 }
 
-/** Levée quand un refresh token est inconnu ou expiré (mais pas réutilisé). */
+/** Levée quand un compte Google est déjà rattaché à un autre utilisateur. */
+export class GoogleAccountConflictError extends Error {
+  constructor() {
+    super(
+      'Ce compte Google est déjà rattaché à un autre utilisateur. ' +
+        'Contacter un administrateur pour le détacher.',
+    );
+    this.name = 'GoogleAccountConflictError';
+  }
+}
+
+/**
+ * Levée quand un refresh token est inconnu ou expiré (mais pas réutilisé).
+ */
 export class InvalidRefreshTokenError extends Error {
   constructor() {
     super('Session expirée ou inconnue. Reconnectez-vous.');
@@ -181,6 +203,18 @@ export interface AuthProvider {
    * **défi** à compléter. Le mot de passe seul ne suffit alors pas.
    */
   login(input: LoginInput): Promise<LoginResult>;
+
+  /**
+   * Connexion par compte Google (REQ-AUTH-02, REQ-AUTH-07).
+   *
+   * Le profil est **déjà vérifié** : la signature du jeton d'identité Google a
+   * été contrôlée en amont (`src/lib/auth/google.ts`). Ce provider ne fait donc
+   * aucune confiance à une valeur brute venue du navigateur.
+   *
+   * La liaison se fait par **email** (design.md §4), avec l'identifiant stable
+   * conservé pour retrouver le compte même si l'adresse change.
+   */
+  loginWithGoogle(profile: GoogleProfileInput): Promise<Session>;
 
   /**
    * État actuel d'un utilisateur, **lu en base**.

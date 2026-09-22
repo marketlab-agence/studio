@@ -18,6 +18,7 @@ import {
 } from '@/lib/auth/totp';
 import {
   AccountDisabledError,
+  GoogleAccountConflictError,
   InvalidCredentialsError,
   InvalidMfaCodeError,
   InvalidRefreshTokenError,
@@ -27,6 +28,7 @@ import {
   RESET_TTL_MINUTES,
   type AuthProvider,
   type AuthenticatedUser,
+  type GoogleProfileInput,
   type LoginInput,
   type LoginResult,
   type MfaSetup,
@@ -67,12 +69,13 @@ type UserRow = {
   password_hash: string | null;
   must_reset_password: boolean;
   two_factor_enabled: boolean;
+  google_id: string | null;
   two_factor_secret: string | null;
 };
 
 const USER_COLUMNS = `
   id, organization_id, email, name, role, status, plan_id, avatar_url, phone,
-  password_hash, must_reset_password, two_factor_enabled, two_factor_secret
+  password_hash, must_reset_password, two_factor_enabled, two_factor_secret, google_id
 `;
 
 function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
@@ -113,6 +116,24 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 48) || 'organisation';
+}
+
+/** Code PostgreSQL d'une violation de contrainte d'unicité. */
+const UNIQUE_VIOLATION = '23505';
+
+/**
+ * Indique si l'erreur est une violation d'unicité sur une contrainte donnée.
+ *
+ * **Pourquoi c'est nécessaire** : « vérifier puis insérer » est un schéma
+ * *racé par nature*. Deux requêtes concurrentes passent le contrôle
+ * d'existence, puis l'une viole la contrainte. Sans ce traitement, la seconde
+ * obtient un **500** — une erreur serveur pour ce qui est un simple conflit
+ * d'usage. La contrainte est le vrai garde-fou ; encore faut-il traduire sa
+ * violation correctement.
+ */
+function isUniqueViolation(error: unknown, constraint: string): boolean {
+  const candidate = error as { code?: string; constraint?: string };
+  return candidate?.code === UNIQUE_VIOLATION && candidate.constraint === constraint;
 }
 
 export class JwtAuthProvider implements AuthProvider {
@@ -174,45 +195,55 @@ export class JwtAuthProvider implements AuthProvider {
       throw new Error(`Un compte existe déjà pour ${email}.`);
     }
 
-    const userId = await withTransaction(async (client) => {
-      let organizationId = input.organizationId;
+    let userId: string;
+    try {
+      userId = await withTransaction(async (client) => {
+        let organizationId = input.organizationId;
 
-      if (!organizationId) {
-        // Inscription libre-service (REQ-ORG-04) : créer un compte crée
-        // l'organisation, l'inscrit devient Propriétaire.
-        const slug = `${slugify(input.name)}-${randomBytes(3).toString('hex')}`;
-        const created = await client.query<{ id: string }>(
-          `INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
-          [input.name, slug],
+        if (!organizationId) {
+          // Inscription libre-service (REQ-ORG-04) : créer un compte crée
+          // l'organisation, l'inscrit devient Propriétaire.
+          const slug = `${slugify(input.name)}-${randomBytes(3).toString('hex')}`;
+          const created = await client.query<{ id: string }>(
+            `INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+            [input.name, slug],
+          );
+          organizationId = created.rows[0].id;
+        }
+
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO users (organization_id, email, name, role, password_hash)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [
+            organizationId,
+            email,
+            input.name,
+            input.organizationId ? 'Utilisateur' : 'Propriétaire',
+            passwordHash,
+          ],
         );
-        organizationId = created.rows[0].id;
+
+        const createdUserId = inserted.rows[0].id;
+
+        // `organizations.owner_id` référence users : renseigné après création.
+        if (!input.organizationId) {
+          await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [
+            createdUserId,
+            organizationId,
+          ]);
+        }
+
+        return createdUserId;
+      });
+    } catch (error) {
+      // Une inscription concurrente a créé le compte entre le contrôle et
+      // l'insertion : c'est un conflit d'usage, pas une panne.
+      if (isUniqueViolation(error, 'users_email_key')) {
+        throw new Error(`Un compte existe déjà pour ${email}.`);
       }
-
-      const inserted = await client.query<{ id: string }>(
-        `INSERT INTO users (organization_id, email, name, role, password_hash)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id`,
-        [
-          organizationId,
-          email,
-          input.name,
-          input.organizationId ? 'Utilisateur' : 'Propriétaire',
-          passwordHash,
-        ],
-      );
-
-      const createdUserId = inserted.rows[0].id;
-
-      // `organizations.owner_id` référence users : renseigné après création.
-      if (!input.organizationId) {
-        await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [
-          createdUserId,
-          organizationId,
-        ]);
-      }
-
-      return createdUserId;
-    });
+      throw error;
+    }
 
     const user = await this.findById(userId);
     if (!user) throw new Error('Compte introuvable après création.');
@@ -252,6 +283,104 @@ export class JwtAuthProvider implements AuthProvider {
   }
 
   // --- Double authentification ----------------------------------------------
+
+  async loginWithGoogle(profile: GoogleProfileInput): Promise<Session> {
+    const email = JwtAuthProvider.normalizeEmail(profile.email);
+
+    // 1. Compte déjà rattaché à ce compte Google : chemin nominal des visites
+    //    suivantes, et seul cas où un changement d'adresse côté Google ne crée
+    //    pas de doublon.
+    const bySubject = await query<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE google_id = $1`,
+      [profile.subject],
+    );
+
+    if (bySubject.rows[0]) {
+      const user = bySubject.rows[0];
+      if (user.status !== 'Actif') throw new AccountDisabledError();
+
+      await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+      return this.issueSession(user);
+    }
+
+    // 2. Compte existant portant cette adresse : on le rattache.
+    const existing = await this.findByEmail(email);
+
+    if (existing) {
+      // L'adresse est déjà liée à un AUTRE compte Google : on refuse plutôt que
+      // d'écraser, sinon la connexion d'un tiers prendrait la main sur ce compte.
+      if (existing.google_id && existing.google_id !== profile.subject) {
+        throw new GoogleAccountConflictError();
+      }
+
+      if (existing.status !== 'Actif') throw new AccountDisabledError();
+
+      await query(
+        `UPDATE users
+         SET google_id = $2,
+             avatar_url = COALESCE(avatar_url, $3),
+             last_login = NOW(),
+             -- Google a vérifié l'adresse : le mot de passe local n'est plus
+             -- nécessaire, et l'obligation de le réinitialiser n'a plus lieu
+             -- d'être (REQ-AUTH-07 : les comptes Google se connectent sans
+             -- friction).
+             must_reset_password = false
+         WHERE id = $1`,
+        [existing.id, profile.subject, profile.picture ?? null],
+      );
+
+      const refreshed = await this.findById(existing.id);
+      if (!refreshed) throw new InvalidCredentialsError();
+
+      return this.issueSession(refreshed);
+    }
+
+    // 3. Aucun compte : inscription libre-service, comme pour l'email. Le compte
+    //    n'a PAS de mot de passe local (`password_hash` reste NULL).
+    let userId: string;
+    try {
+      userId = await withTransaction(async (client) => {
+        const slug = `${slugify(profile.name)}-${randomBytes(3).toString('hex')}`;
+        const created = await client.query<{ id: string }>(
+          `INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+          [profile.name, slug],
+        );
+        const organizationId = created.rows[0].id;
+
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO users (organization_id, email, name, role, google_id, avatar_url)
+           VALUES ($1, $2, $3, 'Propriétaire', $4, $5)
+           RETURNING id`,
+          [organizationId, email, profile.name, profile.subject, profile.picture ?? null],
+        );
+
+        const createdUserId = inserted.rows[0].id;
+
+        await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [
+          createdUserId,
+          organizationId,
+        ]);
+
+        return createdUserId;
+      });
+    } catch (error) {
+      // Deux connexions Google simultanées pour le même compte, ou pour la même
+      // adresse : la contrainte tranche, et on traduit en conflit d'usage plutôt
+      // qu'en erreur serveur.
+      if (isUniqueViolation(error, 'users_google_id_key')) {
+        throw new GoogleAccountConflictError();
+      }
+      if (isUniqueViolation(error, 'users_email_key')) {
+        throw new GoogleAccountConflictError();
+      }
+      throw error;
+    }
+
+    const user = await this.findById(userId);
+    if (!user) throw new InvalidCredentialsError();
+
+    return this.issueSession(user);
+  }
 
   async currentUser(scope: OrgScope, userId: string): Promise<AuthenticatedUser | null> {
     // Filtré par organisation : un identifiant valide d'une autre organisation

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthProvider, getEmailProvider, RESET_TTL_MINUTES } from '@/lib/providers';
 import { forgotPasswordSchema } from '@/lib/schemas/auth';
-import { enforceRateLimit, errorResponse, mapAuthError, parseBody } from '@/lib/auth/api';
+import { enforceRateLimit, errorResponse, parseBody } from '@/lib/auth/api';
 import { RATE_LIMITS } from '@/lib/rate-limit';
 import { passwordResetEmail } from '@/lib/email/templates';
 import { absoluteUrl } from '@/lib/email/urls';
