@@ -8,7 +8,8 @@ import React,
   useMemo,
   useCallback,
   useState,
-  useEffect
+  useEffect,
+  useRef
 } from 'react';
 import { useAuth } from './AuthContext';
 import type
@@ -19,6 +20,7 @@ import type
 } from '@/types/tutorial.types';
 import type { CourseInfo } from '@/types/course.types';
 import type { Quiz } from '@/types/tutorial.types';
+import { fetchProgress, saveProgress, toState } from '@/lib/progress/client';
 
 const getChapterNumber = (title: string) =>
 {
@@ -53,6 +55,8 @@ type TutorialContextType = {
   goToPreviousLesson: () => void;
   resetActiveCourseProgress: () => void;
   resetChapter: (chapterId: string) => void;
+  /** Marque une leçon comme terminée (ou l'inverse). */
+  setLessonCompleted: (lessonId: string, completed: boolean) => void;
   areAllLessonsInChapterCompleted: (chapterId: string) => boolean;
   isChapterUnlocked: (chapterId: string) => boolean;
   currentChapter: Tutorial | undefined;
@@ -69,12 +73,6 @@ type TutorialContextType = {
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
-const reviver = (key: string, value: any) =>
-{
-  if (key === 'completedLessons' && Array.isArray(value)) return new Set(value);
-  return value;
-};
-
 export function TutorialProvider({ children }: { children: ReactNode })
 {
   const { user, loading: authLoading, isPremium } = useAuth();
@@ -82,24 +80,46 @@ export function TutorialProvider({ children }: { children: ReactNode })
   const [isProgressLoading, setIsProgressLoading] = useState(true);
 
   /**
-   * ⚠️ La progression n'est plus persistée ici.
+   * Chargement de la progression depuis le serveur (REQ-PROG-01).
    *
-   * Elle l'était dans Firestore, dont le couplage est rompu. La persistance
-   * revient en **phase 5** (`T5.2`/`T5.3`) via `user_course_progress` et
-   * `user_lesson_progress`, exposées par `ContentProvider`.
-   *
-   * En attendant, la progression reste **en mémoire** : elle fonctionne pendant
-   * la session et se réinitialise au rechargement. C'est une dégradation
-   * assumée et visible, préférable à un code qui prétendrait sauvegarder sans
-   * que rien ne soit écrit.
+   * La progression est **nominative** : elle est rechargée à chaque changement
+   * d'utilisateur, et remise à zéro si personne n'est connecté. Sans cette
+   * remise à zéro, l'apprenant suivant verrait celle du précédent.
    */
   useEffect(() => {
     if (authLoading) return;
 
-    // Changement d'utilisateur : on repart d'une ardoise vierge plutôt que de
-    // laisser la progression du précédent.
-    setGlobalProgress({});
-    setIsProgressLoading(false);
+    if (!user) {
+      setGlobalProgress({});
+      setIsProgressLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsProgressLoading(true);
+
+    fetchProgress()
+      .then((result) => {
+        // Le composant peut avoir été démonté, ou l'utilisateur avoir changé,
+        // pendant la requête : on évite alors d'écrire un état périmé.
+        if (cancelled) return;
+
+        if (result.ok) {
+          setGlobalProgress(toState(result.data.progress));
+        } else {
+          // Panne réseau : on repart d'une progression vide plutôt que de
+          // bloquer l'interface. La prochaine visite rechargera.
+          console.error('Chargement de la progression impossible :', result.message);
+          setGlobalProgress({});
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsProgressLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading]);
 
 
@@ -140,11 +160,48 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
   const progress = useMemo(() => activeCourseId ? (globalProgress[activeCourseId] || initialCourseProgress) : initialCourseProgress, [globalProgress, activeCourseId]);
 
+  /**
+   * Miroir de `globalProgress`, pour lire la valeur courante sans la mettre en
+   * dépendance d'un `useCallback`.
+   */
+  const progressRef = useRef<GlobalProgress>(globalProgress);
+  useEffect(() => { progressRef.current = globalProgress; }, [globalProgress]);
+
+  /**
+   * Enregistre la progression d'une formation.
+   *
+   * L'échec est journalisé mais **n'interrompt pas** le parcours : l'apprenant
+   * doit pouvoir continuer même si le réseau vacille. Sa progression locale
+   * reste juste ; seule sa sauvegarde est différée à la prochaine action.
+   */
+  const persist = useCallback((courseId: string, courseProgress: CourseProgress) => {
+    void saveProgress(courseId, courseProgress).then((result) => {
+      if (!result.ok) {
+        console.error('Enregistrement de la progression impossible :', result.message);
+      }
+    });
+  }, []);
+
+  /**
+   * Point de mutation **unique** de la progression de la formation active.
+   *
+   * La persistance est branchée ici, et non dans un `useEffect` observant
+   * `globalProgress` : un effet se déclencherait aussi au **chargement initial**
+   * et réécrirait ce qu'on vient de lire. Ici, seule une action de l'apprenant
+   * déclenche un enregistrement.
+   */
   const updateActiveCourseProgress = useCallback((progressUpdater: (prev: CourseProgress) => CourseProgress) =>
   {
     if (!activeCourseId) return;
-    setGlobalProgress(prev => ({ ...prev, [activeCourseId]: progressUpdater(prev[activeCourseId] || initialCourseProgress) }));
-  }, [activeCourseId]);
+
+    const updated = progressUpdater(progressRef.current[activeCourseId] || initialCourseProgress);
+    const next = { ...progressRef.current, [activeCourseId]: updated };
+
+    progressRef.current = next;
+    setGlobalProgress(next);
+
+    persist(activeCourseId, updated);
+  }, [activeCourseId, persist]);
 
     const isChapterUnlocked = useCallback((chapterId: string): boolean => {
         if (isPremium) {
@@ -159,6 +216,22 @@ export function TutorialProvider({ children }: { children: ReactNode })
 
         return false;
     }, [isPremium, courseChapters]);
+
+  /**
+   * Marque une leçon comme terminée, ou l'inverse.
+   *
+   * `completed: false` **retire** réellement la leçon : le serveur synchronise
+   * `user_lesson_progress` en conséquence (voir `saveCourse`). Sans ce retrait,
+   * une leçon décochée resterait comptée comme terminée en base.
+   */
+  const setLessonCompleted = useCallback((lessonId: string, completed: boolean) => {
+    updateActiveCourseProgress(prev => {
+      const next = new Set(prev.completedLessons);
+      if (completed) next.add(lessonId);
+      else next.delete(lessonId);
+      return { ...prev, completedLessons: next };
+    });
+  }, [updateActiveCourseProgress]);
 
   const setCurrentLocation = useCallback((chapterId: string, lessonId: string) =>
   {
@@ -357,6 +430,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
       goToPreviousLesson,
       resetActiveCourseProgress,
       resetChapter,
+      setLessonCompleted,
       areAllLessonsInChapterCompleted,
       isChapterUnlocked,
       currentChapter,
@@ -387,6 +461,7 @@ export function TutorialProvider({ children }: { children: ReactNode })
     goToPreviousLesson,
     resetActiveCourseProgress,
     resetChapter,
+    setLessonCompleted,
     areAllLessonsInChapterCompleted,
     allQuizzesData,
     isChapterUnlocked

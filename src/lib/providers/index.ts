@@ -4,6 +4,7 @@ import type { ContentProvider } from './content';
 import type { DocumentProvider } from './document';
 import type { EmailProvider } from './email';
 import type { NotificationProvider } from './notification';
+import type { ProgressProvider } from './progress';
 import type { SettingsProvider } from './settings';
 import type { StorageProvider } from './storage';
 import type { UserProvider } from './users';
@@ -12,6 +13,7 @@ import { PostgresAiCreditProvider } from './postgres/ai-credits';
 import { PostgresContentProvider } from './postgres/content';
 import { PostgresDocumentProvider } from './postgres/document';
 import { PostgresNotificationProvider } from './postgres/notification';
+import { PostgresProgressProvider } from './postgres/progress';
 import { PostgresSettingsProvider } from './postgres/settings';
 import { PostgresUserProvider } from './postgres/users';
 import { MemoryEmailProvider } from './email/memory';
@@ -44,6 +46,7 @@ let storageProvider: StorageProvider | null = null;
 let aiCreditProvider: AiCreditProvider | null = null;
 let notificationProvider: NotificationProvider | null = null;
 let documentProvider: DocumentProvider | null = null;
+let progressProvider: ProgressProvider | null = null;
 let authProvider: AuthProvider | null = null;
 
 export function getContentProvider(): ContentProvider {
@@ -188,6 +191,20 @@ export function getAuthProvider(): AuthProvider {
   }
 }
 
+/** Progression des apprenants (leçons terminées, scores, point de reprise). */
+export function getProgressProvider(): ProgressProvider {
+  if (progressProvider) return progressProvider;
+
+  const provider = process.env.DATA_PROVIDER ?? 'postgres';
+  switch (provider) {
+    case 'postgres':
+      progressProvider = new PostgresProgressProvider();
+      return progressProvider;
+    default:
+      return unknownProvider('DATA_PROVIDER', provider, ['postgres']);
+  }
+}
+
 /** Réinitialise les instances mémorisées (tests). */
 export function resetProviders(): void {
   contentProvider = null;
@@ -199,6 +216,7 @@ export function resetProviders(): void {
   notificationProvider = null;
   documentProvider = null;
   authProvider = null;
+  progressProvider = null;
 }
 
 // --- Ré-exports : un seul point d'entrée pour les appelants -------------------
@@ -209,6 +227,7 @@ export * from './content';
 export * from './document';
 export * from './email';
 export * from './notification';
+export * from './progress';
 export * from './settings';
 export * from './storage';
 export * from './users';

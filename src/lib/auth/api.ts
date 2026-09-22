@@ -60,11 +60,19 @@ export function enforceRateLimit(
   return result.allowed ? null : rateLimitResponse(result);
 }
 
-/** Lit le corps JSON et le valide. Retourne soit les données, soit une réponse. */
-export async function parseBody<T>(
+/**
+ * Lit le corps JSON et le valide. Retourne soit les données, soit une réponse.
+ *
+ * Le générique porte sur le **schéma** et non sur son type de sortie :
+ * `z.ZodType<T>` fixe aussi le type d'ENTRÉE, et un schéma muni de `default()`
+ * (dont l'entrée diffère de la sortie) n'y serait alors pas assignable.
+ */
+export async function parseBody<S extends z.ZodTypeAny>(
   request: Request,
-  schema: z.ZodType<T>,
-): Promise<{ data: T; response?: never } | { data?: never; response: NextResponse }> {
+  schema: S,
+): Promise<
+  { data: z.infer<S>; response?: never } | { data?: never; response: NextResponse }
+> {
   let payload: unknown;
 
   try {

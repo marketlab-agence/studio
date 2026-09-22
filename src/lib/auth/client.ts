@@ -1,4 +1,5 @@
 import type { AuthenticatedUser } from '@/lib/providers/auth';
+import { request, type ApiResult } from '@/lib/api-client';
 
 /**
  * Appels d'authentification côté navigateur.
@@ -11,14 +12,8 @@ import type { AuthenticatedUser } from '@/lib/providers/auth';
  * donc invisibles au JavaScript de la page — c'est précisément l'objectif.
  */
 
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | {
-      ok: false;
-      status: number;
-      message: string;
-      issues?: { champ: string; message: string }[];
-    };
+// Ré-exporté : les appelants historiques importent ApiResult depuis ce module.
+export type { ApiResult };
 
 export interface SessionUserResponse {
   user: AuthenticatedUser;
@@ -32,49 +27,6 @@ export interface MfaChallengeResponse {
   expiresInSeconds: number;
 }
 
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-): Promise<ApiResult<T>> {
-  try {
-    const response = await fetch(path, {
-      ...init,
-      // `sameSite` protège déjà des requêtes inter-sites ; `same-origin` évite en
-      // outre d'envoyer les cookies à un domaine tiers.
-      credentials: 'same-origin',
-      headers: {
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...init.headers,
-      },
-    });
-
-    // 204 : succès sans contenu (déconnexion).
-    if (response.status === 204) {
-      return { ok: true, data: undefined as T };
-    }
-
-    const payload = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: response.status,
-        message: payload?.message ?? 'La demande n’a pas pu aboutir.',
-        issues: payload?.issues,
-      };
-    }
-
-    return { ok: true, data: payload as T };
-  } catch {
-    // Panne réseau : distinct d'un refus du serveur, et l'utilisateur doit le
-    // savoir — réessayer a du sens dans ce cas, pas dans l'autre.
-    return {
-      ok: false,
-      status: 0,
-      message: 'Impossible de joindre le serveur. Vérifiez votre connexion.',
-    };
-  }
-}
 
 /** Connexion. Peut retourner une session ou un défi à deux facteurs. */
 export function loginRequest(

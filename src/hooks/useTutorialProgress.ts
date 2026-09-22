@@ -1,41 +1,76 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+'use client';
+
+import { useCallback, useMemo } from 'react';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 /**
- * Progression d'un tutoriel.
+ * Progression d'un chapitre (« tutoriel »), vue comme une suite d'étapes.
  *
- * ⚠️ **La progression n'est plus persistée.** Elle l'était dans Firestore, dont
- * le couplage est rompu. La persistance revient en **phase 5** (`T5.2`/`T5.3`)
- * via `user_lesson_progress`, exposée par le provider de contenu.
+ * ⚠️ **Ce hook ne stocke rien.** Il dérive son état du contexte, qui est la
+ * source unique — et qui persiste désormais côté serveur (REQ-PROG-01).
  *
- * En attendant, l'état est **en mémoire** : il fonctionne pendant la session et
- * se réinitialise au rechargement. C'est une dégradation assumée et visible,
- * préférable à du code qui prétendrait sauvegarder sans que rien ne soit écrit.
+ * Il maintenait auparavant son propre `Set` en mémoire et sa propre lecture
+ * Firestore : deux sources pour la même donnée, qui divergeaient dès que l'une
+ * était mise à jour sans l'autre. Un apprenant pouvait voir une leçon cochée
+ * dans un écran et décochée dans un autre.
+ *
+ * Les « étapes » d'un chapitre sont ses **leçons** : marquer une étape revient à
+ * marquer une leçon terminée, ce que le contexte enregistre déjà.
+ *
+ * ⚠️ Aucun consommateur à ce jour : le hook est prêt pour la phase 11 (parcours
+ * d'apprentissage), mais n'est encore utilisé nulle part. Il est testé
+ * directement.
  */
-export function useTutorialProgress(tutorialId: string, totalSteps: number) {
-  const { user, loading: authLoading } = useAuth();
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+export function useTutorialProgress(chapterId: string, totalSteps: number) {
+  const { progress, courseChapters, isLoading, setLessonCompleted } = useTutorial();
 
-  const progress = totalSteps > 0 ? (completedSteps.size / totalSteps) * 100 : 0;
+  const chapter = useMemo(
+    () => courseChapters.find((candidate) => candidate.id === chapterId),
+    [courseChapters, chapterId],
+  );
 
-  useEffect(() => {
-    // Changement d'utilisateur ou de tutoriel : on repart d'une ardoise vierge
-    // plutôt que de conserver la progression du précédent.
-    setCompletedSteps(new Set());
-    setLoading(false);
-  }, [user, tutorialId]);
+  /**
+   * Étapes terminées de ce chapitre.
+   *
+   * On filtre les leçons **du chapitre** : le contexte suit les leçons de toute
+   * la formation, et compter celles des autres chapitres fausserait le
+   * pourcentage.
+   */
+  const completedSteps = useMemo(() => {
+    if (!chapter) return new Set<string>();
 
-  const completeStep = useCallback((stepId: string) => {
-    // Ignoré sans utilisateur : une progression anonyme n'aurait nulle part où
-    // être rattachée.
-    if (!user || !tutorialId) return;
+    return new Set(
+      chapter.lessons
+        .map((lesson) => lesson.id)
+        .filter((lessonId) => progress.completedLessons.has(lessonId)),
+    );
+  }, [chapter, progress.completedLessons]);
 
-    setCompletedSteps((previous) => {
-      if (previous.has(stepId)) return previous;
-      return new Set(previous).add(stepId);
-    });
-  }, [user, tutorialId]);
+  // Le nombre d'étapes annoncé fait foi s'il est fourni : un chapitre en cours
+  // de création peut ne pas encore avoir toutes ses leçons.
+  const denominator = totalSteps > 0 ? totalSteps : (chapter?.lessons.length ?? 0);
+  const completion = denominator > 0 ? (completedSteps.size / denominator) * 100 : 0;
 
-  return { progress, completedSteps, completeStep, loading: loading || authLoading };
+  const completeStep = useCallback(
+    (stepId: string) => {
+      setLessonCompleted(stepId, true);
+    },
+    [setLessonCompleted],
+  );
+
+  const uncompleteStep = useCallback(
+    (stepId: string) => {
+      setLessonCompleted(stepId, false);
+    },
+    [setLessonCompleted],
+  );
+
+  return {
+    /** Pourcentage d'achèvement du chapitre, de 0 à 100. */
+    progress: completion,
+    completedSteps,
+    completeStep,
+    uncompleteStep,
+    loading: isLoading,
+  };
 }
