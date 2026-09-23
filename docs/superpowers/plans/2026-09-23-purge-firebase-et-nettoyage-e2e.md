@@ -698,11 +698,14 @@ git commit -m "refactor(firebase): retirer les dependances et les scripts obsole
 
 ---
 
-### Task 7 : Retirer les variables d'environnement Firebase
+### Task 7 : Retirer les variables d'environnement Firebase et purger la documentation obsolète
 
 **Files:**
 - Modify: `.env.local` (retrait des `FIREBASE_*`)
 - Modify: `.env.example` (retrait des mêmes clés, si présentes)
+- Modify: `AGENTS.md` (8 références cassées)
+- Modify: `MEMORY.md` (2 références cassées)
+- Modify: `dev-spec/firebase-admin-guideline.md` (documente un fichier supprimé)
 
 **Interfaces:**
 - Consumes: Task 6.
@@ -710,30 +713,48 @@ git commit -m "refactor(firebase): retirer les dependances et les scripts obsole
 
 - [ ] **Step 1: Lister les variables Firebase présentes**
 
+⚠️ **Les références obsolètes découvertes en revue de Task 6 doivent être corrigées ici.** Elles ne sont pas seulement des variables d'environnement : la vague 3 a supprimé des scripts et des modules que la documentation annonce encore.
+
 Run: `grep -n "FIREBASE_" .env.local .env.example`
-Expected: lire la sortie. Si aucune : tâche terminée, passer au commit (ou sauter).
+Expected: lire la sortie. Si aucune : passer à l'étape 3.
 
 - [ ] **Step 2: Retirer les lignes `FIREBASE_*`**
 
-Éditer les fichiers concernés pour supprimer les lignes `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` et toute autre clé `FIREBASE_*`.
+Éditer les fichiers concernés pour supprimer `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` et toute autre clé `FIREBASE_*`.
 
 ⚠️ **Ne jamais afficher la valeur de `FIREBASE_PRIVATE_KEY`** : éditer par nom de clé uniquement.
 
-- [ ] **Step 3: Vérifier qu'aucun code ne les réclame**
+- [ ] **Step 3: Purger `AGENTS.md`**
+
+Retirer :
+- ligne 6 : la mention « Firebase: Firestore (Admin SDK server-side, Web SDK client-side), Firebase Auth » de la section Stack (remplacée par PostgreSQL + auth JWT, déjà en place depuis la phase 3)
+- ligne 20 : `npm run migrate` (script supprimé en Task 6)
+- lignes 28-41 : le bloc entier « ## Firebase setup » (`src/lib/firebase-admin.ts` et `src/lib/firebase.ts` n'existent plus)
+- ligne 46 : « fetch data directly from Firestore via `getFirebaseAdmin()` » → remplacer par la réalité (providers PostgreSQL)
+- ligne 60 : « migratable to Firestore via `npm run migrate` » → retirer
+- ligne 62 : la ligne `scripts/migrate-data.js` du tableau (fichier supprimé)
+- ligne 77 : « Deployment is via Firebase App Hosting » → **laisser** : c'est la phase 8 qui tranche le déploiement, pas cette phase
+
+- [ ] **Step 4: Purger `MEMORY.md`**
+
+- ligne 35 : `npm run db:import-auth` (script supprimé) **et** le compte « (12) » → la valeur réelle est **11**
+- ligne 31-32 : `db:migrate` / `db:migrate:test` → **laisser** (scripts existants)
+
+- [ ] **Step 5: Vérifier qu'aucun code ne réclame les variables**
 
 Run: `grep -n "FIREBASE_" src/ e2e/ scripts/`
-Expected: aucune sortie
+Expected: aucune sortie (si `scripts/` n'existe plus, la commande le signale — sans conséquence)
 
-- [ ] **Step 4: Vérifier typecheck et démarrage**
+- [ ] **Step 6: Vérifier typecheck**
 
 Run: `npm run typecheck`
 Expected: 0 erreur
 
-- [ ] **Step 5: Commit (`.env.example` seulement — `.env.local` est ignoré par git)**
+- [ ] **Step 7: Commit (`.env.example` seulement — `.env.local` est ignoré par git)**
 
 ```bash
-git add .env.example
-git commit -m "chore(env): retirer les variables Firebase obsoletes"
+git add .env.example AGENTS.md MEMORY.md
+git commit -m "chore(docs): purger les references Firebase obsoletes et les variables"
 ```
 
 ---
