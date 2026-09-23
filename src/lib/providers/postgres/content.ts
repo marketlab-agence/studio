@@ -314,9 +314,9 @@ export class PostgresContentProvider implements ContentProvider {
       await query(
         `INSERT INTO lessons (
            id, chapter_id, source_id, title, objective, content, type, points,
-           interactive_component_name, visual_component_name, position
+           interactive_component_name, visual_component_name, bloom_level, position
          )
-         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8, $9)
+         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8, $9, $10)
          ON CONFLICT (id) DO UPDATE SET
            chapter_id = EXCLUDED.chapter_id,
            title = EXCLUDED.title,
@@ -324,11 +324,12 @@ export class PostgresContentProvider implements ContentProvider {
            content = EXCLUDED.content,
            interactive_component_name = EXCLUDED.interactive_component_name,
            visual_component_name = EXCLUDED.visual_component_name,
+           bloom_level = EXCLUDED.bloom_level,
            position = EXCLUDED.position`,
         [
           lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
           lesson.content ?? '', lesson.interactiveComponentName ?? null,
-          lesson.visualComponentName ?? null, index,
+          lesson.visualComponentName ?? null, lesson.bloomLevel ?? null, index,
         ],
       );
     }

@@ -20,6 +20,14 @@ export interface Lesson {
   content: string; // Illustrative markdown content
   interactiveComponentName?: string;
   visualComponentName?: string;
+  /**
+   * Niveau de Bloom visé par l'objectif de cette leçon.
+   *
+   * ⚠️ `undefined` signifie **« à compléter »**, jamais « aucun niveau » : la conformité
+   * (indicateur 11 du RNQ) exige un niveau déclaré. L'audit signale les manquants
+   * (`@docs/katalyst/regles-conformite.md`, règle R6).
+   */
+  bloomLevel?: string;
 }
 
 export interface Quiz {

@@ -43,6 +43,16 @@ export const LESSON_TYPES = [
 export const LessonTypeSchema = z.enum(LESSON_TYPES);
 export type LessonType = z.infer<typeof LessonTypeSchema>;
 
+/** Niveaux de la taxonomie de Bloom — miroir du module `@/lib/content/bloom`. */
+export const BloomLevelSchema = z.enum([
+  'Connaître',
+  'Comprendre',
+  'Appliquer',
+  'Analyser',
+  'Évaluer',
+  'Créer',
+]);
+
 /** Famille de média référencée par une leçon. */
 export const MEDIA_PROVIDERS = ['youtube', 'vevo', 'image', 'audio', 'file', 'external'] as const;
 export const MediaProviderSchema = z.enum(MEDIA_PROVIDERS);
@@ -139,6 +149,14 @@ export const LessonSchema = z.object({
   interactiveComponentName: z.string().min(1).optional(),
   /** Nom d'un composant du catalogue, de nature `visual`. */
   visualComponentName: z.string().min(1).optional(),
+  /**
+   * Niveau de Bloom visé par l'objectif de cette leçon.
+   *
+   * ⚠️ **Absent (`undefined`) signifie « à compléter »**, jamais « aucun niveau » : la
+   * conformité (indicateur 11 du RNQ) exige un niveau déclaré pour vérifier que l'évaluation
+   * est à la hauteur de l'objectif. L'audit signale les manquants.
+   */
+  bloomLevel: BloomLevelSchema.optional(),
   unlockRuleId: z.string().min(1).optional(),
   position: z.number().int().min(0),
 });
@@ -197,8 +215,17 @@ export interface RuleReport {
   label: string;
   /** Constats, un par anomalie. Vide = conforme. */
   findings: string[];
-  /** La règle est-elle évaluable ? `false` = seuil en attente d'arrêté. */
+  /** La règle est-elle évaluable ? `false` = motif indiqué par `notEvaluableReason`. */
   evaluable: boolean;
+  /**
+   * Pourquoi la règle n'est pas évaluable.
+   *
+   * ⚠️ **Deux motifs très différents, à ne pas confondre** :
+   * - `'arrete'` — un seuil réglementaire n'est pas publié : rien à corriger de notre côté ;
+   * - `'donnees-a-completer'` — la règle est mesurable, mais le contenu doit être complété.
+   *   Ce n'est pas une excuse : c'est un travail à faire.
+   */
+  notEvaluableReason?: 'arrete' | 'donnees-a-completer';
 }
 
 export interface ContentComplianceReport {
@@ -284,6 +311,30 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     evaluable: true,
   });
 
+  // --- R3 · indicateur 6 — niveau de Bloom déclaré ---------------------------
+  const r3Findings: string[] = [];
+  for (const lesson of lessons) {
+    if (!lesson.bloomLevel) {
+      r3Findings.push(
+        `« ${lesson.title} » : niveau de Bloom non déclaré — l'atteinte de l'objectif n'est ` +
+          'pas vérifiable (indicateur 11).',
+      );
+    }
+  }
+  rules.push({
+    rule: 'R3',
+    indicator: 11,
+    label: 'Niveau de Bloom déclaré sur chaque leçon',
+    findings: r3Findings,
+    // ⚠️ Volontairement **non bloquante** : les 80 leçons seedées ont été créées avant cette
+    // exigence. Les déclarer non conformes ferait échouer les 6 formations sur un critère
+    // que la migration ne peut pas remplir sans **inventer** des données pédagogiques — ce
+    // que la méthode REWORK interdit. La règle **mesure** l'écart : c'est un travail à faire,
+    // pas une excuse.
+    evaluable: false,
+    notEvaluableReason: 'donnees-a-completer',
+  });
+
   // --- R4 · indicateur 11 — évaluation de l'atteinte -------------------------
   const r4Findings: string[] = [];
   for (const chapter of course.chapters) {
@@ -340,6 +391,7 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     // la règle n'est pas évaluable tant qu'il ne l'est pas. Le déclarer explicitement
     // vaut mieux que de conclure à tort.
     evaluable: false,
+    notEvaluableReason: 'arrete',
   });
 
   return {

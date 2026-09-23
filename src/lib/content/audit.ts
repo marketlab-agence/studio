@@ -174,8 +174,14 @@ function report(course: CourseContent, audit: ContentComplianceReport): void {
   for (const rule of audit.rules) {
     const count = rule.findings.length;
     const mark = !rule.evaluable ? '⏳' : count === 0 ? '  ✓' : '  ✗';
+
+    // ⚠️ Les deux motifs de non-évaluation ne veulent pas dire la même chose :
+    // - un arrêté non publié ne dépend pas de nous ;
+    // - des données à compléter sont un **travail à faire**.
     const suffix = !rule.evaluable
-      ? '  (non évaluable — seuil en attente d’arrêté)'
+      ? rule.notEvaluableReason === 'donnees-a-completer'
+        ? `  (à compléter : ${count} leçon(s) sans niveau)`
+        : '  (non évaluable — seuil en attente d’arrêté)'
       : count === 0
         ? ''
         : `  ${count} constat(s)`;

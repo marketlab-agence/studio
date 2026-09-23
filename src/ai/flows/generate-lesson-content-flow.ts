@@ -24,14 +24,39 @@ const GenerateLessonContentInputSchema = z.object({
   chapterContext: z.string().describe("The titles and objectives of other lessons in the same chapter to provide context and the full course plan to give global context."),
   lessonLength: z.enum(['Court', 'Moyen', 'Long']).optional().describe("The desired length for the lesson content. 'Court' for a summary, 'Moyen' for standard detail, 'Long' for an in-depth explanation."),
   availableInteractiveComponents: z.array(z.string()).describe("A list of available interactive React components to choose from."),
-  availableVisualComponents: z.array(z.string()).describe("A list of available data visualization React components to choose from.")
+  availableVisualComponents: z.array(z.string()).describe("A list of available data visualization React components to choose from."),
+  /**
+   * Niveau de Bloom visé par l'objectif.
+   *
+   * ⚠️ **Indispensable à la conformité** (indicateur 11 du RNQ) : sans niveau déclaré, on ne
+   * peut pas vérifier que l'évaluation proposée est à la hauteur de l'objectif. Il est donc
+   * transmis à l'IA, qui doit choisir un composant **cohérent** avec lui.
+   *
+   * Optionnel pour ne pas casser les appelants existants : sans niveau, le comportement
+   * antérieur est conservé (le catalogue entier, filtré par domaine).
+   */
+  bloomLevel: z
+    .enum(['Connaître', 'Comprendre', 'Appliquer', 'Analyser', 'Évaluer', 'Créer'])
+    .optional()
+    .describe('Le niveau de Bloom visé par la leçon. Détermine la nature de la mise en pratique attendue.'),
 });
 export type GenerateLessonContentInput = z.infer<typeof GenerateLessonContentInputSchema>;
 
 const GenerateLessonContentOutputSchema = z.object({
   illustrativeContent: z.string().describe("The main educational content for the lesson in well-structured Markdown format. It should include headings, lists, code blocks, and bold text to explain the concepts clearly."),
   interactiveComponentName: z.string().optional().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience. If no component is relevant, this field can be omitted."),
-  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted.")
+  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted."),
+  /**
+   * Niveau de Bloom **confirmé** par l'IA après rédaction.
+   *
+   * L'IA peut constater que le contenu effectivement produit ne correspond pas au niveau visé
+   * — par exemple un objectif « Créer » traité comme une simple explication. Le signaler vaut
+   * mieux que de laisser une incohérence silencieuse que l'audit découvrirait plus tard.
+   */
+  bloomLevelUsed: z
+    .enum(['Connaître', 'Comprendre', 'Appliquer', 'Analyser', 'Évaluer', 'Créer'])
+    .optional()
+    .describe('Le niveau de Bloom effectivement couvert par le contenu produit.'),
 });
 
 const generateLessonContentFlow = ai.defineFlow(
