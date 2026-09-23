@@ -132,7 +132,18 @@ describe('Formation', () => {
 });
 
 describe('Audit de conformité du contenu', () => {
-  const course = (withInteractive: boolean): CourseContent => ({
+  /**
+   * ⚠️ Depuis la phase 6, « conforme » ne signifie plus seulement « dotée d'un composant
+   * interactif » : l'audit évalue les **règles R2, R4, R5.1, R6** adossées au RNQ V10
+   * (`@docs/katalyst/regles-conformite.md`).
+   *
+   * L'objectif doit donc respecter la **formule Bloom** (verbe d'action + critères entre
+   * parenthèses), et le composant ne doit pas être un placeholder.
+   */
+  const course = (
+    withInteractive: boolean,
+    objective = "L'apprenant sera capable de fusionner deux branches (sans conflit résiduel)",
+  ): CourseContent => ({
     id: 'c',
     title: 'Formation',
     description: '',
@@ -147,7 +158,7 @@ describe('Audit de conformité du contenu', () => {
           {
             id: 'l1',
             title: 'Leçon',
-            objective: 'Objectif',
+            objective,
             content: '',
             type: 'MISE_EN_PRATIQUE',
             points: 0,
@@ -159,16 +170,48 @@ describe('Audit de conformité du contenu', () => {
     ],
   });
 
-  it('déclare conforme une formation dont toutes les leçons sont interactives', () => {
+  it('déclare conforme une formation interactive ET aux objectifs Bloom valides', () => {
     const report = auditCourseContent(course(true));
+
     expect(report.totalLessons).toBe(1);
-    expect(report.compliant).toBe(true);
     expect(report.lessonsWithoutInteractive).toHaveLength(0);
+    // Aucune règle évaluable ne doit signaler de constat.
+    const evaluables = report.rules.filter((rule) => rule.evaluable);
+    expect(evaluables.flatMap((rule) => rule.findings)).toEqual([]);
+    expect(report.compliant).toBe(true);
   });
 
   it('signale les leçons sans composant interactif', () => {
     const report = auditCourseContent(course(false));
+
     expect(report.compliant).toBe(false);
     expect(report.lessonsWithoutInteractive).toEqual(['Leçon']);
+  });
+
+  it('signale un objectif qui ne respecte pas la formule Bloom (règle R2)', () => {
+    // « Objectif » est exactement le genre de libellé que l'indicateur 5 interdit :
+    // sans verbe d'action identifiable, il n'est pas évaluable.
+    const report = auditCourseContent(course(true, 'Objectif'));
+
+    const r2 = report.rules.find((rule) => rule.rule === 'R2');
+    expect(r2?.findings.length).toBeGreaterThan(0);
+    expect(report.compliant).toBe(false);
+  });
+
+  it('déclare non évaluable la règle du référent pédagogique (seuil en attente d’arrêté)', () => {
+    const report = auditCourseContent(course(true));
+
+    const r53 = report.rules.find((rule) => rule.rule === 'R5.3');
+    // Un seuil fixé par un arrêté non publié ne doit pas rendre une formation non conforme :
+    // la règle est déclarée non évaluable plutôt que de conclure à tort.
+    expect(r53?.evaluable).toBe(false);
+  });
+
+  it('expose chaque règle avec son indicateur RNQ', () => {
+    const report = auditCourseContent(course(true));
+
+    const parIndicateur = report.rules.map((rule) => rule.indicator);
+    // Les règles de la phase 6 portent sur les indicateurs 5, 11 et 19.
+    expect(parIndicateur).toEqual(expect.arrayContaining([5, 11, 19]));
   });
 });

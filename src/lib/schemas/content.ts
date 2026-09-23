@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  analyzeObjective,
+  BLOOM_ALLOWED_LESSON_TYPES,
+  isLessonTypeCompatibleWithBloom,
+} from '@/lib/content/bloom';
+import { resolveComponentMeta } from '@/components/registry/catalog';
 
 /**
  * Modèle de contenu de Katalyst — **source unique des contrats**.
@@ -175,19 +181,55 @@ export type CourseContent = z.infer<typeof CourseSchema>;
 
 // --- Conformité du contenu ---------------------------------------------------
 
+/**
+ * Résultat de conformité, par règle.
+ *
+ * ⚠️ **Chaque règle correspond à un indicateur du RNQ V10** (voir
+ * `@docs/katalyst/regles-conformite.md`). Le rapport est structuré par règle — et non par un
+ * simple booléen — pour qu'un auditeur puisse **relier chaque constat à son exigence**.
+ */
+export interface RuleReport {
+  /** Identifiant de la règle (R1, R2…). */
+  rule: string;
+  /** Indicateur RNQ concerné. */
+  indicator: number;
+  /** Intitulé court. */
+  label: string;
+  /** Constats, un par anomalie. Vide = conforme. */
+  findings: string[];
+  /** La règle est-elle évaluable ? `false` = seuil en attente d'arrêté. */
+  evaluable: boolean;
+}
+
 export interface ContentComplianceReport {
   totalLessons: number;
   interactiveLessons: number;
   visualLessons: number;
   quizzes: number;
-  /** Leçons sans aucun composant interactif — cible : 0 (REQ-CNT-02). */
+  /** Leçons sans aucun composant interactif. */
   lessonsWithoutInteractive: string[];
+  /** Rapport détaillé par règle de conformité. */
+  rules: RuleReport[];
+  /** Conforme si **toutes les règles évaluables** le sont. */
   compliant: boolean;
 }
 
 /**
- * Évalue la conformité d'une formation au modèle de référence :
- * **100 % des leçons dotées d'un composant interactif** (REQ-CNT-02).
+ * Évalue la conformité d'une formation aux **règles de contenu** de la phase 6.
+ *
+ * ⚠️ **Rejouable à tout moment** — c'est une exigence, pas un confort : une formation reste
+ * modifiable (ajout/retrait de chapitres et de leçons), donc sa conformité doit pouvoir être
+ * re-vérifiée après chaque modification.
+ *
+ * Les règles sont décrites dans `@docs/katalyst/regles-conformite.md` :
+ * - **R2** (indicateur 5) — objectifs au format Bloom ;
+ * - **R3/R6** (indicateurs 6, 11) — cohérence type de leçon ↔ niveau ;
+ * - **R4** (indicateur 11) — évaluation de l'atteinte ;
+ * - **R5.1** (indicateur 19) — aucun placeholder en mise en pratique.
+ *
+ * ⚠️ **R1 (analyse du besoin) n'est pas évaluable ici** : elle porte sur les
+ * `generation_params` de la formation, absents du contenu pédagogique. Elle est vérifiée
+ * séparément, côté provider.
  */
 export function auditCourseContent(course: CourseContent): ContentComplianceReport {
   const lessons = course.chapters.flatMap((chapter) => chapter.lessons);
@@ -200,12 +242,117 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
   const interactiveLessons = lessons.filter((lesson) => lesson.interactiveComponentName).length;
   const visualLessons = lessons.filter((lesson) => lesson.visualComponentName).length;
 
+  const rules: RuleReport[] = [];
+
+  // --- R2 · indicateur 5 — objectifs au format Bloom -------------------------
+  const r2Findings: string[] = [];
+  for (const lesson of lessons) {
+    const analysis = analyzeObjective(lesson.objective ?? '');
+    for (const problem of analysis.problems) {
+      r2Findings.push(`« ${lesson.title} » : ${problem}`);
+    }
+  }
+  rules.push({
+    rule: 'R2',
+    indicator: 5,
+    label: 'Objectifs opérationnels et évaluables (format Bloom)',
+    findings: r2Findings,
+    evaluable: true,
+  });
+
+  // --- R3/R6 · indicateurs 6 et 11 — cohérence type ↔ niveau -----------------
+  const r6Findings: string[] = [];
+  for (const lesson of lessons) {
+    const analysis = analyzeObjective(lesson.objective ?? '');
+
+    // Sans niveau déterminable, la cohérence est indécidable : c'est déjà signalé par R2,
+    // on ne double pas le constat ici.
+    if (!analysis.level) continue;
+
+    if (!isLessonTypeCompatibleWithBloom(lesson.type, analysis.level)) {
+      r6Findings.push(
+        `« ${lesson.title} » : type ${lesson.type} incompatible avec le niveau ` +
+          `« ${analysis.level} » (types admis : ${BLOOM_ALLOWED_LESSON_TYPES[analysis.level].join(', ')}).`,
+      );
+    }
+  }
+  rules.push({
+    rule: 'R6',
+    indicator: 11,
+    label: 'Cohérence entre le type de leçon et le niveau de Bloom',
+    findings: r6Findings,
+    evaluable: true,
+  });
+
+  // --- R4 · indicateur 11 — évaluation de l'atteinte -------------------------
+  const r4Findings: string[] = [];
+  for (const chapter of course.chapters) {
+    const hasEvaluation = chapter.lessons.some((lesson) => lesson.type === 'EVALUATION');
+    if (hasEvaluation && chapter.quiz === undefined) {
+      r4Findings.push(
+        `Chapitre « ${chapter.title} » : contient une leçon EVALUATION mais aucun quiz rattaché.`,
+      );
+    }
+  }
+  rules.push({
+    rule: 'R4',
+    indicator: 11,
+    label: 'Évaluation de l’atteinte des objectifs',
+    findings: r4Findings,
+    evaluable: true,
+  });
+
+  // --- R5.1 · indicateur 19 — appropriation (aucun placeholder) --------------
+  const r5Findings: string[] = [];
+  for (const lesson of lessons) {
+    if (lesson.type !== 'MISE_EN_PRATIQUE') continue;
+
+    if (!lesson.interactiveComponentName) {
+      r5Findings.push(
+        `« ${lesson.title} » : mise en pratique sans composant interactif — l'apprenant ne peut pas se l'approprier.`,
+      );
+      continue;
+    }
+
+    const meta = resolveComponentMeta(lesson.interactiveComponentName);
+    if (meta?.status === 'placeholder') {
+      r5Findings.push(
+        `« ${lesson.title} » : le composant « ${lesson.interactiveComponentName} » est un ` +
+          'placeholder (interface sans interaction) — il ne produit aucune trace exploitable en audit.',
+      );
+    }
+  }
+  rules.push({
+    rule: 'R5.1',
+    indicator: 19,
+    label: 'Appropriation — aucune mise en pratique sans interaction réelle',
+    findings: r5Findings,
+    evaluable: true,
+  });
+
+  // --- R5.3 · indicateur 19 — référent pédagogique (seuil en attente) --------
+  rules.push({
+    rule: 'R5.3',
+    indicator: 19,
+    label: 'Référent pédagogique par formation',
+    findings: [],
+    // Le seuil (nombre d'intervenants) est fixé par un **arrêté non publié** :
+    // la règle n'est pas évaluable tant qu'il ne l'est pas. Le déclarer explicitement
+    // vaut mieux que de conclure à tort.
+    evaluable: false,
+  });
+
   return {
     totalLessons: lessons.length,
     interactiveLessons,
     visualLessons,
     quizzes,
     lessonsWithoutInteractive,
-    compliant: lessons.length > 0 && lessonsWithoutInteractive.length === 0,
+    rules,
+    compliant:
+      lessons.length > 0 &&
+      // Seules les règles **évaluables** comptent : une règle en attente d'arrêté ne
+      // doit pas rendre une formation non conforme.
+      rules.every((rule) => !rule.evaluable || rule.findings.length === 0),
   };
 }
