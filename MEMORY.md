@@ -20,7 +20,7 @@
 | **Conformité — progrès mesuré** | `R5.1` (appropriation, indicateur 19) : **0/6 → 6/6** · `R6` (cohérence type↔Bloom) : conforme · `R4` (évaluation) : conforme · **`R2` : 142 constats (contenu)** · `PLACEHOLDER_COMPONENTS` : **vide** (13 coquilles résolues) |
 | **Documentation** | `@docs/rework/` (3 f.) et `@docs/katalyst/` (4 f. dont `conformite-rnq-v10.md`, `regles-conformite.md`, `primitives-pedagogiques.md`) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
-| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
+| Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 11 comptes importés |
 | ✅ **Accès rétabli (2026-09-23)** | Mot de passe défini pour le Super Admin via `npm run db:set-password`. **La connexion Google fonctionne** — confirmé par l'utilisateur, **T4.3 validée**. |
 | **Couplage Firestore** | ✅ **ROMPU** : `firebase-admin.ts`, `firebase.ts` et `local-data.ts` n'ont **plus aucun consommateur** dans `src/` |
 | **Providers (10)** | ✅ Content, User, Settings, AI crédits, Document, Notification, Email, Storage, **Auth** — **9 implémentés**. Reste `PaymentProvider` (phase 24) |
@@ -32,9 +32,8 @@ npm run db:migrate          # applique les migrations (dev, port 5433)
 npm run db:migrate:test     # applique les migrations sur katalyst_test
 npm run db:seed             # rejoue src/data/*.json (idempotent)
 npm run db:seed:test        # seed sur la base de test
-npm run db:import-auth      # importe les comptes Firebase Auth (12)
 ```
-| Stack actuelle | Next.js 15, React 19, TypeScript, **PostgreSQL** (Firestore dé-couplé, modules encore présents mais morts) |
+| Stack actuelle | Next.js 15, React 19, TypeScript, **PostgreSQL** (Firestore dé-couplé) |
 | Stack cible | Next.js 15 + PostgreSQL **multi-tenant** + JWT/Google OAuth + Stripe + SSE + **studio IA à crédits** + Capacitor |
 | Plan | **29 phases** (0, 0.5, 1-27) — Couche 0 (fondations) · Couche 1 (migration) · Couche 2 (socle transverse : i18n, API, sécurité) · Couche 3 (produit REWORK + conformité + autonomie) |
 
@@ -54,7 +53,7 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
 10. **Paiement : Stripe** derrière une abstraction `PaymentProvider` (swappable).
 11. **Zero vendor lock-in** : abstractions `ContentProvider`, `UserProvider`, `SettingsProvider`, `AuthProvider`, `EmailProvider`, `StorageProvider`, `PaymentProvider`, `AICreditProvider`, `NotificationProvider`, `DocumentProvider`. Sélection par variables d'environnement.
 12. **Mobile : Capacitor** dès la Couche 2 (précédent masterplan365 : `android/`, `ios/`, `fastlane/`).
-13. **Aucune facturation GCP.** Contenu depuis `src/data/*.json`. Les **12 comptes** sont importés ; les **10 comptes email → reset forcé** (mots de passe non exportables).
+13. **Aucune facturation GCP.** Contenu depuis `src/data/*.json`. Les **11 comptes** sont importés ; les **10 comptes email → reset forcé** (mots de passe non exportables).
 14. **Suivi : modèle `.kiro`** adapté de masterplan365 (lecture seule sur masterplan365, jamais modifié).
 15. **Registre de composants obligatoire** (`src/components/registry.ts`) : source unique pour l'UI, l'IA et l'outil de création. Aujourd'hui `LessonView.tsx` importe 37 composants en dur et l'IA reçoit une liste séparée → désynchronisation.
 16. **Méthodologie REWORK = moteur pédagogique** de Katalyst (CPA², ACTIF, Bloom, Identimètre, QQOQCCP, SAVI, déroulé 6 colonnes, fiche 17 rubriques, pipeline à gates). Voir `adr/0005-methodologie-rework.md` et `.kiro/steering/rework-methodology.md`. Source : `1. Consulting IA/Formation REWORK/`.
