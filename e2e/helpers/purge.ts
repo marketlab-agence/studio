@@ -9,46 +9,66 @@ import type { Pool } from 'pg';
  * s'y étaient accumulés. La logique est donc centralisée ici, appelée par le
  * setup global, le teardown global et un script npm — un seul code à maintenir.
  *
- * ⚠️ **Pourquoi deux marqueurs combinés, et pas un seul.**
+ * ⚠️ **Pourquoi une liste de préfixes ET une liste de formes exactes.**
  * Un nettoyage qui supprimerait « tout sauf l'organisation principale » pourrait
  * effacer une organisation créée légitimement à la main. Le relevé de la base de
  * développement le prouve : `khalipha-ababacar-ndiaye-fbc564` est une organisation
- * réelle, créée hors des tests. Un préfixe seul serait insuffisant — les tests
- * utilisent `institut-`, `nouveau-`, `apprenant-`, qui sont des débuts de nom
- * parfaitement plausibles pour une organisation réelle (`institut-national`).
- * Un suffixe aléatoire seul serait insuffisant aussi : l'organisation réelle
- * citée en porte un.
+ * réelle, créée hors des tests.
  *
- * **Un résidu de test est donc identifié par la conjonction** : un préfixe
- * connu **ET** le suffixe aléatoire à 6 caractères hexadécimaux posé par
- * `RUN` (`Date.now().toString(36)` + identifiant). `institut-national` est
- * préservé ; `institut-e2e-027393` est purgé.
+ * ⚠️ **Le suffixe aléatoire ne protège pas.** L'application en pose un sur
+ * *toute* organisation (`jwt.ts:216`) : une organisation réelle « Institut
+ * National » devient `institut-national-<hex6>`, indiscernable d'une fixture
+ * par son suffixe. Le seul critère valable est donc **le nom lui-même** : est
+ * retenu ce qu'aucun organisme réel ne s'appellerait (voir les deux listes).
  */
 
-/** Préfixes de slug utilisés par les tests E2E. Observés en base, non supposés. */
+/**
+ * Préfixes de slug utilisés par les tests E2E. Observés en base, non supposés.
+ *
+ * ⚠️ **Chaque préfixe doit être un nom qu'une organisation réelle ne porterait
+ * pas.** C'est le critère de sélection, et il est plus strict qu'il n'y paraît :
+ * l'application génère elle-même un suffixe aléatoire pour **toute**
+ * organisation (`jwt.ts:216`, `slugify(nom)-<hex6>`). Le suffixe ne protège
+ * donc rien — une organisation réelle « Institut National » deviendrait
+ * `institut-national-<hex6>` et serait indistinguable d'une fixture par son
+ * seul suffixe.
+ *
+ * Sont retenus les préfixes qui sont des **noms de fixture** : aucun organisme
+ * réel ne s'appelle « test », « diag », « invalide », « compte connu » ou
+ * « apprenant iso-a ». Sont écartés ceux qui sont des **débuts de nom
+ * plausibles** : `institut-` (Institut National), `nouveau-` (Nouveau Projet),
+ * ainsi que `persistant-`, `reprise-`, `decoche-`, qui n'étaient que des
+ * variantes déjà couvertes par `apprenant-` et élargissaient la surface sans
+ * bénéfice.
+ */
 export const TEST_ORG_SLUG_PREFIXES: readonly string[] = [
   'test-',
   'formateur-e2e-',
-  'institut-',
   'compte-connu-',
+  'hors-org-',
   'apprenant-',
   'diag-',
   'invalide-',
-  'nouveau-',
-  'hors-org-',
-  'persistant-',
-  'reprise-',
-  'decoche-',
 ];
 
 /**
- * Suffixe aléatoire à 6 caractères hexadécimaux, en fin de slug.
+ * Noms d'organisation littéraux des fixtures, préfixés par leur slug.
  *
- * ⚠️ **Indispensable en plus du préfixe.** Sans lui, `institut-national` — une
- * organisation réelle — serait supprimée. Vérifié le 2026-09-23 : les 677
- * organisations de test le portent, sans exception.
+ * ⚠️ **Pourquoi une liste distincte.** `institut-e2e`, `institut-liste`,
+ * `institut-page`, `institut-expire`, `institut-parcours` viennent de
+ * `e2e/invitation.spec.ts`, où les noms sont **codés en dur** (`'Institut E2E'`,
+ * `'Institut Parcours'`…). Le préfixe `institut-` seul serait dangereux
+ * (« Institut National ») ; ces cinq formes ne le sont pas. Les citer
+ * explicitement garde la protection et reste honnête sur ce qui est purgé.
  */
-export const TEST_ORG_SLUG_SUFFIX = '-[0-9a-f]{6}$';
+export const TEST_ORG_SLUG_EXACT_FIXTURES: readonly string[] = [
+  'institut-e2e',
+  'institut-liste',
+  'institut-page',
+  'institut-expire',
+  'institut-parcours',
+];
+
 
 /** Domaine réservé aux comptes E2E — aucun compte réel ne le porte. */
 export const TEST_EMAIL_MARKER = '%@e2e.local';
@@ -110,10 +130,11 @@ export async function purgeTestData(pool: Pool): Promise<PurgeReport> {
   // Toutes les FK vers `organizations` sont en ON DELETE CASCADE : une seule
   // instruction suffit pour l'organisation et toutes ses dépendances.
   const prefixes = TEST_ORG_SLUG_PREFIXES.map((prefixe) => `${prefixe}%`);
+  const fixtures = TEST_ORG_SLUG_EXACT_FIXTURES.map((nom) => `${nom}-%`);
   const organisations = await pool.query(
     `DELETE FROM organizations
-     WHERE slug LIKE ANY($1::text[]) AND slug ~ $2`,
-    [prefixes, TEST_ORG_SLUG_SUFFIX],
+     WHERE slug LIKE ANY($1::text[]) OR slug LIKE ANY($2::text[])`,
+    [prefixes, fixtures],
   );
 
   // Second passage nécessaire : `e2e/progress.spec.ts` réaffecte explicitement

@@ -11,7 +11,6 @@ import { assertSafeDatabase, purgeTestData } from '../../../e2e/helpers/purge';
  */
 describe('purgeTestData', () => {
   const MARQUEUR_ORG = 'test-purge-fixture-a1b2c3';
-  const MARQUEUR_ORG_SANS_SUFFIXE = 'institut-national';
   const EMAIL_TEST = 'purge-fixture@e2e.local';
 
   beforeAll(async () => {
@@ -19,9 +18,9 @@ describe('purgeTestData', () => {
   });
 
   afterEach(async () => {
-    await pool.query('DELETE FROM organizations WHERE slug = ANY($1::text[])', [
-      [MARQUEUR_ORG, MARQUEUR_ORG_SANS_SUFFIXE],
-    ]);
+    await pool.query(
+      `DELETE FROM organizations WHERE slug LIKE 'test-purge-%' OR slug LIKE 'institut-national%' OR slug LIKE 'institut-parcours%'`,
+    );
     await pool.query('DELETE FROM users WHERE email = $1', [EMAIL_TEST]);
   });
 
@@ -64,13 +63,26 @@ describe('purgeTestData', () => {
     expect(rows.length).toBe(1);
   });
 
-  it('préserve un slug au préfixe connu mais SANS suffixe de test', async () => {
-    const orgId = await creerOrganisation(MARQUEUR_ORG_SANS_SUFFIXE);
+  it('préserve une organisation réelle au nom plausible', async () => {
+    // ⚠️ L'application pose elle-même un suffixe aléatoire sur TOUTE organisation
+    // (`jwt.ts:216`) : « Institut National » devient `institut-national-<hex6>`,
+    // indiscernable d'une fixture par son suffixe. C'est donc le NOM qui doit
+    // protéger, pas le suffixe. Ce test le prouve explicitement.
+    const orgId = await creerOrganisation('institut-national-a1b2c3');
 
     await purgeTestData(pool);
 
     const restante = await pool.query('SELECT id FROM organizations WHERE id = $1', [orgId]);
     expect(restante.rowCount).toBe(1);
+  });
+
+  it('supprime les fixtures littérales d’invitation (Institut Parcours…)', async () => {
+    const orgId = await creerOrganisation('institut-parcours-a1b2c3');
+
+    await purgeTestData(pool);
+
+    const restante = await pool.query('SELECT id FROM organizations WHERE id = $1', [orgId]);
+    expect(restante.rowCount).toBe(0);
   });
 
   it('préserve un utilisateur au vrai email', async () => {
@@ -104,22 +116,33 @@ describe('purgeTestData', () => {
   });
 
   it('est idempotent : deux exécutions donnent le même état', async () => {
-    // ⚠️ Comparer un **état réellement modifié** : sans fixture à purger, une
-    // purge qui ne ferait rien passerait ce test.
     await creerOrganisation(MARQUEUR_ORG);
 
+    const avant = await pool.query<{ orgs: number }>(
+      `SELECT COUNT(*)::int AS orgs FROM organizations WHERE slug = $1`,
+      [MARQUEUR_ORG],
+    );
+    expect(avant.rows[0].orgs).toBe(1);
+
     await purgeTestData(pool);
-    const premier = await pool.query<{ orgs: number; users: number }>(
+
+    // ⚠️ On assère que la fixture a bien **disparu** : sans cela, une purge
+    // inerte laisserait le comptage inchangé et le test d'idempotence passerait
+    // à tort.
+    const apresPremiere = await pool.query<{ orgs: number; users: number }>(
       `SELECT (SELECT COUNT(*)::int FROM organizations) AS orgs,
               (SELECT COUNT(*)::int FROM users) AS users`,
     );
+    const fixture = await pool.query(`SELECT id FROM organizations WHERE slug = $1`, [MARQUEUR_ORG]);
+    expect(fixture.rowCount).toBe(0);
+
     await purgeTestData(pool);
-    const second = await pool.query<{ orgs: number; users: number }>(
+    const apresSeconde = await pool.query<{ orgs: number; users: number }>(
       `SELECT (SELECT COUNT(*)::int FROM organizations) AS orgs,
               (SELECT COUNT(*)::int FROM users) AS users`,
     );
 
-    expect(second.rows[0]).toEqual(premier.rows[0]);
+    expect(apresSeconde.rows[0]).toEqual(apresPremiere.rows[0]);
   });
 
   it('refuse une base hors du port 5433', () => {
