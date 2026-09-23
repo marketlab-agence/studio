@@ -73,9 +73,31 @@ export const TEST_ORG_SLUG_EXACT_FIXTURES: readonly string[] = [
 /** Domaine réservé aux comptes E2E — aucun compte réel ne le porte. */
 export const TEST_EMAIL_MARKER = '%@e2e.local';
 
+/**
+ * Plafond de suppressions par exécution.
+ *
+ * ⚠️ **Pourquoi un plafond, alors que les motifs sont déjà stricts.**
+ * Les marqueurs sont volontairement précis, mais ils reposent sur des noms :
+ * une faute de frappe dans la liste (`test-` devenu `t-`), ou un futur spec qui
+ * crée 500 organisations, transformerait une purge légitime en suppression de
+ * masse sans que personne ne le voie. Le plafond est le dernier filet : au-delà,
+ * on **préfère échouer bruyamment** plutôt que de continuer à supprimer.
+ *
+ * ⚠️ La valeur est **le double** du plus gros volume observé (une exécution
+ * complète de la suite crée ~35 organisations, cf. mesure du 2026-09-23). Elle
+ * laisse donc une marge confortable sans jamais devenir un permis de tout effacer.
+ */
+export const MAX_PURGE_ORGANIZATIONS = 700;
+
 export interface PurgeReport {
   organizations: number;
   orphanUsers: number;
+}
+
+/** Options internes — le plafond est injectable pour être réellement testable. */
+export interface PurgeOptions {
+  /** Plafond de suppressions ; par défaut `MAX_PURGE_ORGANIZATIONS`. */
+  maxOrganizations?: number;
 }
 
 /**
@@ -126,11 +148,32 @@ function masquerMotDePasse(url: string): string {
 }
 
 /** Supprime les données de test. Idempotent. */
-export async function purgeTestData(pool: Pool): Promise<PurgeReport> {
+export async function purgeTestData(pool: Pool, options: PurgeOptions = {}): Promise<PurgeReport> {
+  const plafond = options.maxOrganizations ?? MAX_PURGE_ORGANIZATIONS;
+
   // Toutes les FK vers `organizations` sont en ON DELETE CASCADE : une seule
   // instruction suffit pour l'organisation et toutes ses dépendances.
   const prefixes = TEST_ORG_SLUG_PREFIXES.map((prefixe) => `${prefixe}%`);
   const fixtures = TEST_ORG_SLUG_EXACT_FIXTURES.map((nom) => `${nom}-%`);
+
+  // ⚠️ On **compte d'abord**, on supprime ensuite. Un `DELETE` ne rend le nombre
+  // de lignes touchées qu'après coup : le plafond serait alors vérifié trop tard,
+  // une fois les données perdues. Le comptage préalable rend le garde-fou
+  // réellement protecteur.
+  const { rows: compte } = await pool.query<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM organizations
+     WHERE slug LIKE ANY($1::text[]) OR slug LIKE ANY($2::text[])`,
+    [prefixes, fixtures],
+  );
+
+  if (compte[0].n > plafond) {
+    throw new Error(
+      `Purge refusée : ${compte[0].n} organisations correspondent aux marqueurs, ` +
+        `au-delà du plafond de ${plafond}. C'est le signe probable d'un marqueur ` +
+        'trop large. Vérifier TEST_ORG_SLUG_PREFIXES avant de relancer.',
+    );
+  }
+
   const organisations = await pool.query(
     `DELETE FROM organizations
      WHERE slug LIKE ANY($1::text[]) OR slug LIKE ANY($2::text[])`,

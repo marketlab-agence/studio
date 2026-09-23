@@ -195,10 +195,10 @@ Dépend de : 1, 3
 Dépend de : 3, 4, 5, 6
 
 - [x] T7.1 — Supprimer `firebase`, `firebase-admin` · REQ-DAT-06 · vérif: `package.json` nettoyé ✔ *(2026-09-23)*
-- [ ] T7.2 — Supprimer `firebase.json`, `.firebaserc`, `apphosting.yaml` · **REPORTÉ en phase 7bis** : retirer ces fichiers change la **cible de déploiement**, décision d'infrastructure distincte de la purge du code. Les mélanger rendrait tout retour arrière inutilisable. *(Le dossier `providers/firestore/` n'existe pas : couche 1 déjà faite en phase 3.)*
+- [ ] T7.2 — Supprimer `firebase.json`, `.firebaserc`, `apphosting.yaml`, **`firestore.rules`**, **`.idx/`** · **REPORTÉ en phase 7bis** : retirer ces fichiers change la **cible de déploiement**, décision d'infrastructure distincte de la purge du code. Les mélanger rendrait tout retour arrière inutilisable. *(Le dossier `providers/firestore/` n'existe pas : couche 1 déjà faite en phase 3.)*
 - [x] T7.3 — Supprimer `lib/firebase.ts`, `lib/firebase-admin.ts`, `lib/local-data.ts` · REQ-DAT-06 · vérif: fichiers absents ✔ *(2026-09-23)*
 - [x] T7.4 — Retirer `NEXT_PUBLIC_FIREBASE_*` et clés Firebase de `.env*` · REQ-FND-05 · vérif: aucun secret Firebase ✔ *(2026-09-23)*
-- [ ] T7.5 — **Révoquer la clé de service account** (console Firebase, **action manuelle**) · REQ-FND-05 · vérif: clé révoquée — **non réalisable ici** : elle porte sur la console Firebase, hors du dépôt.
+- [ ] T7.5 — **Révoquer la clé de service account** (console Firebase, **action manuelle**) · REQ-FND-05 · vérif: clé révoquée — **non réalisable dans le dépôt** : retirer la variable d'environnement **n'invalide pas** la clé côté Google. **SUIVI OUVERT** : à exécuter dans la console Firebase, puis marquer ici. Tant que ce n'est pas fait, la clé reste valide pour qui la détiendrait.
 - [x] **Sortie Couche 1** : `grep -rn "firebase" src/ package.json` → **0 résultat** ✔ *(2026-09-23)*
 
 > **Note de fin de phase 7 (2026-09-23)**

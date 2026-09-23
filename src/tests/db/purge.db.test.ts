@@ -171,4 +171,18 @@ describe('purgeTestData', () => {
   it('accepte la base de test', () => {
     expect(() => assertSafeDatabase(TEST_DATABASE_URL)).not.toThrow();
   });
+
+  it('refuse de purger au-delà du plafond de sécurité, SANS rien supprimer', async () => {
+    // ⚠️ Le plafond doit être éprouvé pour de vrai : un test qui se contente de
+    // constater sa valeur ne prouve rien. On abaisse le plafond sous le nombre
+    // de lignes marquées, puis on vérifie que la purge **refuse** et que la
+    // fixture est **toujours là** — c'est le point crucial : le comptage
+    // préalable doit empêcher la suppression, pas la constater après coup.
+    const orgId = await creerOrganisation(MARQUEUR_ORG);
+
+    await expect(purgeTestData(pool, { maxOrganizations: 0 })).rejects.toThrow(/plafond/);
+
+    const restante = await pool.query('SELECT id FROM organizations WHERE id = $1', [orgId]);
+    expect(restante.rowCount).toBe(1);
+  });
 });

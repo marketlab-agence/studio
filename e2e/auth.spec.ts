@@ -8,10 +8,10 @@ import { test, expect } from '@playwright/test';
  * c'est la seule façon de prouver que le middleware Edge, les route handlers et
  * le provider PostgreSQL fonctionnent ensemble.
  *
- * ⚠️ Les comptes créés ici restent dans la base de développement (le domaine
- * `@e2e.local` les rend identifiables). Les supprimer :
- *   DELETE FROM organizations WHERE id IN
- *     (SELECT organization_id FROM users WHERE email LIKE '%@e2e.local');
+ * ⚠️ Les comptes créés ici sont nettoyés **automatiquement** depuis la phase 7 :
+ * `e2e/global-teardown.ts` purge les organisations de test et les comptes
+ * `@e2e.local` après chaque suite (et `e2e/global-setup.ts` avant, pour réparer
+ * un passage interrompu). Plus rien à supprimer à la main.
  */
 
 /** Identifiant unique par exécution : deux passages ne se marchent pas dessus. */
