@@ -117,6 +117,38 @@ export const INTERACTIVE_DESCRIPTIONS: Record<string, string> = {
     'Exécution guidée d’une procédure : l’apprenant valide chaque étape dans l’ordre, reçoit un indice en cas d’erreur et une explication après réussite. Chaque étape produit une trace de suivi.',
   GitCommandSimulator:
     "Procédure Git guidée : l'apprenant exécute les commandes essentielles (clone, status, add, commit, push) ; chaque étape est validée et expliquée.",
+  /**
+   * ⚠️ **Primitives génériques** (etape 15 du plan de phase 6) — et non composants de domaine.
+   *
+   * Chacune recoit ses donnees (elements, criteres, rubriques...) et ne sait rien du sujet
+   * enseigne. C'est ce qui les rend reutilisables : voir la table a 3 contraintes dans
+   * @docs/katalyst/primitives-pedagogiques.md.
+   *
+   * La 3e contrainte (trace auditable, indicateur 19) est ELIMINATOIRE : chaque primitive
+   * enregistre ses interactions via `useLessonTrace`.
+   */
+  RecallQuiz:
+    "Restitution : l'apprenant répond à des questions à choix (unique ou multiple), reçoit une note et un corrigé.",
+  FlashcardDrill:
+    "Révision par cartes : l'apprenant lit une question, devine, puis s'auto-évalue. C'est le mécanisme de la répétition espacée.",
+  SortingGame:
+    "Classification : l'apprenant range des éléments dans des catégories, distinguant le pertinent du bruit.",
+  MatchingPairs:
+    "Appariement : l'apprenant relie deux séries (terme et définition, commande et effet).",
+  GuidedProcedure:
+    "Checklist ordonnée : l'apprenant coche des points de contrôle dans l'ordre, sans réponse à saisir.",
+  CaseDiagnosis:
+    "Diagnostic de situation : l'apprenant retient les indices pertinents, identifie une cause et justifie. La démarche est évaluée autant que la conclusion.",
+  CompareContrast:
+    "Comparaison : l'apprenant relève les écarts entre deux options selon des critères donnés, puis conclut.",
+  DecisionScenario:
+    "Arbitrage : l'apprenant choisit une option informée (avantages et inconvénients) et justifie. Plusieurs choix peuvent se défendre.",
+  PeerReviewSimulator:
+    "Évaluation par critères : l'apprenant note une production selon une grille explicite et rédige un retour argumenté.",
+  BuilderCanvas:
+    "Construction : l'apprenant produit un document structuré (fiche programme, déroulé, plan de slides, règles de jeu).",
+  DraftCoach:
+    "Rédaction guidée : l'apprenant écrit, relit selon des critères, puis révise. L'ÉCART entre les deux versions est la trace d'apprentissage.",
   GitRepositoryPlayground: "Bac à sable Git complet : l'apprenant exécute de vraies commandes et observe l'état du dépôt.",
   GitTimeTravel: "Voyage dans l'historique : revenir à un commit, explorer les états successifs du dépôt.",
   GitDoctorTool: "Diagnostic de dépôt : détecter et corriger un état Git problématique (detached HEAD, conflit).",
@@ -181,8 +213,28 @@ export const VISUAL_DESCRIPTIONS: Record<string, string> = {
  * formations **n'existent pas encore** : c'est le travail des étapes 15 et 16.
  */
 const COMPONENT_DOMAINS_BY_NAME: Record<string, readonly ComponentDomain[]> = {
+  // --- PRIMITIVES GÉNÉRIQUES (étape 15) --------------------------------------
+  //
+  // ⚠️ `'*'` : ces composants ne savent rien du sujet enseigné — ils reçoivent leurs données.
+  // C'est ce qui leur permet d'être proposés pour **toute** formation, ce dont les 13
+  // plateholders Git ne sont pas capables (leur domaine est `git`).
+  //
+  // C'est l'apport principal de l'étape 15 : un formateur qui crée une formation de vente
+  // dispose désormais de composants interactifs pertinents.
+  RecallQuiz: ['*'],
+  FlashcardDrill: ['*'],
+  SortingGame: ['*'],
+  MatchingPairs: ['*'],
+  StepByStepRunner: ['*'],
+  GuidedProcedure: ['*'],
+  CaseDiagnosis: ['*'],
+  CompareContrast: ['*'],
+  DecisionScenario: ['*'],
+  PeerReviewSimulator: ['*'],
+  BuilderCanvas: ['*'],
+  DraftCoach: ['*'],
+
   // --- Interactifs Git (y compris les placeholders) -------------------------
-  StepByStepRunner: ['*'], // PRIMITIVE générique : procédure guidée, applicable partout
   GitRepositoryPlayground: ['git'],
   GitCommandSimulator: ['git'],
   GitTimeTravel: ['git'],
@@ -228,8 +280,26 @@ const COMPONENT_DOMAINS_BY_NAME: Record<string, readonly ComponentDomain[]> = {
  * fait *créer*. Elles seront affinées à l'étape 11 (table à 3 contraintes).
  */
 const COMPONENT_BLOOM_BY_NAME: Record<string, readonly BloomLevel[]> = {
+  // --- PRIMITIVES GÉNÉRIQUES (étape 15) --------------------------------------
+  //
+  // ⚠️ Chaque primitive couvre **un** niveau, et la couverture est vérifiée par test :
+  // la décision utilisateur exige **au moins 2 primitives par niveau de Bloom**.
+  //
+  // Voir `@docs/katalyst/primitives-pedagogiques.md` — table à 3 contraintes.
+  RecallQuiz: ['Connaître'],
+  FlashcardDrill: ['Connaître'],
+  SortingGame: ['Comprendre'],
+  MatchingPairs: ['Comprendre'],
+  StepByStepRunner: ['Appliquer'],
+  GuidedProcedure: ['Appliquer'],
+  CaseDiagnosis: ['Analyser'],
+  CompareContrast: ['Analyser'],
+  DecisionScenario: ['Évaluer'],
+  PeerReviewSimulator: ['Évaluer'],
+  BuilderCanvas: ['Créer'],
+  DraftCoach: ['Créer'],
+
   // --- Interactifs ---------------------------------------------------------
-  StepByStepRunner: ['Appliquer'], // PRIMITIVE : exécution guidée
   GitRepositoryPlayground: ['Appliquer', 'Créer'],
   GitCommandSimulator: ['Appliquer'],
   GitTimeTravel: ['Comprendre', 'Analyser'],

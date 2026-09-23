@@ -153,7 +153,15 @@ describe('filtrage par niveau de Bloom', () => {
     const venteCreer = listByBloomLevel('interactive', 'Créer', 'vente');
 
     expect(gitCreer.length).toBeGreaterThan(0);
-    // Aucun composant de vente n'existe encore : c'est le constat à corriger (étapes 15-16).
-    expect(venteCreer.length).toBe(0);
+
+    // ⚠️ Ce test affirmait `venteCreer.length === 0` AVANT l'étape 15 : le catalogue était
+    // entièrement Git, donc aucune formation de vente n'avait de composant interactif.
+    // L'étape 15 a apporté les primitives génériques — et c'est précisément ce que ce test
+    // doit désormais constater.
+    expect(venteCreer.length).toBeGreaterThan(0);
+    // Les primitives de création sont génériques : elles sont proposées partout.
+    expect(venteCreer.map((meta) => meta.name)).toEqual(
+      expect.arrayContaining(['BuilderCanvas', 'DraftCoach']),
+    );
   });
 });

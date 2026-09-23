@@ -3,6 +3,17 @@ import { COMPONENT_CATALOG, type ComponentMeta } from './catalog';
 
 // --- Composants interactifs --------------------------------------------------
 import { AiHelper } from '@/components/interactive/AiHelper';
+import { BuilderCanvas } from '@/components/interactive/primitives/BuilderCanvas';
+import { CaseDiagnosis } from '@/components/interactive/primitives/CaseDiagnosis';
+import { CompareContrast } from '@/components/interactive/primitives/CompareContrast';
+import { DecisionScenario } from '@/components/interactive/primitives/DecisionScenario';
+import { DraftCoach } from '@/components/interactive/primitives/DraftCoach';
+import { FlashcardDrill } from '@/components/interactive/primitives/FlashcardDrill';
+import { GuidedProcedure } from '@/components/interactive/primitives/GuidedProcedure';
+import { MatchingPairs } from '@/components/interactive/primitives/MatchingPairs';
+import { PeerReviewSimulator } from '@/components/interactive/primitives/PeerReviewSimulator';
+import { RecallQuiz } from '@/components/interactive/primitives/RecallQuiz';
+import { SortingGame } from '@/components/interactive/primitives/SortingGame';
 import { StepByStepRunner } from '@/components/interactive/primitives/StepByStepRunner';
 import { BranchCreator } from '@/components/interactive/BranchCreator';
 import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
@@ -72,7 +83,10 @@ const COMPONENTS: Record<string, ComponentType<any>> = {
   // interactifs
   AiHelper, BranchCreator, CollaborationSimulator, ConflictResolver,
   GitCommandSimulator,
-  StepByStepRunner, GitDoctorTool, GitRepositoryPlayground, GitTimeTravel,
+  StepByStepRunner, RecallQuiz, FlashcardDrill, SortingGame, MatchingPairs, GuidedProcedure,
+  CaseDiagnosis, CompareContrast, DecisionScenario, PeerReviewSimulator,
+  BuilderCanvas, DraftCoach,
+  GitDoctorTool, GitRepositoryPlayground, GitTimeTravel,
   MergeSimulator, PullRequestCreator, WorkflowDesigner,
   ActionsWorkflowBuilder, AliasCreator, CommitMessageLinter, ConflictPlayground,
   ConflictVisualizer, FlowDiagramBuilder, ForkVsCloneDemo, GitHubInterfaceSimulator,
