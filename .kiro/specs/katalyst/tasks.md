@@ -194,12 +194,38 @@ Dépend de : 1, 3
 
 Dépend de : 3, 4, 5, 6
 
-- [ ] T7.1 — Supprimer `firebase`, `firebase-admin` · REQ-DAT-06 · vérif: `package.json` nettoyé
-- [ ] T7.2 — Supprimer `firebase.json`, `.firebaserc`, `apphosting.yaml`, `providers/firestore/` · REQ-DAT-06 · vérif: fichiers absents
-- [ ] T7.3 — Supprimer `lib/firebase.ts`, `lib/firebase-admin.ts`, `lib/local-data.ts` · REQ-DAT-06 · vérif: fichiers absents
-- [ ] T7.4 — Retirer `NEXT_PUBLIC_FIREBASE_*` et clés Firebase de `.env*` · REQ-FND-05 · vérif: aucun secret Firebase
-- [ ] T7.5 — **Révoquer la clé de service account** (console Firebase, manuel) · REQ-FND-05 · vérif: clé révoquée
-- [ ] **Sortie Couche 1** : `grep -rn "firebase" src/ package.json` → **0 résultat**
+- [x] T7.1 — Supprimer `firebase`, `firebase-admin` · REQ-DAT-06 · vérif: `package.json` nettoyé ✔ *(2026-09-23)*
+- [ ] T7.2 — Supprimer `firebase.json`, `.firebaserc`, `apphosting.yaml` · **REPORTÉ en phase 7bis** : retirer ces fichiers change la **cible de déploiement**, décision d'infrastructure distincte de la purge du code. Les mélanger rendrait tout retour arrière inutilisable. *(Le dossier `providers/firestore/` n'existe pas : couche 1 déjà faite en phase 3.)*
+- [x] T7.3 — Supprimer `lib/firebase.ts`, `lib/firebase-admin.ts`, `lib/local-data.ts` · REQ-DAT-06 · vérif: fichiers absents ✔ *(2026-09-23)*
+- [x] T7.4 — Retirer `NEXT_PUBLIC_FIREBASE_*` et clés Firebase de `.env*` · REQ-FND-05 · vérif: aucun secret Firebase ✔ *(2026-09-23)*
+- [ ] T7.5 — **Révoquer la clé de service account** (console Firebase, **action manuelle**) · REQ-FND-05 · vérif: clé révoquée — **non réalisable ici** : elle porte sur la console Firebase, hors du dépôt.
+- [x] **Sortie Couche 1** : `grep -rn "firebase" src/ package.json` → **0 résultat** ✔ *(2026-09-23)*
+
+> **Note de fin de phase 7 (2026-09-23)**
+>
+> **Ce qui est fait, et mesuré.** La purge Firebase est **effective** : `firebase.ts`,
+> `firebase-admin.ts`, `local-data.ts`, `import-auth.ts` et `scripts/migrate-data.js` supprimés ;
+> `firebase` et `firebase-admin` désinstallés ; **0 occurrence** de `firebase|firestore` (minuscules)
+> dans `src/` et `e2e/`. La traçabilité des 11 comptes importés est conservée dans
+> `docs/katalyst/migration-comptes-firebase.md` — `import-auth.ts` **lisait réellement** Firebase,
+> le dégrader en constante aurait exigé d'inventer les comptes.
+>
+> **Nettoyage des données E2E (exigence utilisateur).** Les E2E écrivaient dans la base de
+> développement **sans jamais nettoyer** : **678 organisations** s'y étaient accumulées (99 % de
+> résidus). Un module unique (`e2e/helpers/purge.ts`) purge désormais **avant et après** la suite,
+> via `globalSetup`/`globalTeardown`, plus un script manuel `npm run db:cleanup-e2e`.
+>
+> **Preuve en conditions réelles** : 678 → **2 organisations** ; une exécution E2E crée 35
+> organisations et 7 utilisateurs, que le teardown purge intégralement. L'organisation `katalyst`
+> (11 comptes réels, 6 formations) et une organisation personnelle créée à la main sont **intactes**.
+>
+> **Découverte de conception** : le suffixe aléatoire que l'application pose sur *toute*
+> organisation (`jwt.ts:216`) **ne protège rien** — une organisation réelle « Institut National »
+> devient `institut-national-<hex>`. Seul le **nom** distingue un résidu de test : les marqueurs
+> retenus sont des noms qu'aucun organisme réel ne porterait.
+>
+> **Vérifié** : typecheck 0 · lint 0 · **275** tests unitaires · **185** tests DB · **76** E2E · audit
+> contenu **6/6**.
 
 ---
 

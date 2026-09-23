@@ -13,11 +13,11 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** (code complet : T4.1-T4.14, SAML inclus) |
-| Phase en cours | ✅ **Phase 6 — Conformité des formations** : *outillage livré* (audit rejouable, 12 primitives, 13 placeholders résolus) ; **T6.8 reste bloquée par du contenu**, pas par du code |
-| 🔴 **DÉCISION ATTENDUE** | **Comment compléter les 80 leçons ?** 142 constats R2 (objectifs hors format Bloom) + 80 leçons sans `bloom_level`. Trois voies : re-génération IA (phase 17), saisie manuelle du formateur, ou **accepter que la conformité ne soit exigée que pour les formations neuves** (défendable : le décret n'est pas rétroactif). **À trancher avant T6.8.** |
-| Prochaine phase | **Phase 7 — Purge Firebase** · dépend de 3, 4, 5, 6 · vérif : `grep -rn "firebase" src/ package.json` → **0**. *Les modules sont déjà sans consommateur depuis la phase 3.* |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **27 suites / 275** · tests DB **15 suites / 174** · **E2E 76** |
-| **Conformité — progrès mesuré** | `R5.1` (appropriation, indicateur 19) : **0/6 → 6/6** · `R6` (cohérence type↔Bloom) : conforme · `R4` (évaluation) : conforme · **`R2` : 142 constats (contenu)** · `PLACEHOLDER_COMPONENTS` : **vide** (13 coquilles résolues) |
+| Phase en cours | ✅ **Phase 7 — Purge Firebase & nettoyage E2E terminée** : couplage Firebase **supprimé** (5 fichiers, 2 paquets) · nettoyage E2E **automatique avant/après** · base de dev **678 → 2 organisations** |
+| 🔴 **DÉCISION ATTENDUE** | **Phase 7bis — cible de déploiement.** `firebase.json`, `.firebaserc`, `apphosting.yaml` sont **conservés** volontairement : les retirer change la façon dont l'app se déploie. À trancher avec la phase 25 (déploiement portable). |
+| Prochaine phase | **Phase 8 — Internationalisation & transatlantique** (voir `adr/0008`) |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **27 suites / 275** · tests DB **16 suites / 185** · **E2E 76** |
+| **Conformité — progrès mesuré** | **6/6 formations conformes** · `R2` : 142 constats → **0** · `R3` : 80 niveaux déclarés · `R6` : conforme · `R5.1` : 6/6 · `PLACEHOLDER_COMPONENTS` : **vide** |
 | **Documentation** | `@docs/rework/` (3 f.) et `@docs/katalyst/` (4 f. dont `conformite-rnq-v10.md`, `regles-conformite.md`, `primitives-pedagogiques.md`) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 11 comptes importés |
