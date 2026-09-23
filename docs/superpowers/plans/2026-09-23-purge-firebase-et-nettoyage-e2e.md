@@ -503,10 +503,10 @@ git commit -m "docs(memory): consigner la preuve du nettoyage E2E"
 
 - [ ] **Step 1: Contrôler qu'aucun export n'est consommé ailleurs**
 
-Run: `rg -n "from ['\"]@/lib/(firebase|firebase-admin|local-data)['\"]" src/ e2e/`
+Run: `grep -rn "@/lib/firebase\|@/lib/firebase-admin\|@/lib/local-data" src/ e2e/`
 Expected: **aucune sortie**
 
-Run: `rg -n "getFirebaseAdmin|initializeFirebaseAdmin|firebaseApp|isFirebaseConfigured" src/ e2e/`
+Run: `grep -rn "getFirebaseAdmin\\|initializeFirebaseAdmin\\|firebaseApp\\|isFirebaseConfigured" src/ e2e/`
 Expected: **aucune sortie**
 
 Si l'une des deux commandes produit une ligne, **arrêter** et traiter ce consommateur avant de supprimer.
@@ -551,12 +551,12 @@ git commit -m "refactor(firebase): supprimer les modules orphelins (vague 1)"
 
 - [ ] **Step 1: Chercher les alias résiduels**
 
-Run: `rg -n "firebase|local-data" tsconfig.json jest.config.mjs`
+Run: `grep -n "firebase|local-data" tsconfig.json jest.config.mjs`
 Expected: lire la sortie et ne retirer que les entrées pointant vers les fichiers supprimés. Si aucune sortie : passer à l'étape 3.
 
 - [ ] **Step 2: Chercher les références textuelles restantes**
 
-Run: `rg -n "firebase|firestore|Firestore" src/ e2e/ --glob '!*.test.ts'`
+Run: `grep -rn "firebase" src/ e2e/` (sensible à la casse : la prose « Firestore » n'est pas ciblée, seule la spec §6.3 fait foi)
 Expected: aucune sortie (les fichiers de test peuvent mentionner Firebase dans un commentaire historique — les laisser).
 
 - [ ] **Step 3: Vérifier typecheck**
@@ -677,10 +677,19 @@ Expected: 16 suites (15 + la nouvelle suite `purge`), tests verts
 
 - [ ] **Step 9: Vérifier le grep final — 0 occurrence dans le code**
 
-Run: `rg -n "firebase|firestore" src/ scripts/ e2e/`
+Run: `grep -rn "firebase\|firestore" src/ scripts/ e2e/`
 Expected: aucune sortie
 
-- [ ] **Step 10: Commit**
+Run: `grep -n "firebase" jest.config.mjs`
+Expected: aucune sortie — `ESM_DEPS` contenait `'firebase'` et `'@firebase'` (lignes 18-19), devenus morts après la désinstallation. `jest.config.mjs` n'était pas couvert par le grep ci-dessus : sans cette seconde commande, ces deux lignes survivraient silencieusement.
+
+- [ ] **Step 10: Retirer les entrées mortes de `jest.config.mjs`**
+
+Si l'étape 9 en a trouvé, supprimer `'firebase'` et `'@firebase'` du tableau `ESM_DEPS` dans `jest.config.mjs`.
+
+⚠️ Ne retirer que ces deux entrées : les autres (`jose`, `otplib`…) sont toujours nécessaires, et `jest.config.mjs` est commenté pour expliquer pourquoi chacune existe.
+
+- [ ] **Step 11: Commit**
 
 ```bash
 git add -A
@@ -701,7 +710,7 @@ git commit -m "refactor(firebase): retirer les dependances et les scripts obsole
 
 - [ ] **Step 1: Lister les variables Firebase présentes**
 
-Run: `rg -n "FIREBASE_" .env.local .env.example`
+Run: `grep -n "FIREBASE_" .env.local .env.example`
 Expected: lire la sortie. Si aucune : tâche terminée, passer au commit (ou sauter).
 
 - [ ] **Step 2: Retirer les lignes `FIREBASE_*`**
@@ -712,7 +721,7 @@ Expected: lire la sortie. Si aucune : tâche terminée, passer au commit (ou sau
 
 - [ ] **Step 3: Vérifier qu'aucun code ne les réclame**
 
-Run: `rg -n "FIREBASE_" src/ e2e/ scripts/`
+Run: `grep -n "FIREBASE_" src/ e2e/ scripts/`
 Expected: aucune sortie
 
 - [ ] **Step 4: Vérifier typecheck et démarrage**
