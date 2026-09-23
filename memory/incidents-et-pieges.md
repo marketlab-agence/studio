@@ -33,7 +33,7 @@
 - **Un « vert » de test n'est une preuve que si le test s'exécute réellement.** Les tests DB étaient passés à vide via un `return` gracieux : ils sont désormais **stricts** (base injoignable = échec). `SKIP_DB_IF_UNAVAILABLE=1` existe mais doit rester exceptionnel.
 - **[mineur]** Avertissement Jest sur le projet DB : `worker process failed to exit gracefully` — fuite de handle à investiguer (n'affecte pas les résultats).
 - **`src/queries/**` = code mort** : importé nulle part. Typé pour T0.2, à supprimer en phase 16.
-- **Modules Firebase = code mort** depuis la phase 3 : `src/lib/firebase-admin.ts`, `src/lib/firebase.ts`, `src/lib/local-data.ts` n'ont **plus aucun consommateur** (vérifié). À supprimer en phase 16, avec les dépendances `firebase` / `firebase-admin` de `package.json`.
+- **Modules Firebase = code mort** depuis la phase 3. **SUPPRIMÉ en phase 7 (2026-09-23)** : `src/lib/firebase-admin.ts`, `src/lib/firebase.ts`, `src/lib/local-data.ts`, plus `src/lib/db/import-auth.ts` et `scripts/migrate-data.js`, avec les dépendances `firebase` / `firebase-admin`. La traçabilité des 11 comptes importés est conservée dans `@docs/katalyst/migration-comptes-firebase.md`.
 - **Le build Next n'est pas vérifié** : étape CI en report-only (script `npm run build` en syntaxe Windows `cmd`).
 - **Divergence de branche** : `master` a 96+ commits locaux contre 1 sur `origin/master`. Aucun push effectué.
 

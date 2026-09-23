@@ -3,7 +3,7 @@
 ## Stack
 - Next.js 15 (App Router), React 19, TypeScript strict, Tailwind CSS 3.4
 - shadcn/ui (Radix primitives, lucide-react icons, CSS variables, neutral base)
-- Firebase: Firestore (Admin SDK server-side, Web SDK client-side), Firebase Auth
+- Data & auth: PostgreSQL (self-hosted, port 5433) · JWT + Google OAuth + MFA/TOTP + SAML
 - AI: Genkit + Gemini 2.0 Flash (`src/ai/genkit.ts`)
 - Testing: Jest 29 + MSW + @testing-library/react
 - Forms: react-hook-form + zod
@@ -17,7 +17,6 @@ npm run lint             # ESLint via next lint
 npm run typecheck        # tsc --noEmit
 npm test                 # Jest (single run)
 npm run genkit:dev       # Genkit dev UI on port 4000
-npm run migrate          # Seed Firestore from src/data/*.json
 npm run storybook        # Storybook on port 6006
 ```
 The `build` script (`rmdir /s /q .next 2>nul & next build`) uses Windows `cmd` syntax. On Mac/Linux, run `next build` directly.
@@ -25,25 +24,10 @@ The `build` script (`rmdir /s /q .next 2>nul & next build`) uses Windows `cmd` s
 ## Path alias
 `@/*` maps to `./src/*` (configured in both `tsconfig.json` and `jest.config.mjs`).
 
-## Firebase setup
-- Project: `git-explorer-2tcnx` (from `.firebaserc`)
-- Hosting region: `europe-west1`, fixed at 1 instance (`apphosting.yaml`)
-
-**Server-side** (`src/lib/firebase-admin.ts`):
-- Uses Firebase Admin SDK with service account credentials
-- Required env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`
-- Private key `\n` escaping handled in `initializeFirebaseAdmin()`
-- Lazy-init via `getFirebaseAdmin()` which returns `{ db, auth }`
-- Firestore setting: `ignoreUndefinedProperties: true`
-
-**Client-side** (`src/lib/firebase.ts`):
-- Uses Firebase Web SDK with `NEXT_PUBLIC_*` prefixed env vars
-- Gracefully disables Firebase features if config is missing (logs warning, exports `null`)
-
 ## Architecture
 
 ### Server / Client split
-- **Server Components** (`.page.tsx`, `.layout.tsx`) fetch data directly from Firestore via `getFirebaseAdmin()`
+- **Server Components** (`.page.tsx`, `.layout.tsx`) fetch data directly from PostgreSQL via the server-side providers
 - **Server Actions** (`src/actions/*.ts`) handle all mutations — callable from client components
 - **Client Components** use Server Actions + React Query for mutations/fetching
 
@@ -57,9 +41,8 @@ The `build` script (`rmdir /s /q .next 2>nul & next build`) uses Windows `cmd` s
 | `src/components/interactive/` | Git/dev simulation components |
 | `src/components/visualizations/` | Chart/diagram components |
 | `src/types/` | TypeScript type definitions |
-| `src/data/` | JSON seed data (migratable to Firestore via `npm run migrate`) |
+| `src/data/` | JSON seed data (loaded by `npm run db:seed`) |
 | `src/contexts/` | AuthContext, TutorialContext providers |
-| `scripts/migrate-data.js` | JSON-to-Firestore migration script |
 
 ### Provider hierarchy (root layout)
 `ThemeProvider` (next-themes) → `AuthProvider` → `TutorialProvider`

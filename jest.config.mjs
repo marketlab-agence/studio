@@ -15,8 +15,6 @@ const ESM_DEPS = [
   'strict-event-emitter',
   'is-node-process',
   'headers-polyfill',
-  'firebase',
-  '@firebase',
   'yaml',
   // `jose` est publie en ESM uniquement (Web Crypto, compatible Edge runtime).
   'jose',
