@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -169,9 +170,8 @@ function AcceptInvitationForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password">Mot de passe</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}
@@ -186,9 +186,9 @@ function AcceptInvitationForm() {
 
           <div className="space-y-2">
             <Label htmlFor="confirmation">Confirmer le mot de passe</Label>
-            <Input
+            <PasswordInput
               id="confirmation"
-              type="password"
+              
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}

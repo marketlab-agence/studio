@@ -17,6 +17,7 @@
     "db:seed": "tsx src/lib/db/seed.ts",
     "db:seed:test": "tsx src/lib/db/seed.ts --test",
     "db:import-auth": "tsx src/lib/db/import-auth.ts",
+    "db:set-password": "tsx src/lib/db/set-password.ts",
     "test": "jest",
     "test:db": "jest --config jest.config.db.mjs",
     "test:e2e": "playwright test",
