@@ -1,8 +1,19 @@
 # ADR 0006 — Conformité Qualiopi comme objectif produit
 
-- **Statut** : accepté — **sous réserve du gate G5**
-- **Date** : 2026-09-21
-- **Phases concernées** : 15
+- **Statut** : accepté — **gate G5 LEVÉ** (2026-09-23)
+- **Date** : 2026-09-21 (révisé le 2026-09-23)
+- **Phases concernées** : 6 (indicateurs pédagogiques), 20 (conformité complète)
+
+> **⚠️ Mise à jour du 2026-09-23 — le référentiel officiel est obtenu.**
+>
+> Le **texte intégral du décret n° 2026-728** (33 indicateurs, en vigueur au 01/11/2026) a été
+> fourni par l'utilisateur. Il est consigné dans
+> **`@docs/katalyst/conformite-rnq-v10.md`**, qui devient la **source de vérité du RNQ dans
+> le projet**.
+>
+> **Le présent ADR ne duplique plus le référentiel** : il enregistre la décision et renvoie
+> au document de référence. Toute divergence entre les deux se résout **en faveur de
+> `docs/katalyst/conformite-rnq-v10.md`**, qui cite le décret.
 
 ## Contexte
 

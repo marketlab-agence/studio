@@ -1,5 +1,21 @@
 # **App Name**: Git Explorer
 
+> **⚠️ DOCUMENT ARCHIVÉ — NE PAS SUIVRE**
+>
+> **Nature** : blueprint initial généré par Firebase Studio, à l'époque où
+> l'application s'appelait « Git Explorer » et ne traitait que Git/GitHub.
+>
+> **Pourquoi il est ici et non à la racine** : il documente l'origine du projet,
+> mais **contredit la charte cible de Katalyst** — il prescrit un fond sombre
+> (`#303030`), là où la charte retenue est « 1 seul accent (navy), fond blanc,
+> neutres ». Il n'est plus référencé par aucun document du plan.
+>
+> **Ne pas s'en servir comme référence de conception.** Conservé pour la
+> traçabilité historique uniquement. Voir `@.kiro/steering/project-context.md`
+> pour le contexte réel du projet.
+>
+> Archivé le 2026-09-23.
+
 ## Core Features:
 
 - Interactive Tutorials: Interactive tutorial content on Git and GitHub.
