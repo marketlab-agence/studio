@@ -56,5 +56,23 @@ The `build` script (`rmdir /s /q .next 2>nul & next build`) uses Windows `cmd` s
 ## UI language
 The app is in French (`lang="fr"` in root layout, French copy throughout).
 
-## No CI
-No `.github/workflows` or CI configuration exists. Deployment is via Firebase App Hosting.
+## CI
+
+A GitHub workflow exists at `.github/workflows/ci.yml` (typecheck, gitleaks, `test:e2e`, `check:version`).
+
+## Deployment
+
+**Multi-cloud, from a single container image** (REQ-DEP-02, phase 25): AWS, GCP and Azure.
+
+The app ships as a **Next.js standalone** image built by a multi-stage `Dockerfile`, deployed
+with `docker-compose.prod.yml` (app + PostgreSQL/pgvector). The three cloud targets are reached
+from that **same image**, never from a platform-specific build.
+
+Firebase App Hosting was used before phase 7bis and has been **removed**: it is a GCP-only
+service requiring GCP billing, which NG-07 forbids as a durable dependency. The deployment
+artifacts of that era (`.firebaserc`, `firebase.json`, `apphosting.yaml`, `firestore.rules`,
+`.idx/`) are gone.
+
+⚠️ **Nothing is deployed today.** Phase 25 is what will produce the `Dockerfile`, the prod
+compose file and the three cloud workflows. Until then, `/health` is the only deployment-shaped
+endpoint, and it runs locally.

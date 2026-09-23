@@ -2,8 +2,8 @@
  * Limitation de débit (REQ-AUTH-01, design.md §20).
  *
  * ⚠️ **Limite assumée** : ce compteur vit en mémoire du processus. Il protège
- * donc une instance unique — ce qui correspond au déploiement actuel
- * (`apphosting.yaml` : `maxInstances: 1`). En cas de montée à plusieurs
+ * donc une instance unique — ce qui correspond au déploiement actuel (une
+ * instance, cf. `AGENTS.md` § Deployment). En cas de montée à plusieurs
  * instances, il faudra un compteur partagé (base ou Redis), sinon la limite
  * effective serait multipliée par le nombre d'instances.
  *
