@@ -23,6 +23,7 @@
     "db:align-bloom": "tsx src/lib/db/align-bloom.ts",
     "db:convert-git-lessons": "tsx src/lib/db/convert-git-lessons.ts",
     "db:export-content": "tsx src/lib/db/export-content.ts",
+    "db:cleanup-e2e": "tsx e2e/cleanup-cli.ts",
     "test": "jest",
     "test:db": "jest --config jest.config.db.mjs",
     "test:e2e": "playwright test",
