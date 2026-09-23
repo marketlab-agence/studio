@@ -16,7 +16,6 @@
     "db:migrate:test": "tsx src/lib/db/migrate.ts --test",
     "db:seed": "tsx src/lib/db/seed.ts",
     "db:seed:test": "tsx src/lib/db/seed.ts --test",
-    "db:import-auth": "tsx src/lib/db/import-auth.ts",
     "db:set-password": "tsx src/lib/db/set-password.ts",
     "audit:content": "tsx src/lib/content/audit.ts",
     "db:complete-objectives": "tsx src/lib/db/complete-objectives.ts",
@@ -28,8 +27,7 @@
     "test:db": "jest --config jest.config.db.mjs",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "migrate": "node scripts/migrate-data.js"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.0.0",
@@ -64,8 +62,6 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
-    "firebase": "^11.9.1",
-    "firebase-admin": "^10.3.0",
     "framer-motion": "^11.2.12",
     "genkit": "^1.0.0",
     "html2canvas": "^1.4.1",
