@@ -58,11 +58,12 @@ type LessonRow = {
   objective: string;
   content: string;
   type: string;
-  points: number;
-  position: number;
-  interactive_component_name: string | null;
-  visual_component_name: string | null;
-}
+    points: number;
+    position: number;
+    bloom_level: string | null;
+    interactive_component_name: string | null;
+    visual_component_name: string | null;
+  }
 
 type QuizRow = {
   id: string;
@@ -85,7 +86,7 @@ async function loadCourses(): Promise<CourseContent[]> {
 
   const { rows: lessons } = await query<LessonRow>(
     `SELECT id, chapter_id, title, objective, content, type, points, position,
-            interactive_component_name, visual_component_name
+            bloom_level, interactive_component_name, visual_component_name
      FROM lessons ORDER BY chapter_id, position`,
   );
 
@@ -141,6 +142,10 @@ async function loadCourses(): Promise<CourseContent[]> {
             type: lesson.type as CourseContent['chapters'][number]['lessons'][number]['type'],
             points: lesson.points,
             position: lesson.position,
+            // ⚠️ Sans cette propagation, la règle R3 voyait `undefined` partout et signalait
+            // à tort des leçons « sans niveau » alors que la colonne était renseignée en base.
+            bloomLevel: (lesson.bloom_level ?? undefined) as
+              | CourseContent['chapters'][number]['lessons'][number]['bloomLevel'],
             interactiveComponentName: lesson.interactive_component_name ?? undefined,
             visualComponentName: lesson.visual_component_name ?? undefined,
           })),

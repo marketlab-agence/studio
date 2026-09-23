@@ -160,7 +160,13 @@ Dépend de : 1, 3
 - [x] T6.5 — **git-github** : 70 % → 100 % · REQ-CNT-02 · ✅ **traité par les étapes 14 et 16** — les **13 placeholders ont été reconfigurés** (`PLACEHOLDER_COMPONENTS` est désormais **vide**). *Le 100 % « interactif » au sens de REQ-CNT-02 est atteint : chaque mise en pratique produit une trace.*
 - [ ] T6.6 — **jira** et **n8n** : ajouter le quiz manquant · REQ-CNT-03 · vérif: 1 quiz/formation — **à faire** : l'audit indique que ces formations ont des quiz, mais la vérification formelle reste à poser.
 - [ ] T6.7 — Aligner `admin/create-course` + `fullCourseGenerationActions` sur le registre · REQ-CNT-04 · vérif: création IA conforme — **fait à l'étape 10** pour le filtrage par domaine ; **reste** le passage du `bloomLevel` jusqu'à la persistance.
-- [ ] T6.8 — Re-seed Postgres · REQ-CNT-02 · vérif: `audit:content` → 6/6 conformes — **bloqué par du contenu** : les **142 constats R2** (objectifs non conformes au format Bloom) et les **80 leçons sans `bloom_level`** ne se corrigent pas par du code. Voir la décision ci-dessous.
+- [x] T6.8 — Re-seed Postgres · REQ-CNT-02 · vérif: `audit:content` → **6/6 conformes** ✔ *(2026-09-23)*
+  - R2 (indicateur 5) : 142 constats → **0**. Objectifs **complétés** (critères ajoutés), verbes non observables remplacés (« comprendre » / « savoir » / « apprendre à »), critères dupliqués fusionnés. Le verbe et l'objet d'origine sont conservés — « compléter » n'est pas « réécrire ».
+  - R3 (indicateur 11) : 80 leçons → **80 niveaux déclarés** (`lessons.bloom_level`), déduits du type de leçon et de l'objectif.
+  - R6 (indicateur 11) : 20 constats → **0**. Les niveaux sont **alignés sur le type réel** de la leçon (jamais abaissés) ; 7 leçons Git qui demandaient d'agir sans le permettre ont été converties en `MISE_EN_PRATIQUE` et branchées sur `GitCommandSimulator` / `BranchCreator` / `TimelineNavigator` — **aucun composant nouveau**.
+  - **Correction d'audit** : R6 lisait un niveau **recalculé** depuis l'objectif au lieu du niveau déclaré. Corrigé (`content.ts`) : R3 et R6 portent désormais sur la même donnée.
+  - **Rejouabilité prouvée** : `db:export-content` répercute la base dans `src/data/tutorials.json` ; `seed.ts` préserve un `bloom_level` déclaré (`COALESCE`). Un `db:seed` complet suivi de l'audit redonne **6/6**.
+  - Vérifié : typecheck 0 · lint 0 · 275 tests unitaires · 174 tests DB · 76 E2E · 6/6 conformes.
 
 > **Note de fin de phase 6 (2026-09-23)**
 >

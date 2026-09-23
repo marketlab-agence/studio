@@ -66,6 +66,13 @@ interface SourceLesson {
   content?: string;
   interactiveComponentName?: string;
   visualComponentName?: string;
+  /**
+   * Niveau de Bloom visé par l'objectif.
+   *
+   * ⚠️ **Optionnel, et c'est délibéré** : absent vaut « à compléter » (méthode REWORK). Un
+   * JSON sans ce champ ne casse pas le seed et n'efface pas la valeur stockée en base.
+   */
+  bloomLevel?: string;
 }
 
 interface SourceTutorial {
@@ -210,16 +217,20 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
         await client.query(
           `INSERT INTO lessons (
              id, chapter_id, source_id, title, objective, content, type,
-             points, interactive_component_name, visual_component_name, position
+             points, interactive_component_name, visual_component_name, position, bloom_level
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
            ON CONFLICT (id) DO UPDATE SET
              source_id = EXCLUDED.source_id, title = EXCLUDED.title,
              objective = EXCLUDED.objective,
              content = EXCLUDED.content, type = EXCLUDED.type, points = EXCLUDED.points,
              interactive_component_name = EXCLUDED.interactive_component_name,
              visual_component_name = EXCLUDED.visual_component_name,
-             position = EXCLUDED.position`,
+             position = EXCLUDED.position,
+             -- COALESCE volontaire : un bloom_level absent du JSON ne doit PAS écraser
+             -- un niveau déclaré en base. Re-seeder ne doit jamais détruire un travail de
+             -- conformité (T6.8) : la donnée pédagogique saisie survit à la ré-initialisation.
+             bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level)`,
           [
             lessonId, tutorial.id, lesson.id, lesson.title,
             lesson.objective ?? '', lesson.content ?? '',
@@ -227,6 +238,7 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
             lesson.interactiveComponentName ?? null,
             lesson.visualComponentName ?? null,
             lessonIndex,
+            lesson.bloomLevel ?? null,
           ],
         );
       }

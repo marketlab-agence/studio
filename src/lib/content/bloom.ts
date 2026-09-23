@@ -43,12 +43,17 @@ export const BLOOM_VERBS: Record<BloomLevel, readonly string[]> = {
   ],
   Appliquer: [
     'appliquer', 'utiliser', 'exécuter', 'mettre en œuvre', 'réaliser', 'employer',
+    'effectuer', 'proposer', 'naviguer', 'combiner', 'publier', 'livrer', 'guider', 'suivre',
+    'obtenir', 'générer un', 'traiter', 'gérer', 'connecter',
     'manipuler', 'installer', 'configurer', 'calculer', 'fusionner',
     'commiter', 'cloner', 'déployer', 'paramétrer', 'implémenter',
   ],
   Analyser: [
     'analyser', 'diagnostiquer', 'décomposer', 'différencier', 'examiner', 'investiguer',
     'corréler', 'structurer', 'organiser', 'auditer',
+    // Ajoutés le 2026-09-23 : verbes réels du contenu existant, tous observables.
+    // Leur absence faisait échouer la détection de niveau sur des objectifs légitimes.
+    'résoudre', 'simuler', 'reproduire', 'cartographier', 'modéliser',
   ],
   Évaluer: [
     'évaluer', 'juger', 'critiquer', 'justifier', 'arbitrer', 'valider', 'prioriser',

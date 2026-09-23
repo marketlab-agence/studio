@@ -290,16 +290,21 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
   // --- R3/R6 · indicateurs 6 et 11 — cohérence type ↔ niveau -----------------
   const r6Findings: string[] = [];
   for (const lesson of lessons) {
-    const analysis = analyzeObjective(lesson.objective ?? '');
+    // ⚠️ **Le niveau est LU, pas recalculé.**
+    // La règle R6 vérifie la cohérence entre le type de la leçon et le niveau **déclaré**
+    // (c'est-à-dire `bloomLevel`, contrôlé par R3). Recalculer le niveau depuis le verbe de
+    // l'objectif rendait R3 sans effet sur R6 : une leçon corrigée par le formateur — objectif
+    // reformulé, niveau déclaré — restait signalée jusqu'à ce que la reformulation produise
+    // *accessoirement* le niveau attendu. Deux règles doivent porter sur la même donnée.
+    const declaredLevel = lesson.bloomLevel;
 
-    // Sans niveau déterminable, la cohérence est indécidable : c'est déjà signalé par R2,
-    // on ne double pas le constat ici.
-    if (!analysis.level) continue;
+    // Sans niveau déclaré, la cohérence est indécidable : R3 porte déjà le constat.
+    if (!declaredLevel) continue;
 
-    if (!isLessonTypeCompatibleWithBloom(lesson.type, analysis.level)) {
+    if (!isLessonTypeCompatibleWithBloom(lesson.type, declaredLevel)) {
       r6Findings.push(
         `« ${lesson.title} » : type ${lesson.type} incompatible avec le niveau ` +
-          `« ${analysis.level} » (types admis : ${BLOOM_ALLOWED_LESSON_TYPES[analysis.level].join(', ')}).`,
+          `« ${declaredLevel} » (types admis : ${BLOOM_ALLOWED_LESSON_TYPES[declaredLevel].join(', ')}).`,
       );
     }
   }
