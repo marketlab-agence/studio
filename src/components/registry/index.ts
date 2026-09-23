@@ -2,6 +2,24 @@ import type { ComponentType } from 'react';
 import { COMPONENT_CATALOG, type ComponentMeta } from './catalog';
 
 // --- Composants interactifs --------------------------------------------------
+// ⚠️ Les configurations Git remplacent les placeholders (étape 16) : elles reposent sur les
+// primitives génériques et produisent une trace. Voir git-configurations.tsx.
+import {
+  GitDoctorTool as GitDoctorToolConfig,
+  GitRepositoryPlayground as GitRepositoryPlaygroundConfig,
+  MergeStrategyComparison,
+  UndoCommandComparison as UndoCommandComparisonConfig,
+  ForkVsCloneDemo as ForkVsCloneDemoConfig,
+  TrunkBasedDevelopmentVisualizer as TrunkBasedDevelopmentVisualizerConfig,
+  ReflogExplorer as ReflogExplorerConfig,
+  ResolutionGuide as ResolutionGuideConfig,
+  PullRequestCreator as PullRequestCreatorConfig,
+  CollaborationSimulator as CollaborationSimulatorConfig,
+  WorkflowDesigner as WorkflowDesignerConfig,
+  ConflictVisualizer as ConflictVisualizerConfig,
+  GitTimeTravel as GitTimeTravelConfig,
+  StagingAreaVisualizer as StagingAreaVisualizerConfig,
+} from '@/components/interactive/git-configurations';
 import { AiHelper } from '@/components/interactive/AiHelper';
 import { BuilderCanvas } from '@/components/interactive/primitives/BuilderCanvas';
 import { CaseDiagnosis } from '@/components/interactive/primitives/CaseDiagnosis';
@@ -86,14 +104,14 @@ const COMPONENTS: Record<string, ComponentType<any>> = {
   StepByStepRunner, RecallQuiz, FlashcardDrill, SortingGame, MatchingPairs, GuidedProcedure,
   CaseDiagnosis, CompareContrast, DecisionScenario, PeerReviewSimulator,
   BuilderCanvas, DraftCoach,
-  GitDoctorTool, GitRepositoryPlayground, GitTimeTravel,
-  MergeSimulator, PullRequestCreator, WorkflowDesigner,
+  GitDoctorTool: GitDoctorToolConfig, GitRepositoryPlayground, GitTimeTravel,
+  MergeSimulator: MergeStrategyComparison, PullRequestCreator, WorkflowDesigner,
   ActionsWorkflowBuilder, AliasCreator, CommitMessageLinter, ConflictPlayground,
-  ConflictVisualizer, FlowDiagramBuilder, ForkVsCloneDemo, GitHubInterfaceSimulator,
+  ConflictVisualizer: ConflictVisualizerConfig, FlowDiagramBuilder, ForkVsCloneDemo, GitHubInterfaceSimulator,
   GitignoreTester, IssueTracker, OpenSourceSimulator, PRWorkflowSimulator,
   PushPullAnimator, ReflogExplorer, ResolutionGuide, SecurityScanner,
-  StagingAreaVisualizer, TimelineNavigator, TrunkBasedDevelopmentVisualizer,
-  UndoCommandComparison, VersioningDemo, WorkflowSimulator,
+  StagingAreaVisualizer: StagingAreaVisualizerConfig, TimelineNavigator, TrunkBasedDevelopmentVisualizer,
+  UndoCommandComparison: UndoCommandComparisonConfig, VersioningDemo, WorkflowSimulator,
   // visuels
   ConceptExplanation, FileTreeViewer, ProjectDashboard, WorkflowComparisonTable,
   AnimatedFlow, BranchDiagram, CommitTimeline, ConceptDiagram, DiffViewer,

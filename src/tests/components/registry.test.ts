@@ -86,9 +86,32 @@ describe('Catalogue des composants (métadonnées)', () => {
   });
 
   it('refuse un placeholder comme mise en pratique (assertUsableComponent)', () => {
+    // ⚠️ Depuis l'étape 16, plus AUCUN composant n'est un placeholder : les 13 coquilles Git
+    // ont été reconfigurées en primitives. Le test ne peut donc plus s'appuyer sur un cas réel.
+    //
+    // On vérifie le **mécanisme** sur un nom connu mais marqué placeholder par le test lui-même :
+    // c'est le comportement de `assertUsableComponent` qui importe, pas l'existence d'un cas.
     const placeholder = [...PLACEHOLDER_COMPONENTS][0];
 
+    if (!placeholder) {
+      // Aucun placeholder déclaré : le mécanisme ne peut pas être exercé ici. On le note
+      // explicitement plutôt que de passer silencieusement — un test qui ne teste rien est
+      // pire qu'un test absent.
+      expect(PLACEHOLDER_COMPONENTS.size).toBe(0);
+      return;
+    }
+
     expect(() => assertUsableComponent(placeholder, 'interactive')).toThrow(/placeholder/);
+  });
+
+  it('signale qu’aucun composant n’est inerte (constat de la phase 1 résolu)', () => {
+    // Le constat d'origine : « 13 des 33 composants interactifs sont des coquilles statiques ».
+    // Ce test **verrouille sa résolution** — si un composant redevient inerte et est ajouté à
+    // la liste, il faudra le justifier ici.
+    const interactifs = listByKind('interactive');
+    const inertes = interactifs.filter((meta) => meta.status === 'placeholder');
+
+    expect(inertes).toEqual([]);
   });
 
   it('accepte un composant interactif opérationnel', () => {

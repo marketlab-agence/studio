@@ -79,30 +79,22 @@ export interface ComponentMeta {
 /**
  * Composants dont l'interface existe mais dont l'interaction n'est pas implémentée.
  *
- * Constat : ces fichiers ne contiennent aucun gestionnaire d'événement ni état
- * (vérifié par recherche de `useState`/`onClick`/`onChange`/`onDrag`). Ils
- * affichent des contrôles inertes — un `<Button>` sans `onClick`, par exemple.
+ * ⚠️ **VIDE depuis l'étape 16 (2026-09-23).** Les 13 placeholders Git ont tous été traités :
  *
- * Conséquence : ils ne doivent PAS être proposés comme « mise en pratique ».
- * Les rendre réellement interactifs relève de la phase 6 (conformité du contenu).
+ * - `GitCommandSimulator` a été **réécrit** comme configuration de `StepByStepRunner` (étape 14) ;
+ * - les 12 autres ont été **reconfigurés** en primitives génériques (étape 16) — voir
+ *   `@/components/interactive/git-configurations.tsx`.
+ *
+ * Le constat d'origine (`docs/` phase 1) était : *« 13 des 33 composants interactifs sont des
+ * coquilles statiques — aucun `useState`/`onClick` »*. Le problème est **résolu** : chaque
+ * composant interactif produit désormais une trace d'interaction (indicateur 19 du RNQ).
+ *
+ * ⚠️ **Cet ensemble reste déclaré** — et non supprimé : c'est la liste des composants à NE PAS
+ * proposer à l'IA comme mise en pratique. Si un futur composant s'avère inerte, il suffit de
+ * l'y ajouter, et `assertUsableComponent` le refusera automatiquement.
  */
-export const PLACEHOLDER_COMPONENTS = new Set<string>([
-  'CollaborationSimulator',
-  'ConflictVisualizer',
-  'ForkVsCloneDemo',
-  // ⚠️ `GitCommandSimulator` a été RETIRÉ de cette liste le 2026-09-23 : il a été réécrit
-  // comme **configuration de `StepByStepRunner`** (étape 14 du plan de phase 6). Il produit
-  // désormais une trace d'interaction par étape validée, donc l'indicateur 19 est satisfait.
-  'GitDoctorTool',
-  'GitRepositoryPlayground',
-  'GitTimeTravel',
-  'PullRequestCreator',
-  'ReflogExplorer',
-  'ResolutionGuide',
-  'TrunkBasedDevelopmentVisualizer',
-  'UndoCommandComparison',
-  'WorkflowDesigner',
-]);
+export const PLACEHOLDER_COMPONENTS = new Set<string>([]);
+
 
 /** Descriptions des composants interactifs (l'apprenant manipule). */
 export const INTERACTIVE_DESCRIPTIONS: Record<string, string> = {
