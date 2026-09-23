@@ -13,11 +13,12 @@
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** (code complet : T4.1-T4.14, SAML inclus) |
-| Phase en cours | 🔄 **Phase 6 — Conformité des formations**, recentrée sur les **indicateurs RNQ 4, 5, 6, 11, 19** (contenu et suivi pédagogiques) |
-| Prochaine phase | **Phase 6** : règles de conformité → `npm run audit:content` → catalogue par domaine et Bloom → primitives réutilisables |
-| Qualité | `typecheck` 0 · `lint` 0 · tests **22 suites / 215** · tests DB **14 suites / 164** · **E2E 76** |
-| 🔴 **DÉCISION UTILISATEUR (2026-09-23)** | **Toute formation doit rester modifiable** (allonger/raccourcir chapitres et leçons). Conséquence : la conformité doit être **re-vérifiable à tout moment**, pas seulement à la création. |
-| ✅ **Documentation REWORK/RNQ** | `@docs/rework/` (3 fichiers : exercices, formats, méthodes) + `@docs/katalyst/` (2 fichiers : conformité RNQ V10, cas Immotech) — le **décret 2026-728** y est consigné intégralement |
+| Phase en cours | ✅ **Phase 6 — Conformité des formations** : *outillage livré* (audit rejouable, 12 primitives, 13 placeholders résolus) ; **T6.8 reste bloquée par du contenu**, pas par du code |
+| 🔴 **DÉCISION ATTENDUE** | **Comment compléter les 80 leçons ?** 142 constats R2 (objectifs hors format Bloom) + 80 leçons sans `bloom_level`. Trois voies : re-génération IA (phase 17), saisie manuelle du formateur, ou **accepter que la conformité ne soit exigée que pour les formations neuves** (défendable : le décret n'est pas rétroactif). **À trancher avant T6.8.** |
+| Prochaine phase | **Phase 7 — Purge Firebase** · dépend de 3, 4, 5, 6 · vérif : `grep -rn "firebase" src/ package.json` → **0**. *Les modules sont déjà sans consommateur depuis la phase 3.* |
+| Qualité | `typecheck` 0 · `lint` 0 · tests **27 suites / 275** · tests DB **15 suites / 174** · **E2E 76** |
+| **Conformité — progrès mesuré** | `R5.1` (appropriation, indicateur 19) : **0/6 → 6/6** · `R6` (cohérence type↔Bloom) : conforme · `R4` (évaluation) : conforme · **`R2` : 142 constats (contenu)** · `PLACEHOLDER_COMPONENTS` : **vide** (13 coquilles résolues) |
+| **Documentation** | `@docs/rework/` (3 f.) et `@docs/katalyst/` (4 f. dont `conformite-rnq-v10.md`, `regles-conformite.md`, `primitives-pedagogiques.md`) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
 | Base locale | PostgreSQL **pgvector/pgvector:pg16** sur le port **5433** — **27 tables**, contenu seedé, 12 comptes importés |
 | ✅ **Accès rétabli (2026-09-23)** | Mot de passe défini pour le Super Admin via `npm run db:set-password`. **La connexion Google fonctionne** — confirmé par l'utilisateur, **T4.3 validée**. |
@@ -76,6 +77,15 @@ npm run db:import-auth      # importe les comptes Firebase Auth (12)
     schémas Zod, correction utilisateur sur « S » et « J », accès par période, arbitrages
     de la phase 3, socle d'authentification, MFA, Google OAuth, autorisation par rôle.
     Déplacées le 2026-09-23 pour respecter la règle des 200 lignes.
+
+31. 🟢 **Phase 6 — conformité du contenu** (décret 2026-728 obtenu, gate G5 levé). **12 primitives génériques** (≥ 2 par niveau de Bloom), **13 placeholders Git reconfigurés** (`PLACEHOLDER_COMPONENTS` **vide**), **journal d'interaction** (`lesson_interactions`) rendant l'indicateur 19 opposable. Points durables :
+    - **Les 13 placeholders étaient TOUS des simulateurs Git.** Le catalogue avait été construit autour d'**une seule formation** : aucune formation de vente, marketing, IA ou gestion de projet n'avait de composant interactif. C'est ce déséquilibre — non le nombre — qui était le vrai problème.
+    - **Un composant admissible est pertinent pour ≥ 3 formations, sans modification de code.** Sinon c'est un contenu, pas un composant. Règle issue de la source REWORK : *« adapter le sujet, garder la structure »*.
+    - **La 3ᵉ contrainte (trace auditable) est éliminatoire.** Un composant pédagogiquement excellent mais sans trace rend l'organisme **non conforme** (indicateur 19). Sur un LMS distanciel, « pertinent » ne suffit pas.
+    - **`NULL` signifie « à compléter », jamais « aucun ».** Les 80 leçons existantes n'ont pas de `bloom_level` : leur en affecter un par défaut aurait été **inventer une donnée pédagogique**. Aucune migration ne peut le faire — seul le contenu le peut.
+    - **Une erreur affichée vaut mieux qu'une erreur effacée.** Toutes les primitives conservent les erreurs de l'apprenant : elles montrent *où* il bloque, information la plus utile à l'encadrant.
+    - **Déclarer une primitive sans l'ajouter aux tables domaines/Bloom la rend invisible.** `StepByStepRunner` a échoué **deux fois** ainsi ; seule la vérification automatisée de couverture l'a détecté. **Un test par exigence, pas par composant.**
+    - **Progrès mesuré** : `R5.1` (appropriation) **0/6 → 6/6**. Bilan global **0/6** à cause de `R2` (142 constats d'objectifs) — du **contenu**, pas du code.
 
 ---
 

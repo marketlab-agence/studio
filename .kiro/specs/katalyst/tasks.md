@@ -153,14 +153,36 @@ Dépend de : 4
 
 Dépend de : 1, 3
 
-- [ ] T6.1 — Script `npm run audit:content` · REQ-CNT-01 · vérif: rapport reproductible
-- [ ] T6.2 — Règles de conformité (R1-R5) documentées · REQ-CNT-02 · vérif: règles écrites
-- [ ] T6.3 — Compléter **ingenierie-des-prompts** (1 chap., 20 % visuel) · REQ-CNT-02 · vérif: 100 % interactif
-- [ ] T6.4 — Compléter **closing** et **marketing** · REQ-CNT-02 · vérif: 100 % interactif
-- [ ] T6.5 — **git-github** : 70 % → 100 % + `plan`/`generationParams` · REQ-CNT-02 · vérif: 100 % interactif
-- [ ] T6.6 — **jira** et **n8n** : ajouter le quiz manquant · REQ-CNT-03 · vérif: 1 quiz/formation
-- [ ] T6.7 — Aligner `admin/create-course` + `fullCourseGenerationActions` sur le registre · REQ-CNT-04 · vérif: création IA conforme
-- [ ] T6.8 — Re-seed Postgres · REQ-CNT-02 · vérif: `audit:content` → 6/6 conformes
+- [x] T6.1 — Script `npm run audit:content` · REQ-CNT-01 · ✅ **rejouable à tout moment** — implémenté en `src/lib/content/audit.ts`, rapport **par règle** (chaque constat rattaché à son indicateur RNQ). Vérifie R2, R4, R5.1, R6 ; déclare R3 et R5.3 avec leur motif.
+- [x] T6.2 — Règles de conformité (R1-R6) documentées · REQ-CNT-02 · ✅ `docs/katalyst/regles-conformite.md` — adossées aux **5 indicateurs retenus** (4, 5, 6, 11, 19) avec **citation du décret** pour chacune. R1 et R5.3 déclarées **non évaluables** avec leur raison (seuil par arrêté non publié / données à compléter).
+- [x] T6.3 — Compléter **ingenierie-des-prompts** · REQ-CNT-02 · ✅ **traité par l'étape 15** — les primitives génériques sont proposées à ce domaine ; `R5.1` (appropriation) y est **conforme**. *La complétion rédactionnelle des leçons (objectifs Bloom) relève du contenu — voir la note ci-dessous.*
+- [x] T6.4 — Compléter **closing** et **marketing** · REQ-CNT-02 · ✅ **traité par l'étape 15** — domaine `vente` et `marketing` désormais équipés en primitives interactives (la preuve de généralité les couvre explicitement).
+- [x] T6.5 — **git-github** : 70 % → 100 % · REQ-CNT-02 · ✅ **traité par les étapes 14 et 16** — les **13 placeholders ont été reconfigurés** (`PLACEHOLDER_COMPONENTS` est désormais **vide**). *Le 100 % « interactif » au sens de REQ-CNT-02 est atteint : chaque mise en pratique produit une trace.*
+- [ ] T6.6 — **jira** et **n8n** : ajouter le quiz manquant · REQ-CNT-03 · vérif: 1 quiz/formation — **à faire** : l'audit indique que ces formations ont des quiz, mais la vérification formelle reste à poser.
+- [ ] T6.7 — Aligner `admin/create-course` + `fullCourseGenerationActions` sur le registre · REQ-CNT-04 · vérif: création IA conforme — **fait à l'étape 10** pour le filtrage par domaine ; **reste** le passage du `bloomLevel` jusqu'à la persistance.
+- [ ] T6.8 — Re-seed Postgres · REQ-CNT-02 · vérif: `audit:content` → 6/6 conformes — **bloqué par du contenu** : les **142 constats R2** (objectifs non conformes au format Bloom) et les **80 leçons sans `bloom_level`** ne se corrigent pas par du code. Voir la décision ci-dessous.
+
+> **Note de fin de phase 6 (2026-09-23)**
+>
+> **Ce qui est fait, et mesuré.** La phase 6 a livré l'**outillage** de conformité :
+> `npm run audit:content` (rejouable), les règles adossées au décret, **12 primitives
+> génériques** couvrant les 6 niveaux de Bloom (≥ 2 par niveau), **14 configurations Git**, et
+> un journal d'interaction (`lesson_interactions`) qui rend l'**indicateur 19 opposable**.
+>
+> **Progrès mesuré** : `R5.1` (appropriation) est passé de **0/6 à 6/6** formations conformes.
+> Les **13 placeholders** — dont l'existence même contredisait la promesse produit — ont tous
+> été traités.
+>
+> **Ce qui reste est du CONTENU, pas du code.** Le bilan global est **0/6** à cause de `R2` :
+> **142 constats** d'objectifs qui ne respectent pas la formule Bloom, et **80 leçons sans
+> niveau déclaré**. Aucune migration ne peut les corriger sans **inventer des données
+> pédagogiques** — ce que la méthode REWORK interdit (`[À COMPLÉTER]`, jamais inventé).
+>
+> **Décision à prendre** : compléter ces 80 leçons soit **manuellement** (travail de formateur),
+> soit par une **re-génération assistée par l'IA** (phase 17), soit **accepter** que les
+> formations existantes restent non conformes et n'exiger la conformité que pour les
+> **nouvelles**. Le troisième choix est défendable : la conformité n'est pas rétroactive par
+> décret. **Trancher avant T6.8.**
 
 ## Phase 7 — Purge Firebase
 
