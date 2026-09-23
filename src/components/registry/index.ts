@@ -3,6 +3,7 @@ import { COMPONENT_CATALOG, type ComponentMeta } from './catalog';
 
 // --- Composants interactifs --------------------------------------------------
 import { AiHelper } from '@/components/interactive/AiHelper';
+import { StepByStepRunner } from '@/components/interactive/primitives/StepByStepRunner';
 import { BranchCreator } from '@/components/interactive/BranchCreator';
 import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
 import { ConflictResolver } from '@/components/interactive/ConflictResolver';
@@ -70,7 +71,8 @@ export interface RegistryEntry extends ComponentMeta {
 const COMPONENTS: Record<string, ComponentType<any>> = {
   // interactifs
   AiHelper, BranchCreator, CollaborationSimulator, ConflictResolver,
-  GitCommandSimulator, GitDoctorTool, GitRepositoryPlayground, GitTimeTravel,
+  GitCommandSimulator,
+  StepByStepRunner, GitDoctorTool, GitRepositoryPlayground, GitTimeTravel,
   MergeSimulator, PullRequestCreator, WorkflowDesigner,
   ActionsWorkflowBuilder, AliasCreator, CommitMessageLinter, ConflictPlayground,
   ConflictVisualizer, FlowDiagramBuilder, ForkVsCloneDemo, GitHubInterfaceSimulator,

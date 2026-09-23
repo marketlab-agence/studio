@@ -90,7 +90,9 @@ export const PLACEHOLDER_COMPONENTS = new Set<string>([
   'CollaborationSimulator',
   'ConflictVisualizer',
   'ForkVsCloneDemo',
-  'GitCommandSimulator',
+  // ⚠️ `GitCommandSimulator` a été RETIRÉ de cette liste le 2026-09-23 : il a été réécrit
+  // comme **configuration de `StepByStepRunner`** (étape 14 du plan de phase 6). Il produit
+  // désormais une trace d'interaction par étape validée, donc l'indicateur 19 est satisfait.
   'GitDoctorTool',
   'GitRepositoryPlayground',
   'GitTimeTravel',
@@ -104,8 +106,18 @@ export const PLACEHOLDER_COMPONENTS = new Set<string>([
 
 /** Descriptions des composants interactifs (l'apprenant manipule). */
 export const INTERACTIVE_DESCRIPTIONS: Record<string, string> = {
+  /**
+   * ⚠️ **Primitive générique** (étape 14 du plan de phase 6) — et non composant de domaine.
+   *
+   * Elle exécute une **procédure** fournie en données : elle ne sait rien de Git, de n8n ou
+   * du closing. C'est ce qui la rend réutilisable ailleurs — `GitCommandSimulator` en est une
+   * configuration. Voir `@docs/katalyst/primitives-pedagogiques.md`.
+   */
+  StepByStepRunner:
+    'Exécution guidée d’une procédure : l’apprenant valide chaque étape dans l’ordre, reçoit un indice en cas d’erreur et une explication après réussite. Chaque étape produit une trace de suivi.',
+  GitCommandSimulator:
+    "Procédure Git guidée : l'apprenant exécute les commandes essentielles (clone, status, add, commit, push) ; chaque étape est validée et expliquée.",
   GitRepositoryPlayground: "Bac à sable Git complet : l'apprenant exécute de vraies commandes et observe l'état du dépôt.",
-  GitCommandSimulator: "Simulateur de commandes Git : saisie d'une commande, résultat et explication pas à pas.",
   GitTimeTravel: "Voyage dans l'historique : revenir à un commit, explorer les états successifs du dépôt.",
   GitDoctorTool: "Diagnostic de dépôt : détecter et corriger un état Git problématique (detached HEAD, conflit).",
   StagingAreaVisualizer: "Zone de staging manipulable : ajouter, retirer et committer des fichiers pour comprendre l'index.",
@@ -170,6 +182,7 @@ export const VISUAL_DESCRIPTIONS: Record<string, string> = {
  */
 const COMPONENT_DOMAINS_BY_NAME: Record<string, readonly ComponentDomain[]> = {
   // --- Interactifs Git (y compris les placeholders) -------------------------
+  StepByStepRunner: ['*'], // PRIMITIVE générique : procédure guidée, applicable partout
   GitRepositoryPlayground: ['git'],
   GitCommandSimulator: ['git'],
   GitTimeTravel: ['git'],
@@ -216,6 +229,7 @@ const COMPONENT_DOMAINS_BY_NAME: Record<string, readonly ComponentDomain[]> = {
  */
 const COMPONENT_BLOOM_BY_NAME: Record<string, readonly BloomLevel[]> = {
   // --- Interactifs ---------------------------------------------------------
+  StepByStepRunner: ['Appliquer'], // PRIMITIVE : exécution guidée
   GitRepositoryPlayground: ['Appliquer', 'Créer'],
   GitCommandSimulator: ['Appliquer'],
   GitTimeTravel: ['Comprendre', 'Analyser'],

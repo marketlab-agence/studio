@@ -52,10 +52,15 @@ describe('catalogue — intégrité des métadonnées', () => {
   });
 
   it('associe chaque placeholder à un domaine', () => {
-    for (const name of PLACEHOLDER_COMPONENTS) {
+    // `PLACEHOLDER_COMPONENTS` est un `Set` : on l'itère, on ne le mesure pas.
+    const anomalies = [...PLACEHOLDER_COMPONENTS].filter((name) => {
       const meta = resolveComponentMeta(name);
-      expect(meta?.domains.length).toBeGreaterThan(0);
-    }
+      return !meta || meta.domains.length === 0;
+    });
+
+    // Le tableau des anomalies est vide si tout est conforme — et il **nomme** les cas
+    // fautifs, ce qui rend le diagnostic immédiat.
+    expect(anomalies).toEqual([]);
   });
 });
 
