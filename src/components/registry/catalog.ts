@@ -8,7 +8,40 @@
  * Le lien vers les composants React vit dans `./index.ts`.
  */
 
+import type { BloomLevel } from '@/lib/content/bloom';
+
 export type ComponentKind = 'interactive' | 'visual';
+
+/**
+ * Domaine de contenu auquel un composant s'applique.
+ *
+ * ⚠️ **Pourquoi ce champ existe.** Sans lui, `generateLessonContentAction` transmettait le
+ * **catalogue entier** à l'IA : sur une formation de vente, elle se voyait proposer
+ * `MergeSimulator`. Elle ne le choisissait probablement pas, mais rien ne l'en empêchait
+ * structurellement.
+ *
+ * `'*'` désigne un composant **générique**, pertinent pour toute formation (quiz, tri,
+ * appariement…). C'est la valeur par défaut des primitives réutilisables.
+ */
+export type ComponentDomain =
+  | '*'
+  | 'git'
+  | 'ia'
+  | 'automatisation'
+  | 'gestion-projet'
+  | 'marketing'
+  | 'vente';
+
+/** Tous les domaines connus, pour validation et affichage. */
+export const COMPONENT_DOMAINS: readonly ComponentDomain[] = [
+  '*',
+  'git',
+  'ia',
+  'automatisation',
+  'gestion-projet',
+  'marketing',
+  'vente',
+];
 
 /**
  * État de maturité du composant.
@@ -28,6 +61,19 @@ export interface ComponentMeta {
   status: ComponentStatus;
   /** Décrit ce que le composant apporte — injecté dans le prompt IA. */
   description: string;
+  /**
+   * Domaines où le composant est pertinent. `['*']` = générique.
+   * Sert à **filtrer** ce que l'IA reçoit (voir `listForDomain`).
+   */
+  domains: readonly ComponentDomain[];
+  /**
+   * Niveaux de Bloom que le composant permet de travailler.
+   *
+   * ⚠️ Un composant **sans niveau** ne peut pas être mis en correspondance avec un objectif
+   * pédagogique — la règle R6 de `@docs/katalyst/regles-conformite.md` le refuserait. Un
+   * tableau vide est donc un défaut, pas une option.
+   */
+  bloomLevels: readonly BloomLevel[];
 }
 
 /**
@@ -110,6 +156,101 @@ export const VISUAL_DESCRIPTIONS: Record<string, string> = {
   ProjectDashboard: "Tableau de bord de projet : vue synthétique de l'avancement (issues, PR, jalons).",
 };
 
+/**
+ * Domaines par composant.
+ *
+ * ⚠️ **Constat mesuré le 2026-09-23** : les 33 composants interactifs et 13 visuels
+ * proviennent **tous** de la formation `git-github`. Aucun ne concerne la vente, le
+ * marketing, l'IA ou la gestion de projet. Ce champ rend cet état **visible** au lieu de le
+ * laisser implicite — et il permet à l'IA de ne pas se voir proposer `MergeSimulator` sur
+ * une formation de closing.
+ *
+ * Les 13 placeholders sont marqués `git` (leur domaine d'origine). Les composants des autres
+ * formations **n'existent pas encore** : c'est le travail des étapes 15 et 16.
+ */
+const COMPONENT_DOMAINS_BY_NAME: Record<string, readonly ComponentDomain[]> = {
+  // --- Interactifs Git (y compris les placeholders) -------------------------
+  GitRepositoryPlayground: ['git'],
+  GitCommandSimulator: ['git'],
+  GitTimeTravel: ['git'],
+  GitDoctorTool: ['git'],
+  ReflogExplorer: ['git'],
+  StagingAreaVisualizer: ['git'],
+  VersioningDemo: ['*'], // versionner existe dans tout projet : générique
+  BranchCreator: ['git'],
+  ConflictPlayground: ['git'],
+  ConflictVisualizer: ['git'],
+  MergeSimulator: ['git'],
+  ResolutionGuide: ['git'],
+  UndoCommandComparison: ['git'],
+  ForkVsCloneDemo: ['git'],
+  PullRequestCreator: ['git', 'gestion-projet'],
+  CollaborationSimulator: ['git', 'gestion-projet'],
+  WorkflowDesigner: ['git', 'gestion-projet'],
+  TrunkBasedDevelopmentVisualizer: ['git'],
+
+  // --- Visuels Git ---------------------------------------------------------
+  GitGraph: ['git'],
+  BranchDiagram: ['git'],
+  CommitTimeline: ['git'],
+  DiffViewer: ['git'],
+  RepoComparison: ['git'],
+  LanguagesChart: ['git'],
+  StatisticsChart: ['*'], // des statistiques existent partout
+  ProjectDashboard: ['gestion-projet'],
+
+  // --- Visuels génériques --------------------------------------------------
+  AnimatedFlow: ['*'],
+  ConceptDiagram: ['*'],
+  ConceptExplanation: ['*'],
+  FileTreeViewer: ['*'],
+  WorkflowComparisonTable: ['*'],
+};
+
+/**
+ * Niveaux de Bloom par composant.
+ *
+ * ⚠️ Ces correspondances sont **déduites de la nature du composant**, pas inventées : un
+ * simulateur de commandes fait *appliquer*, un comparateur fait *analyser*, un concepteur
+ * fait *créer*. Elles seront affinées à l'étape 11 (table à 3 contraintes).
+ */
+const COMPONENT_BLOOM_BY_NAME: Record<string, readonly BloomLevel[]> = {
+  // --- Interactifs ---------------------------------------------------------
+  GitRepositoryPlayground: ['Appliquer', 'Créer'],
+  GitCommandSimulator: ['Appliquer'],
+  GitTimeTravel: ['Comprendre', 'Analyser'],
+  GitDoctorTool: ['Analyser', 'Évaluer'],
+  ReflogExplorer: ['Analyser'],
+  StagingAreaVisualizer: ['Comprendre', 'Appliquer'],
+  VersioningDemo: ['Comprendre', 'Appliquer'],
+  BranchCreator: ['Appliquer'],
+  ConflictPlayground: ['Appliquer', 'Analyser'],
+  ConflictVisualizer: ['Comprendre', 'Analyser'],
+  MergeSimulator: ['Appliquer', 'Évaluer'],
+  ResolutionGuide: ['Analyser', 'Évaluer'],
+  UndoCommandComparison: ['Analyser', 'Évaluer'],
+  ForkVsCloneDemo: ['Comprendre'],
+  PullRequestCreator: ['Appliquer', 'Créer'],
+  CollaborationSimulator: ['Analyser', 'Évaluer'],
+  WorkflowDesigner: ['Créer'],
+  TrunkBasedDevelopmentVisualizer: ['Comprendre', 'Analyser'],
+
+  // --- Visuels -------------------------------------------------------------
+  GitGraph: ['Connaître', 'Comprendre'],
+  BranchDiagram: ['Connaître', 'Comprendre'],
+  CommitTimeline: ['Connaître', 'Comprendre'],
+  DiffViewer: ['Comprendre', 'Analyser'],
+  RepoComparison: ['Analyser'],
+  LanguagesChart: ['Connaître'],
+  StatisticsChart: ['Connaître', 'Analyser'],
+  ProjectDashboard: ['Analyser'],
+  AnimatedFlow: ['Comprendre'],
+  ConceptDiagram: ['Connaître', 'Comprendre'],
+  ConceptExplanation: ['Connaître', 'Comprendre'],
+  FileTreeViewer: ['Connaître', 'Comprendre'],
+  WorkflowComparisonTable: ['Analyser', 'Évaluer'],
+};
+
 function toMeta(
   descriptions: Record<string, string>,
   kind: ComponentKind,
@@ -119,6 +260,10 @@ function toMeta(
     kind,
     status: PLACEHOLDER_COMPONENTS.has(name) ? 'placeholder' : 'functional',
     description,
+    // Un composant sans domaine déclaré est traité comme **générique** : c'est le défaut le
+    // plus sûr (il reste proposé partout) — l'inverse masquerait des composants utiles.
+    domains: COMPONENT_DOMAINS_BY_NAME[name] ?? ['*'],
+    bloomLevels: COMPONENT_BLOOM_BY_NAME[name] ?? [],
   }));
 }
 
@@ -156,6 +301,76 @@ export function listFunctionalInteractiveNames(): string[] {
   return listByKind('interactive')
     .filter((meta) => meta.status === 'functional')
     .map((meta) => meta.name);
+}
+
+// --- Filtrage par domaine et par niveau ---------------------------------------
+
+/**
+ * Composants pertinents pour une formation d'un domaine donné.
+ *
+ * ⚠️ **Correction d'un risque réel.** Avant ce filtrage, `generateLessonContentAction`
+ * transmettait le catalogue **entier** à l'IA : sur une formation de vente, elle recevait
+ * `MergeSimulator`, `StashWorkflowSimulator`… sans rapport. Elle ne les choisissait
+ * probablement pas, mais rien ne l'en empêchait.
+ *
+ * Un composant générique (`domains: ['*']`) est **toujours** inclus.
+ *
+ * @param domain Domaine de la formation, ou `undefined` pour tout recevoir (comportement
+ *   historique, conservé pour ne pas casser les appelants qui ne connaissent pas le domaine).
+ */
+export function listByDomain(
+  kind: ComponentKind,
+  domain: ComponentDomain | undefined,
+): ComponentMeta[] {
+  const components = listByKind(kind);
+
+  // Domaine inconnu : on ne filtre pas. Mieux vaut proposer trop que de priver l'IA de tout
+  // composant faute d'information sur la formation.
+  if (!domain) return components;
+
+  return components.filter(
+    (meta) => meta.domains.includes('*') || meta.domains.includes(domain),
+  );
+}
+
+/** Noms des composants pertinents pour un domaine (pour les prompts IA). */
+export function listNamesForDomain(
+  kind: ComponentKind,
+  domain: ComponentDomain | undefined,
+): string[] {
+  return listByDomain(kind, domain).map((meta) => meta.name);
+}
+
+/**
+ * Noms des composants **interactifs fonctionnels** pertinents pour un domaine.
+ * C'est cette liste qui doit être transmise à l'IA (placeholders exclus + domaine filtré).
+ */
+export function listFunctionalInteractiveNamesForDomain(
+  domain: ComponentDomain | undefined,
+): string[] {
+  return listByDomain('interactive', domain)
+    .filter((meta) => meta.status === 'functional')
+    .map((meta) => meta.name);
+}
+
+/**
+ * Composants capables de travailler un niveau de Bloom donné.
+ *
+ * Sert à l'IA pour choisir un composant **cohérent avec l'objectif** de la leçon, et au
+ * contrôle de la règle R6.
+ */
+export function listByBloomLevel(
+  kind: ComponentKind,
+  level: BloomLevel,
+  domain?: ComponentDomain,
+): ComponentMeta[] {
+  return listByDomain(kind, domain).filter((meta) => meta.bloomLevels.includes(level));
+}
+
+/** Composants sans niveau de Bloom déclaré — défaut à corriger, pas une option. */
+export function listWithoutBloomLevels(kind?: ComponentKind): ComponentMeta[] {
+  const components = kind ? listByKind(kind) : COMPONENT_CATALOG;
+  return components.filter((meta) => meta.bloomLevels.length === 0);
 }
 
 /**

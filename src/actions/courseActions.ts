@@ -10,7 +10,11 @@ import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 // Métadonnées seules : éviter de tirer les 46 composants (et Genkit via AiHelper)
 // dans une action serveur qui n'a besoin que des noms et descriptions.
-import { listNames, listFunctionalInteractiveNames } from '@/components/registry/catalog';
+import {
+  listNamesForDomain,
+  listFunctionalInteractiveNamesForDomain,
+  type ComponentDomain,
+} from '@/components/registry/catalog';
 
 const slugify = (text: string) =>
   text
@@ -171,19 +175,54 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 
 
 /**
- * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry.ts`).
+ * Déduit le domaine d'une formation depuis son titre et sa description.
  *
- * Seuls les composants interactifs **réellement opérationnels** sont proposés
- * comme « mise en pratique » : les 13 placeholders (interface sans interaction)
- * en sont exclus, sinon l'IA générerait des leçons pointant vers des coquilles.
+ * ⚠️ **Heuristique assumée et provisoire.** Le domaine devrait être un **champ explicite**
+ * de la formation ; il sera ajouté à l'étape 12 (avec `organization.type`). En attendant,
+ * cette déduction évite le pire (proposer des simulateurs Git à une formation de vente)
+ * sans introduire de migration.
  *
- * Auparavant, cette fonction maintenait deux listes en dur, désynchronisées du
- * rendu (`LessonView`) : des composants y figuraient, d'autres manquaient.
+ * Retourne `undefined` si rien ne correspond : dans ce cas, aucun filtrage n'est appliqué —
+ * mieux vaut proposer trop que priver l'IA de tout composant.
  */
-function getRelevantComponents(): { interactive: string[]; visual: string[] } {
+function inferDomain(course: CourseInfo): ComponentDomain | undefined {
+  const haystack = `${course.title} ${course.description}`.toLowerCase();
+
+  const patterns: [ComponentDomain, RegExp][] = [
+    ['git', /\bgit\b|github|versionn|branche|commit/],
+    ['ia', /\bia\b|intelligence artificielle|prompt|llm|chatgpt|gemini/],
+    ['automatisation', /n8n|automatis|workflow|zapier|make\b/],
+    ['gestion-projet', /jira|agile|scrum|kanban|gestion de projet|sprint/],
+    ['marketing', /marketing|seo|audience|réseaux sociaux|publicité|contenu/],
+    ['vente', /vente|closing|prospect|commercial|négociation|objection/],
+  ];
+
+  for (const [domain, pattern] of patterns) {
+    if (pattern.test(haystack)) return domain;
+  }
+
+  return undefined;
+}
+
+/**
+ * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry/catalog.ts`).
+ *
+ * Deux filtres, tous deux nécessaires :
+ *
+ * 1. **Placeholders exclus** — les 13 composants dont l'interface existe sans interaction
+ *    ne doivent pas servir de « mise en pratique » : l'IA générerait des leçons pointant
+ *    vers des coquilles.
+ * 2. **Domaine filtré** (2026-09-23) — sans ce filtre, l'IA recevait le catalogue **entier** :
+ *    sur une formation de vente, elle se voyait proposer `MergeSimulator`. Elle ne le
+ *    choisissait probablement pas, mais rien ne l'en empêchait structurellement.
+ *
+ * ⚠️ Le domaine est **optionnel** : s'il n'est pas connu, on ne filtre pas. Mieux vaut
+ * proposer trop que priver l'IA de tout composant faute d'information.
+ */
+function getRelevantComponents(domain?: ComponentDomain): { interactive: string[]; visual: string[] } {
   return {
-    interactive: listFunctionalInteractiveNames(),
-    visual: listNames('visual'),
+    interactive: listFunctionalInteractiveNamesForDomain(domain),
+    visual: listNamesForDomain('visual', domain),
   };
 }
 
@@ -232,7 +271,15 @@ export async function generateLessonContentAction(
 
     const chapterContext = contextLines.join('\n');
 
-    const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents();
+    // Le domaine est déduit des paramètres de génération de la formation.
+  //
+  // ⚠️ **Point ouvert** : il repose sur une heuristique par mots-clés, en attendant que le
+  // domaine soit un **champ explicite** de la formation (à ajouter avec `organization.type`,
+  // étape 12 du plan de phase 6). En l'absence de correspondance, `undefined` — donc pas de
+  // filtrage, ce qui conserve le comportement antérieur.
+  const domain = inferDomain(course);
+
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(domain);
 
     const input: GenerateLessonContentInput = {
       lessonTitle: lessonPlan.title,
