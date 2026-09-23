@@ -175,12 +175,31 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
 
 
 /**
+ * Domaine d'une formation : **champ explicite**, avec repli heuristique.
+ *
+ * ⚠️ **Pourquoi le champ prime sur l'heuristique.** Une déduction par mots-clés se trompe
+ * sur les cas mixtes : « Git pour les commerciaux » contient « git » *et* « commercial » —
+ * elle serait classée Git, privant l'IA des composants commerciaux. Le champ
+ * `courses.content_domain` (migration 010) permet à l'auteur de **trancher lui-même**.
+ *
+ * L'heuristique ne subsiste que pour les formations créées **avant** la migration, dont le
+ * domaine est `NULL`. Elle disparaîtra quand elles seront complétées.
+ */
+function resolveCourseDomain(course: CourseInfo & { contentDomain?: string | null }): ComponentDomain | undefined {
+  // 1. Le choix explicite de l'auteur fait foi.
+  if (course.contentDomain) return course.contentDomain as ComponentDomain;
+
+  // 2. Repli : déduction depuis le titre et la description (formations antérieures).
+  return inferDomain(course);
+}
+
+/**
  * Déduit le domaine d'une formation depuis son titre et sa description.
  *
- * ⚠️ **Heuristique assumée et provisoire.** Le domaine devrait être un **champ explicite**
- * de la formation ; il sera ajouté à l'étape 12 (avec `organization.type`). En attendant,
- * cette déduction évite le pire (proposer des simulateurs Git à une formation de vente)
- * sans introduire de migration.
+ * ⚠️ **Heuristique de repli, assumée et provisoire.** Elle ne sert que pour les formations
+ * dont `content_domain` est `NULL` — c'est-à-dire créées avant la migration 010. Elle
+ * évite le pire (proposer des simulateurs Git à une formation de vente) sans imposer une
+ * migration de données.
  *
  * Retourne `undefined` si rien ne correspond : dans ce cas, aucun filtrage n'est appliqué —
  * mieux vaut proposer trop que priver l'IA de tout composant.
@@ -277,7 +296,7 @@ export async function generateLessonContentAction(
   // domaine soit un **champ explicite** de la formation (à ajouter avec `organization.type`,
   // étape 12 du plan de phase 6). En l'absence de correspondance, `undefined` — donc pas de
   // filtrage, ce qui conserve le comportement antérieur.
-  const domain = inferDomain(course);
+  const domain = resolveCourseDomain(course);
 
   const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(domain);
 

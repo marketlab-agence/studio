@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import type { PoolClient } from 'pg';
 import { getPool, closePool } from './pool';
+import { contentDomainFor } from '@/lib/content/course-domain';
 
 // Un script autonome ne bénéficie pas du chargement automatique de Next.
 loadEnv({ path: '.env.local' });
@@ -15,6 +16,7 @@ if (process.argv.includes('--test')) {
   }
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 }
+
 
 /**
  * Rejoue les données JSON (`src/data/`) dans PostgreSQL.
@@ -165,21 +167,26 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
   const tutorials = readJson<SourceTutorial[]>('tutorials.json');
   const quizzes = readJson<Record<string, SourceQuiz>>('quizzes.json');
 
-  for (const course of courses) {
-    await client.query(
-      `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (id) DO UPDATE SET
-         title = EXCLUDED.title, description = EXCLUDED.description,
-         status = EXCLUDED.status, plan = EXCLUDED.plan,
-         generation_params = EXCLUDED.generation_params`,
-      [
-        course.id, organizationId, course.title, course.description ?? '',
-        course.status ?? 'Brouillon',
-        course.plan ? JSON.stringify(course.plan) : null,
-        course.generationParams ? JSON.stringify(course.generationParams) : null,
-      ],
-    );
+      for (const course of courses) {
+        await client.query(
+    `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params, content_domain)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (id) DO UPDATE SET
+             title = EXCLUDED.title, description = EXCLUDED.description,
+             status = EXCLUDED.status, plan = EXCLUDED.plan,
+             generation_params = EXCLUDED.generation_params,
+             content_domain = EXCLUDED.content_domain`,
+          [
+            course.id, organizationId, course.title, course.description ?? '',
+            course.status ?? 'Brouillon',
+            course.plan ? JSON.stringify(course.plan) : null,
+            course.generationParams ? JSON.stringify(course.generationParams) : null,
+            // Le domaine est **déduit de l'identifiant source**, qui est un slug explicite
+            // (« git-github-tutorial », « le-closing… ») : c'est plus fiable qu'une analyse
+            // du titre, et cela évite de maintenir une table de correspondance à la main.
+            (contentDomainFor(course.id) ?? undefined),
+          ],
+        );
 
     const courseChapters = tutorials.filter((tutorial) => tutorial.courseId === course.id);
 

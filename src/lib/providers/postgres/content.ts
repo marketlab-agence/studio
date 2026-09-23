@@ -21,6 +21,7 @@ type CourseRow = {
   status: CourseInfo['status'];
   plan: unknown | null;
   generation_params: unknown | null;
+  content_domain: string | null;
 }
 
 type ChapterRow = {
@@ -57,6 +58,7 @@ function toCourseInfo(row: CourseRow): CourseInfo {
     status: row.status,
     plan: (row.plan ?? undefined) as CourseInfo['plan'],
     generationParams: (row.generation_params ?? undefined) as CourseInfo['generationParams'],
+    contentDomain: row.content_domain,
   };
 }
 
@@ -78,7 +80,7 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows } = await query<CourseRow>(
-      `SELECT id, title, description, status, plan, generation_params
+      `SELECT id, title, description, status, plan, generation_params, content_domain
        FROM courses
        WHERE organization_id = $1
        ORDER BY created_at, id`,
@@ -92,7 +94,7 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows } = await query<CourseRow>(
-      `SELECT id, title, description, status, plan, generation_params
+      `SELECT id, title, description, status, plan, generation_params, content_domain
        FROM courses
        WHERE organization_id = $1 AND id = $2`,
       [organizationId, id],
