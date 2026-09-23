@@ -14,7 +14,7 @@
 | Branche Git active | à renseigner |
 | Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** (code complet : T4.1-T4.14, SAML inclus) |
 | Phase en cours | ✅ **Phase 7 — Purge Firebase & nettoyage E2E terminée** : couplage Firebase **supprimé** (5 fichiers, 2 paquets) · nettoyage E2E **automatique avant/après** · base de dev **678 → 2 organisations** |
-| 🔴 **DÉCISION ATTENDUE** | **Phase 7bis — cible de déploiement.** `firebase.json`, `.firebaserc`, `apphosting.yaml` sont **conservés** volontairement : les retirer change la façon dont l'app se déploie. À trancher avec la phase 25 (déploiement portable). |
+| 🔴 **DÉCISION ATTENDUE** | **Phase 7bis — cible de déploiement.** Artefacts Firebase **conservés volontairement** : `firebase.json`, `.firebaserc`, `apphosting.yaml`, `firestore.rules`, `.idx/`. Les retirer change la façon dont l'app se déploie. À trancher avec la phase 25 (déploiement portable). **Autre suivi ouvert** : révoquer la clé de service account dans la console Firebase (retirer la variable d'environnement ne l'invalide pas). |
 | Prochaine phase | **Phase 8 — Internationalisation & transatlantique** (voir `adr/0008`) |
 | Qualité | `typecheck` 0 · `lint` 0 · tests **27 suites / 275** · tests DB **16 suites / 185** · **E2E 76** |
 | **Conformité — progrès mesuré** | **6/6 formations conformes** · `R2` : 142 constats → **0** · `R3` : 80 niveaux déclarés · `R6` : conforme · `R5.1` : 6/6 · `PLACEHOLDER_COMPONENTS` : **vide** |

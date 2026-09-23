@@ -83,9 +83,15 @@ export const TEST_EMAIL_MARKER = '%@e2e.local';
  * masse sans que personne ne le voie. Le plafond est le dernier filet : au-delà,
  * on **préfère échouer bruyamment** plutôt que de continuer à supprimer.
  *
- * ⚠️ La valeur est **le double** du plus gros volume observé (une exécution
- * complète de la suite crée ~35 organisations, cf. mesure du 2026-09-23). Elle
- * laisse donc une marge confortable sans jamais devenir un permis de tout effacer.
+ * ⚠️ La valeur a **deux ancrages**, et le plus élevé commande :
+ * - une exécution complète de la suite crée ~35 organisations (mesuré le 2026-09-23) ;
+ * - la base de développement en avait accumulé **673** avant la première purge, et le
+ *   nettoyage initial doit pouvoir les évacuer en un passage.
+ *
+ * Le plafond est donc fixé **juste au-dessus du backlog historique (673)**, à 700. Le
+ * descendre à « quelques fois 35 » ferait échouer la première purge d'une base polluée —
+ * exactement le cas qu'on veut résorber. Le plafond reste un garde-fou contre un marqueur
+ * devenu fou, pas une limite calibrée sur le régime courant.
  */
 export const MAX_PURGE_ORGANIZATIONS = 700;
 
