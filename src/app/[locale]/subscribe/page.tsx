@@ -10,9 +10,10 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
-import { useFormatter } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 export default function SubscribePage() {
+  const t = useTranslations('subscribe');
   const format = useFormatter();
   const router = useRouter();
   const { user, loading, isPremium, updateUserPlan } = useAuth();
@@ -53,8 +54,8 @@ export default function SubscribePage() {
             updateUserPlan('premium');
         }
         toast({
-            title: "Félicitations et bienvenue !",
-            description: "Votre abonnement Premium est maintenant actif.",
+            title: t('successTitle'),
+            description: t('successDescription'),
         });
         router.push('/ai-assistant');
     }, 2000);
@@ -66,7 +67,7 @@ export default function SubscribePage() {
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">
           <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          <span>Chargement de votre session...</span>
+          <span>{t('loading')}</span>
         </div>
       </main>
     );
@@ -76,8 +77,8 @@ export default function SubscribePage() {
     <main className="flex-1 flex flex-col items-center justify-center p-4 bg-muted/20">
         <div className="w-full max-w-lg space-y-8">
             <div className="text-center">
-                 <h1 className="text-3xl font-bold tracking-tight">Finalisez votre abonnement</h1>
-                 <p className="text-muted-foreground mt-2">Vous êtes sur le point de débloquer le plein potentiel de Katalyst.</p>
+                 <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+                 <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
             </div>
             <Card>
                 <CardHeader>
@@ -88,12 +89,12 @@ export default function SubscribePage() {
                         </div>
                         <div className="text-right">
                             <p className="text-4xl font-bold">{format.number(premiumPlan.price, { style: 'currency', currency: 'EUR' })}</p>
-                            <p className="text-xs text-muted-foreground">/ mois</p>
+                            <p className="text-xs text-muted-foreground">{t('perMonth')}</p>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <p className="font-semibold text-sm">Ce qui est inclus :</p>
+                    <p className="font-semibold text-sm">{t('includedTitle')}</p>
                     <ul className="space-y-3">
                         {premiumPlan.features.map((feature, i) => (
                              <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -106,12 +107,12 @@ export default function SubscribePage() {
                 <CardFooter>
                     <Button onClick={handleSubscribe} disabled={isSubscribing} className="w-full" size="lg">
                         {isSubscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4" />}
-                        {isSubscribing ? "Redirection..." : "S'abonner et Payer"}
+                        {isSubscribing ? t('redirecting') : t('subscribeButton')}
                     </Button>
                 </CardFooter>
             </Card>
             <p className="text-xs text-center text-muted-foreground">
-              Paiement sécurisé. Vous allez être redirigé vers notre partenaire de paiement.
+              {t('securePayment')}
             </p>
         </div>
     </main>

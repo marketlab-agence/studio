@@ -15,7 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getSettingsAction } from '@/actions/adminActions';
 import type { CourseInfo } from '@/types/course.types';
 import type { Tutorial } from '@/types/tutorial.types';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Accordion,
   AccordionContent,
@@ -32,12 +33,13 @@ type CourseCompletionData = {
 };
 
 export default function CertificatePage() {
+  const t = useTranslations('certificate');
   const { user, loading: authLoading, isPremium } = useAuth();
   const router = useRouter();
   const { globalProgress, isLoading: isProgressLoading } = useTutorial();
   useRequirePremium();
 
-  const [instructorName, setInstructorName] = useState('Instructeur Katalyst');
+  const [instructorName, setInstructorName] = useState(t('defaultInstructor'));
   const [allCourses, setAllCourses] = useState<CourseInfo[]>([]);
   const [allTutorials, setAllTutorials] = useState<Tutorial[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -132,14 +134,14 @@ export default function CertificatePage() {
                     <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
                         <BookOpen className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <CardTitle>Commencez une formation !</CardTitle>
+                    <CardTitle>{t('emptyTitle')}</CardTitle>
                     <CardDescription>
-                        Vous n'avez pas encore commencé de formation. Explorez notre catalogue pour débloquer votre premier certificat.
+                        {t('emptyDescription')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
-                        <Link href="/courses">Explorer les formations</Link>
+                        <Link href="/courses">{t('explore')}</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -151,8 +153,8 @@ export default function CertificatePage() {
             {eligibleCourses.length > 0 && (
                  <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Trophy className="text-yellow-400"/> Formations terminées</CardTitle>
-                        <CardDescription>Félicitations ! Vous pouvez générer un certificat pour ces formations.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Trophy className="text-yellow-400"/> {t('completedTitle')}</CardTitle>
+                        <CardDescription>{t('completedDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible className="w-full">
@@ -172,8 +174,8 @@ export default function CertificatePage() {
             {inProgressCourses.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Formations en cours</CardTitle>
-                        <CardDescription>Terminez ces formations et obtenez un score suffisant pour débloquer votre certificat.</CardDescription>
+                        <CardTitle>{t('inProgressTitle')}</CardTitle>
+                        <CardDescription>{t('inProgressDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                        {inProgressCourses.map(data => (
@@ -181,19 +183,19 @@ export default function CertificatePage() {
                                 <h3 className="font-semibold">{data.course.title}</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 text-sm">
                                     <div>
-                                        <p className="font-medium mb-1">Progression</p>
+                                        <p className="font-medium mb-1">{t('progression')}</p>
                                         <Progress value={data.progress} />
                                         <p className="text-xs text-muted-foreground mt-1">{Math.round(data.progress)}%</p>
                                     </div>
                                     <div>
-                                        <p className="font-medium mb-1">Score moyen aux quiz</p>
+                                        <p className="font-medium mb-1">{t('averageQuizScore')}</p>
                                         <p className={`font-bold ${data.score < 80 ? 'text-destructive' : 'text-green-500'}`}>
-                                            {data.score.toFixed(0)}% <span className="text-xs font-normal text-muted-foreground">(Objectif: 80%)</span>
+                                            {data.score.toFixed(0)}% <span className="text-xs font-normal text-muted-foreground">{t('target')}</span>
                                         </p>
                                     </div>
                                 </div>
                                 <Button size="sm" variant="outline" className="mt-4" asChild>
-                                    <Link href={`/dashboard`}>Continuer la formation</Link>
+                                    <Link href={`/dashboard`}>{t('continueCourse')}</Link>
                                 </Button>
                            </div>
                        ))}
@@ -212,8 +214,8 @@ export default function CertificatePage() {
             <Award className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Vos Certificats de Réussite</h1>
-            <p className="text-muted-foreground">Validez la complétion de votre apprentissage pour chaque formation.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground">{t('subtitle')}</p>
           </div>
         </div>
         {renderContent()}

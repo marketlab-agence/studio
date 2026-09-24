@@ -4,7 +4,8 @@
 import { Award, BookOpen, ChevronRight, LayoutGrid, GitCommitHorizontal, Target, TrendingUp, History, Star, Check, Sparkles, Handshake, KanbanSquare, Rocket } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { StatisticsChart } from '@/components/visualizations/StatisticsChart';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ const courseIcons: Record<string, React.ElementType> = {
 
 
 export default function DashboardPage() {
+    const t = useTranslations('dashboard');
     const { user, loading: authLoading, isPremium } = useAuth();
     const router = useRouter();
     const { 
@@ -169,13 +171,13 @@ export default function DashboardPage() {
                 <LayoutGrid className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tableau de Bord</h1>
-                <p className="text-muted-foreground">Suivez votre progression et vos statistiques d'apprentissage.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+                <p className="text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
           
            <div className="space-y-4">
-            <h2 className="text-xl font-bold">Formation(s) en cours</h2>
+            <h2 className="text-xl font-bold">{t('inProgressTitle')}</h2>
              {startedCourses.length > 0 ? (
                 <div className="space-y-4">
                     {startedCourses.map(course => {
@@ -200,11 +202,11 @@ export default function DashboardPage() {
                                     <CardDescription className="mt-2">{course.description}</CardDescription>
                                     <div className="flex items-center gap-4 mt-4">
                                         <Progress value={overallProgressForCourse} className="h-2 flex-1" />
-                                        <span className="text-sm font-medium text-muted-foreground">{completedLessonsForCourse} / {totalLessonsForCourse} leçons</span>
+                                        <span className="text-sm font-medium text-muted-foreground">{t('lessonsCount', { completed: completedLessonsForCourse, total: totalLessonsForCourse })}</span>
                                     </div>
                                 </div>
                                 <Button onClick={() => handleContinue(course.id)} size="lg" className="w-full md:w-auto self-center md:self-end">
-                                    Continuer
+                                    {t('continue')}
                                     <ChevronRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </Card>
@@ -213,10 +215,10 @@ export default function DashboardPage() {
                 </div>
             ) : (
                 <Card className="flex flex-col items-center justify-center p-6 text-center border-dashed">
-                    <CardTitle className="text-lg">Commencez votre apprentissage !</CardTitle>
-                    <CardDescription className="mt-2">Vous n'avez commencé aucune formation.</CardDescription>
+                    <CardTitle className="text-lg">{t('emptyTitle')}</CardTitle>
+                    <CardDescription className="mt-2">{t('emptyDescription')}</CardDescription>
                     <Button asChild variant="secondary" className="mt-4">
-                        <Link href="/courses">Explorer les formations</Link>
+                        <Link href="/courses">{t('explore')}</Link>
                     </Button>
                 </Card>
             )}

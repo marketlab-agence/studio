@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,36 +19,39 @@ import { CourseCard } from './CourseCard';
 //   description: 'Découvrez toutes nos formations interactives pour maîtriser Git, Jira, AWS, Trello, et plus encore.',
 // };
 
-const futureCourses = [
-  {
-    title: 'Trello : La Simplicité Visuelle',
-    icon: Users,
-    description: "Maîtrisez l'art des tableaux Kanban pour une gestion de projet intuitive et collaborative.",
-  },
-  {
-    title: 'Slack : Communication & Automatisation',
-    icon: MessageSquare,
-    description: 'Transformez votre manière de communiquer et intégrez des workflows automatisés.',
-  },
-  {
-    title: 'Notion : Votre Second Cerveau',
-    icon: BookMarked,
-    description: "Structurez la connaissance, gérez les tâches et construisez des systèmes d'organisation personnels et d'équipe.",
-  },
-  {
-    title: 'AWS : Les Fondamentaux du Cloud',
-    icon: Database,
-    description: 'Comprenez les services cloud essentiels et apprenez à déployer des applications sur AWS.',
-  },
-  {
-    title: 'Docker : Le Guide Pratique',
-    icon: GitCommitHorizontal, // placeholder
-    description: 'Apprenez à créer, gérer et déployer des applications conteneurisées pour des déploiements cohérents.',
-  }
-];
-
 export default function CoursesPage() {
     const t = useTranslations('catalog');
+
+    // Les formations à venir sont une liste de données : leurs libellés sont
+    // traduits ici, avec des clés statiques, plutôt que reconstruits dynamiquement.
+    const futureCourses = [
+      {
+        title: t('futureTrelloTitle'),
+        icon: Users,
+        description: t('futureTrelloDescription'),
+      },
+      {
+        title: t('futureSlackTitle'),
+        icon: MessageSquare,
+        description: t('futureSlackDescription'),
+      },
+      {
+        title: t('futureNotionTitle'),
+        icon: BookMarked,
+        description: t('futureNotionDescription'),
+      },
+      {
+        title: t('futureAwsTitle'),
+        icon: Database,
+        description: t('futureAwsDescription'),
+      },
+      {
+        title: t('futureDockerTitle'),
+        icon: GitCommitHorizontal, // placeholder
+        description: t('futureDockerDescription'),
+      }
+    ];
+
     const [courses, setCourses] = useState<CourseInfo[]>([]);
     const [tutorials, setTutorials] = useState<Tutorial[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,7 @@ export default function CoursesPage() {
     const [langueFiltree, setLangueFiltree] = useState<'all' | 'fr' | 'en'>('all');
 
     useEffect(() => {
-        document.title = 'Formations - Katalyst';
+        document.title = t('documentTitle');
         async function fetchData() {
             setIsLoading(true);
             try {
@@ -80,7 +82,7 @@ export default function CoursesPage() {
             }
         }
         fetchData();
-    }, []);
+    }, [t]);
 
     /**
      * ⚠️ **Filtrage côté client, volontairement.** Le catalogue compte 6 formations :

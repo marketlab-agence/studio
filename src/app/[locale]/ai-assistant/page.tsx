@@ -8,8 +8,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useRequirePremium } from '@/hooks/useRequirePremium';
 import { useTutorial } from '@/contexts/TutorialContext';
+import { useTranslations } from 'next-intl';
 
 export default function AiAssistantPage() {
+  const t = useTranslations('assistant');
   const { user, loading } = useAuth();
   const router = useRouter();
   const { course } = useTutorial();
@@ -28,16 +30,16 @@ export default function AiAssistantPage() {
     if (course) {
         return {
             topic: course.title,
-            description: `Votre copilote expert pour maîtriser ${course.title}.`,
-            pageTitle: `Assistant IA : ${course.title}`
+            description: t('withCourseDescription', { title: course.title }),
+            pageTitle: t('withCoursePageTitle', { title: course.title })
         };
     }
     return {
-        topic: 'un sujet de votre choix',
-        description: 'Votre copilote expert pour maîtriser n\'importe quel sujet.',
-        pageTitle: 'Assistant IA'
+        topic: t('defaultTopic'),
+        description: t('defaultDescription'),
+        pageTitle: t('defaultPageTitle')
     };
-  }, [course]);
+  }, [course, t]);
 
 
   if (loading || !user) {
@@ -45,7 +47,7 @@ export default function AiAssistantPage() {
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">
           <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          <span>Vérification de votre accès...</span>
+          <span>{t('loading')}</span>
         </div>
       </main>
     );
@@ -70,14 +72,17 @@ export default function AiAssistantPage() {
             <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border">
                 <BookOpen className="h-5 w-5 text-muted-foreground"/>
                 <p className="text-sm text-muted-foreground">
-                    L'assistant est actuellement contextualisé sur votre dernière formation consultée : <span className="font-semibold text-foreground">{course.title}</span>
+                    {t.rich('contextualizedOn', {
+                        title: course.title,
+                        span: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
+                    })}
                 </p>
             </div>
         )}
 
         <AiHelper 
           courseTopic={assistantContext.topic} 
-          lessonContext="Assistant général" 
+          lessonContext={t('lessonContext')} 
         />
 
       </div>

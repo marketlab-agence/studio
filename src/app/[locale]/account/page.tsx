@@ -18,25 +18,34 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfileRequest } from '@/lib/auth/client';
-
-const accountFormSchema = z.object({
-  firstName: z.string().min(2, { message: 'Le prénom doit contenir au moins 2 caractères.' }),
-  lastName: z.string().min(2, { message: 'Le nom doit contenir au moins 2 caractères.' }),
-  email: z.string().email({ message: "L'adresse e-mail n'est pas valide." }),
-  phone: z.string().optional(),
-});
-
-type AccountFormValues = z.infer<typeof accountFormSchema>;
+import { useTranslations } from 'next-intl';
 
 export default function AccountPage() {
+  const t = useTranslations('account');
+  const tc = useTranslations('common');
   const { user, loading, refreshSession } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Les messages de validation dépendent de la langue : le schéma est donc
+  // construit dans le composant, là où la traduction est disponible.
+  const accountFormSchema = useMemo(
+    () =>
+      z.object({
+        firstName: z.string().min(2, { message: t('firstNameMin') }),
+        lastName: z.string().min(2, { message: t('lastNameMin') }),
+        email: z.string().email({ message: t('emailInvalid') }),
+        phone: z.string().optional(),
+      }),
+    [t],
+  );
+
+  type AccountFormValues = z.infer<typeof accountFormSchema>;
 
   // Initialize form with default values
   const form = useForm<AccountFormValues>({
@@ -88,7 +97,7 @@ export default function AccountPage() {
         if (!result.ok) {
             toast({
                 variant: 'destructive',
-                title: 'Erreur',
+                title: tc('errorTitle'),
                 description: result.message,
             });
             return;
@@ -99,8 +108,8 @@ export default function AccountPage() {
         await refreshSession();
 
         toast({
-            title: 'Profil mis à jour',
-            description: 'Vos informations ont été sauvegardées avec succès.',
+            title: t('updateSuccessTitle'),
+            description: t('updateSuccessDescription'),
         });
 
         router.refresh();
@@ -109,8 +118,8 @@ export default function AccountPage() {
         console.error("Erreur de mise à jour du profil:", error);
         toast({
             variant: 'destructive',
-            title: 'Erreur',
-            description: 'La mise à jour de votre profil a échoué.',
+            title: tc('errorTitle'),
+            description: t('updateErrorDescription'),
         });
     } finally {
         setIsSaving(false);
@@ -122,7 +131,7 @@ export default function AccountPage() {
           <main className="flex-1 flex flex-col items-center justify-center p-4">
               <div className="flex items-center text-muted-foreground">
                   <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                  <span>Chargement du compte...</span>
+                  <span>{t('loading')}</span>
               </div>
           </main>
       );
@@ -136,16 +145,16 @@ export default function AccountPage() {
                 <User className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mon Compte</h1>
-                <p className="text-muted-foreground">Gérez vos informations personnelles et de certificat.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+                <p className="text-muted-foreground">{t('subtitle')}</p>
             </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Informations Personnelles</CardTitle>
+            <CardTitle>{t('personalInfoTitle')}</CardTitle>
             <CardDescription>
-              Ces informations seront utilisées pour la génération de votre certificat.
+              {t('personalInfoDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -157,9 +166,9 @@ export default function AccountPage() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prénom</FormLabel>
+                        <FormLabel>{t('firstName')}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Votre prénom" {...field} />
+                          <Input placeholder={t('firstNamePlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -170,9 +179,9 @@ export default function AccountPage() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nom</FormLabel>
+                        <FormLabel>{t('lastName')}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Votre nom" {...field} />
+                          <Input placeholder={t('lastNamePlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -184,12 +193,12 @@ export default function AccountPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t('email')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Votre email" {...field} readOnly disabled />
+                        <Input placeholder={t('emailPlaceholder')} {...field} readOnly disabled />
                       </FormControl>
                        <FormDescription>
-                        L'adresse e-mail ne peut pas être modifiée.
+                        {t('emailReadonly')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -200,9 +209,9 @@ export default function AccountPage() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Numéro de téléphone (facultatif)</FormLabel>
+                      <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+33 6 12 34 56 78" {...field} />
+                        <Input placeholder={t('phonePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -210,7 +219,7 @@ export default function AccountPage() {
                 />
                 <Button type="submit" disabled={isSaving}>
                   {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sauvegarder les modifications
+                  {t('submit')}
                 </Button>
               </form>
             </Form>

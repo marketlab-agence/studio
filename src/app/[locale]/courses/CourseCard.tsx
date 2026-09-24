@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +30,7 @@ export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProp
     const { user, isPremium, accessibleCourses } = useAuth();
     const router = useRouter();
     const t = useTranslations('catalog');
+    const tp = useTranslations('pricing');
 
     const Icon = courseIcons[course.id] || Rocket;
     const href = `/tutorial/${course.id}`;
@@ -49,7 +49,7 @@ export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProp
         }
     };
     
-    const buttonText = !user ? 'Se connecter pour commencer' : (hasAccess ? 'Commencer la formation' : 'Passer au Premium');
+    const buttonText = !user ? t('loginToStart') : (hasAccess ? t('startCourse') : tp('goPremium'));
 
     return (
         <Card key={course.id} className="flex flex-col h-full shadow-lg border-primary/20">
@@ -66,12 +66,12 @@ export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProp
             </CardHeader>
             <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">
-                    Cette formation est conçue pour vous apporter des compétences pratiques et directement applicables dans votre quotidien professionnel.
+                    {t('courseIntro')}
                 </p>
             </CardContent>
               <CardFooter className="flex-col items-start gap-4">
                   <div className="flex flex-wrap gap-2">
-                      <Badge>Inclus</Badge>
+                      <Badge>{t('included')}</Badge>
                       {/*
                         ⚠️ **Le marquage de langue est la partie non négociable de
                         l'option C.** L'interface peut être en anglais alors que la
@@ -81,9 +81,9 @@ export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProp
                       <Badge variant="outline">
                           {course.language === 'en' ? t('languageEn') : t('languageFr')}
                       </Badge>
-                      {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
-                      {lessonCount > 0 && <Badge variant="secondary">{lessonCount} Leçons</Badge>}
-                      <Badge variant="secondary">Quiz Interactifs</Badge>
+                      {chapterCount > 0 && <Badge variant="secondary">{t('chaptersBadge', { count: chapterCount })}</Badge>}
+                      {lessonCount > 0 && <Badge variant="secondary">{t('lessonsBadge', { count: lessonCount })}</Badge>}
+                      <Badge variant="secondary">{t('quizInteractive')}</Badge>
                   </div>
                 <Button className="w-full" size="lg" onClick={handleButtonClick}>
                     {buttonText} <ArrowRight className="ml-2" />

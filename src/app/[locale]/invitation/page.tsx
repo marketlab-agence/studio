@@ -1,8 +1,9 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,8 @@ import { MIN_PASSWORD_LENGTH } from '@/lib/auth/policy';
  * La laisser éditable permettrait de créer un compte pour l'adresse d'autrui.
  */
 function AcceptInvitationForm() {
+  const t = useTranslations('invitation');
+  const tAuth = useTranslations('auth');
   const router = useRouter();
   const token = useSearchParams().get('token');
   const { refreshSession } = useAuth();
@@ -46,7 +49,7 @@ function AcceptInvitationForm() {
 
   useEffect(() => {
     if (!token) {
-      setLoadError('Ce lien ne contient pas de jeton d’invitation.');
+      setLoadError(t('missingToken'));
       setIsLoading(false);
       return;
     }
@@ -77,7 +80,7 @@ function AcceptInvitationForm() {
     setError(null);
 
     if (password !== confirmation) {
-      setError('Les deux mots de passe ne correspondent pas.');
+      setError(tAuth('passwordsDoNotMatch'));
       return;
     }
 
@@ -101,7 +104,7 @@ function AcceptInvitationForm() {
       <Card className="w-full max-w-md">
         <CardContent className="flex items-center justify-center py-10 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          <span>Vérification de l’invitation…</span>
+          <span>{t('loading')}</span>
         </CardContent>
       </Card>
     );
@@ -112,17 +115,16 @@ function AcceptInvitationForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            Invitation non valable
+            {t('invalidTitle')}
           </h1>
-          <CardDescription>{loadError ?? 'Ce lien n’est plus utilisable.'}</CardDescription>
+          <CardDescription>{loadError ?? t('unusable')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Une invitation peut avoir expiré, avoir été remplacée par une plus récente, ou avoir
-            déjà servi. Demandez un nouveau lien à la personne qui vous a invité.
+            {t('invalidDescription')}
           </p>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/login">Aller à la connexion</Link>
+            <Link href="/login">{t('goToLogin')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -133,16 +135,19 @@ function AcceptInvitationForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <h1 className="text-2xl font-semibold leading-none tracking-tight">
-          Rejoindre {invitation.organizationName}
+          {t('joinTitle', { organization: invitation.organizationName })}
         </h1>
         <CardDescription>
-          Vous êtes invité avec le rôle <strong>{invitation.role}</strong>.
+          {t.rich('invitedWithRole', {
+            role: invitation.role,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Adresse email</Label>
+            <Label htmlFor="email">{tAuth('emailAddress')}</Label>
             <Input
               id="email"
               type="email"
@@ -155,7 +160,7 @@ function AcceptInvitationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nom à afficher</Label>
+            <Label htmlFor="name">{tAuth('displayName')}</Label>
             <Input
               id="name"
               type="text"
@@ -169,7 +174,7 @@ function AcceptInvitationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">{tAuth('password')}</Label>
             <PasswordInput
               id="password"
               autoComplete="new-password"
@@ -180,12 +185,12 @@ function AcceptInvitationForm() {
               disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">
-              Au moins {MIN_PASSWORD_LENGTH} caractères.
+              {tAuth('passwordHint', { count: MIN_PASSWORD_LENGTH })}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmation">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirmation">{tAuth('confirmPassword')}</Label>
             <PasswordInput
               id="confirmation"
               
@@ -205,13 +210,13 @@ function AcceptInvitationForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte et rejoindre'}
+            {isSubmitting ? <Loader2 className="animate-spin" /> : t('createAndJoin')}
           </Button>
         </form>
 
         <div className="text-center text-sm">
           <Link href="/login" className="underline">
-            J’ai déjà un compte
+            {t('alreadyHaveAccount')}
           </Link>
         </div>
       </CardContent>
@@ -220,13 +225,14 @@ function AcceptInvitationForm() {
 }
 
 export default function InvitationPage() {
+  const tCommon = useTranslations('common');
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
       <Suspense
         fallback={
           <div className="flex items-center text-muted-foreground">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            <span>Chargement…</span>
+            <span>{tCommon('loading')}</span>
           </div>
         }
       >
