@@ -9,6 +9,7 @@ import { GitCommitHorizontal, KanbanSquare, Sparkles, Rocket, BrainCircuit, Arro
 import type { CourseInfo } from '@/types/course.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 type CourseCardProps = {
     course: CourseInfo;
@@ -29,6 +30,7 @@ const courseIcons: Record<string, React.ElementType> = {
 export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProps) {
     const { user, isPremium, accessibleCourses } = useAuth();
     const router = useRouter();
+    const t = useTranslations('catalog');
 
     const Icon = courseIcons[course.id] || Rocket;
     const href = `/tutorial/${course.id}`;
@@ -67,13 +69,22 @@ export function CourseCard({ course, chapterCount, lessonCount }: CourseCardProp
                     Cette formation est conçue pour vous apporter des compétences pratiques et directement applicables dans votre quotidien professionnel.
                 </p>
             </CardContent>
-            <CardFooter className="flex-col items-start gap-4">
-                <div className="flex flex-wrap gap-2">
-                    <Badge>Inclus</Badge>
-                    {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
-                    {lessonCount > 0 && <Badge variant="secondary">{lessonCount} Leçons</Badge>}
-                    <Badge variant="secondary">Quiz Interactifs</Badge>
-                </div>
+              <CardFooter className="flex-col items-start gap-4">
+                  <div className="flex flex-wrap gap-2">
+                      <Badge>Inclus</Badge>
+                      {/*
+                        ⚠️ **Le marquage de langue est la partie non négociable de
+                        l'option C.** L'interface peut être en anglais alors que la
+                        formation est en français : sans ce badge, un apprenant
+                        anglophone ne le découvrirait qu'après avoir commencé.
+                      */}
+                      <Badge variant="outline">
+                          {course.language === 'en' ? t('languageEn') : t('languageFr')}
+                      </Badge>
+                      {chapterCount > 0 && <Badge variant="secondary">{chapterCount} Chapitres</Badge>}
+                      {lessonCount > 0 && <Badge variant="secondary">{lessonCount} Leçons</Badge>}
+                      <Badge variant="secondary">Quiz Interactifs</Badge>
+                  </div>
                 <Button className="w-full" size="lg" onClick={handleButtonClick}>
                     {buttonText} <ArrowRight className="ml-2" />
                 </Button>

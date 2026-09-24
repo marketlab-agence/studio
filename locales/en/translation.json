@@ -12,5 +12,19 @@
     "label": "Language",
     "fr": "French",
     "en": "English"
+  },
+  "catalog": {
+    "title": "Our Interactive Courses",
+    "subtitle": "Learn by doing. Every course is a simulation designed to make you operational.",
+    "languageLabel": "Course language",
+    "filterByLanguage": "Filter by language",
+    "allLanguages": "All languages",
+    "languageFr": "French",
+    "languageEn": "English",
+    "noResultForFilter": "No course in this language",
+    "loading": "Loading…",
+    "comingSoonTitle": "Upcoming Courses",
+    "comingSoonSubtitle": "Our catalog keeps growing. Here is a preview of what is coming.",
+    "comingSoonBadge": "Coming soon"
   }
 }

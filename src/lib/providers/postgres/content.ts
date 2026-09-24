@@ -14,15 +14,16 @@ import type { ChapterWithLessons, ContentProvider } from '../content';
  * `courses` porte directement `organization_id`.
  */
 
-type CourseRow = {
-  id: string;
-  title: string;
-  description: string;
-  status: CourseInfo['status'];
-  plan: unknown | null;
-  generation_params: unknown | null;
-  content_domain: string | null;
-}
+  type CourseRow = {
+    id: string;
+    title: string;
+    description: string;
+    status: CourseInfo['status'];
+    plan: unknown | null;
+    generation_params: unknown | null;
+    content_domain: string | null;
+    language: CourseInfo['language'];
+  }
 
 type ChapterRow = {
   id: string;
@@ -57,10 +58,11 @@ function toCourseInfo(row: CourseRow): CourseInfo {
     description: row.description,
     status: row.status,
     plan: (row.plan ?? undefined) as CourseInfo['plan'],
-    generationParams: (row.generation_params ?? undefined) as CourseInfo['generationParams'],
-    contentDomain: row.content_domain,
-  };
-}
+      generationParams: (row.generation_params ?? undefined) as CourseInfo['generationParams'],
+      contentDomain: row.content_domain,
+      language: row.language,
+    };
+  }
 
 function toLesson(row: LessonRow): Lesson {
   return {
@@ -80,7 +82,7 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows } = await query<CourseRow>(
-      `SELECT id, title, description, status, plan, generation_params, content_domain
+      `SELECT id, title, description, status, plan, generation_params, content_domain, language
        FROM courses
        WHERE organization_id = $1
        ORDER BY created_at, id`,
@@ -94,7 +96,7 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows } = await query<CourseRow>(
-      `SELECT id, title, description, status, plan, generation_params, content_domain
+      `SELECT id, title, description, status, plan, generation_params, content_domain, language
        FROM courses
        WHERE organization_id = $1 AND id = $2`,
       [organizationId, id],
@@ -108,12 +110,13 @@ export class PostgresContentProvider implements ContentProvider {
 
     for (const course of courses) {
       await query(
-        `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params, language)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (id) DO UPDATE SET
            title = EXCLUDED.title, description = EXCLUDED.description,
            status = EXCLUDED.status, plan = EXCLUDED.plan,
-           generation_params = EXCLUDED.generation_params
+           generation_params = EXCLUDED.generation_params,
+           language = EXCLUDED.language
          WHERE courses.organization_id = EXCLUDED.organization_id`,
         [
           course.id, organizationId, course.title, course.description ?? '',
@@ -129,10 +132,10 @@ export class PostgresContentProvider implements ContentProvider {
     const { organizationId } = assertScope(scope);
 
     const { rows } = await query<{ id: string }>(
-      `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params)
+      `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params, language)
        VALUES (
          COALESCE($1, regexp_replace(lower($2), '[^a-z0-9]+', '-', 'g')),
-         $3, $2, $4, $5, $6, $7
+         $3, $2, $4, $5, $6, $7, $8
        )
        RETURNING id`,
       [
@@ -140,6 +143,7 @@ export class PostgresContentProvider implements ContentProvider {
         course.status ?? 'Brouillon',
         course.plan ? JSON.stringify(course.plan) : null,
         course.generationParams ? JSON.stringify(course.generationParams) : null,
+        course.language ?? 'fr',
       ],
     );
 
@@ -155,13 +159,15 @@ export class PostgresContentProvider implements ContentProvider {
          description = COALESCE($4, description),
          status = COALESCE($5, status),
          plan = COALESCE($6, plan),
-         generation_params = COALESCE($7, generation_params)
+         generation_params = COALESCE($7, generation_params),
+         language = COALESCE($8, language)
        WHERE organization_id = $1 AND id = $2`,
       [
         organizationId, id,
         changes.title ?? null, changes.description ?? null, changes.status ?? null,
         changes.plan ? JSON.stringify(changes.plan) : null,
         changes.generationParams ? JSON.stringify(changes.generationParams) : null,
+        changes.language ?? null,
       ],
     );
   }

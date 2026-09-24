@@ -12,5 +12,19 @@
     "label": "Langue",
     "fr": "Français",
     "en": "Anglais"
+  },
+  "catalog": {
+    "title": "Nos Formations Interactives",
+    "subtitle": "Apprenez en faisant. Chaque cours est une simulation conçue pour vous rendre opérationnel.",
+    "languageLabel": "Langue de la formation",
+    "filterByLanguage": "Filtrer par langue",
+    "allLanguages": "Toutes les langues",
+    "languageFr": "Français",
+    "languageEn": "Anglais",
+    "noResultForFilter": "Aucune formation dans cette langue",
+    "loading": "Chargement…",
+    "comingSoonTitle": "Formations à Venir",
+    "comingSoonSubtitle": "Notre catalogue s'agrandit constamment. Voici un aperçu de ce qui vous attend.",
+    "comingSoonBadge": "Bientôt disponible"
   }
 }
