@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import TutorialPage from '@/app/tutorial/page';
+import TutorialPage from '@/app/[locale]/tutorial/page';
 
 const meta: Meta<typeof TutorialPage> = {
   title: 'Pages/Page du Tutoriel',
