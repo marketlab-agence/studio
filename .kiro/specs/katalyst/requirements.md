@@ -72,9 +72,14 @@
 | ID | Exigence | Critère d'acceptation | Prio | Phase |
 |---|---|---|---|---|
 | REQ-CNT-01 | Un audit de contenu est reproductible | `npm run audit:content` produit un rapport | MUST | 6 |
-| REQ-CNT-02 | **100 % des leçons ont un composant interactif** | Audit → 100 % sur 6/6 formations | MUST | 6 |
+| REQ-CNT-02 | **Toute leçon de mise en pratique a un composant interactif fonctionnel** | Audit → 6/6 (règle `R5.1`) | MUST | 6 |
 | REQ-CNT-03 | Chaque formation a au moins un quiz | Audit → 6/6 | MUST | 6 |
 | REQ-CNT-04 | L'outil de création produit un contenu conforme | Création IA → conforme | MUST | 6 |
+| REQ-CNT-09 | **Une leçon porte N composants pédagogiques ordonnés** (aucun plafond) | Le même composant peut apparaître plusieurs fois ; l'ordre est défini | MUST | 8bis |
+| REQ-CNT-10 | **Chaque composant interactif produit sa propre trace** | Audit → une trace par composant, pas par leçon (indicateur 19 du décret) | MUST | 8bis |
+| REQ-CNT-11 | **La sélection des composants est pilotée par le niveau de Bloom** | Aucun composant proposé hors du niveau de la leçon | MUST | 8bis |
+| REQ-CNT-12 | **Chaque composant déclare un schéma de configuration strict** | `CATALOG_SIZE` composants couverts, config validée à l'écriture et au rendu | MUST | 8bis |
+| REQ-CNT-13 | Le nombre de composants est une **cible, non une obligation** | Audit → rapport, jamais bloquant ; 0 composant autorisé | SHOULD | 8bis |
 
 ## I18N — Internationalisation & transatlantique
 

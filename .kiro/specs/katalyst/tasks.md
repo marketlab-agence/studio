@@ -247,6 +247,42 @@ Dépend de : 1 · Voir `adr/0008`
 - [ ] T8.8 — Locale de repli documentée + détection à la première visite · REQ-I18N-03 · vérif: repli fonctionnel
 - [ ] T8.9 — ES préparé (structure prête, non activé) · REQ-I18N-02 · vérif: ajout d'une locale sans refonte
 
+## Phase 8bis — Composants pédagogiques multiples par leçon
+
+Dépend de : 8 · Voir `adr/0013` · Spec : `@docs/superpowers/specs/2026-09-23-phase8bis-composants-multiples-design.md`
+
+> **Pourquoi cette phase.** Le plafond de 2 composants par leçon n'est pas une règle métier : c'est une
+> conséquence du schéma de la phase 2 (`interactive_component_name` + `visual_component_name`, chacune `text`).
+> Décision utilisateur du 2026-09-23 : le « 2 composants » est un **plancher**, jamais un plafond —
+> « certaines formations pourraient demander plusieurs composants par leçon (pas que 2) selon le cahier
+> des charges ». Et la sélection doit être **pilotée par la taxonomie de Bloom**, ce qui n'existe pas
+> aujourd'hui (`suggest-lesson-components-flow` ne reçoit même pas le `bloomLevel` de la leçon).
+>
+> **Fondement réglementaire** (indicateur 19) : le décret exige une « **trace d'interaction par composant** ».
+> Avec un seul composant, « par composant » et « par leçon » se confondent ; avec plusieurs, `R5.2` telle
+> qu'écrite serait **plus faible que le décret**. Cette phase la renforce.
+> Le décret ne mentionne **jamais** les composants visuels — `kind` a donc un sens réglementaire :
+> `interactive` → trace obligatoire ; `visual` → illustration, aucune trace exigée.
+
+- [ ] T8bis.1 — **Table `lesson_components`** (migration 014) : `id UUID` (clé de substitution), `lesson_id`, `component_name`, `position`, `config JSONB` · REQ-CNT-09 · vérif: 121 références → 121 lignes, **0 perte**
+  > La clé de substitution autorise **deux instances du même composant** dans une leçon (décision utilisateur). `UNIQUE (lesson_id, position)` garantit l'ordre d'affichage.
+- [ ] T8bis.2 — **`lesson_interactions.lesson_component_id`** (`NULL` + `ON DELETE SET NULL`) · REQ-CNT-10 · vérif: 2 instances → 2 traces distinctes ; supprimer un composant **préserve** l'historique
+- [ ] T8bis.3 — **Contrat de configuration uniforme** (`labels` + `data`) · REQ-CNT-09 · vérif: un composant sans config rend **comme aujourd'hui**
+- [ ] T8bis.4 — **Schéma strict pour les 58 composants** (`labelKeys` + `dataSchema` Zod dans le catalogue) · REQ-CNT-12 · vérif: `CATALOG_SIZE` composants couverts, aucun sans schéma
+  > Décision utilisateur : *« un schéma strict pour tous les 34 composants comme les 12 »*. Le catalogue ne contient **aucun import React** : les schémas sont donc utilisables par les schémas, actions serveur, tests et prompts. La documentation parle de « 46 composants » — le compte réel est **58** (45 interactifs + 13 visuels).
+- [ ] T8bis.5 — **Sélection IA pilotée par Bloom** · REQ-CNT-11 · vérif: candidats filtrés par `listByBloomLevel`, sortie en tableau
+- [ ] T8bis.6 — **Rendu de N composants ordonnés** (`LessonView`) · REQ-CNT-09 · vérif: une leçon à 1 composant rend **à l'identique**
+- [ ] T8bis.7 — **Édition créateur** (ajout/retrait/réordonnancement + `config`) · REQ-CNT-09 · vérif: toute formation reste modifiable
+- [ ] T8bis.8 — **Règles de conformité** : `R5.2` renforcée (par composant), `R7` (couverture Bloom), `R8` (Bloom déclaré), `R9` (config valide) · REQ-CNT-10/11 · vérif: `audit:content` reflète les nouvelles règles
+  > ⚠️ `R7` et `R8` ne s'appliquent **qu'aux composants interactifs** : les visuels sont illustratifs et n'ont **aucune obligation de niveau Bloom** (décision utilisateur).
+- [ ] T8bis.9 — **Plancher non bloquant** : cible IA ≥ 2, rapport en audit · REQ-CNT-13 · vérif: jamais un rouge, 0 composant autorisé
+- [ ] **Sortie** : une leçon porte **N composants** ; chaque composant interactif produit **sa** trace ; le créateur peut en ajouter autant que son cahier des charges l'exige
+
+> **Prérequis** : la Phase 8 doit être terminée et fusionnée. Les deux touchent `content.ts`, les providers,
+> le seed et `LessonView` — les mener ensemble créerait des conflits sur une même branche.
+
+---
+
 ## Phase 9 — API centrale v1
 
 Dépend de : 3 · Voir `adr/0009` · Normes : OWASP ASVS, API Top 10
