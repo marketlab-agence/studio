@@ -1,0 +1,16 @@
+{
+  "common": {
+    "appName": "Katalyst",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "fr": "French",
+    "en": "English"
+  }
+}
