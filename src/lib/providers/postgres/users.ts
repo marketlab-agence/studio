@@ -19,8 +19,9 @@ type UserRow = {
   status: AppUser['status'];
   role: AppUser['role'];
   created_at: Date;
-  phone: string | null;
-}
+    phone: string | null;
+    language: AppUser['language'];
+  }
 
 function toAppUser(row: UserRow): AppUser {
   return {
@@ -30,12 +31,13 @@ function toAppUser(row: UserRow): AppUser {
     planId: row.plan_id ?? 'free',
     status: row.status,
     role: row.role,
-    joined: row.created_at.toISOString().slice(0, 10),
-    phone: row.phone ?? undefined,
-  };
-}
+      joined: row.created_at.toISOString().slice(0, 10),
+      phone: row.phone ?? undefined,
+      language: row.language,
+    };
+  }
 
-const SELECT_COLUMNS = 'id, name, email, plan_id, status, role, created_at, phone';
+const SELECT_COLUMNS = 'id, name, email, plan_id, status, role, created_at, phone, language';
 
 export class PostgresUserProvider implements UserProvider {
   async list(scope: OrgScope, filters: UserQuery = {}): Promise<AppUser[]> {
@@ -119,13 +121,25 @@ export class PostgresUserProvider implements UserProvider {
     );
   }
 
-  async setRole(scope: OrgScope, userId: string, role: AppUser['role']): Promise<void> {
-    const { organizationId } = assertScope(scope);
+    async setRole(scope: OrgScope, userId: string, role: AppUser['role']): Promise<void> {
+      const { organizationId } = assertScope(scope);
 
-    await query('UPDATE users SET role = $3 WHERE organization_id = $1 AND id = $2', [
-      organizationId, userId, role,
-    ]);
-  }
+      await query('UPDATE users SET role = $3 WHERE organization_id = $1 AND id = $2', [
+        organizationId, userId, role,
+      ]);
+    }
+
+    async updatePreferredLanguage(scope: OrgScope, language: 'fr' | 'en' | 'es'): Promise<void> {
+      const { organizationId, userId } = assertScope(scope);
+
+      // ⚠️ La cible est `scope.userId`, jamais un identifiant fourni par l'appelant :
+      // un utilisateur ne change que SA préférence. Le filtre d'organisation empêche
+      // en outre de toucher un compte d'un autre tenant.
+      await query(
+        'UPDATE users SET language = $3 WHERE organization_id = $1 AND id = $2',
+        [organizationId, userId, language],
+      );
+    }
 
   async delete(scope: OrgScope, userId: string): Promise<void> {
     const { organizationId } = assertScope(scope);

@@ -6,6 +6,7 @@ import { TutorialProvider } from '@/contexts/TutorialContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { routing } from '@/i18n/routing';
 import '../globals.css';
 
@@ -52,6 +53,9 @@ export default async function LocaleLayout({
             <TutorialProvider>
               <div className="flex min-h-screen w-full flex-col">
                 <Header />
+                <div className="flex justify-end px-4 pt-2 md:px-6">
+                  <LocaleSwitcher />
+                </div>
                 {children}
                 <Footer />
               </div>
