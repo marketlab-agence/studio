@@ -574,19 +574,38 @@ git commit -m "refactor(i18n): restructurer les routes sous le segment [locale]"
 
 ---
 
-### Task 5 : Catalogue — afficher, marquer et filtrer par langue
+### Task 5 : Catalogue — afficher, marquer et filtrer par langue · REQ-I18N-08 (option C)
 
 **Files:**
 - Modify: `src/app/[locale]/courses/page.tsx` (ou l'équivalent trouvé)
-- Modify: `src/lib/providers/content.ts` (méthode de liste)
+- Modify: `src/lib/providers/content.ts` (méthode de liste **et d'écriture**)
+- Modify: `src/lib/providers/postgres/content.ts` (implémentation)
 - Modify: `locales/fr/translation.json`, `locales/en/translation.json`
 - Test: `e2e/i18n.spec.ts` (cas catalogue)
 
+⚠️ **Tâche ajoutée à la suite de la revue de Task 1.** Le constat était juste : la colonne existe
+en base, mais **aucun chemin ne l'écrit**. Or la règle du projet est explicite — « toute formation
+reste modifiable » (`docs/superpowers/specs/2026-09-23-phase8-internationalisation-design.md` §8).
+Sans cette tâche, la langue serait figée à la création et l'exigence non couverte.
+
 **Interfaces:**
 - Consumes: `courses.language` (Task 1), navigation localisée (Task 2).
-- Produces: catalogue avec marquage et filtre de langue.
+- Produces: catalogue avec marquage et filtre + **écriture de la langue par le créateur**.
 
-- [ ] **Step 1: Ajouter les clés de catalogue**
+- [ ] **Step 1: Exposer `language` en lecture ET en écriture dans le provider**
+
+Dans `src/lib/providers/content.ts`, le type des cours doit porter `language`. Vérifier les **trois** méthodes d'écriture — c'est le point que la revue a relevé :
+
+```ts
+  // Dans le type retourné par listCourses / getCourse :
+  language: 'fr' | 'en' | 'es';
+```
+
+⚠️ **Et dans les écritures** : `saveCourses`, `createCourse`, `updateCourse` doivent **persister** `language`. Sans quoi une formation créée ou modifiée par l'interface repartirait systématiquement en `fr`, et le créateur ne pourrait jamais changer la langue — malgré la colonne et la contrainte en base.
+
+Dans `src/lib/providers/postgres/content.ts`, ajouter `language` aux `INSERT` et `UPDATE` correspondants.
+
+- [ ] **Step 2: Ajouter les clés de catalogue**
 
 Dans `locales/fr/translation.json`, ajouter :
 
@@ -598,7 +617,8 @@ Dans `locales/fr/translation.json`, ajouter :
     "allLanguages": "Toutes les langues",
     "languageFr": "Français",
     "languageEn": "Anglais",
-    "noResultForFilter": "Aucune formation dans cette langue"
+    "noResultForFilter": "Aucune formation dans cette langue",
+    "changeLanguage": "Langue du contenu"
   }
 ```
 
@@ -612,13 +632,10 @@ Dans `locales/en/translation.json` :
     "allLanguages": "All languages",
     "languageFr": "French",
     "languageEn": "English",
-    "noResultForFilter": "No course in this language"
+    "noResultForFilter": "No course in this language",
+    "changeLanguage": "Content language"
   }
 ```
-
-- [ ] **Step 2: Vérifier que la liste des cours porte la langue**
-
-La méthode `listCourses` du provider doit retourner `language`. Si le type de retour ne le porte pas, l'ajouter dans `src/lib/providers/content.ts` (et dans son implémentation PostgreSQL `src/lib/providers/postgres/content.ts`).
 
 - [ ] **Step 3: Afficher et marquer la langue sur la carte de formation**
 
@@ -638,7 +655,39 @@ Un sélecteur au-dessus de la liste, avec trois choix (toutes / français / angl
 
 Quand le filtre exclut tout : afficher `t('catalog.noResultForFilter')`, jamais une liste vide muette.
 
-- [ ] **Step 5: Vérifier typecheck, lint et démarrage**
+- [ ] **Step 5: Permettre au créateur de changer la langue**
+
+Dans l'édition d'une formation (formulaire admin), ajouter un sélecteur de langue du contenu. Il écrit `language` via `updateCourse`.
+
+Ajouter un test dans `src/tests/db/language.db.test.ts` :
+
+```ts
+  it('permet au créateur de changer la langue d’une formation', async () => {
+    await requireDatabaseOrSkip();
+
+    const { rows } = await pool.query<{ id: string; language: string }>(
+      `SELECT id, language FROM courses WHERE language = 'fr' LIMIT 1`,
+    );
+    expect(rows.length).toBe(1);
+    const { id } = rows[0];
+
+    try {
+      await pool.query(`UPDATE courses SET language = 'en' WHERE id = $1`, [id]);
+      const apres = await pool.query<{ language: string }>(
+        `SELECT language FROM courses WHERE id = $1`,
+        [id],
+      );
+      expect(apres.rows[0].language).toBe('en');
+    } finally {
+      // ⚠️ Restauration obligatoire : le catalogue E2E attend les 6 formations en
+      // français. Sans ce `finally`, le test laisserait la base dans un état qui
+      // ferait échouer la suite i18n (qui vérifie qu'aucune formation n'est en anglais).
+      await pool.query(`UPDATE courses SET language = 'fr' WHERE id = $1`, [id]);
+    }
+  });
+```
+
+- [ ] **Step 6: Vérifier typecheck, lint, tests et démarrage**
 
 Run: `npm run typecheck`
 Expected: 0 erreur
@@ -646,14 +695,20 @@ Expected: 0 erreur
 Run: `npm run lint`
 Expected: 0 erreur
 
+Run: `npm test`
+Expected: 275
+
+Run: `npx jest --config jest.config.db.mjs --testPathPattern=language`
+Expected: 5 tests (les 4 de la Task 1 + celui-ci)
+
 Run: `npm run dev:turbo` puis `curl.exe -s -o NUL -w "%{http_code}" http://localhost:3000/fr/courses`
 Expected: `200`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A
-git commit -m "feat(i18n): afficher, marquer et filtrer la langue des formations (option C)"
+git commit -m "feat(i18n): afficher, marquer, filtrer et modifier la langue des formations (option C)"
 ```
 
 ---
