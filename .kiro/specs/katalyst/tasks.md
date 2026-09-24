@@ -242,7 +242,8 @@ Dépend de : 1 · Voir `adr/0008`
 - [ ] T8.4 — Extraction de toutes les chaînes en dur de l'interface · REQ-I18N-04 · vérif: `grep` → 0 libellé non clé
 - [ ] T8.5 — Formats localisés (dates, nombres, devises, fuseaux) · REQ-I18N-06 · vérif: affichage conforme
 - [ ] T8.6 — Langue persistée par utilisateur · REQ-I18N-07 · vérif: choix conservé
-- [ ] T8.7 — **Modèle de données multilingue pour le contenu** · REQ-I18N-08 · vérif: une formation existe en FR et EN
+- [ ] T8.7 — **Langue déclarée sur chaque formation** · REQ-I18N-08 · vérif: `courses.language` renseigné, catalogue marque et filtre par langue
+  > **Amendement du 2026-09-23** (voir `adr/0008`) : il ne s'agit **pas** d'un modèle multilingue ni d'une traduction. La langue est un **attribut de la formation**, choisi par son créateur. Les 6 formations existantes portent `fr` — c'est leur état normal, pas une dette.
 - [ ] T8.8 — Locale de repli documentée + détection à la première visite · REQ-I18N-03 · vérif: repli fonctionnel
 - [ ] T8.9 — ES préparé (structure prête, non activé) · REQ-I18N-02 · vérif: ajout d'une locale sans refonte
 
@@ -373,7 +374,7 @@ Dépend de : 16 · Voir `adr/0005`, `adr/0010` · **Gate G4**
 - [ ] T17.10 — **Mention de transparence IA** (AI Act) · REQ-AIC-07 · vérif: mention visible
 - [ ] T17.11 — Ergonomie : parcours guidé sans rupture · REQ-AIC-08 · vérif: test utilisateur
 - [ ] T17.12 — Recharge de crédits (lien phase 24) · REQ-AIC-03 · vérif: solde crédité
-- [ ] T17.13 — Traduction de contenu assistée par IA (FR → EN) · REQ-I18N-09 · vérif: contenu traduit et validé
+- [x] T17.13 — ~~Traduction de contenu assistée par IA (FR → EN)~~ · **SUPPRIMÉE le 2026-09-23** : la traduction de contenu a été **écartée** (voir `adr/0008`, amendement). Une formation porte sa langue, choisie par son créateur ; il n'y a pas de traduction à produire ni à assister.
 
 ## Phase 18 — Défenses anti prompt-injection
 

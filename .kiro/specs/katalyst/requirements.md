@@ -87,8 +87,7 @@
 | REQ-I18N-05 | Clé manquante dans une langue obligatoire → build en erreur | CI échoue si FR/EN incomplets | MUST | 8 |
 | REQ-I18N-06 | Formats localisés (dates, nombres, devises, fuseaux) | Affichage conforme à la locale | MUST | 8 |
 | REQ-I18N-07 | Langue persistée par utilisateur | Choix conservé entre sessions | MUST | 8 |
-| REQ-I18N-08 | **Contenu traduisible** (formations, leçons) | Une formation existe en FR et EN | MUST | 8 |
-| REQ-I18N-09 | Traduction du contenu assistée par IA | Usage du studio (famille TTT) | SHOULD | 17 |
+| REQ-I18N-08 | **Langue du contenu déclarée par le créateur** | Chaque formation porte sa langue ; aucune traduction obligatoire | MUST | 8 |
 
 ## API — API centrale
 

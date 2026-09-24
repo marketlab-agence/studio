@@ -614,10 +614,10 @@ Voir `adr/0008`. **FR et EN obligatoires**, ES optionnel.
 - **Catalogues** : `locales/{fr,en}/translation.json` (pattern masterplan365 `_t('fr','en')`).
 - **Zéro chaîne en dur** : toute chaîne passe par une clé. Lint i18n **bloquant** : clé absente d'une langue obligatoire → **build en erreur**.
 - **Formats** : dates, nombres, devises, fuseaux via l'API d'internationalisation native.
-- **Contenu multilingue** : le modèle porte la locale. Une formation existe en FR et EN ; la traduction est **assistée par IA** (famille TTT du studio, phase 17).
-- **Locale de repli** : FR, documentée.
-
-> Conséquence de conception : le contenu pédagogique est une **donnée multilingue**, pas une colonne texte.
+  - **Langue du contenu = attribut de la formation** : une colonne `courses.language`, choisie par le créateur. **Aucune traduction, aucune assistance à la traduction** (amendement du 2026-09-23, voir `adr/0008`).
+  - **Locale de repli** : FR, documentée.
+  
+  > Conséquence de conception : l'interface suit la langue de **l'utilisateur**, le contenu suit celle de **son créateur** — les deux sont indépendants. Le catalogue affiche toutes les formations, marque leur langue et permet de filtrer.
 
 ---
 
