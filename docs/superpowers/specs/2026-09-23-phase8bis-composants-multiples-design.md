@@ -204,6 +204,20 @@ Un composant visuel **illustre** — il n'**exerce** pas une compétence. Exiger
 - la couverture Bloom (`R7`) **ne s'applique pas** à eux ;
 - ils ne produisent **aucune trace** (le décret ne l'exige pas).
 
+⚠️ **Mais l'IA continue de leur en proposer.** Précision utilisateur du 2026-09-23 :
+
+> « Chargez quand même l'IA de créer des composants visuels pour les leçons. »
+
+Le critère de sélection diffère donc selon la nature :
+
+| Nature | Critère de sélection IA |
+|---|---|
+| `interactive` | **Niveau de Bloom** de la leçon + domaine + cahier des charges |
+| `visual` | **Pertinence illustrative** — « faire comprendre et retenir très vite » — sans contrainte de Bloom |
+
+Concrètement, le flux de suggestion reçoit **les deux listes** et produit **les deux types**, avec des justifications distinctes : « cette interaction exerce le niveau *Appliquer* » d'un côté, « ce schéma rend le concept immédiatement lisible » de l'autre.
+
+
 
 ---
 
