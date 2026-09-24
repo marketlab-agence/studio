@@ -23,6 +23,16 @@ export default defineConfig({
 
   use: {
     baseURL: BASE_URL,
+    // ⚠️ **`locale` est OBLIGATOIRE depuis l'internationalisation (phase 8).**
+    //
+    // `next-intl` négocie la locale depuis l'en-tête `Accept-Language`. Playwright
+    // envoie `en-US` par défaut : une navigation vers `/reset-password` (sans
+    // préfixe) était donc redirigée vers `/en/reset-password`, et les tests qui
+    // cherchent du texte français échouaient — alors que le code était correct.
+    //
+    // La suite de tests est **française** : elle doit se déclarer française. Un
+    // test i18n dédié couvre explicitement la version anglaise.
+    locale: 'fr-FR',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
