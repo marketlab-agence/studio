@@ -13,6 +13,27 @@
     "fr": "Français",
     "en": "Anglais"
   },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "courses": "Formations",
+    "certification": "Certification",
+    "aiAssistant": "Assistant IA",
+    "premium": "Premium",
+    "notifications": "Notifications",
+    "account": "Mon compte",
+    "certificate": "Certificat",
+    "subscription": "Abonnement",
+    "admin": "Administration",
+    "logout": "Déconnexion",
+    "blog": "Blog",
+    "pricing": "Tarifs",
+    "login": "Connexion",
+    "userMenu": "Menu utilisateur",
+    "features": "Fonctionnalités",
+    "about": "À propos",
+    "allRightsReserved": "Tous droits réservés.",
+    "userAvatar": "Avatar de l'utilisateur"
+  },
   "catalog": {
     "title": "Nos Formations Interactives",
     "subtitle": "Apprenez en faisant. Chaque cours est une simulation conçue pour vous rendre opérationnel.",

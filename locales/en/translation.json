@@ -13,6 +13,27 @@
     "fr": "French",
     "en": "English"
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "certification": "Certification",
+    "aiAssistant": "AI Assistant",
+    "premium": "Premium",
+    "notifications": "Notifications",
+    "account": "My account",
+    "certificate": "Certificate",
+    "subscription": "Subscription",
+    "admin": "Administration",
+    "logout": "Sign out",
+    "blog": "Blog",
+    "pricing": "Pricing",
+    "login": "Sign in",
+    "userMenu": "User menu",
+    "features": "Features",
+    "about": "About",
+    "allRightsReserved": "All rights reserved.",
+    "userAvatar": "User avatar"
+  },
   "catalog": {
     "title": "Our Interactive Courses",
     "subtitle": "Learn by doing. Every course is a simulation designed to make you operational.",
