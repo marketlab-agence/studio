@@ -55,6 +55,13 @@ interface SourceCourse {
   title: string;
   description?: string;
   status?: string;
+  /**
+   * Langue du contenu, choisie par le créateur.
+   *
+   * ⚠️ Absente vaut `'fr'` : c'est l'état réel des formations existantes, pas
+   * une valeur de remplissage. Une formation porte UNE langue — pas de traduction.
+   */
+  language?: string;
   plan?: unknown;
   generationParams?: unknown;
 }
@@ -176,13 +183,17 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
 
       for (const course of courses) {
         await client.query(
-    `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params, content_domain)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO courses (id, organization_id, title, description, status, plan, generation_params, content_domain, language)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            ON CONFLICT (id) DO UPDATE SET
              title = EXCLUDED.title, description = EXCLUDED.description,
              status = EXCLUDED.status, plan = EXCLUDED.plan,
              generation_params = EXCLUDED.generation_params,
-             content_domain = EXCLUDED.content_domain`,
+             content_domain = EXCLUDED.content_domain,
+             -- PAS de COALESCE volontairement, contrairement à bloom_level : la langue a un
+             -- défaut réel ('fr') et le créateur doit pouvoir la CHANGER (fr vers en). Un
+             -- COALESCE figerait la valeur d'origine et empêcherait ce changement.
+             language = EXCLUDED.language`,
           [
             course.id, organizationId, course.title, course.description ?? '',
             course.status ?? 'Brouillon',
@@ -192,6 +203,7 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
             // (« git-github-tutorial », « le-closing… ») : c'est plus fiable qu'une analyse
             // du titre, et cela évite de maintenir une table de correspondance à la main.
             (contentDomainFor(course.id) ?? undefined),
+            course.language ?? 'fr',
           ],
         );
 

@@ -1,39 +1,44 @@
-
 [
   {
     "id": "git-github-tutorial",
     "title": "Git & GitHub : Le Guide Complet",
     "description": "La compétence fondamentale pour tout développeur. De la première ligne de commande à la contribution open source.",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   },
   {
     "id": "le-closing-pour-debutants-de-prospect-a-client",
     "title": "Le Closing pour Débutants : De Prospect à Client",
     "description": "Ce cours est conçu pour les débutants souhaitant maîtriser l'art du closing. Vous apprendrez les bases, les techniques avancées, et comment gérer les objections pour transformer les prospects en clients fidèles. Développez vos compétences et atteignez vos objectifs de vente !",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   },
   {
     "id": "introduction-au-marketing-digital",
     "title": "Introduction au Marketing Digital",
     "description": "Ce cours vous initie au monde passionnant du marketing digital. Apprenez les bases, explorez les différents canaux, et découvrez comment créer du contenu engageant et optimiser votre présence en ligne. Conçu pour les débutants, ce cours vous donnera les clés pour réussir dans le marketing digital.",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   },
   {
     "id": "ingenierie-des-prompts-pour-debutants",
     "title": "Ingénierie des Prompts pour Débutants",
     "description": "Ce cours d'introduction à l'ingénierie des prompts est conçu pour les débutants souhaitant maîtriser l'art de communiquer efficacement avec les modèles de langage. Vous apprendrez les bases de la conception de prompts, les différentes techniques et stratégies, et comment optimiser vos prompts pour obtenir les meilleurs résultats possibles.",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   },
   {
     "id": "jira-de-zero-a-heros",
     "title": "Jira : De Zéro à Héros",
     "description": "Maîtrisez Jira et devenez un expert en gestion de projet Agile. Ce cours pour débutants vous guidera à travers les fonctionnalités essentielles de Jira, de la création de projets à la gestion des tâches et à l'analyse des performances de l'équipe. Apprenez à organiser, suivre et gérer le travail de votre équipe efficacement avec Jira.",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   },
   {
     "id": "automatisation-de-processus-informatique-pour-debutants-avec-n8n",
     "title": "Automatisation de processus informatique pour débutants avec n8n",
     "description": "Ce cours vous guidera à travers les bases de l'automatisation des processus informatiques en utilisant n8n, une plateforme puissante et flexible. Vous apprendrez à installer, configurer et utiliser n8n pour automatiser des tâches courantes, interagir avec des APIs, et intégrer des services cloud populaires. Conçu pour les débutants, ce cours vous donnera les compétences nécessaires pour créer des workflows efficaces et améliorer votre productivité.",
-    "status": "Publié"
+    "status": "Publié",
+    "language": "fr"
   }
 ]
