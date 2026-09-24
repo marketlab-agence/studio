@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { GitCommit, History, Pencil, Undo2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useFormatter } from 'next-intl';
 
 type Commit = {
   id: string;
@@ -30,6 +31,7 @@ const initialCommits: Commit[] = [
 ];
 
 export function VersioningDemo() {
+  const format = useFormatter();
   const [commits, setCommits] = useState<Commit[]>(initialCommits);
   const [currentContent, setCurrentContent] = useState<string>(initialContent);
   const [commitMessage, setCommitMessage] = useState<string>('');
@@ -87,7 +89,7 @@ export function VersioningDemo() {
                     >
                       <p className="font-semibold">{commit.message}</p>
                       <p className="text-xs text-muted-foreground">
-                        {commit.id} - {new Date(commit.timestamp).toLocaleString('fr-FR')}
+                          {commit.id} - {format.dateTime(new Date(commit.timestamp), { dateStyle: 'short', timeStyle: 'short' })}
                       </p>
                     </button>
                   ))}

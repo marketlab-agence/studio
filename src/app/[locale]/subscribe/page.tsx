@@ -10,8 +10,10 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
+import { useFormatter } from 'next-intl';
 
 export default function SubscribePage() {
+  const format = useFormatter();
   const router = useRouter();
   const { user, loading, isPremium, updateUserPlan } = useAuth();
   const { toast } = useToast();
@@ -85,7 +87,7 @@ export default function SubscribePage() {
                             <CardDescription className="mt-1">{premiumPlan.description}</CardDescription>
                         </div>
                         <div className="text-right">
-                            <p className="text-4xl font-bold">{premiumPlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</p>
+                            <p className="text-4xl font-bold">{format.number(premiumPlan.price, { style: 'currency', currency: 'EUR' })}</p>
                             <p className="text-xs text-muted-foreground">/ mois</p>
                         </div>
                     </div>

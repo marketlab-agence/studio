@@ -36,6 +36,7 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
+import { useFormatter } from 'next-intl';
 
 
 type StoredPlan = { plan: CreateCourseOutput; params: CreateCourseInput; localId: string; createdAt: Date };
@@ -47,6 +48,7 @@ type BuildStep = {
 };
 
 export default function CreateCoursePage() {
+    const format = useFormatter();
     const router = useRouter();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -437,7 +439,7 @@ export default function CreateCoursePage() {
                             <div key={storedPlan.localId} className={cn("p-3 rounded-md border flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-colors", activePlanId === storedPlan.localId ? 'bg-primary/10 border-primary' : 'bg-muted/50')}>
                                 <div>
                                     <p className="font-semibold">{storedPlan.plan.title}</p>
-                                    <p className="text-sm text-muted-foreground">{storedPlan.plan.chapters.length} chapitres - Généré à {storedPlan.createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <p className="text-sm text-muted-foreground">{storedPlan.plan.chapters.length} chapitres - Généré à {format.dateTime(storedPlan.createdAt, { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                                 <div className="flex gap-2 self-end sm:self-center">
                                     <Button variant="outline" size="sm" onClick={() => setActivePlanId(storedPlan.localId)} disabled={activePlanId === storedPlan.localId || isBuildingMode}><Pencil className="mr-2 h-4 w-4"/>Modifier</Button>

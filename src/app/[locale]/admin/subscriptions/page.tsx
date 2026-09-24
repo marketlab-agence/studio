@@ -6,10 +6,12 @@ import Link from 'next/link';
 import { CreditCard, PlusCircle, ChevronRight } from 'lucide-react';
 import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
+import { getFormatter } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSubscriptionsPage() {
+  const format = await getFormatter();
   const plans = (await getPlansAction()) as SubscriptionPlan[];
 
   return (
@@ -58,7 +60,7 @@ export default async function AdminSubscriptionsPage() {
               {plans.map(plan => (
                   <TableRow key={plan.id}>
                   <TableCell className="font-medium">{plan.name}</TableCell>
-                  <TableCell>{plan.price > 0 ? `${plan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}` : 'Gratuit'}</TableCell>
+                    <TableCell>{plan.price > 0 ? format.number(plan.price, { style: 'currency', currency: 'EUR' }) : 'Gratuit'}</TableCell>
                   <TableCell className="capitalize">{plan.billingPeriod === 'monthly' ? 'Mensuel' : plan.billingPeriod === 'yearly' ? 'Annuel' : 'Unique'}</TableCell>
                   <TableCell>
                     <Button asChild variant="outline" size="sm">

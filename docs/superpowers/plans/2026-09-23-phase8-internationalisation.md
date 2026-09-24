@@ -1131,6 +1131,19 @@ test.describe('internationalisation', () => {
     await expect(page.getByText(/French|Français/i).first()).toBeVisible();
   });
 
+  test('formate la devise selon la locale', async ({ page }) => {
+    // ⚠️ Vérification ajoutée après la Task 7 : le prix n'apparaît PAS dans le HTML
+    // initial (page cliente qui charge via fetch), donc curl ne peut pas le prouver.
+    // Seul un vrai navigateur voit le montant formaté.
+    await page.goto('/fr/pricing');
+    // En français : espace insécable comme séparateur de milliers, virgule décimale.
+    await expect(page.getByText(/9,99\s*€/)).toBeVisible();
+
+    await page.goto('/en/pricing');
+    // En anglais : point décimal, symbole en tête.
+    await expect(page.getByText(/€\s*9\.99/)).toBeVisible();
+  });
+
   test('le filtre de langue restreint la liste', async ({ page }) => {
     await page.goto('/fr/courses');
     // Les 6 formations sont en français : filtrer sur l'anglais doit vider la liste.

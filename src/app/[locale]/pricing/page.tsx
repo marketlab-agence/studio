@@ -9,6 +9,7 @@ import { Check, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useFormatter } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import {
@@ -26,6 +27,7 @@ import { getPlansAction } from '@/actions/planActions';
 import type { SubscriptionPlan } from '@/types/plans.types';
 
 export default function PricingPage() {
+  const format = useFormatter();
     const { user, loading, userPlan, updateUserPlan } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -157,7 +159,13 @@ export default function PricingPage() {
                     <CardTitle className="text-xl">{premiumPlan.name}</CardTitle>
                     <CardDescription>{premiumPlan.description}</CardDescription>
                     <div className="pt-4">
-                        <span className="text-4xl font-bold">{premiumPlan.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR'})}</span>
+                          {/*
+                            ⚠️ La devise reste l'euro — seule sa PRÉSENTATION suit la
+                            locale (`1 234,56 €` en français, `€1,234.56` en anglais).
+                            Changer de devise serait une décision commerciale, hors
+                            périmètre de l'internationalisation.
+                          */}
+                          <span className="text-4xl font-bold">{format.number(premiumPlan.price, { style: 'currency', currency: 'EUR' })}</span>
                         <span className="text-muted-foreground">/mois</span>
                     </div>
                 </CardHeader>

@@ -7,12 +7,20 @@ import { Input } from '@/components/ui/input';
 import { GitCommitHorizontal, ShieldCheck, Download, Linkedin, Loader2, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormatter } from 'next-intl';
 
 export function CertificateGenerator({ courseTitle, averageQuizScore, masteryIndex, instructorName }: { courseTitle: string, averageQuizScore: number, masteryIndex: number, instructorName: string }) {
     const { user, loading } = useAuth();
+    const format = useFormatter();
     const [name, setName] = useState('');
     const [generated, setGenerated] = useState(false);
-    const [completionDate, setCompletionDate] = useState('');
+    /**
+     * ⚠️ **On stocke la Date, pas son texte formaté.** Formater au moment du clic
+     * figerait la locale de cet instant : un utilisateur qui change de langue après
+     * avoir généré son certificat garderait l'ancien format. La mise en forme se
+     * fait donc au rendu, où la locale courante est connue.
+     */
+    const [completionDate, setCompletionDate] = useState<Date | null>(null);
     const [certificateId, setCertificateId] = useState('');
     const certificateRef = useRef<HTMLDivElement>(null);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -26,11 +34,7 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
 
     const handleGenerate = () => {
         if (name.trim()) {
-            setCompletionDate(new Date().toLocaleDateString('fr-FR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            }));
+              setCompletionDate(new Date());
              setCertificateId(`KAT-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
             setGenerated(true);
         }
@@ -136,7 +140,7 @@ export function CertificateGenerator({ courseTitle, averageQuizScore, masteryInd
                         <div className="pt-8 w-full grid grid-cols-3 items-end gap-4">
                             <div className="text-left text-xs space-y-1">
                                 <p className="font-code text-muted-foreground">Certificat No: {certificateId}</p>
-                                <p className="font-code text-muted-foreground">Date d'émission: {completionDate}</p>
+                                  <p className="font-code text-muted-foreground">Date d'émission: {completionDate ? format.dateTime(completionDate, { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
                             </div>
 
                             <div className="flex flex-col items-center">
