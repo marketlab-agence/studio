@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { BLOG_POSTS, BlogPost } from '@/lib/blog';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
@@ -32,7 +33,8 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage({ params }: Props) {
+  const t = await getTranslations('blog');
   const post = BLOG_POSTS.find((p) => p.slug === params.slug);
 
   if (!post) {
@@ -43,7 +45,7 @@ export default function BlogPostPage({ params }: Props) {
     <main className="flex-1 py-12 md:py-16">
       <article className="container max-w-3xl px-4 md:px-6">
         <header className="mb-8 text-center">
-          <p className="text-muted-foreground">{post.date} &bull; Par {post.author}</p>
+          <p className="text-muted-foreground">{post.date} &bull; {t('byAuthor', { author: post.author })}</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tighter sm:text-5xl">{post.title}</h1>
         </header>
 
@@ -75,7 +77,7 @@ export default function BlogPostPage({ params }: Props) {
                 return (
                     <Alert className="bg-muted/50 my-6">
                         <Lightbulb className="h-5 w-5" />
-                        <AlertTitle>Bon à savoir</AlertTitle>
+                        <AlertTitle>{t('goodToKnow')}</AlertTitle>
                         <AlertDescription>
                             {children}
                         </AlertDescription>

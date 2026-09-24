@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,8 @@ import type { SubscriptionPlan } from '@/types/plans.types';
 
 export default function PricingPage() {
   const format = useFormatter();
+    const t = useTranslations('pricing');
+    const tc = useTranslations('common');
     const { user, loading, userPlan, updateUserPlan } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -35,7 +37,7 @@ export default function PricingPage() {
     const [plansLoading, setPlansLoading] = useState(true);
 
     useEffect(() => {
-        document.title = 'Tarifs - Katalyst';
+        document.title = t('documentTitle');
         async function fetchPlans() {
             setPlansLoading(true);
             try {
@@ -43,20 +45,20 @@ export default function PricingPage() {
                 setPlans(fetchedPlans);
             } catch (error) {
                 console.error("Failed to fetch plans:", error);
-                toast({ title: "Erreur", description: "Impossible de charger les offres.", variant: 'destructive'});
+                toast({ title: t('errorTitle'), description: t('errorLoad'), variant: 'destructive'});
             } finally {
                 setPlansLoading(false);
             }
         }
         fetchPlans();
-    }, [toast]);
+    }, [toast, t]);
 
     const handleDowngrade = () => {
         if (updateUserPlan) {
             updateUserPlan('free');
             toast({
-                title: 'Changement de formule confirmé',
-                description: 'Votre abonnement a été annulé. Vous ne serez plus facturé à la prochaine échéance.',
+                title: t('downgradeTitle'),
+                description: t('downgradeDescription'),
             });
         }
     };
@@ -66,7 +68,7 @@ export default function PricingPage() {
             <main className="flex-1 flex flex-col items-center justify-center p-4">
                 <div className="flex items-center text-muted-foreground">
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    <span>Chargement...</span>
+                    <span>{t('loading')}</span>
                 </div>
             </main>
         );
@@ -81,10 +83,10 @@ export default function PricingPage() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <Badge variant="outline">Nos Formules</Badge>
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Un tarif simple et transparent.</h1>
+              <Badge variant="outline">{t('badge')}</Badge>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">{t('title')}</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Débloquez tout le potentiel de Katalyst et accélérez votre carrière.
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -97,7 +99,7 @@ export default function PricingPage() {
                     <CardDescription>{freePlan.description}</CardDescription>
                     <div className="pt-4">
                         <span className="text-4xl font-bold">{freePlan.price > 0 ? `${freePlan.price}€` : '0€'}</span>
-                        <span className="text-muted-foreground">/mois</span>
+                        <span className="text-muted-foreground">{t('perMonth')}</span>
                     </div>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -114,30 +116,30 @@ export default function PricingPage() {
                     {
                         !user ? (
                             <Button variant="outline" className="w-full" asChild>
-                                <Link href="/login">Commencer gratuitement</Link>
+                                <Link href="/login">{t('startFree')}</Link>
                             </Button>
                         ) : userPlan?.id === 'free' ? (
                             <Button variant="outline" className="w-full" disabled>
-                                Votre formule actuelle
+                                {t('currentPlan')}
                             </Button>
                         ) : ( // User is Premium
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="outline" className="w-full">
                                         <RefreshCw className="mr-2 h-4 w-4" />
-                                        Passer à la formule Gratuite
+                                        {t('switchToFree')}
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                    <AlertDialogTitle>Voulez-vous vraiment changer de formule ?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t('confirmSwitchTitle')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Votre abonnement Premium sera annulé. Vous perdrez l'accès aux fonctionnalités Premium à la fin de votre période de facturation actuelle. Êtes-vous sûr de vouloir continuer ?
+                                        {t('confirmSwitchDescription')}
                                     </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDowngrade}>Confirmer le passage en Gratuit</AlertDialogAction>
+                                    <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDowngrade}>{t('confirmSwitchAction')}</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -153,7 +155,7 @@ export default function PricingPage() {
                     premiumPlan.recommended && "relative"
                 )}>
                     {premiumPlan.recommended && (
-                        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Recommandé</Badge>
+                        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t('recommended')}</Badge>
                     )}
                 <CardHeader>
                     <CardTitle className="text-xl">{premiumPlan.name}</CardTitle>
@@ -166,14 +168,14 @@ export default function PricingPage() {
                             périmètre de l'internationalisation.
                           */}
                           <span className="text-4xl font-bold">{format.number(premiumPlan.price, { style: 'currency', currency: 'EUR' })}</span>
-                        <span className="text-muted-foreground">/mois</span>
+                        <span className="text-muted-foreground">{t('perMonth')}</span>
                     </div>
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <ul className="space-y-3">
                         <li className="flex items-center gap-2 font-semibold">
                             <Check className="h-5 w-5 text-primary" />
-                            <span>Toutes les fonctionnalités gratuites, et :</span>
+                            <span>{t('allFreeFeatures')}</span>
                         </li>
                         {premiumPlan.features.map((feature, i) => (
                              <li key={i} className="flex items-center gap-2 pl-7">
@@ -189,18 +191,18 @@ export default function PricingPage() {
                             <Button className="w-full" size="lg" asChild>
                                 <Link href="/login?redirect=/subscribe">
                                     <Sparkles className="mr-2 h-5 w-5"/>
-                                    Passer au Premium
+                                    {t('goPremium')}
                                 </Link>
                             </Button>
                         ) : userPlan?.id === 'premium' ? (
                             <Button className="w-full" size="lg" disabled>
-                                Votre formule actuelle
+                                {t('currentPlan')}
                             </Button>
                         ) : ( // User is Free
                             <Button className="w-full" size="lg" asChild>
                                 <Link href="/subscribe">
                                     <Sparkles className="mr-2 h-5 w-5"/>
-                                    Mettre à niveau
+                                    {t('upgrade')}
                                 </Link>
                             </Button>
                         )

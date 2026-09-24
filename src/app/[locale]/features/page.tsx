@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { Terminal, MousePointerClick, BrainCircuit, Bot, AreaChart, CheckCircle } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
@@ -8,48 +9,26 @@ export const metadata: Metadata = {
 };
 
 const features = [
-  {
-    icon: MousePointerClick,
-    title: 'Simulations Interactives',
-    description: "Plongez dans des leçons qui intègrent des simulateurs pour une pratique immédiate. Apprenez en faisant, pas seulement en lisant.",
-  },
-  {
-    icon: Terminal,
-    title: 'Environnements Sans Risque',
-    description: "Utilisez des interfaces et terminaux intégrés pour manipuler les outils dans un environnement sécurisé, sans craindre de casser quoi que ce soit.",
-  },
-  {
-    icon: BrainCircuit,
-    title: 'Visualisations Claires',
-    description: "Comprenez les concepts complexes comme les workflows Jira, les architectures AWS ou les flux de données grâce à des diagrammes animés et interactifs.",
-  },
-  {
-    icon: Bot,
-    title: 'Aide Contextuelle IA',
-    description: "Coincé sur une tâche ? Notre IA vous fournit des explications et des indices basés sur votre état actuel dans le simulateur.",
-  },
-  {
-    icon: AreaChart,
-    title: 'Suivi de Compétences',
-    description: "Visualisez votre progression, vos scores aux quiz et votre maîtrise des fonctionnalités sur un tableau de bord personnalisé.",
-  },
-  {
-    icon: CheckCircle,
-    title: 'Validation des Acquis',
-    description: "Testez vos connaissances avec des projets finaux et obtenez une certification pour valider vos nouvelles compétences.",
-  },
+  { icon: MousePointerClick, key: 'interactiveSimulations' },
+  { icon: Terminal, key: 'safeEnvironments' },
+  { icon: BrainCircuit, key: 'clearVisualizations' },
+  { icon: Bot, key: 'aiHelp' },
+  { icon: AreaChart, key: 'skillTracking' },
+  { icon: CheckCircle, key: 'validation' },
 ];
 
-export default function FeaturesPage() {
+export default async function FeaturesPage() {
+  const t = await getTranslations('features');
+
   return (
     <main className="flex-1 bg-muted/20">
       <section className="w-full py-12 md:py-20 lg:py-24">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">La compétence par la pratique.</h1>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">{t('title')}</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Katalyst est conçu autour d'un principe simple : la meilleure façon d'apprendre est de pratiquer. C'est pourquoi nous avons conçu des fonctionnalités qui vous immergent dans des scénarios réels pour une maîtrise accélérée de l'essentiel.
+                {t('intro')}
               </p>
             </div>
           </div>
@@ -60,10 +39,10 @@ export default function FeaturesPage() {
                   <div className="p-2 bg-primary/10 rounded-full">
                     <feature.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg">{t(`items.${feature.key}.title`)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <p className="text-sm text-muted-foreground">{t(`items.${feature.key}.description`)}</p>
                 </CardContent>
               </Card>
             ))}

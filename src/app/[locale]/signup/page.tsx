@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
@@ -25,6 +26,7 @@ import { MIN_PASSWORD_LENGTH } from '@/lib/auth/policy';
  * pose des cookies `httpOnly`.
  */
 export default function SignupPage() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const { refreshSession } = useAuth();
 
@@ -44,7 +46,7 @@ export default function SignupPage() {
 
     // Vérifié ici pour éviter un aller-retour inutile ; le serveur revalide.
     if (password !== confirmation) {
-      setError('Les deux mots de passe ne correspondent pas.');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
 
@@ -69,15 +71,15 @@ export default function SignupPage() {
     <main className="flex-1 flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight">Créer un compte</h1>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">{t('signupTitle')}</h1>
           <CardDescription>
-            Votre espace de formation est créé automatiquement : vous en serez le propriétaire.
+            {t('signupDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nom à afficher</Label>
+              <Label htmlFor="name">{t('displayName')}</Label>
               <Input
                 id="name"
                 type="text"
@@ -91,7 +93,7 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Adresse email</Label>
+              <Label htmlFor="email">{t('emailAddress')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -105,7 +107,7 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <PasswordInput
                 id="password"
                 autoComplete="new-password"
@@ -116,12 +118,12 @@ export default function SignupPage() {
                 disabled={isSubmitting}
               />
               <p className="text-xs text-muted-foreground">
-                Au moins {MIN_PASSWORD_LENGTH} caractères.
+                {t('passwordHint', { count: MIN_PASSWORD_LENGTH })}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmation">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmation">{t('confirmPassword')}</Label>
               <PasswordInput
                 id="confirmation"
                 
@@ -145,7 +147,7 @@ export default function SignupPage() {
                 className="mt-1"
               />
               <Label htmlFor="acceptTerms" className="text-sm font-normal">
-                J’accepte les conditions d’utilisation et la politique de confidentialité.
+                {t('acceptTerms')}
               </Label>
             </div>
 
@@ -164,14 +166,14 @@ export default function SignupPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isSubmitting || !accepted}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Créer mon compte'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : t('createAccount')}
             </Button>
           </form>
 
           <div className="text-center text-sm">
-            Vous avez déjà un compte ?{' '}
+            {t('alreadyHaveAccount')}{' '}
             <Link href="/login" className="underline">
-              Connectez-vous
+              {t('signInLink')}
             </Link>
           </div>
         </CardContent>

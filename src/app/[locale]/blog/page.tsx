@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations } from 'next-intl/server';
 import { BLOG_POSTS } from '@/lib/blog';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
@@ -10,16 +11,18 @@ export const metadata: Metadata = {
   description: 'Articles, tutoriels et astuces pour maîtriser les outils professionnels du développement et du DevOps.',
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const t = await getTranslations('blog');
+
   return (
     <main className="flex-1">
       <section className="w-full py-12 md:py-20 lg:py-24">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Le Blog Katalyst</h1>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">{t('title')}</h1>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Conseils, astuces et réflexions pour vous aider à devenir plus efficace avec les outils que vous utilisez tous les jours.
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -36,7 +39,7 @@ export default function BlogPage() {
                             <Badge variant="secondary">{post.date}</Badge>
                         </div>
                         <div className="flex items-center font-semibold text-primary">
-                            Lire la suite <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            {t('readMore')} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </div>
                     </CardFooter>
                  </Card>

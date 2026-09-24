@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import { Loader2 } from 'lucide-react';
  * serveur qui le décide, et cette page se contente de l'afficher.
  */
 export default function ForgotPasswordPage() {
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -39,13 +41,13 @@ export default function ForgotPasswordPage() {
       const payload = await response.json();
 
       if (!response.ok) {
-        setError(payload.message ?? 'La demande n’a pas pu aboutir. Réessayez.');
+        setError(payload.message ?? t('forgotError'));
         return;
       }
 
       setMessage(payload.message);
     } catch {
-      setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
+      setError(t('serverUnreachable'));
     } finally {
       setIsSubmitting(false);
     }
@@ -58,10 +60,10 @@ export default function ForgotPasswordPage() {
           {/* Un vrai titre de niveau 1 : `CardTitle` produit un `div`, ce qui
               laisse la page sans structure de titres (WCAG 2.2 AA). */}
           <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            Mot de passe oublié
+            {t('forgotTitle')}
           </h1>
           <CardDescription>
-            Indiquez votre adresse : nous vous enverrons un lien pour définir un nouveau mot de passe.
+            {t('forgotDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -74,7 +76,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -94,14 +96,14 @@ export default function ForgotPasswordPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Envoyer le lien'}
+                {isSubmitting ? <Loader2 className="animate-spin" /> : t('sendLink')}
               </Button>
             </form>
           )}
 
           <div className="text-center text-sm">
             <Link href="/login" className="underline">
-              Retour à la connexion
+              {t('backToLogin')}
             </Link>
           </div>
         </CardContent>

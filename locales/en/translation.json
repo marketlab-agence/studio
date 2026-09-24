@@ -47,5 +47,123 @@
     "comingSoonTitle": "Upcoming Courses",
     "comingSoonSubtitle": "Our catalog keeps growing. Here is a preview of what is coming.",
     "comingSoonBadge": "Coming soon"
+  },
+  "about": {
+    "title": "Our Mission: Accelerating Your Mastery.",
+    "paragraph1": "In the world of technology, knowing is not enough. You have to know how to *do*. Yet most courses stop at theory, leaving you with a gap between what you learned and what you need to accomplish.",
+    "paragraph2": "**Katalyst** was created to bridge that gap. We believe skill is born from deliberate practice. That is why we built a unique learning platform that immerses you in simulated environments and real scenarios. You do not just watch, you manipulate. You do not just read, you build.",
+    "paragraph3": "Our goal is to transform the way you learn professional tools, moving from passive assimilation to active skill acquisition. So that you are not only ready, but truly operational.",
+    "imageAlt": "An image representing technology and learning"
+  },
+  "features": {
+    "title": "Skill through practice.",
+    "intro": "Katalyst is built around a simple principle: the best way to learn is to practice. That is why we designed features that immerse you in real scenarios for accelerated mastery of the essentials.",
+    "items": {
+      "interactiveSimulations": {
+        "title": "Interactive Simulations",
+        "description": "Dive into lessons that include simulators for immediate practice. Learn by doing, not just by reading."
+      },
+      "safeEnvironments": {
+        "title": "Risk-Free Environments",
+        "description": "Use built-in interfaces and terminals to manipulate tools in a secure environment, without fear of breaking anything."
+      },
+      "clearVisualizations": {
+        "title": "Clear Visualizations",
+        "description": "Understand complex concepts such as Jira workflows, AWS architectures or data flows through animated, interactive diagrams."
+      },
+      "aiHelp": {
+        "title": "Contextual AI Help",
+        "description": "Stuck on a task? Our AI provides explanations and hints based on your current state in the simulator."
+      },
+      "skillTracking": {
+        "title": "Skill Tracking",
+        "description": "Visualize your progress, quiz scores and feature mastery on a personalized dashboard."
+      },
+      "validation": {
+        "title": "Validation of Acquired Skills",
+        "description": "Test your knowledge with final projects and earn a certification to validate your new skills."
+      }
+    }
+  },
+  "pricing": {
+    "documentTitle": "Pricing - Katalyst",
+    "errorTitle": "Error",
+    "errorLoad": "Unable to load the plans.",
+    "downgradeTitle": "Plan change confirmed",
+    "downgradeDescription": "Your subscription has been cancelled. You will no longer be billed at the next due date.",
+    "loading": "Loading...",
+    "badge": "Our Plans",
+    "title": "Simple, transparent pricing.",
+    "subtitle": "Unlock the full potential of Katalyst and accelerate your career.",
+    "perMonth": "/month",
+    "startFree": "Get started for free",
+    "currentPlan": "Your current plan",
+    "switchToFree": "Switch to the Free plan",
+    "confirmSwitchTitle": "Do you really want to change your plan?",
+    "confirmSwitchDescription": "Your Premium subscription will be cancelled. You will lose access to Premium features at the end of your current billing period. Are you sure you want to continue?",
+    "confirmSwitchAction": "Confirm switch to Free",
+    "recommended": "Recommended",
+    "allFreeFeatures": "All free features, plus:",
+    "goPremium": "Go Premium",
+    "upgrade": "Upgrade"
+  },
+  "blog": {
+    "title": "The Katalyst Blog",
+    "subtitle": "Tips, tricks and thoughts to help you become more efficient with the tools you use every day.",
+    "readMore": "Read more",
+    "byAuthor": "By {author}",
+    "goodToKnow": "Good to know"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "passwordsDoNotMatch": "The two passwords do not match.",
+    "backToLogin": "Back to sign in",
+    "welcome": "Welcome",
+    "signInToContinue": "Sign in to continue.",
+    "continueWithGoogle": "Continue with Google",
+    "orByEmail": "Or by email",
+    "signIn": "Sign in",
+    "forgotPasswordQuestion": "Forgot your password?",
+    "noAccount": "Don’t have an account?",
+    "signUp": "Sign up",
+    "mfaTitle": "Two-step verification",
+    "mfaDescription": "Enter the 6-digit code shown by your authenticator app.",
+    "verificationCode": "Verification code",
+    "validate": "Validate",
+    "backToSignIn": "Back to sign in",
+    "oauthGoogleUnavailable": "Google sign-in is not configured on this server. Use your email address.",
+    "oauthGoogleInvalidState": "The sign-in request has expired or is invalid. Please try again.",
+    "oauthGoogleDenied": "You denied access to your Google account.",
+    "oauthGoogleNoCode": "Google did not return an authorization. Please try again.",
+    "oauthGoogleInvalidToken": "Google's response could not be verified. Sign-in denied.",
+    "oauthGoogleError": "Google sign-in failed. Please try again.",
+    "oauthGoogleAlreadyLinked": "This Google account is already linked to another user. Contact an administrator.",
+    "oauthAccountDisabled": "This account is disabled. Contact an administrator.",
+    "oauthGoogleConnectionFailed": "Google sign-in could not complete. Please try again.",
+    "signupTitle": "Create an account",
+    "signupDescription": "Your training space is created automatically: you will be the owner.",
+    "displayName": "Display name",
+    "emailAddress": "Email address",
+    "passwordHint": "At least {count} characters.",
+    "acceptTerms": "I accept the terms of use and the privacy policy.",
+    "createAccount": "Create my account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "forgotTitle": "Forgot password",
+    "forgotDescription": "Enter your address: we will send you a link to set a new password.",
+    "sendLink": "Send the link",
+    "forgotError": "The request could not be completed. Please try again.",
+    "serverUnreachable": "Unable to reach the server. Check your connection.",
+    "resetIncompleteTitle": "Incomplete link",
+    "resetIncompleteDescription": "This link does not contain a reset token. Request a new one.",
+    "requestNewLink": "Request a new link",
+    "resetError": "The reset could not be completed.",
+    "newPasswordTitle": "New password",
+    "newPasswordDescription": "Choose a password of at least {count} characters.",
+    "newPasswordLabel": "New password",
+    "setPassword": "Set password",
+    "redirectNotice": "You will be redirected to the sign-in page."
   }
 }

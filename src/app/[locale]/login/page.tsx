@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
@@ -15,25 +16,22 @@ import { completeMfaRequest, loginRequest } from '@/lib/auth/client';
 import { safeRedirectPath } from '@/lib/auth/redirect';
 
 /**
- * Messages associés aux échecs du parcours Google.
+ * Clés de traduction associées aux échecs du parcours Google.
  *
  * Le rappel OAuth redirige ici avec un code dans l'URL : sans traduction,
  * l'utilisateur ne verrait qu'une page de connexion inchangée après avoir cliqué
  * sur « Continuer avec Google », sans savoir ce qui s'est passé.
  */
-const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  google_indisponible:
-    'La connexion Google n’est pas configurée sur ce serveur. Utilisez votre adresse email.',
-  google_etat_invalide:
-    'La demande de connexion a expiré ou n’est pas valide. Merci de réessayer.',
-  google_refuse: 'Vous avez refusé l’accès à votre compte Google.',
-  google_sans_code: 'Google n’a pas renvoyé d’autorisation. Merci de réessayer.',
-  google_jeton_invalide: 'La réponse de Google n’a pas pu être vérifiée. Connexion refusée.',
-  google_erreur: 'La connexion Google a échoué. Merci de réessayer.',
-  google_deja_rattache:
-    'Ce compte Google est déjà rattaché à un autre utilisateur. Contactez un administrateur.',
-  compte_desactive: 'Ce compte est désactivé. Contactez un administrateur.',
-  google_connexion_impossible: 'La connexion Google n’a pas pu aboutir. Merci de réessayer.',
+const OAUTH_ERROR_KEYS: Record<string, string> = {
+  google_indisponible: 'oauthGoogleUnavailable',
+  google_etat_invalide: 'oauthGoogleInvalidState',
+  google_refuse: 'oauthGoogleDenied',
+  google_sans_code: 'oauthGoogleNoCode',
+  google_jeton_invalide: 'oauthGoogleInvalidToken',
+  google_erreur: 'oauthGoogleError',
+  google_deja_rattache: 'oauthGoogleAlreadyLinked',
+  compte_desactive: 'oauthAccountDisabled',
+  google_connexion_impossible: 'oauthGoogleConnectionFailed',
 };
 
 /**
@@ -50,6 +48,7 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
  *    repris de Firebase n'ont pas de mot de passe utilisable.
  */
 function LoginForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshSession } = useAuth();
@@ -67,7 +66,8 @@ function LoginForm() {
   const destination = safeRedirectPath(searchParams.get('redirect'));
 
   // Un échec du parcours Google revient ici sous forme de code.
-  const oauthError = OAUTH_ERROR_MESSAGES[searchParams.get('error') ?? ''] ?? null;
+  const oauthErrorKey = OAUTH_ERROR_KEYS[searchParams.get('error') ?? ''];
+  const oauthError = oauthErrorKey ? t(oauthErrorKey) : null;
   const displayedError = error ?? oauthError;
 
   async function finish() {
@@ -128,16 +128,16 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            Vérification en deux étapes
+            {t('mfaTitle')}
           </h1>
           <CardDescription>
-            Saisissez le code à 6 chiffres affiché par votre application d’authentification.
+            {t('mfaDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleMfa} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Code de vérification</Label>
+              <Label htmlFor="code">{t('verificationCode')}</Label>
               <Input
                 id="code"
                 // `one-time-code` permet le remplissage automatique par le
@@ -161,7 +161,7 @@ function LoginForm() {
             )}
 
             <Button type="submit" className="w-full" disabled={isSubmitting || code.length !== 6}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Valider'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : t('validate')}
             </Button>
           </form>
 
@@ -175,7 +175,7 @@ function LoginForm() {
                 setError(null);
               }}
             >
-              Revenir à la connexion
+              {t('backToSignIn')}
             </button>
           </div>
         </CardContent>
@@ -187,8 +187,8 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold leading-none tracking-tight">Bienvenue</h1>
-        <CardDescription>Connectez-vous pour continuer.</CardDescription>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight">{t('welcome')}</h1>
+        <CardDescription>{t('signInToContinue')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/*
@@ -200,7 +200,7 @@ function LoginForm() {
         */}
         <Button variant="outline" className="w-full" asChild>
           <a href={`/api/auth/google?redirect=${encodeURIComponent(destination)}`}>
-            Continuer avec Google
+            {t('continueWithGoogle')}
           </a>
         </Button>
 
@@ -209,13 +209,13 @@ function LoginForm() {
             <Separator />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Ou par email</span>
+            <span className="bg-background px-2 text-muted-foreground">{t('orByEmail')}</span>
           </div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <Input
               id="email"
               type="email"
@@ -228,7 +228,7 @@ function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <PasswordInput
               id="password"
               autoComplete="current-password"
@@ -246,19 +246,19 @@ function LoginForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Se connecter'}
+            {isSubmitting ? <Loader2 className="animate-spin" /> : t('signIn')}
           </Button>
         </form>
 
         <div className="text-center text-sm">
           <Link href="/forgot-password" className="underline">
-            Mot de passe oublié ?
+            {t('forgotPasswordQuestion')}
           </Link>
         </div>
         <div className="text-center text-sm">
-          Vous n’avez pas de compte ?{' '}
+          {t('noAccount')}{' '}
           <Link href="/signup" className="underline">
-            Inscrivez-vous
+            {t('signUp')}
           </Link>
         </div>
       </CardContent>
@@ -267,6 +267,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useTranslations('common');
+
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
       {/* `useSearchParams` exige une frontière Suspense. */}
@@ -274,7 +276,7 @@ export default function LoginPage() {
         fallback={
           <div className="flex items-center text-muted-foreground">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            <span>Chargement…</span>
+            <span>{t('loading')}</span>
           </div>
         }
       >

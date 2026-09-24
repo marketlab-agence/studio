@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { MIN_PASSWORD_LENGTH } from '@/lib/auth/policy';
  * passe — un lien d'email ne doit pas valoir authentification.
  */
 function ResetPasswordForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const token = useSearchParams().get('token');
 
@@ -35,14 +37,14 @@ function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight">Lien incomplet</h1>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">{t('resetIncompleteTitle')}</h1>
           <CardDescription>
-            Ce lien ne contient pas de jeton de réinitialisation. Demandez-en un nouveau.
+            {t('resetIncompleteDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href="/forgot-password">Demander un nouveau lien</Link>
+            <Link href="/forgot-password">{t('requestNewLink')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -55,7 +57,7 @@ function ResetPasswordForm() {
 
     // Vérifié ici pour éviter un aller-retour inutile ; le serveur revalide.
     if (password !== confirmation) {
-      setError('Les deux mots de passe ne correspondent pas.');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
 
@@ -71,7 +73,7 @@ function ResetPasswordForm() {
       const payload = await response.json();
 
       if (!response.ok) {
-        setError(payload.message ?? 'La réinitialisation n’a pas pu aboutir.');
+        setError(payload.message ?? t('resetError'));
         return;
       }
 
@@ -79,7 +81,7 @@ function ResetPasswordForm() {
       // Redirection différée : l'utilisateur doit pouvoir lire la confirmation.
       setTimeout(() => router.push('/login'), 2500);
     } catch {
-      setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
+      setError(t('serverUnreachable'));
     } finally {
       setIsSubmitting(false);
     }
@@ -88,20 +90,20 @@ function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold leading-none tracking-tight">Nouveau mot de passe</h1>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight">{t('newPasswordTitle')}</h1>
         <CardDescription>
-          Choisissez un mot de passe d’au moins {MIN_PASSWORD_LENGTH} caractères.
+          {t('newPasswordDescription', { count: MIN_PASSWORD_LENGTH })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {message ? (
           <p role="status" className="text-sm text-muted-foreground">
-            {message} Vous allez être redirigé vers la page de connexion.
+            {message} {t('redirectNotice')}
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
+              <Label htmlFor="password">{t('newPasswordLabel')}</Label>
               <PasswordInput
                 id="password"
                 
@@ -114,7 +116,7 @@ function ResetPasswordForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmation">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmation">{t('confirmPassword')}</Label>
               <PasswordInput
                 id="confirmation"
                 
@@ -134,14 +136,14 @@ function ResetPasswordForm() {
             )}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Définir le mot de passe'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : t('setPassword')}
             </Button>
           </form>
         )}
 
         <div className="text-center text-sm">
           <Link href="/login" className="underline">
-            Retour à la connexion
+            {t('backToLogin')}
           </Link>
         </div>
       </CardContent>
@@ -150,6 +152,8 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('common');
+
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-4">
       {/* `useSearchParams` exige une frontière Suspense : sans elle, Next refuse
@@ -158,7 +162,7 @@ export default function ResetPasswordPage() {
         fallback={
           <div className="flex items-center text-muted-foreground">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            <span>Chargement…</span>
+            <span>{t('loading')}</span>
           </div>
         }
       >
