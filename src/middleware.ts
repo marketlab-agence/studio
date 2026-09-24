@@ -59,6 +59,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cheminMetier = sansLocale(pathname);
 
+  /**
+   * Locale de l'utilisateur, déduite de l'URL.
+   *
+   * ⚠️ **Les redirections ne doivent pas imposer le français.** Un visiteur qui
+   * arrive sur `/en/dashboard` sans session doit être renvoyé vers `/en/login`,
+   * pas vers `/fr/login` : le forcer à changer de langue au moment où il est déjà
+   * interrompu ajoute de la friction sans raison.
+   *
+   * Le repli est la locale par défaut uniquement quand l'URL n'en porte aucune —
+   * cas d'une visite directe sur `/dashboard`.
+   */
+  const localeCourante = routing.locales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) ?? routing.defaultLocale;
+
   const claims = await tryVerifyAccessToken(request.cookies.get(ACCESS_COOKIE)?.value);
 
   if (!claims && isProtectedPath(cheminMetier)) {
@@ -66,7 +79,7 @@ export async function middleware(request: NextRequest) {
     // La cible porte un préfixe de locale : la redirection traverse `handleI18n`
     // sans être réécrite. Le chemin mémorisé, lui, reste **sans locale**, pour
     // que le retour post-connexion le re-localise.
-    url.pathname = `/${routing.defaultLocale}/login`;
+      url.pathname = `/${localeCourante}/login`;
     url.search = '';
     // La destination est dérivée du chemin courant, jamais d'un paramètre fourni
     // par le client : pas de redirection ouverte possible ici.
@@ -74,9 +87,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (claims && isGuestOnlyPath(cheminMetier)) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${routing.defaultLocale}/dashboard`;
+    if (claims && isGuestOnlyPath(cheminMetier)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${localeCourante}/dashboard`;
     url.search = '';
     return NextResponse.redirect(url);
   }
@@ -88,9 +101,9 @@ export async function middleware(request: NextRequest) {
   // Le contrôle qui fait foi est dans les server actions (`@/lib/auth/server`),
   // seuls endroits où l'organisation et la base sont accessibles. Ici, on évite
   // surtout à un apprenant de tomber sur une page admin en erreur.
-  if (claims && isAdminPath(cheminMetier) && !canAccessAdminUi(claims.role)) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${routing.defaultLocale}/dashboard`;
+    if (claims && isAdminPath(cheminMetier) && !canAccessAdminUi(claims.role)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${localeCourante}/dashboard`;
     url.search = '';
     return NextResponse.redirect(url);
   }
