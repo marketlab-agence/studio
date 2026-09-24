@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { getAdminCoursesAction, getSettingsAction, updateSettingsAction, getAdminUsersAction } from '@/actions/adminActions';
@@ -23,7 +23,7 @@ import type { AppSettings } from '@/types/settings.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useFormatter } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 type AdminCourse = {
     id: string;
@@ -35,6 +35,8 @@ type AdminCourse = {
 
 export default function AdminDashboardPage() {
   const format = useFormatter();
+  const t = useTranslations('admin');
+  const tc = useTranslations('common');
   const { user: authUser } = useAuth();
   const { toast } = useToast();
 
@@ -82,22 +84,22 @@ export default function AdminDashboardPage() {
             }
         } catch (error) {
             console.error("Failed to load admin data", error);
-            toast({ title: 'Erreur', description: 'Impossible de charger les données du tableau de bord.', variant: 'destructive'});
+            toast({ title: tc('errorTitle'), description: t('dashboard.loadErrorDescription'), variant: 'destructive'});
         } finally {
             setDataLoading(false);
         }
     }
     loadAdminData();
-  }, [toast]);
+  }, [toast, t, tc]);
   
   const handleSaveSettings = async () => {
     if (!instructorName) return;
     setIsSavingSettings(true);
     try {
         await updateSettingsAction({ instructorName });
-        toast({ title: 'Paramètres sauvegardés !', description: 'Le nom de l\'instructeur a été mis à jour.' });
+        toast({ title: t('dashboard.settingsSavedTitle'), description: t('dashboard.settingsSavedDescription') });
     } catch (e) {
-        toast({ title: 'Erreur', description: 'La sauvegarde a échoué.', variant: 'destructive' });
+        toast({ title: tc('errorTitle'), description: t('dashboard.settingsErrorDescription'), variant: 'destructive' });
     } finally {
         setIsSavingSettings(false);
     }
@@ -111,8 +113,8 @@ export default function AdminDashboardPage() {
             <LayoutDashboard className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tableau de Bord</h1>
-            <p className="text-muted-foreground">Vue d'ensemble de votre plateforme Katalyst.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+            <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
           </div>
         </div>
 
@@ -134,48 +136,48 @@ export default function AdminDashboardPage() {
         ) : (
             <>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Utilisateurs Totals</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
-                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Abonnés Premium</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
-                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenus (Mensuel)</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{format.number(stats.monthlyRevenue, { style: 'currency', currency: 'EUR' })}</div></CardContent></Card>
-                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Formations Actives</CardTitle><BookCopy className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalCourses}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.usersTotal')}</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.premiumSubscribers')}</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.monthlyRevenue')}</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{format.number(stats.monthlyRevenue, { style: 'currency', currency: 'EUR' })}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.activeCourses')}</CardTitle><BookCopy className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalCourses}</div></CardContent></Card>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Gestion des Formations</CardTitle>
-                            <CardDescription>Accédez à la bibliothèque des formations pour créer, modifier et publier des cours.</CardDescription>
+                            <CardTitle>{t('dashboard.manageCoursesTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageCoursesDescription')}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex gap-2">
-                            <Button asChild><Link href="/admin/courses">Gérer les formations</Link></Button>
+                            <Button asChild><Link href="/admin/courses">{t('dashboard.manageCoursesButton')}</Link></Button>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Gestion des Utilisateurs</CardTitle>
-                            <CardDescription>Gérez les utilisateurs et leurs rôles.</CardDescription>
+                            <CardTitle>{t('dashboard.manageUsersTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageUsersDescription')}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button asChild><Link href="/admin/users">Gérer les utilisateurs</Link></Button>
+                            <Button asChild><Link href="/admin/users">{t('dashboard.manageUsersButton')}</Link></Button>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Gestion des Abonnements</CardTitle>
-                            <CardDescription>Créez et modifiez les plans d'abonnement de la plateforme.</CardDescription>
+                            <CardTitle>{t('dashboard.manageSubscriptionsTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageSubscriptionsDescription')}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button asChild><Link href="/admin/subscriptions">Gérer les abonnements</Link></Button>
+                            <Button asChild><Link href="/admin/subscriptions">{t('dashboard.manageSubscriptionsButton')}</Link></Button>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Paramètres</CardTitle>
-                            <CardDescription>Gérez les paramètres globaux de la plateforme.</CardDescription>
+                            <CardTitle>{t('dashboard.settingsTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.settingsDescription')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="instructorName">Nom de l'instructeur</Label>
+                                <Label htmlFor="instructorName">{t('dashboard.instructorName')}</Label>
                                 <Input 
                                     id="instructorName" 
                                     value={instructorName} 
@@ -185,7 +187,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <Button onClick={handleSaveSettings} disabled={isSavingSettings || dataLoading || !instructorName}>
                                 {isSavingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Sauvegarder
+                                {t('dashboard.save')}
                             </Button>
                         </CardContent>
                     </Card>

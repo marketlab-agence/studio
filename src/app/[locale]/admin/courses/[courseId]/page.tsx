@@ -16,7 +16,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations } from 'next-intl/server';
 import { BookOpen, ChevronRight, UploadCloud } from 'lucide-react';
 import { getCourseAndChaptersAction } from '@/actions/courseActions';
 import type { CourseInfo } from '@/types/course.types';
@@ -25,6 +26,7 @@ import { PublishCourseButton } from './PublishCourseButton';
 
 
 export default async function CourseChaptersPage({ params }: { params: { courseId: string } }) {
+  const t = await getTranslations('admin');
   const { course, chapters } = await getCourseAndChaptersAction(params.courseId);
 
   if (!course) {
@@ -36,9 +38,9 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-        <Link href="/admin" className="hover:text-primary">Admin</Link>
+        <Link href="/admin" className="hover:text-primary">{t('breadcrumbAdmin')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href="/admin/courses" className="hover:text-primary">Formations</Link>
+        <Link href="/admin/courses" className="hover:text-primary">{t('courses.title')}</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground max-w-xs truncate">{courseInfo.title}</span>
       </div>
@@ -49,7 +51,7 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
             <BookOpen className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Chapitres de la Formation</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('courseDetail.chaptersTitle')}</h1>
             <p className="text-muted-foreground">{courseInfo.title}</p>
           </div>
         </div>
@@ -61,16 +63,16 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Chapitres</CardTitle>
-          <CardDescription>Gérez les chapitres de cette formation.</CardDescription>
+          <CardTitle>{t('courseDetail.chaptersListTitle')}</CardTitle>
+          <CardDescription>{t('courseDetail.chaptersListDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Titre du Chapitre</TableHead>
-                <TableHead>Nombre de leçons</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('courseDetail.columnChapterTitle')}</TableHead>
+                <TableHead>{t('courseDetail.columnLessons')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -80,7 +82,7 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
                     <TableCell>{chapter.lessons.length}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${params.courseId}/chapters/${chapter.id}`}>Modifier</Link>
+                        <Link href={`/admin/courses/${params.courseId}/chapters/${chapter.id}`}>{t('edit')}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

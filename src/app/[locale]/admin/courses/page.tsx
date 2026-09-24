@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations } from 'next-intl/server';
 import { PlusCircle, BookCopy, ChevronRight } from 'lucide-react';
 import { ActionButtons } from './ActionButtons';
 
@@ -18,6 +19,7 @@ type AdminCourse = {
 };
 
 export default async function AdminCoursesListPage() {
+  const t = await getTranslations('admin');
   const allCoursesData = await getAdminCoursesAction();
   const allCourses = allCoursesData as AdminCourse[];
   
@@ -27,12 +29,18 @@ export default async function AdminCoursesListPage() {
     'Plan': 'outline',
   };
 
+  const statusLabels: { [key: string]: string } = {
+    'Publié': t('courses.statusPublished'),
+    'Brouillon': t('courses.statusDraft'),
+    'Plan': t('courses.statusPlan'),
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/admin" className="hover:text-primary">Admin</Link>
+        <Link href="/admin" className="hover:text-primary">{t('breadcrumbAdmin')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-foreground">Formations</span>
+        <span className="font-semibold text-foreground">{t('courses.title')}</span>
       </div>
         
       <div className="flex justify-between items-start">
@@ -41,39 +49,39 @@ export default async function AdminCoursesListPage() {
                 <BookCopy className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Bibliothèque des formations</h1>
-                <p className="text-muted-foreground">Gérez toutes les formations de la plateforme.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('courses.libraryTitle')}</h1>
+                <p className="text-muted-foreground">{t('courses.librarySubtitle')}</p>
             </div>
         </div>
         <Button asChild>
           <Link href="/admin/create-course">
-            <PlusCircle className="mr-2 h-4 w-4" /> Créer une Formation
+            <PlusCircle className="mr-2 h-4 w-4" /> {t('courses.create')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Toutes les formations</CardTitle>
+          <CardTitle>{t('courses.allTitle')}</CardTitle>
           <CardDescription>
-            Liste de toutes les formations publiées, en brouillon ou en plan.
+            {t('courses.allDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Titre</TableHead>
-                <TableHead>Nombre de leçons</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('courses.columnTitle')}</TableHead>
+                <TableHead>{t('courses.columnLessons')}</TableHead>
+                <TableHead>{t('courses.columnStatus')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {allCourses.length === 0 ? (
                  <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                        Aucune formation planifiée ou en brouillon.
+                        {t('courses.empty')}
                     </TableCell>
                 </TableRow>
               ) : (
@@ -81,7 +89,7 @@ export default async function AdminCoursesListPage() {
                     <TableRow key={course.id}>
                     <TableCell className="font-medium">{course.title}</TableCell>
                     <TableCell>{course.lessonsCount}</TableCell>
-                    <TableCell><Badge variant={badgeVariants[course.status] || 'secondary'}>{course.status}</Badge></TableCell>
+                    <TableCell><Badge variant={badgeVariants[course.status] || 'secondary'}>{statusLabels[course.status] || course.status}</Badge></TableCell>
                     <TableCell>
                       <ActionButtons course={course} />
                     </TableCell>

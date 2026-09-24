@@ -10,7 +10,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { ChevronRight, Save, Pencil, Loader2, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -36,6 +37,8 @@ export function EditLessonForm({
     chapterId,
 }: EditLessonFormProps) {
   const { toast } = useToast();
+  const t = useTranslations('admin');
+  const tc = useTranslations('common');
   
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
   const [isSaving, setIsSaving] = useState(false);
@@ -46,7 +49,7 @@ export function EditLessonForm({
     const lessonIndexMatch = lesson.id.match(/-l(\d+)$/);
 
     if (!chapterIndexMatch || !lessonIndexMatch) {
-        toast({ title: 'Erreur de format d\'ID', description: 'Impossible de déterminer les indices du chapitre/leçon.', variant: 'destructive'});
+        toast({ title: t('editLesson.invalidIdTitle'), description: t('editLesson.invalidIdDescription'), variant: 'destructive'});
         return null;
     }
     
@@ -60,14 +63,14 @@ export function EditLessonForm({
     try {
         await updateLessonContentAction(courseId, chapterId, lesson);
         toast({
-            title: 'Leçon Sauvegardée',
-            description: `La leçon "${lesson.title}" a été mise à jour avec succès.`,
+            title: t('editLesson.savedTitle'),
+            description: t('editLesson.savedDescription', { title: lesson.title }),
         });
     } catch (error) {
         console.error(error);
         toast({
-            title: 'Erreur',
-            description: "La sauvegarde de la leçon a échoué.",
+            title: tc('errorTitle'),
+            description: t('editLesson.saveErrorDescription'),
             variant: "destructive",
         });
     } finally {
@@ -90,12 +93,12 @@ export function EditLessonForm({
           visualComponentName: visualComponentName || undefined
       }));
       
-      toast({ title: 'Contenu généré !', description: 'Le contenu et les composants ont été mis à jour par lIA.' });
+      toast({ title: t('editLesson.generatedTitle'), description: t('editLesson.generatedDescription') });
     } catch (error) {
         console.error(error);
         toast({
-            title: 'Erreur de Génération',
-            description: 'Impossible de générer le contenu.',
+            title: t('editLesson.generateErrorTitle'),
+            description: t('editLesson.generateErrorDescription'),
             variant: 'destructive',
         });
     } finally {
@@ -106,9 +109,9 @@ export function EditLessonForm({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-        <Link href="/admin" className="hover:text-primary">Admin</Link>
+        <Link href="/admin" className="hover:text-primary">{t('breadcrumbAdmin')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${courseId}`} className="hover:text-primary">Formation</Link>
+        <Link href={`/admin/courses/${courseId}`} className="hover:text-primary">{t('editLesson.breadcrumbCourse')}</Link>
         <ChevronRight className="h-4 w-4" />
         <Link href={`/admin/courses/${courseId}/chapters/${chapterId}`} className="hover:text-primary max-w-xs truncate">{initialChapterTitle}</Link>
         <ChevronRight className="h-4 w-4" />
@@ -121,29 +124,29 @@ export function EditLessonForm({
                 <Pencil className="h-8 w-8 text-primary" />
             </div>
             <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Modifier la Leçon</h1>
-            <p className="text-muted-foreground">Chapitre: {initialChapterTitle}</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('editLesson.title')}</h1>
+            <p className="text-muted-foreground">{t('editLesson.chapterLabel', { title: initialChapterTitle })}</p>
             </div>
         </div>
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Sauvegarder
+          {t('editLesson.save')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
             <div className="flex justify-between items-center">
-                <CardTitle>Contenu de la Leçon</CardTitle>
+                <CardTitle>{t('editLesson.contentTitle')}</CardTitle>
                 <Button variant="outline" onClick={handleGenerateContent} disabled={isGenerating}>
                     {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    Générer la Leçon par IA
+                    {t('editLesson.generate')}
                 </Button>
             </div>
         </CardHeader>
         <CardContent className="space-y-6">
            <div className="space-y-2">
-                <Label htmlFor="lessonTitle">Titre de la leçon</Label>
+                <Label htmlFor="lessonTitle">{t('editLesson.lessonTitle')}</Label>
                 <Input 
                     id="lessonTitle" 
                     value={lesson.title} 
@@ -151,7 +154,7 @@ export function EditLessonForm({
                 />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="lessonObjective">Objectif</Label>
+                <Label htmlFor="lessonObjective">{t('editLesson.objective')}</Label>
                 <Input 
                     id="lessonObjective" 
                     value={lesson.objective} 
@@ -159,7 +162,7 @@ export function EditLessonForm({
                 />
             </div>
           <div className="space-y-2">
-            <Label htmlFor="lessonContent">Contenu de la leçon (Markdown)</Label>
+            <Label htmlFor="lessonContent">{t('editLesson.contentLabel')}</Label>
             <Textarea
               id="lessonContent"
               value={lesson.content}
@@ -172,29 +175,29 @@ export function EditLessonForm({
 
       <Card>
         <CardHeader>
-            <CardTitle>Composants Pédagogiques</CardTitle>
+            <CardTitle>{t('editLesson.componentsTitle')}</CardTitle>
             <CardDescription>
-                Renseignez manuellement les noms des composants ou utilisez la génération IA pour les remplir.
+                {t('editLesson.componentsDescription')}
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="interactiveComponent">Composant Interactif / Pratique</Label>
+                    <Label htmlFor="interactiveComponent">{t('editLesson.interactiveComponent')}</Label>
                     <Input
                         id="interactiveComponent"
                         value={lesson.interactiveComponentName || ''}
                         onChange={(e) => setLesson(prev => ({...prev, interactiveComponentName: e.target.value || undefined}))}
-                        placeholder="Ex: StagingAreaVisualizer"
+                        placeholder={t('editLesson.interactiveComponentPlaceholder')}
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="visualComponent">Composant de Visualisation</Label>
+                    <Label htmlFor="visualComponent">{t('editLesson.visualComponent')}</Label>
                     <Input
                         id="visualComponent"
                         value={lesson.visualComponentName || ''}
                         onChange={(e) => setLesson(prev => ({...prev, visualComponentName: e.target.value || undefined}))}
-                        placeholder="Ex: GitGraph"
+                        placeholder={t('editLesson.visualComponentPlaceholder')}
                     />
                 </div>
             </div>

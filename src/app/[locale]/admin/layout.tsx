@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { canAccessAdminUi } from '@/lib/auth/routes';
+import { useTranslations } from 'next-intl';
 
 /**
  * Enveloppe de la zone d'administration.
@@ -31,6 +32,7 @@ export default function AdminLayout({
 }) {
   const { user, loading, userRole } = useAuth();
   const router = useRouter();
+  const t = useTranslations('admin');
 
   const allowed = canAccessAdminUi(userRole ?? '');
 
@@ -50,7 +52,7 @@ export default function AdminLayout({
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="flex items-center text-muted-foreground">
-          <span>Vérification des accès…</span>
+          <span>{t('layout.checkingAccess')}</span>
         </div>
       </main>
     );
@@ -62,9 +64,9 @@ export default function AdminLayout({
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertTitle>{t('layout.accessDeniedTitle')}</AlertTitle>
           <AlertDescription>
-            Cette zone est réservée à l’administration. Redirection en cours…
+            {t('layout.accessDeniedDescription')}
           </AlertDescription>
         </Alert>
       </main>
@@ -76,9 +78,9 @@ export default function AdminLayout({
         <div className="mx-auto max-w-7xl space-y-8">
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Zone Administrateur</AlertTitle>
+                <AlertTitle>{t('layout.zoneTitle')}</AlertTitle>
                 <AlertDescription>
-                    Vous êtes dans la zone d&apos;administration. Les modifications ici peuvent affecter l&apos;ensemble de l&apos;application.
+                    {t('layout.zoneDescription')}
                 </AlertDescription>
             </Alert>
             {children}

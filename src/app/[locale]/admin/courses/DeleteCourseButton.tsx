@@ -17,6 +17,7 @@ import { Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { deleteCourseAction } from '@/actions/courseActions';
+import { useTranslations } from 'next-intl';
 
 interface DeleteCourseButtonProps {
     courseId: string;
@@ -27,21 +28,23 @@ export function DeleteCourseButton({ courseId, courseTitle }: DeleteCourseButton
     const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+    const t = useTranslations('admin');
+    const tc = useTranslations('common');
     
     const handleDelete = async () => {
         setIsDeleting(true);
         try {
             await deleteCourseAction(courseId);
             toast({
-                title: 'Formation supprimée',
-                description: `La formation "${courseTitle}" a été supprimée avec succès.`,
+                title: t('deleteCourse.successTitle'),
+                description: t('deleteCourse.successDescription', { title: courseTitle }),
             });
             router.refresh();
         } catch (error) {
             console.error(error);
             toast({
-                title: 'Erreur',
-                description: 'La suppression de la formation a échoué.',
+                title: tc('errorTitle'),
+                description: t('deleteCourse.errorDescription'),
                 variant: 'destructive',
             });
             setIsDeleting(false);
@@ -53,21 +56,21 @@ export function DeleteCourseButton({ courseId, courseTitle }: DeleteCourseButton
             <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer
+                    {t('deleteCourse.trigger')}
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('deleteCourse.confirmTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Cette action est irréversible. Elle supprimera définitivement la formation "{courseTitle}" ainsi que tous ses chapitres, leçons et quiz associés.
+                        {t('deleteCourse.confirmDescription', { title: courseTitle })}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
                         {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Confirmer la suppression
+                        {t('deleteCourse.confirm')}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

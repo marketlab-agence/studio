@@ -17,11 +17,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations } from 'next-intl/server';
 import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
 
 export default async function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
+  const t = await getTranslations('admin');
   const tutorials = await getTutorials();
   const chapter = tutorials.find(c => c.id === params.chapterId);
   const courses = await getCourses();
@@ -34,9 +36,9 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-        <Link href="/admin" className="hover:text-primary">Admin</Link>
+        <Link href="/admin" className="hover:text-primary">{t('breadcrumbAdmin')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href="/admin/courses" className="hover:text-primary">Formations</Link>
+        <Link href="/admin/courses" className="hover:text-primary">{t('courses.title')}</Link>
         <ChevronRight className="h-4 w-4" />
         <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary max-w-xs truncate">{course.title}</Link>
         <ChevronRight className="h-4 w-4" />
@@ -49,14 +51,14 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
             <FileText className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leçons du Chapitre</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('chapterDetail.lessonsTitle')}</h1>
             <p className="text-muted-foreground">{chapter.title}</p>
           </div>
         </div>
         <Button asChild variant="secondary">
             <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/quiz`}>
                 <GraduationCap className="mr-2 h-4 w-4" />
-                Modifier le Quiz
+                {t('chapterDetail.editQuiz')}
             </Link>
         </Button>
       </div>
@@ -64,16 +66,16 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Leçons</CardTitle>
-          <CardDescription>Gérez les leçons de ce chapitre.</CardDescription>
+          <CardTitle>{t('chapterDetail.lessonsListTitle')}</CardTitle>
+          <CardDescription>{t('chapterDetail.lessonsListDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Titre de la Leçon</TableHead>
-                <TableHead>Objectif</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('chapterDetail.columnLessonTitle')}</TableHead>
+                <TableHead>{t('chapterDetail.columnObjective')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -83,7 +85,7 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
                     <TableCell className="text-muted-foreground">{lesson.objective}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/lessons/${lesson.id}`}>Modifier</Link>
+                        <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/lessons/${lesson.id}`}>{t('edit')}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

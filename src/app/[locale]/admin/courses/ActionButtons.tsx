@@ -2,9 +2,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeleteCourseButton } from './DeleteCourseButton';
+import { useTranslations } from 'next-intl';
 
 type AdminCourse = {
     id: string;
@@ -14,12 +15,13 @@ type AdminCourse = {
 };
 
 export function ActionButtons({ course }: { course: AdminCourse }) {
+    const t = useTranslations('admin');
     const { userRole } = useAuth();
     const isSuperAdmin = userRole === 'Super Admin';
 
     const editButton = (
         <Button asChild variant="outline" size="sm">
-            <Link href={`/admin/courses/${course.id}`}>Modifier</Link>
+            <Link href={`/admin/courses/${course.id}`}>{t('edit')}</Link>
         </Button>
     );
 
@@ -31,7 +33,7 @@ export function ActionButtons({ course }: { course: AdminCourse }) {
         return (
             <div className="flex items-center gap-4">
                 <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/create-course?planId=${course.id}`}>Modifier le Plan</Link>
+                    <Link href={`/admin/create-course?planId=${course.id}`}>{t('courses.editPlan')}</Link>
                 </Button>
                 {deleteButton}
             </div>
