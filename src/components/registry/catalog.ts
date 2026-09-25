@@ -9,6 +9,8 @@
  */
 
 import type { BloomLevel } from '@/lib/content/bloom';
+import { z } from 'zod';
+import { DATA_SCHEMAS, LABEL_KEYS } from './component-schemas';
 
 export type ComponentKind = 'interactive' | 'visual';
 
@@ -74,6 +76,22 @@ export interface ComponentMeta {
    * tableau vide est donc un défaut, pas une option.
    */
   bloomLevels: readonly BloomLevel[];
+  /**
+   * Libellés personnalisables du composant, avec leur valeur par défaut (français).
+   *
+   * ⚠️ **Le catalogue expose ce qui est personnalisable** — ni plus, ni moins. L'IA
+   * sait ainsi *quels* libellés produire pour une formation anglophone, et le
+   * formulaire ne propose pas de modifier un texte qui n'existe pas.
+   */
+  labelKeys: Record<string, string>;
+  /**
+   * Structure attendue de `config.data`, validée à l'écriture ET au rendu.
+   *
+   * ⚠️ Un schéma **par composant**, et non un schéma générique : c'est ce qui
+   * attrape une étape manquante dans un `StepByStepRunner` ou une paire
+   * incomplète dans un `MatchingPairs`.
+   */
+  dataSchema: z.ZodType;
 }
 
 /**
@@ -338,10 +356,14 @@ function toMeta(
     description,
     // Un composant sans domaine déclaré est traité comme **générique** : c'est le défaut le
     // plus sûr (il reste proposé partout) — l'inverse masquerait des composants utiles.
-    domains: COMPONENT_DOMAINS_BY_NAME[name] ?? ['*'],
-    bloomLevels: COMPONENT_BLOOM_BY_NAME[name] ?? [],
-  }));
-}
+      domains: COMPONENT_DOMAINS_BY_NAME[name] ?? ['*'],
+      bloomLevels: COMPONENT_BLOOM_BY_NAME[name] ?? [],
+      // Un composant sans schéma déclaré n'accepte aucune donnée structurée : `{}`.
+      // Le test exige en outre que `labelKeys` soit non vide pour CHAQUE composant.
+      dataSchema: DATA_SCHEMAS[name] ?? z.object({}),
+      labelKeys: LABEL_KEYS[name] ?? {},
+    }));
+  }
 
 /** Catalogue complet, métadonnées seules. */
 export const COMPONENT_CATALOG: ComponentMeta[] = [
