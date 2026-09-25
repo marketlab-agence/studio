@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Users, ChevronRight, Shield } from 'lucide-react';
 import { planLabel } from '@/lib/users';
+import { getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminUsersListPage() {
+  const t = await getTranslations('admin');
   const users = await getAdminUsersAction();
-  
+
   const roleBadgeVariants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     'Super Admin': 'destructive',
     'Admin': 'default',
@@ -25,12 +27,25 @@ export default async function AdminUsersListPage() {
     'Inactif': 'outline',
   };
 
+  const roleLabels: { [key: string]: string } = {
+    'Super Admin': t('roles.roleNameSuperAdmin'),
+    'Propriétaire': t('roles.roleNameOwner'),
+    'Admin': t('roles.roleNameAdmin'),
+    'Modérateur': t('roles.roleNameModerator'),
+    'Utilisateur': t('roles.roleNameUser'),
+  };
+
+  const statusLabels: { [key: string]: string } = {
+    'Actif': t('users.statusActive'),
+    'Inactif': t('users.statusInactive'),
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/admin" className="hover:text-primary">Admin</Link>
+        <Link href="/admin" className="hover:text-primary">{t('breadcrumbAdmin')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-foreground">Utilisateurs</span>
+        <span className="font-semibold text-foreground">{t('users.breadcrumb')}</span>
       </div>
         
       <div className="flex justify-between items-start">
@@ -39,20 +54,20 @@ export default async function AdminUsersListPage() {
                 <Users className="h-8 w-8 text-primary" />
             </div>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Gestion des Utilisateurs</h1>
-                <p className="text-muted-foreground">Gérez tous les utilisateurs de la plateforme.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('users.title')}</h1>
+                <p className="text-muted-foreground">{t('users.subtitle')}</p>
             </div>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
                 <Link href="/admin/subscriptions">
-                    Gérer les abonnements
+                    {t('dashboard.manageSubscriptionsButton')}
                 </Link>
             </Button>
             <Button variant="outline" asChild>
                 <Link href="/admin/roles">
                     <Shield className="mr-2 h-4 w-4" />
-                    Gérer les rôles
+                    {t('users.manageRoles')}
                 </Link>
             </Button>
         </div>
@@ -60,21 +75,21 @@ export default async function AdminUsersListPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Tous les utilisateurs</CardTitle>
+          <CardTitle>{t('users.allTitle')}</CardTitle>
           <CardDescription>
-            Liste de tous les utilisateurs inscrits sur la plateforme.
+            {t('users.allDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Abonnement</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('users.columnName')}</TableHead>
+                <TableHead>{t('users.columnEmail')}</TableHead>
+                <TableHead>{t('users.columnRole')}</TableHead>
+                <TableHead>{t('users.columnSubscription')}</TableHead>
+                <TableHead>{t('users.columnStatus')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -82,12 +97,12 @@ export default async function AdminUsersListPage() {
                   <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell><Badge variant={roleBadgeVariants[user.role] || 'outline'}>{user.role}</Badge></TableCell>
+                  <TableCell><Badge variant={roleBadgeVariants[user.role] || 'outline'}>{roleLabels[user.role] || user.role}</Badge></TableCell>
                   <TableCell><Badge variant={user.planId === 'premium' ? 'secondary' : 'outline'}>{planLabel(user.planId)}</Badge></TableCell>
-                  <TableCell><Badge variant={statusBadgeVariants[user.status]}>{user.status}</Badge></TableCell>
+                  <TableCell><Badge variant={statusBadgeVariants[user.status]}>{statusLabels[user.status] || user.status}</Badge></TableCell>
                   <TableCell>
                     <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/users/${user.id}`}>Gérer</Link>
+                        <Link href={`/admin/users/${user.id}`}>{t('users.manage')}</Link>
                     </Button>
                   </TableCell>
                   </TableRow>
@@ -99,4 +114,3 @@ export default async function AdminUsersListPage() {
     </div>
   );
 }
-

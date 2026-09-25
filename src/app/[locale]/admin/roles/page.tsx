@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { ArrowLeft, Shield, Users, BookOpen, Settings, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 import {
   canAssignRole,
   canManageContent,
@@ -48,19 +49,16 @@ import {
 const CAPABILITIES = [
   {
     id: 'settings',
-    label: "Modifier les réglages de l'organisation",
     icon: Settings,
     granted: canManageSettings,
   },
   {
     id: 'members',
-    label: 'Gérer les membres (inviter, révoquer)',
     icon: Users,
     granted: canManageMembers,
   },
   {
     id: 'content',
-    label: 'Créer et modifier des formations',
     icon: BookOpen,
     granted: canManageContent,
   },
@@ -69,30 +67,47 @@ const CAPABILITIES = [
 /** Rôles du schéma, du plus élevé au plus restreint. */
 const ROLES = ['Super Admin', 'Propriétaire', 'Admin', 'Modérateur', 'Utilisateur'] as const;
 
-const ROLE_DESCRIPTIONS: Record<string, string> = {
-  'Super Admin': 'Administration de la plateforme Katalyst elle-même. Jamais attribuable par une organisation.',
-  Propriétaire: "Responsable de l'organisation. Peut tout y faire, y compris nommer d'autres administrateurs.",
-  Admin: "Administre l'organisation. Ne peut pas nommer de Propriétaire ni d'autre Admin.",
-  Modérateur: 'Gère le contenu pédagogique. Ne peut pas administrer les membres.',
-  Utilisateur: 'Suit les formations. Aucun accès à l’administration.',
-};
-
 export default function ManageRolesPage() {
   const { userRole } = useAuth();
+  const t = useTranslations('admin');
+
+  const capabilityLabels: Record<string, string> = {
+    settings: t('roles.capSettings'),
+    members: t('roles.capMembers'),
+    content: t('roles.capContent'),
+  };
+
+  const roleLabels: Record<string, string> = {
+    'Super Admin': t('roles.roleNameSuperAdmin'),
+    'Propriétaire': t('roles.roleNameOwner'),
+    'Admin': t('roles.roleNameAdmin'),
+    'Modérateur': t('roles.roleNameModerator'),
+    'Utilisateur': t('roles.roleNameUser'),
+  };
+
+  const roleDescriptions: Record<string, string> = {
+    'Super Admin': t('roles.descSuperAdmin'),
+    'Propriétaire': t('roles.descOwner'),
+    'Admin': t('roles.descAdmin'),
+    'Modérateur': t('roles.descModerator'),
+    'Utilisateur': t('roles.descUser'),
+  };
+
+  const currentRoleLabel = userRole ? (roleLabels[userRole] ?? userRole) : t('roles.unknownRole');
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href="/admin" aria-label="Retour à l’administration">
+          <Link href="/admin" aria-label={t('roles.backAria')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold">Rôles et permissions</h1>
+          <h1 className="text-2xl font-semibold">{t('roles.title')}</h1>
           <p className="text-muted-foreground">
-            Référence des droits appliqués. Votre rôle actuel :{' '}
-            <Badge variant="secondary">{userRole ?? 'inconnu'}</Badge>
+            {t('roles.subtitle')}{' '}
+            <Badge variant="secondary">{currentRoleLabel}</Badge>
           </p>
         </div>
       </div>
@@ -101,22 +116,20 @@ export default function ManageRolesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5" />
-            Droits appliqués
+            {t('roles.rightsTitle')}
           </CardTitle>
           <CardDescription>
-            Ces droits sont contrôlés <strong>côté serveur</strong>, dans chaque action et chaque
-            route. Ils ne sont pas configurables pour l’instant : cette page les décrit, elle ne les
-            modifie pas.
+            {t('roles.rightsDescriptionBefore')}<strong>{t('roles.rightsDescriptionStrong')}</strong>{t('roles.rightsDescriptionAfter')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Permission</TableHead>
+                <TableHead>{t('roles.columnPermission')}</TableHead>
                 {ROLES.map((role) => (
                   <TableHead key={role} className="text-center">
-                    {role}
+                    {roleLabels[role] ?? role}
                   </TableHead>
                 ))}
               </TableRow>
@@ -126,16 +139,16 @@ export default function ManageRolesPage() {
                 <TableRow key={capability.id}>
                   <TableCell className="flex items-center gap-2">
                     <capability.icon className="h-4 w-4 text-muted-foreground" />
-                    {capability.label}
+                    {capabilityLabels[capability.id]}
                   </TableCell>
                   {ROLES.map((role) => (
                     <TableCell key={role} className="text-center">
                       {capability.granted(role) ? (
-                        <span className="text-primary" aria-label="accordé">
+                        <span className="text-primary" aria-label={t('roles.granted')}>
                           ✓
                         </span>
                       ) : (
-                        <span className="text-muted-foreground" aria-label="refusé">
+                        <span className="text-muted-foreground" aria-label={t('roles.denied')}>
                           —
                         </span>
                       )}
@@ -153,16 +166,16 @@ export default function ManageRolesPage() {
               <TableRow>
                 <TableCell className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-muted-foreground" />
-                  Nommer un Propriétaire
+                  {t('roles.assignOwner')}
                 </TableCell>
                 {ROLES.map((role) => (
                   <TableCell key={role} className="text-center">
                     {canAssignRole(role, 'Propriétaire') ? (
-                      <span className="text-primary" aria-label="accordé">
+                      <span className="text-primary" aria-label={t('roles.granted')}>
                         ✓
                       </span>
                     ) : (
-                      <span className="text-muted-foreground" aria-label="refusé">
+                      <span className="text-muted-foreground" aria-label={t('roles.denied')}>
                         —
                       </span>
                     )}
@@ -173,16 +186,16 @@ export default function ManageRolesPage() {
               <TableRow>
                 <TableCell className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-muted-foreground" />
-                  Nommer un Admin
+                  {t('roles.assignAdmin')}
                 </TableCell>
                 {ROLES.map((role) => (
                   <TableCell key={role} className="text-center">
                     {canAssignRole(role, 'Admin') ? (
-                      <span className="text-primary" aria-label="accordé">
+                      <span className="text-primary" aria-label={t('roles.granted')}>
                         ✓
                       </span>
                     ) : (
-                      <span className="text-muted-foreground" aria-label="refusé">
+                      <span className="text-muted-foreground" aria-label={t('roles.denied')}>
                         —
                       </span>
                     )}
@@ -193,8 +206,7 @@ export default function ManageRolesPage() {
           </Table>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            « Super Admin » n’est jamais attribuable depuis une organisation : c’est un rôle
-            plateforme, et l’accorder à un client lui donnerait des droits sur l’ensemble du service.
+            {t('roles.superAdminNote')}
           </p>
         </CardContent>
       </Card>
@@ -203,8 +215,8 @@ export default function ManageRolesPage() {
         {ROLES.map((role) => (
           <Card key={role}>
             <CardHeader>
-              <CardTitle className="text-lg">{role}</CardTitle>
-              <CardDescription>{ROLE_DESCRIPTIONS[role]}</CardDescription>
+              <CardTitle className="text-lg">{roleLabels[role] ?? role}</CardTitle>
+              <CardDescription>{roleDescriptions[role]}</CardDescription>
             </CardHeader>
           </Card>
         ))}

@@ -3,7 +3,7 @@
 
 import { notFound, useParams } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { ArrowLeft, User, Shield, Activity, FileText, AlertTriangle, Trash2, Loader2, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { AppUser, planLabel } from '@/lib/users';
 import { getAdminUserByIdAction, updateUserRoleAction } from '@/actions/adminActions';
+import { useTranslations } from 'next-intl';
 
 
 export default function ManageUserPage() {
@@ -33,6 +34,8 @@ export default function ManageUserPage() {
   const { toast } = useToast();
   const { user: authUser } = useAuth();
   const { overallProgress } = useTutorial();
+  const t = useTranslations('admin');
+  const tc = useTranslations('common');
 
   useEffect(() => {
     async function loadUser() {
@@ -47,6 +50,19 @@ export default function ManageUserPage() {
     loadUser();
   }, [userId]);
 
+  const roleLabels: { [key: string]: string } = {
+    'Super Admin': t('roles.roleNameSuperAdmin'),
+    'Propriétaire': t('roles.roleNameOwner'),
+    'Admin': t('roles.roleNameAdmin'),
+    'Modérateur': t('roles.roleNameModerator'),
+    'Utilisateur': t('roles.roleNameUser'),
+  };
+
+  const statusLabels: { [key: string]: string } = {
+    'Actif': t('users.statusActive'),
+    'Inactif': t('users.statusInactive'),
+  };
+
   const handleRoleSave = () => {
     if (!selectedRole || !user || selectedRole === user.role) return;
 
@@ -55,13 +71,13 @@ export default function ManageUserPage() {
             await updateUserRoleAction(user.id, selectedRole as AppUser['role']);
             setUser(prev => prev ? {...prev, role: selectedRole as AppUser['role']} : null);
             toast({
-                title: "Rôle mis à jour",
-                description: `Le rôle de ${user.name} est maintenant ${selectedRole}.`,
+                title: t('userDetail.roleUpdatedTitle'),
+                description: t('userDetail.roleUpdatedDescription', { name: user.name, role: roleLabels[selectedRole] || selectedRole }),
             });
         } catch(error) {
             toast({
-                title: "Erreur",
-                description: "La mise à jour du rôle a échoué.",
+                title: tc('errorTitle'),
+                description: t('userDetail.roleUpdateErrorDescription'),
                 variant: 'destructive',
             });
         }
@@ -106,7 +122,7 @@ export default function ManageUserPage() {
         <Button asChild variant="outline" size="sm">
           <Link href="/admin/users">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour à la liste des utilisateurs
+            {t('userDetail.backToList')}
           </Link>
         </Button>
       </div>
@@ -125,47 +141,47 @@ export default function ManageUserPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><User/> Identité</CardTitle>
+                <CardTitle className="flex items-center gap-2"><User/> {t('userDetail.identityTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><p className="text-sm text-muted-foreground">Prénom</p><p className="font-medium">{user.name.split(' ')[0]}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Nom</p><p className="font-medium">{user.name.split(' ').slice(1).join(' ')}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium">{user.email}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Mobile</p><p className="font-medium">{user.phone || 'Non renseigné'}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Statut</p><p className="font-medium">{user.status}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Inscrit le</p><p className="font-medium">{user.joined}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.firstName')}</p><p className="font-medium">{user.name.split(' ')[0]}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.lastName')}</p><p className="font-medium">{user.name.split(' ').slice(1).join(' ')}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.email')}</p><p className="font-medium">{user.email}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.mobile')}</p><p className="font-medium">{user.phone || t('userDetail.notProvided')}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.status')}</p><p className="font-medium">{statusLabels[user.status] || user.status}</p></div>
+                    <div><p className="text-sm text-muted-foreground">{t('userDetail.joinedAt')}</p><p className="font-medium">{user.joined}</p></div>
                 </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><FileText /> Conformité & Gestion des Données</CardTitle>
+                <CardTitle className="flex items-center gap-2"><FileText /> {t('userDetail.complianceTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Zone Sensible</AlertTitle>
-                    <AlertDescription>Les actions de cette section sont irréversibles et doivent être effectuées avec prudence.</AlertDescription>
+                    <AlertTitle>{t('userDetail.sensitiveTitle')}</AlertTitle>
+                    <AlertDescription>{t('userDetail.sensitiveDescription')}</AlertDescription>
                 </Alert>
                 <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Actions RGPD</h4>
+                    <h4 className="font-semibold text-sm">{t('userDetail.gdprActionsTitle')}</h4>
                     <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm">Exporter les données de l'utilisateur</Button>
-                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/> Anonymiser cet utilisateur</Button>
+                        <Button variant="outline" size="sm">{t('userDetail.exportData')}</Button>
+                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/> {t('userDetail.anonymize')}</Button>
                     </div>
                 </div>
                  <Separator />
                 <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Vérifications Qualiopi / CPF (simulé)</h4>
+                    <h4 className="font-semibold text-sm">{t('userDetail.qualiopiTitle')}</h4>
                     <div className="flex items-center space-x-2">
                         <Switch id="cpf-switch" defaultChecked={user.id === 'usr_1'}/>
-                        <Label htmlFor="cpf-switch">Dossier de financement CPF complet et vérifié</Label>
+                        <Label htmlFor="cpf-switch">{t('userDetail.cpfLabel')}</Label>
                     </div>
                      <div className="flex items-center space-x-2">
                         <Switch id="qualiopi-switch" defaultChecked={user.id === 'usr_1' || user.id === 'usr_5'} />
-                        <Label htmlFor="qualiopi-switch">Traçabilité Qualiopi assurée</Label>
+                        <Label htmlFor="qualiopi-switch">{t('userDetail.qualiopiLabel')}</Label>
                     </div>
                 </div>
             </CardContent>
@@ -174,20 +190,20 @@ export default function ManageUserPage() {
         
         <div className="space-y-6">
             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Shield/> Rôle & Abonnement</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Shield/> {t('userDetail.roleSubscriptionTitle')}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div>
-                        <Label htmlFor="role-select" className="font-semibold text-sm">Rôle de l'utilisateur</Label>
+                        <Label htmlFor="role-select" className="font-semibold text-sm">{t('userDetail.roleLabel')}</Label>
                         <div className="flex items-center gap-2 mt-1">
                             <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppUser['role'])}>
                                 <SelectTrigger id="role-select">
-                                    <SelectValue placeholder="Sélectionner un rôle" />
+                                    <SelectValue placeholder={t('userDetail.selectRole')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Super Admin">Super Admin</SelectItem>
-                                    <SelectItem value="Admin">Administrateur</SelectItem>
-                                    <SelectItem value="Modérateur">Modérateur</SelectItem>
-                                    <SelectItem value="Utilisateur">Utilisateur</SelectItem>
+                                    <SelectItem value="Super Admin">{t('userDetail.selectRoleSuperAdmin')}</SelectItem>
+                                    <SelectItem value="Admin">{t('userDetail.selectRoleAdmin')}</SelectItem>
+                                    <SelectItem value="Modérateur">{t('userDetail.selectRoleModerator')}</SelectItem>
+                                    <SelectItem value="Utilisateur">{t('userDetail.selectRoleUser')}</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Button onClick={handleRoleSave} disabled={isSaving || selectedRole === user.role}>
@@ -197,24 +213,24 @@ export default function ManageUserPage() {
                     </div>
                     <Separator/>
                     <div>
-                        <p className="font-semibold mb-1 text-sm">Abonnement Actuel</p>
+                        <p className="font-semibold mb-1 text-sm">{t('userDetail.currentSubscription')}</p>
                         <Badge variant={user.planId === 'premium' ? 'default' : 'secondary'}>{planLabel(user.planId)}</Badge>
                     </div>
-                     <Button variant="outline" size="sm" className="w-full">Gérer l'abonnement</Button>
+                     <Button variant="outline" size="sm" className="w-full">{t('userDetail.manageSubscription')}</Button>
                 </CardContent>
             </Card>
 
             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Activity/> Utilisation de la plateforme</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Activity/> {t('userDetail.platformUsageTitle')}</CardTitle></CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                    <div><p className="font-medium">Dernière activité</p><p className="text-muted-foreground">il y a 2 jours</p></div>
+                    <div><p className="font-medium">{t('userDetail.lastActivity')}</p><p className="text-muted-foreground">{t('userDetail.twoDaysAgo')}</p></div>
                     <Separator/>
                     <div>
-                        <p className="font-medium mb-1">Progression du tutoriel</p>
+                        <p className="font-medium mb-1">{t('userDetail.tutorialProgress')}</p>
                         <Progress value={userProgress} className="h-2"/>
-                        <p className="text-xs text-muted-foreground mt-2">{Math.round(userProgress)}% complété</p>
+                        <p className="text-xs text-muted-foreground mt-2">{t('userDetail.completed', { percent: Math.round(userProgress) })}</p>
                     </div>
-                    <Button variant="link" size="sm" className="p-0 h-auto">Voir l'historique d'activité complet</Button>
+                    <Button variant="link" size="sm" className="p-0 h-auto">{t('userDetail.viewFullActivity')}</Button>
                 </CardContent>
             </Card>
         </div>

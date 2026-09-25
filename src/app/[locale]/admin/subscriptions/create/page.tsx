@@ -10,13 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, Save, Loader2, BookCopy, Star } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type SubscriptionPlan } from '@/types/plans.types';
 import { getPlansAction, createOrUpdatePlanAction } from '@/actions/planActions';
 import { getAdminCoursesAction } from '@/actions/adminActions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslations } from 'next-intl';
 
 type Course = {
   id: string;
@@ -31,6 +32,8 @@ export default function CreatePlanPage() {
   const searchParams = useSearchParams();
   const planId = searchParams.get('plan');
   const isEditing = !!planId;
+  const t = useTranslations('admin');
+  const tc = useTranslations('common');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,13 +67,13 @@ export default function CreatePlanPage() {
         }
       } catch (error) {
         console.error("Failed to load page data:", error);
-        toast({ title: "Erreur de chargement", description: "Impossible de récupérer les données nécessaires.", variant: "destructive" });
+        toast({ title: t('createPlan.loadErrorTitle'), description: t('createPlan.loadErrorDescription'), variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     }
     loadData();
-  }, [planId, isEditing, toast]);
+  }, [planId, isEditing, toast, t]);
 
   const handleAddFeature = () => {
     setFeatures([...features, '']);
@@ -107,21 +110,21 @@ export default function CreatePlanPage() {
     try {
         const savedPlan = await createOrUpdatePlanAction(planData, planId || undefined);
         toast({
-            title: isEditing ? 'Plan Modifié' : 'Plan Sauvegardé',
-            description: `Le plan "${savedPlan.name}" a été sauvegardé.`,
+            title: isEditing ? t('createPlan.updatedTitle') : t('createPlan.savedTitle'),
+            description: t('createPlan.savedDescription', { name: savedPlan.name }),
         });
         if (!isEditing) {
             router.push(`/admin/subscriptions/create?plan=${savedPlan.id}`);
         }
     } catch(e) {
-        toast({ title: 'Erreur', description: 'La sauvegarde a échoué.', variant: 'destructive'});
+        toast({ title: tc('errorTitle'), description: t('createPlan.saveErrorDescription'), variant: 'destructive'});
     } finally {
         setIsSaving(false);
     }
   };
   
   if (isLoading) {
-    return <div>Chargement...</div>;
+    return <div>{t('createPlan.loading')}</div>;
   }
 
   return (
@@ -130,12 +133,12 @@ export default function CreatePlanPage() {
             <Button asChild variant="outline" size="sm">
             <Link href="/admin/subscriptions">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Retour aux abonnements
+                {t('createPlan.back')}
             </Link>
             </Button>
             <Button onClick={handleSavePlan} disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {isEditing ? 'Sauvegarder les modifications' : 'Sauvegarder le plan'}
+                {isEditing ? t('createPlan.saveChanges') : t('createPlan.savePlan')}
             </Button>
         </div>
         
@@ -145,10 +148,10 @@ export default function CreatePlanPage() {
             </div>
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                    {isEditing && planName ? `Modifier le Plan : ${planName}` : 'Créer un Nouveau Plan'}
+                    {isEditing && planName ? t('createPlan.editTitle', { name: planName }) : t('createPlan.createTitle')}
                 </h1>
                 <p className="text-muted-foreground">
-                    {isEditing ? 'Mettez à jour les détails de ce plan.' : 'Définissez les détails, fonctionnalités et accès de votre nouveau plan.'}
+                    {isEditing ? t('createPlan.editSubtitle') : t('createPlan.createSubtitle')}
                 </p>
             </div>
         </div>
@@ -157,44 +160,44 @@ export default function CreatePlanPage() {
             <div className="lg:col-span-2 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Détails du Plan</CardTitle>
-                        <CardDescription>Informations de base qui seront affichées aux utilisateurs.</CardDescription>
+                        <CardTitle>{t('createPlan.detailsTitle')}</CardTitle>
+                        <CardDescription>{t('createPlan.detailsDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="plan-name">Nom du plan</Label>
-                            <Input id="plan-name" placeholder="Ex: Premium Plus" value={planName} onChange={e => setPlanName(e.target.value)} />
+                            <Label htmlFor="plan-name">{t('createPlan.nameLabel')}</Label>
+                            <Input id="plan-name" placeholder={t('createPlan.namePlaceholder')} value={planName} onChange={e => setPlanName(e.target.value)} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="plan-price">Prix (EUR)</Label>
-                                <Input id="plan-price" type="number" placeholder="Ex: 19.99" value={price} onChange={e => setPrice(e.target.value)} />
+                                <Label htmlFor="plan-price">{t('createPlan.priceLabel')}</Label>
+                                <Input id="plan-price" type="number" placeholder={t('createPlan.pricePlaceholder')} value={price} onChange={e => setPrice(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="billing-period">Période de facturation</Label>
+                                <Label htmlFor="billing-period">{t('createPlan.billingPeriodLabel')}</Label>
                                 <Select value={billingPeriod} onValueChange={setBillingPeriod}>
                                     <SelectTrigger id="billing-period">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="monthly">Mensuel</SelectItem>
-                                        <SelectItem value="yearly">Annuel</SelectItem>
-                                        <SelectItem value="once">Paiement unique</SelectItem>
+                                        <SelectItem value="monthly">{t('createPlan.billingMonthly')}</SelectItem>
+                                        <SelectItem value="yearly">{t('createPlan.billingYearly')}</SelectItem>
+                                        <SelectItem value="once">{t('createPlan.billingOnce')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="plan-description">Description courte</Label>
-                            <Textarea id="plan-description" placeholder="Une phrase d'accroche pour décrire le plan." value={description} onChange={e => setDescription(e.target.value)} />
+                            <Label htmlFor="plan-description">{t('createPlan.descriptionLabel')}</Label>
+                            <Textarea id="plan-description" placeholder={t('createPlan.descriptionPlaceholder')} value={description} onChange={e => setDescription(e.target.value)} />
                         </div>
                     </CardContent>
                 </Card>
 
                  <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Star /> Fonctionnalités</CardTitle>
-                        <CardDescription>Ajoutez les avantages et fonctionnalités qui seront listés pour ce plan.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Star /> {t('createPlan.featuresTitle')}</CardTitle>
+                        <CardDescription>{t('createPlan.featuresDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {features.map((feature, index) => (
@@ -202,11 +205,11 @@ export default function CreatePlanPage() {
                                 <Input 
                                     value={feature} 
                                     onChange={(e) => handleFeatureChange(index, e.target.value)}
-                                    placeholder="Ex: Accès à toutes les formations"
+                                    placeholder={t('createPlan.featurePlaceholder')}
                                 />
                             </div>
                         ))}
-                        <Button variant="outline" size="sm" onClick={handleAddFeature}>Ajouter une fonctionnalité</Button>
+                        <Button variant="outline" size="sm" onClick={handleAddFeature}>{t('createPlan.addFeature')}</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -214,8 +217,8 @@ export default function CreatePlanPage() {
             <div className="lg:col-span-1">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BookCopy /> Formations Incluses</CardTitle>
-                        <CardDescription>Sélectionnez les formations accessibles avec ce plan.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><BookCopy /> {t('createPlan.includedCoursesTitle')}</CardTitle>
+                        <CardDescription>{t('createPlan.includedCoursesDescription')}</CardDescription>
                     </CardHeader>
                      <CardContent>
                         <ScrollArea className="h-72">
