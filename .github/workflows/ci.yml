@@ -47,6 +47,12 @@ jobs:
       - name: Cohérence de version
         run: npm run check:version
 
+      # --- Bloquant : parité des catalogues FR/EN (REQ-I18N-05).
+      #     N'est bloquant qu'une fois l'extraction terminée : c'est le cas depuis
+      #     la fin de la phase 8 (vagues 1 à 4). ---
+      - name: Catalogues i18n
+        run: npm run lint:i18n
+
       # --- Bloquant : suite verte depuis la suppression des 2 suites obsolètes ---
       - name: Tests
         run: npm test

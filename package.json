@@ -10,6 +10,7 @@
     "build": "rmdir /s /q .next 2>nul & next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:i18n": "node scripts/lint-i18n.mjs",
     "typecheck": "tsc --noEmit",
     "check:version": "node scripts/check-version.mjs",
     "db:migrate": "tsx src/lib/db/migrate.ts",
