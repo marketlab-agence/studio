@@ -164,7 +164,7 @@ async function loadCourses(): Promise<CourseContent[]> {
             : undefined,
         };
       }),
-    } as CourseContent;
+    } as unknown as CourseContent;
   });
 }
 

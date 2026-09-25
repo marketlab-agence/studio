@@ -18,8 +18,17 @@ export interface Lesson {
   title: string;
   objective: string;
   content: string; // Illustrative markdown content
-  interactiveComponentName?: string;
-  visualComponentName?: string;
+  /**
+   * Composants pédagogiques, **ordonnés**.
+   *
+   * ⚠️ **Une liste, pas deux emplacements.** Le même composant peut apparaître
+   * plusieurs fois (deux procédures, deux quiz) : c'est la `position` qui définit
+   * l'enchaînement.
+   *
+   * ⚠️ **La nature (`interactive`/`visual`) vient du catalogue**, jamais de la
+   * donnée — sinon deux vérités pourraient diverger.
+   */
+  components: LessonComponent[];
   /**
    * Niveau de Bloom visé par l'objectif de cette leçon.
    *
@@ -28,6 +37,18 @@ export interface Lesson {
    * (`@docs/katalyst/regles-conformite.md`, règle R6).
    */
   bloomLevel?: string;
+}
+
+/** Une instance de composant dans une leçon : son nom, sa place, sa configuration. */
+export interface LessonComponent {
+  name: string;
+  position: number;
+  config?: {
+    /** Libellés propres à cette instance, dans la langue de la formation. */
+    labels?: Record<string, string>;
+    /** Données structurées, validées par le schéma du composant (catalogue). */
+    data?: unknown;
+  };
 }
 
 export interface Quiz {

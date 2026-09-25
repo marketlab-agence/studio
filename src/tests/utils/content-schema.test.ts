@@ -164,7 +164,7 @@ describe('Audit de conformité du contenu', () => {
             type: 'MISE_EN_PRATIQUE',
             points: 0,
             position: 0,
-            ...(withInteractive ? { interactiveComponentName: 'MergeSimulator' } : {}),
+            components: withInteractive ? [{ name: 'MergeSimulator', position: 0, config: {} }] : [],
           },
         ],
       },

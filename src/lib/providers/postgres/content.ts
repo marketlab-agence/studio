@@ -45,11 +45,16 @@ type LessonRow = {
   type: string;
   duration_minutes: number | null;
   points: number;
-  media_ref: unknown | null;
-  interactive_component_name: string | null;
-  visual_component_name: string | null;
-  position: number;
-}
+    media_ref: unknown | null;
+    /**
+     * Composants ordonnés, agrégés depuis `lesson_components`.
+     *
+     * ⚠️ **La nature (`interactive`/`visual`) n'est pas dans la donnée** : elle vient
+     * du catalogue (`resolveComponentMeta`). La dupliquer ici créerait deux vérités.
+     */
+    components: { name: string; position: number; config: unknown }[];
+    position: number;
+  }
 
 function toCourseInfo(row: CourseRow): CourseInfo {
   return {
@@ -64,16 +69,19 @@ function toCourseInfo(row: CourseRow): CourseInfo {
     };
   }
 
-function toLesson(row: LessonRow): Lesson {
-  return {
-    id: row.id,
-    title: row.title,
-    objective: row.objective,
-    content: row.content,
-    interactiveComponentName: row.interactive_component_name ?? undefined,
-    visualComponentName: row.visual_component_name ?? undefined,
-  };
-}
+  function toLesson(row: LessonRow): Lesson {
+    return {
+      id: row.id,
+      title: row.title,
+      objective: row.objective,
+      content: row.content,
+      components: (row.components ?? []).map((composant) => ({
+        name: composant.name,
+        position: composant.position,
+        config: (composant.config ?? {}) as Lesson['components'][number]['config'],
+      })),
+    };
+  }
 
 export class PostgresContentProvider implements ContentProvider {
   // --- Formations -----------------------------------------------------------
@@ -196,10 +204,18 @@ export class PostgresContentProvider implements ContentProvider {
     if (chapters.length === 0) return [];
 
     const { rows: lessons } = await query<LessonRow>(
-      `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
-              l.duration_minutes, l.points, l.media_ref,
-              l.interactive_component_name, l.visual_component_name, l.position
-       FROM lessons l
+        `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
+                l.duration_minutes, l.points, l.media_ref, l.position,
+                COALESCE(
+                  (SELECT json_agg(json_build_object(
+                     'name', lc.component_name,
+                     'position', lc.position,
+                     'config', lc.config
+                   ) ORDER BY lc.position)
+                   FROM lesson_components lc WHERE lc.lesson_id = l.id),
+                  '[]'::json
+                ) AS components
+         FROM lessons l
        JOIN chapters ch ON ch.id = l.chapter_id
        JOIN courses co ON co.id = ch.course_id
        WHERE co.organization_id = $1

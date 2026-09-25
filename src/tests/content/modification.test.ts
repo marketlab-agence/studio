@@ -50,7 +50,7 @@ function makeLesson(input: LessonInput, domain: ComponentDomain) {
     bloomLevel: input.bloomLevel,
     points: 0,
     position: 0,
-    interactiveComponentName: componentFor(input.bloomLevel, domain),
+    components: [{ name: componentFor(input.bloomLevel, domain), position: 0, config: {} }],
   };
 }
 
@@ -230,11 +230,12 @@ describe('conformité après modification — contrainte utilisateur', () => {
       title: 'Leçon ajoutée à la hâte',
       objective: 'Objectif',
       content: 'Contenu.',
-      type: 'MISE_EN_PRATIQUE',
-      points: 0,
-      position: 0,
-      // Ni `bloomLevel`, ni composant : c'est exactement l'oubli à détecter.
-    });
+        type: 'MISE_EN_PRATIQUE',
+        points: 0,
+        position: 0,
+        components: [],
+        // Ni `bloomLevel`, ni composant : c'est exactement l'oubli à détecter.
+      });
 
     const findings = auditRegles(course);
 

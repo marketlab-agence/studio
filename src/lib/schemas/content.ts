@@ -5,6 +5,23 @@ import {
   isLessonTypeCompatibleWithBloom,
 } from '@/lib/content/bloom';
 import { resolveComponentMeta } from '@/components/registry/catalog';
+import { ComponentConfigSchema } from '@/lib/schemas/component-config';
+
+/**
+ * Composants **interactifs** d'une leçon (par opposition aux visuels).
+ *
+ * ⚠️ **La nature vient du catalogue, pas de la donnée.** Une leçon porte une liste
+ * de composants ; c'est `resolveComponentMeta` qui dit lesquels sont interactifs.
+ * Sans ça, il faudrait dupliquer `kind` dans `lesson_components` — deux vérités
+ * qui finiraient par diverger.
+ */
+function composantsInteractifs(
+  lesson: { components: { name: string }[] },
+): { name: string }[] {
+  return lesson.components.filter(
+    (composant) => resolveComponentMeta(composant.name)?.kind === 'interactive',
+  );
+}
 
 /**
  * Modèle de contenu de Katalyst — **source unique des contrats**.
@@ -144,11 +161,28 @@ export const LessonSchema = z.object({
    */
   durationMinutes: z.number().int().positive().optional(),
   points: z.number().int().min(0).default(0),
-  mediaRef: MediaRefSchema.optional(),
-  /** Nom d'un composant du catalogue, de nature `interactive`. */
-  interactiveComponentName: z.string().min(1).optional(),
-  /** Nom d'un composant du catalogue, de nature `visual`. */
-  visualComponentName: z.string().min(1).optional(),
+    mediaRef: MediaRefSchema.optional(),
+    /**
+     * Composants pédagogiques de la leçon, **ordonnés**.
+     *
+     * ⚠️ **Une liste, pas deux emplacements fixes.** Une leçon peut exiger autant
+     * de composants que son cahier des charges le demande, et le **même** composant
+     * peut apparaître deux fois (deux procédures, deux quiz) — c'est la `position`
+     * qui définit l'enchaînement, pas la nature du composant.
+     *
+     * ⚠️ **La nature (`interactive`/`visual`) n'est PAS ici** : elle vient du
+     * catalogue (`resolveComponentMeta`), source unique de vérité. La dupliquer
+     * dans la donnée créerait deux vérités qui pourraient diverger.
+     */
+    components: z
+      .array(
+        z.object({
+          name: z.string().min(1),
+          position: z.number().int().min(0),
+          config: ComponentConfigSchema.default({}),
+        }),
+      )
+      .default([]),
   /**
    * Niveau de Bloom visé par l'objectif de cette leçon.
    *
@@ -271,11 +305,15 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
   const quizzes = course.chapters.filter((chapter) => chapter.quiz !== undefined).length;
 
   const lessonsWithoutInteractive = lessons
-    .filter((lesson) => !lesson.interactiveComponentName)
+    .filter((lesson) => composantsInteractifs(lesson).length === 0)
     .map((lesson) => lesson.title);
 
-  const interactiveLessons = lessons.filter((lesson) => lesson.interactiveComponentName).length;
-  const visualLessons = lessons.filter((lesson) => lesson.visualComponentName).length;
+  const interactiveLessons = lessons.filter(
+    (lesson) => composantsInteractifs(lesson).length > 0,
+  ).length;
+  const visualLessons = lessons.filter((lesson) =>
+    lesson.components.some((c) => resolveComponentMeta(c.name)?.kind === 'visual'),
+  ).length;
 
   const rules: RuleReport[] = [];
 
@@ -371,19 +409,28 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
   for (const lesson of lessons) {
     if (lesson.type !== 'MISE_EN_PRATIQUE') continue;
 
-    if (!lesson.interactiveComponentName) {
+    const interactifs = composantsInteractifs(lesson);
+
+    // ⚠️ **Au moins UN composant interactif, parmi N.** La règle ne dit pas
+    // « exactement deux » : une leçon peut en avoir autant que nécessaire — et
+    // c'est le premier d'entre eux qui porte l'appropriation.
+    if (interactifs.length === 0) {
       r5Findings.push(
         `« ${lesson.title} » : mise en pratique sans composant interactif — l'apprenant ne peut pas se l'approprier.`,
       );
       continue;
     }
 
-    const meta = resolveComponentMeta(lesson.interactiveComponentName);
-    if (meta?.status === 'placeholder') {
-      r5Findings.push(
-        `« ${lesson.title} » : le composant « ${lesson.interactiveComponentName} » est un ` +
-          'placeholder (interface sans interaction) — il ne produit aucune trace exploitable en audit.',
-      );
+    // Un seul placeholder suffit à rendre la leçon non conforme : il ne produit
+    // aucune trace exploitable (indicateur 19).
+    for (const composant of interactifs) {
+      const meta = resolveComponentMeta(composant.name);
+      if (meta?.status === 'placeholder') {
+        r5Findings.push(
+          `« ${lesson.title} » : le composant « ${composant.name} » est un ` +
+            'placeholder (interface sans interaction) — il ne produit aucune trace exploitable en audit.',
+        );
+      }
     }
   }
   rules.push({
