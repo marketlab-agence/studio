@@ -236,16 +236,45 @@ Dépend de : 3, 4, 5, 6
 
 Dépend de : 1 · Voir `adr/0008`
 
-- [ ] T8.1 — Infrastructure i18n (routage `/fr` `/en`, catalogue) — pattern masterplan365 `_t('fr','en')` · REQ-I18N-01, REQ-I18N-03 · vérif: navigation localisée
-- [ ] T8.2 — Catalogues **FR + EN** complets · REQ-I18N-01 · vérif: aucune clé manquante
-- [ ] T8.3 — **Lint i18n bloquant** : clé absente d'une langue obligatoire → build en erreur · REQ-I18N-05 · vérif: CI échoue
-- [ ] T8.4 — Extraction de toutes les chaînes en dur de l'interface · REQ-I18N-04 · vérif: `grep` → 0 libellé non clé
-- [ ] T8.5 — Formats localisés (dates, nombres, devises, fuseaux) · REQ-I18N-06 · vérif: affichage conforme
-- [ ] T8.6 — Langue persistée par utilisateur · REQ-I18N-07 · vérif: choix conservé
-- [ ] T8.7 — **Langue déclarée sur chaque formation** · REQ-I18N-08 · vérif: `courses.language` renseigné, catalogue marque et filtre par langue
+- [x] T8.1 — Infrastructure i18n (routage `/fr` `/en`, catalogue) — pattern masterplan365 `_t('fr','en')` · REQ-I18N-01, REQ-I18N-03 · vérif: navigation localisée
+- [x] T8.2 — Catalogues **FR + EN** complets · REQ-I18N-01 · vérif: aucune clé manquante
+- [x] T8.3 — **Lint i18n bloquant** : clé absente d'une langue obligatoire → build en erreur · REQ-I18N-05 · vérif: CI échoue
+- [x] T8.4 — Extraction de toutes les chaînes en dur de l'interface · REQ-I18N-04 · vérif: `grep` → 0 libellé non clé
+- [x] T8.5 — Formats localisés (dates, nombres, devises, fuseaux) · REQ-I18N-06 · vérif: affichage conforme
+- [x] T8.6 — Langue persistée par utilisateur · REQ-I18N-07 · vérif: choix conservé
+- [x] T8.7 — **Langue déclarée sur chaque formation** · REQ-I18N-08 · vérif: `courses.language` renseigné, catalogue marque et filtre par langue
   > **Amendement du 2026-09-23** (voir `adr/0008`) : il ne s'agit **pas** d'un modèle multilingue ni d'une traduction. La langue est un **attribut de la formation**, choisi par son créateur. Les 6 formations existantes portent `fr` — c'est leur état normal, pas une dette.
-- [ ] T8.8 — Locale de repli documentée + détection à la première visite · REQ-I18N-03 · vérif: repli fonctionnel
-- [ ] T8.9 — ES préparé (structure prête, non activé) · REQ-I18N-02 · vérif: ajout d'une locale sans refonte
+- [x] T8.8 — Locale de repli documentée + détection à la première visite · REQ-I18N-03 · vérif: repli fonctionnel
+- [x] T8.9 — ES préparé (structure prête, non activé) · REQ-I18N-02 · vérif: ajout d'une locale sans refonte
+
+> **Note de fin de phase 8 (2026-09-23)**
+>
+> **Ce qui est fait, et mesuré.** L'interface est **bilingue FR/EN** : `next-intl` 4.14.6,
+> routage `/fr` `/en`, **561 clés** par langue, **0 incohérence** (`npm run lint:i18n`,
+> bloquant en CI). Les **~250 chaînes** de l'interface ont été extraites en 4 vagues
+> (navigation, pages publiques, espace apprenant, administration), plus l'accueil et la
+> page de diagnostic.
+>
+> **Décision structurante — la langue du contenu n'est PAS une traduction.** Le référentiel
+> prévoyait « une formation en FR et EN » ; il a été **amendé** : la langue est un **attribut
+> de la formation** (`courses.language`), choisi par son créateur. Les 6 formations
+> existantes portent `fr` — c'est leur état, pas une dette. Un créateur anglophone écrira
+> sa formation en anglais, sans qu'aucune traduction ne soit produite.
+> Voir `adr/0008` (amendement) et `REQ-I18N-08` (réécrite, `REQ-I18N-09` supprimée).
+>
+> **Découverte de conformité.** Le décret (indicateur 19) exige une « trace d'interaction
+> **par composant** ». Avec un seul composant par leçon, « par composant » et « par leçon »
+> se confondaient. La phase **8bis** (voir `adr/0013`) lève cette limite.
+>
+> **Piège documenté.** `playwright.config.ts` **doit** déclarer `locale: 'fr-FR'` :
+> `next-intl` négocie la locale depuis `Accept-Language`, que Playwright envoie en
+> `en-US` par défaut — les tests cherchant du français échouaient alors que le code était
+> correct. 4 échecs → 0 après correction.
+>
+> **Vérifié** : typecheck 0 · lint 0 · **lint:i18n** 561 clés · **280** tests unitaires ·
+> **191** tests DB · **84** E2E (76 + 8 i18n) · audit contenu **6/6**.
+
+---
 
 ## Phase 8bis — Composants pédagogiques multiples par leçon
 
