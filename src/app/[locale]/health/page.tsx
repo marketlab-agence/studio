@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getSettingsProvider, getRequestScope } from '@/lib/providers';
 import { getPool } from '@/lib/db/pool';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,23 +19,24 @@ async function getDatabaseVersion(): Promise<string> {
 }
 
 export default async function HealthPage() {
+  const t = await getTranslations('health');
   const scope = await getRequestScope();
   const settings = await getSettingsProvider().getSettings(scope);
   const databaseVersion = await getDatabaseVersion();
 
   return (
     <main className="container mx-auto max-w-2xl px-4 py-16">
-      <h1 className="text-3xl font-bold tracking-tighter mb-2">Diagnostic de la plateforme</h1>
+      <h1 className="text-3xl font-bold tracking-tighter mb-2">{t('title')}</h1>
       <p className="text-muted-foreground mb-8">
-        Vérification de la chaîne serveur → provider → PostgreSQL.
+        {t('subtitle')}
       </p>
 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Base de données</CardTitle>
-              <Badge variant="secondary">Connectée</Badge>
+              <CardTitle>{t('database')}</CardTitle>
+              <Badge variant="secondary">{t('connected')}</Badge>
             </div>
             <CardDescription>{databaseVersion}</CardDescription>
           </CardHeader>
@@ -42,15 +44,24 @@ export default async function HealthPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Paramètres applicatifs</CardTitle>
+            <CardTitle>{t('appSettings')}</CardTitle>
+            {/*
+              La phrase contient deux noms techniques (`SettingsProvider`, `settings`)
+              qui ne se traduisent pas. Elle est donc découpée en trois segments
+              autour d'eux, plutôt que d'être figée dans une seule clé — un
+              traducteur peut ainsi déplacer les segments, mais jamais renommer les
+              identifiants de code.
+            */}
             <CardDescription>
-              Lus via <code className="text-xs">SettingsProvider</code> (table{' '}
-              <code className="text-xs">settings</code>).
+              {t('settingsSourceBefore')} <code className="text-xs">SettingsProvider</code>{' '}
+              {t('settingsSourceMiddle')}{' '}
+              <code className="text-xs">settings</code>
+              {t('settingsSourceAfter')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-              <dt className="text-muted-foreground font-medium">Formateur</dt>
+              <dt className="text-muted-foreground font-medium">{t('instructor')}</dt>
               <dd>{settings.instructorName}</dd>
             </dl>
           </CardContent>

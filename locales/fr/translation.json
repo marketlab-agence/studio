@@ -610,5 +610,36 @@
     "publishCourse": {
       "button": "Publier la formation"
     }
+  },
+  "health": {
+    "title": "Diagnostic de la plateforme",
+    "subtitle": "Vérification de la chaîne serveur → provider → PostgreSQL.",
+    "database": "Base de données",
+    "connected": "Connectée",
+    "appSettings": "Paramètres applicatifs",
+    "settingsSourceBefore": "Lus via",
+    "settingsSourceMiddle": "(table",
+    "settingsSourceAfter": ").",
+    "instructor": "Formateur"
+  },
+  "home": {
+    "heroTitle": "Accélérez votre maîtrise des outils.",
+    "heroTitleAccent": "Devenez un Katalyst.",
+    "heroSubtitle": "De Jira à AWS, apprenez en faisant. Nos simulations interactives vous plongent dans des scénarios réels pour une compétence qui dure vraiment.",
+    "exploreCourses": "Explorer les formations",
+    "myDashboard": "Mon Tableau de Bord",
+    "heroImageAlt": "Illustration d'un environnement de travail outillé",
+    "methodBadge": "La méthode Katalyst",
+    "methodTitle": "La compétence par la pratique.",
+    "methodSubtitle": "Les tutoriels vidéo, c'est bien. La mémoire musculaire, c'est mieux. Notre approche unique vous fait manipuler les outils comme si vous étiez déjà en poste.",
+    "feature1Title": "Simulations Réalistes",
+    "feature1Description": "Créez un ticket Jira, configurez une alerte Slack, lancez une instance AWS. Le tout, dans un environnement guidé et sans risque.",
+    "feature2Title": "Apprentissage Contextuel",
+    "feature2Description": "Comprenez le *pourquoi* derrière chaque clic. Nos visualisations et explications claires transforment les concepts abstraits en savoir concret.",
+    "feature3Title": "Validation des Compétences",
+    "feature3Description": "Prouvez votre expertise avec des quiz et des projets finaux qui valident que vous savez non seulement quoi faire, mais aussi comment le faire.",
+    "ecosystemTitle": "Un écosystème d'apprentissage complet.",
+    "ecosystemSubtitle": "Nous couvrons les outils essentiels que les entreprises s'arrachent. Commencez par un cours, maîtrisez-les tous.",
+    "comingSoon": "Bientôt disponible"
   }
 }

@@ -610,5 +610,36 @@
     "publishCourse": {
       "button": "Publish course"
     }
+  },
+  "health": {
+    "title": "Platform diagnostics",
+    "subtitle": "Verifying the chain server → provider → PostgreSQL.",
+    "database": "Database",
+    "connected": "Connected",
+    "appSettings": "Application settings",
+    "settingsSourceBefore": "Read via",
+    "settingsSourceMiddle": "(table",
+    "settingsSourceAfter": ").",
+    "instructor": "Instructor"
+  },
+  "home": {
+    "heroTitle": "Accelerate your mastery of professional tools.",
+    "heroTitleAccent": "Become a Katalyst.",
+    "heroSubtitle": "From Jira to AWS, learn by doing. Our interactive simulations immerse you in real scenarios for skills that truly last.",
+    "exploreCourses": "Explore courses",
+    "myDashboard": "My Dashboard",
+    "heroImageAlt": "Illustration of a tool-equipped workspace",
+    "methodBadge": "The Katalyst method",
+    "methodTitle": "Skill through practice.",
+    "methodSubtitle": "Video tutorials are good. Muscle memory is better. Our unique approach has you handling the tools as if you were already on the job.",
+    "feature1Title": "Realistic Simulations",
+    "feature1Description": "Create a Jira ticket, configure a Slack alert, launch an AWS instance. All in a guided, risk-free environment.",
+    "feature2Title": "Contextual Learning",
+    "feature2Description": "Understand the *why* behind every click. Our clear visuals and explanations turn abstract concepts into concrete knowledge.",
+    "feature3Title": "Skill Validation",
+    "feature3Description": "Prove your expertise with quizzes and final projects that confirm you know not only what to do, but also how to do it.",
+    "ecosystemTitle": "A complete learning ecosystem.",
+    "ecosystemSubtitle": "We cover the essential tools companies are competing for. Start with one course, master them all.",
+    "comingSoon": "Coming soon"
   }
 }
