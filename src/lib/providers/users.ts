@@ -23,5 +23,14 @@ export interface UserProvider {
   create(scope: OrgScope, user: Omit<AppUser, 'id'>): Promise<AppUser>;
   update(scope: OrgScope, userId: string, changes: Partial<AppUser>): Promise<void>;
   setRole(scope: OrgScope, userId: string, role: AppUser['role']): Promise<void>;
+  /**
+   * Enregistre la langue d'interface préférée de l'utilisateur.
+   *
+   * ⚠️ **Méthode dédiée plutôt que `update` générique.** La préférence de langue est
+   * une action de l'utilisateur sur **son propre** compte, pas une modification
+   * administrative d'un tiers : le périmètre est donc vérifié contre `scope.userId`,
+   * ce que `update` (qui prend un `userId` arbitraire) ne fait pas.
+   */
+  updatePreferredLanguage(scope: OrgScope, language: 'fr' | 'en' | 'es'): Promise<void>;
   delete(scope: OrgScope, userId: string): Promise<void>;
 }

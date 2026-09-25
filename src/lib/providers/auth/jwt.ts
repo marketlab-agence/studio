@@ -78,15 +78,17 @@ type UserRow = {
   phone: string | null;
   password_hash: string | null;
   must_reset_password: boolean;
-  two_factor_enabled: boolean;
-  google_id: string | null;
-  two_factor_secret: string | null;
-};
+    two_factor_enabled: boolean;
+    google_id: string | null;
+    two_factor_secret: string | null;
+    language: AuthenticatedUser['language'];
+  };
 
-const USER_COLUMNS = `
-  id, organization_id, email, name, role, status, plan_id, avatar_url, phone,
-  password_hash, must_reset_password, two_factor_enabled, two_factor_secret, google_id
-`;
+  const USER_COLUMNS = `
+    id, organization_id, email, name, role, status, plan_id, avatar_url, phone,
+    password_hash, must_reset_password, two_factor_enabled, two_factor_secret, google_id,
+    language
+  `;
 
 function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
   return {
@@ -99,10 +101,11 @@ function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
     planId: row.plan_id ?? 'free',
     avatarUrl: row.avatar_url ?? undefined,
     phone: row.phone ?? undefined,
-    mustResetPassword: row.must_reset_password,
-    twoFactorEnabled: row.two_factor_enabled,
-  };
-}
+      mustResetPassword: row.must_reset_password,
+      twoFactorEnabled: row.two_factor_enabled,
+      language: row.language,
+    };
+  }
 
 /** Jeton aléatoire opaque (32 octets → 43 caractères base64url). */
 function generateOpaqueToken(): string {

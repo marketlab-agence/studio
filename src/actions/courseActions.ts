@@ -27,21 +27,34 @@ const slugify = (text: string) =>
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 
-export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
-    const courses = await getCourses();
-    
-    const courseId = slugify(plan.title);
-    
-    const courseIndex = courses.findIndex(c => c.id === courseId);
+  export async function savePlanAction(plan: CreateCourseOutput, params: CreateCourseInput): Promise<{ courseId: string }> {
+      const courses = await getCourses();
+      
+      const courseId = slugify(plan.title);
+      
+      const courseIndex = courses.findIndex(c => c.id === courseId);
 
-    const newCourseData: CourseInfo = {
-        id: courseId,
-        title: plan.title,
-        description: plan.description,
-        status: 'Plan',
-        plan: plan,
-        generationParams: params,
-    };
+      /**
+       * La langue du contenu vient du formulaire de génération (`courseLanguage`),
+       * que le créateur a déjà renseigné pour que l'IA rédige dans la bonne langue.
+       *
+       * ⚠️ **On ne redemande pas la langue ici.** Elle est connue au moment de la
+       * génération ; la reposer au moment de l'enregistrement créerait deux sources
+       * qui pourraient diverger. Le repli `'fr'` couvre l'appel sans formulaire.
+       */
+      const langueDemandee = params.courseLanguage;
+      const language: CourseInfo['language'] =
+          langueDemandee === 'en' || langueDemandee === 'es' ? langueDemandee : 'fr';
+
+      const newCourseData: CourseInfo = {
+          id: courseId,
+          title: plan.title,
+          description: plan.description,
+          status: 'Plan',
+          plan: plan,
+          generationParams: params,
+          language,
+      };
 
     if (courseIndex !== -1) {
         courses[courseIndex] = { ...courses[courseIndex], ...newCourseData };

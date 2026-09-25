@@ -68,6 +68,7 @@ function baseCourse(): CourseContent {
     title: 'Formation modifiable',
     description: '',
     status: 'Publié' as const,
+    language: 'fr' as const,
     weeks: [],
     chapters: [
       {

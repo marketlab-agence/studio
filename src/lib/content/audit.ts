@@ -40,6 +40,7 @@ const DETAIL = process.argv.includes('--detail');
 type CourseRow = {
   id: string;
   title: string;
+  language: string;
 }
 
 type ChapterRow = {
@@ -77,7 +78,7 @@ type QuizRow = {
 /** Reconstruit un `CourseContent` depuis la base, pour l'auditer. */
 async function loadCourses(): Promise<CourseContent[]> {
   const { rows: courses } = await query<CourseRow>(
-    'SELECT id, title FROM courses ORDER BY created_at',
+    'SELECT id, title, language FROM courses ORDER BY created_at',
   );
 
   const { rows: chapters } = await query<ChapterRow>(
@@ -120,6 +121,7 @@ async function loadCourses(): Promise<CourseContent[]> {
       title: course.title,
       description: '',
       status: 'Publié' as const,
+      language: course.language as CourseContent['language'],
       weeks: [],
       chapters: courseChapters.map((chapter) => {
         const quiz = quizByChapter.get(chapter.id);

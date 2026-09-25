@@ -189,6 +189,14 @@ export const CourseSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
   status: CourseStatusSchema,
+  /**
+   * Langue du contenu, choisie par le créateur.
+   *
+   * ⚠️ **Ce n'est PAS une traduction.** Une formation porte une langue ; il
+   * n'existe pas « la même formation en FR et EN ». La valeur par défaut `'fr'`
+   * correspond à l'état réel des formations existantes, pas à un remplissage.
+   */
+  language: z.enum(['fr', 'en', 'es']).default('fr'),
   unlockRuleId: z.string().min(1).optional(),
   /** Regroupements facultatifs. */
   weeks: z.array(WeekSchema),

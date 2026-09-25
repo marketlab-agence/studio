@@ -148,6 +148,7 @@ describe('Audit de conformité du contenu', () => {
     title: 'Formation',
     description: '',
     status: 'Publié',
+    language: 'fr',
     weeks: [],
     chapters: [
       {

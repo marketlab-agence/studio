@@ -79,6 +79,7 @@ describe('généralité — une formation de VENTE peut être conforme', () => {
       title: 'Prospection commerciale : de l’appel à la signature',
       description: 'Formation créée par l’IA pour un institut de formation commerciale.',
       status: 'Publié' as const,
+      language: 'fr' as const,
       weeks: [],
       chapters: [
         {

@@ -34,6 +34,8 @@
 - **[mineur]** Avertissement Jest sur le projet DB : `worker process failed to exit gracefully` — fuite de handle à investiguer (n'affecte pas les résultats).
 - **`src/queries/**` = code mort** : importé nulle part. Typé pour T0.2, à supprimer en phase 16.
 - **Modules Firebase = code mort** depuis la phase 3. **SUPPRIMÉ en phase 7 (2026-09-23)** : `src/lib/firebase-admin.ts`, `src/lib/firebase.ts`, `src/lib/local-data.ts`, plus `src/lib/db/import-auth.ts` et `scripts/migrate-data.js`, avec les dépendances `firebase` / `firebase-admin`. La traçabilité des 11 comptes importés est conservée dans `@docs/katalyst/migration-comptes-firebase.md`.
+- 🔴 **Playwright envoie Accept-Language: en-US par défaut.** Depuis l'i18n (phase 8), 
+ext-intl négocie la locale depuis cet en-tête : une navigation sans préfixe (/reset-password) était redirigée vers /en/..., et les tests cherchant du texte français échouaient — **alors que le code était correct**. Correctif : locale: 'fr-FR' dans playwright.config.ts (use). La suite est française, elle doit se déclarer française ; une suite E2E i18n dédiée couvre l'anglais.
 - **Le build Next n'est pas vérifié** : étape CI en report-only (script `npm run build` en syntaxe Windows `cmd`).
 - **Divergence de branche** : `master` a 96+ commits locaux contre 1 sur `origin/master`. Aucun push effectué.
 

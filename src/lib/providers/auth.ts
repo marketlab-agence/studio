@@ -29,9 +29,17 @@ export interface AuthenticatedUser {
    * `true` pour les comptes repris de Firebase Auth : la connexion aboutit mais
    * l'application doit imposer un nouveau mot de passe (REQ-AUTH-06).
    */
-  mustResetPassword: boolean;
-  twoFactorEnabled: boolean;
-}
+    mustResetPassword: boolean;
+    twoFactorEnabled: boolean;
+    /**
+     * Langue d'interface préférée, `null` si jamais choisie.
+     *
+     * ⚠️ **Sert à réaligner le cookie de locale à la connexion.** Sans ce champ, la
+     * préférence stockée en base serait écrite mais jamais relue : l'utilisateur
+     * retrouverait la langue de son navigateur, pas la sienne.
+     */
+    language: 'fr' | 'en' | 'es' | null;
+  }
 
 export interface Session {
   user: AuthenticatedUser;

@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { closePool, query } from './pool';
 
 /**
- * Répercute dans `src/data/tutorials.json` les corrections saisies en base (T6.8h).
+ * Répercute dans `src/data/` les corrections saisies en base : les leçons
+ * (`tutorials.json`, T6.8h) et la langue du contenu des formations
+ * (`courses.json`, phase 8).
  *
  * ⚠️ **Pourquoi c'est indispensable, et pas seulement confortable.**
  * Le seed (`db:seed`) relit `src/data/*.json` et **écrase** la base. Sans cet export, tout
@@ -12,8 +14,11 @@ import { closePool, query } from './pool';
  * objectifs d'origine, viderait les `bloomLevel` et déconvertirait les 7 leçons Git.
  * La conformité ne serait plus **rejouable** : elle redeviendrait un état local fragile.
  *
- * ⚠️ Le fichier est réécrit **en préservant l'ordre des clés et l'indentation** du JSON
- * source : le diff git reste lisible, on voit exactement quelle leçon a changé.
+ * ⚠️ Les fichiers sont réécrits **en préservant l'ordre des clés et l'indentation** du
+ * JSON source : le diff git reste lisible, on voit exactement ce qui a changé.
+ *
+ * ⚠️ Une formation peut passer de `fr` à `en` : la langue est une **décision du créateur**,
+ * pas une traduction. Sans cet export, un `db:seed` la ramènerait à `fr`.
  *
  * Usage :
  *   npm run db:export-content              # simulation (affiche le diff)
@@ -50,6 +55,17 @@ type LessonRow = {
   objective: string;
   bloom_level: string | null;
   interactive_component_name: string | null;
+};
+
+type JsonCourse = {
+  id: string;
+  language?: string;
+  [key: string]: unknown;
+};
+
+type CourseRow = {
+  id: string;
+  language: string;
 };
 
 async function main(): Promise<void> {
@@ -105,6 +121,33 @@ async function main(): Promise<void> {
     }
   }
 
+  // --- Langue du contenu des formations ---------------------------------------
+  // ⚠️ L'appariement se fait sur l'`id` de la formation, et non sur
+  // `(chapter_id, source_id)` comme pour les leçons : une formation n'a qu'une
+  // seule ligne, son id est stable et unique.
+  const { rows: courseRows } = await query<CourseRow>('SELECT id, language FROM courses');
+  const langueParId = new Map(courseRows.map((row) => [row.id, row.language]));
+
+  const cheminCours = join(DATA_DIR, 'courses.json');
+  const courses = JSON.parse(readFileSync(cheminCours, 'utf8')) as JsonCourse[];
+
+  let langues = 0;
+  const coursNonTrouves: string[] = [];
+
+  for (const course of courses) {
+    const langueBase = langueParId.get(course.id);
+
+    if (langueBase === undefined) {
+      coursNonTrouves.push(course.id);
+      continue;
+    }
+
+    if (course.language !== langueBase) {
+      course.language = langueBase;
+      langues++;
+    }
+  }
+
   console.log(`  Leçons mises à jour :`);
   console.log(`    objectifs      : ${objectifs}`);
   console.log(`    niveaux Bloom  : ${niveaux}`);
@@ -115,8 +158,17 @@ async function main(): Promise<void> {
     console.log(`    ⚠️ ${item}`);
   }
   console.log('');
+  console.log(`  Formations mises à jour :`);
+  console.log(`    langue         : ${langues}`);
+  console.log(`  Formations du JSON absentes de la base : ${coursNonTrouves.length}`);
+  for (const item of coursNonTrouves.slice(0, 10)) {
+    console.log(`    ⚠️ ${item}`);
+  }
+  console.log('');
 
-  if (objectifs + niveaux + composants === 0) {
+  const modificationsLecons = objectifs + niveaux + composants;
+
+  if (modificationsLecons === 0 && langues === 0) {
     console.log('  Rien à écrire — le JSON est déjà à jour.');
     return;
   }
@@ -126,9 +178,15 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Indentation 2 espaces : c'est celle du fichier d'origine.
-  writeFileSync(chemin, `${JSON.stringify(tutorials, null, 2)}\n`, 'utf8');
-  console.log('  ✔ src/data/tutorials.json mis à jour.');
+  // Indentation 2 espaces : c'est celle des fichiers d'origine.
+  if (modificationsLecons > 0) {
+    writeFileSync(chemin, `${JSON.stringify(tutorials, null, 2)}\n`, 'utf8');
+    console.log('  ✔ src/data/tutorials.json mis à jour.');
+  }
+  if (langues > 0) {
+    writeFileSync(cheminCours, `${JSON.stringify(courses, null, 2)}\n`, 'utf8');
+    console.log('  ✔ src/data/courses.json mis à jour.');
+  }
   console.log('');
 }
 

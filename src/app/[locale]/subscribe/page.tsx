@@ -1,0 +1,120 @@
+
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Check, CreditCard, Loader2, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { getPlansAction } from '@/actions/planActions';
+import type { SubscriptionPlan } from '@/types/plans.types';
+import { useFormatter, useTranslations } from 'next-intl';
+
+export default function SubscribePage() {
+  const t = useTranslations('subscribe');
+  const format = useFormatter();
+  const router = useRouter();
+  const { user, loading, isPremium, updateUserPlan } = useAuth();
+  const { toast } = useToast();
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [premiumPlan, setPremiumPlan] = useState<SubscriptionPlan | null>(null);
+
+  useEffect(() => {
+    async function fetchPlan() {
+        const plans = await getPlansAction();
+        const premPlan = plans.find(p => p.id === 'premium');
+        setPremiumPlan(premPlan || null);
+    }
+    fetchPlan();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login?redirect=/subscribe');
+    }
+  }, [user, loading, router]);
+  
+  useEffect(() => {
+    if (!loading && isPremium) {
+      router.push('/dashboard');
+    }
+  }, [isPremium, loading, router]);
+
+  const handleSubscribe = async () => {
+    setIsSubscribing(true);
+
+    // --- LOGIQUE DE PAIEMENT POUR LA PRODUCTION ---
+    // Le code ci-dessous est un guide pour intégrer un système de paiement réel comme Stripe.
+    
+    // --- SIMULATION ACTUELLE (à remplacer par la logique de production) ---
+    setTimeout(() => {
+        if (updateUserPlan) {
+            updateUserPlan('premium');
+        }
+        toast({
+            title: t('successTitle'),
+            description: t('successDescription'),
+        });
+        router.push('/ai-assistant');
+    }, 2000);
+    // --- FIN DE LA SIMULATION ---
+  };
+
+  if (loading || !user || isPremium || !premiumPlan) {
+    return (
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+          <span>{t('loading')}</span>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex-1 flex flex-col items-center justify-center p-4 bg-muted/20">
+        <div className="w-full max-w-lg space-y-8">
+            <div className="text-center">
+                 <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+                 <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-400" /> {premiumPlan.name}</CardTitle>
+                            <CardDescription className="mt-1">{premiumPlan.description}</CardDescription>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-4xl font-bold">{format.number(premiumPlan.price, { style: 'currency', currency: 'EUR' })}</p>
+                            <p className="text-xs text-muted-foreground">{t('perMonth')}</p>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="font-semibold text-sm">{t('includedTitle')}</p>
+                    <ul className="space-y-3">
+                        {premiumPlan.features.map((feature, i) => (
+                             <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Check className="h-4 w-4 text-primary" />
+                                <span>{feature}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+                <CardFooter>
+                    <Button onClick={handleSubscribe} disabled={isSubscribing} className="w-full" size="lg">
+                        {isSubscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4" />}
+                        {isSubscribing ? t('redirecting') : t('subscribeButton')}
+                    </Button>
+                </CardFooter>
+            </Card>
+            <p className="text-xs text-center text-muted-foreground">
+              {t('securePayment')}
+            </p>
+        </div>
+    </main>
+  );
+}

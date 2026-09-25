@@ -1,0 +1,199 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+    BookCopy, DollarSign, LayoutDashboard, Users, Verified, Save, Loader2, CreditCard
+} from 'lucide-react';
+import { PREMIUM_PLAN_PRICE_EUR } from '@/lib/users';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from '@/i18n/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+import { getAdminCoursesAction, getSettingsAction, updateSettingsAction, getAdminUsersAction } from '@/actions/adminActions';
+import type { AppSettings } from '@/types/settings.types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { useFormatter, useTranslations } from 'next-intl';
+
+type AdminCourse = {
+    id: string;
+    title: string;
+    lessonsCount: number;
+    status: 'Publié' | 'Brouillon' | 'Plan';
+};
+
+
+export default function AdminDashboardPage() {
+  const format = useFormatter();
+  const t = useTranslations('admin');
+  const tc = useTranslations('common');
+  const { user: authUser } = useAuth();
+  const { toast } = useToast();
+
+  const [courses, setCourses] = useState<AdminCourse[]>([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    premiumUsers: 0,
+    monthlyRevenue: 0,
+    activeUsers: 0,
+    totalCourses: 0,
+  });
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [instructorName, setInstructorName] = useState('');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    async function loadAdminData() {
+        setDataLoading(true);
+        
+        try {
+            const coursesData = await getAdminCoursesAction();
+            setCourses(coursesData);
+
+            const settingsData = await getSettingsAction();
+            setSettings(settingsData);
+            setInstructorName(settingsData.instructorName || '');
+            
+            const initialUsers = await getAdminUsersAction();
+            
+            if (initialUsers.length > 0) {
+                const totalUsers = initialUsers.length;
+                const premiumUsers = initialUsers.filter(u => u.planId === 'premium').length;
+                const monthlyRevenue = premiumUsers * PREMIUM_PLAN_PRICE_EUR;
+                const activeUsers = initialUsers.filter(u => u.status === 'Actif').length;
+                
+                setStats({
+                    totalUsers,
+                    premiumUsers,
+                    monthlyRevenue,
+                    activeUsers,
+                    totalCourses: coursesData.length,
+                });
+            }
+        } catch (error) {
+            console.error("Failed to load admin data", error);
+            toast({ title: tc('errorTitle'), description: t('dashboard.loadErrorDescription'), variant: 'destructive'});
+        } finally {
+            setDataLoading(false);
+        }
+    }
+    loadAdminData();
+  }, [toast, t, tc]);
+  
+  const handleSaveSettings = async () => {
+    if (!instructorName) return;
+    setIsSavingSettings(true);
+    try {
+        await updateSettingsAction({ instructorName });
+        toast({ title: t('dashboard.settingsSavedTitle'), description: t('dashboard.settingsSavedDescription') });
+    } catch (e) {
+        toast({ title: tc('errorTitle'), description: t('dashboard.settingsErrorDescription'), variant: 'destructive' });
+    } finally {
+        setIsSavingSettings(false);
+    }
+  };
+
+
+  return (
+    <>
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <LayoutDashboard className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+            <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
+          </div>
+        </div>
+
+        {dataLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader className="flex-row items-center justify-between pb-2">
+                            <Skeleton className="h-5 w-24" />
+                            <Skeleton className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-16" />
+                            <Skeleton className="h-3 w-28 mt-2" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        ) : (
+            <>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.usersTotal')}</CardTitle><Users className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalUsers}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.premiumSubscribers')}</CardTitle><Verified className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.premiumUsers}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.monthlyRevenue')}</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{format.number(stats.monthlyRevenue, { style: 'currency', currency: 'EUR' })}</div></CardContent></Card>
+                    <Card><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">{t('dashboard.activeCourses')}</CardTitle><BookCopy className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalCourses}</div></CardContent></Card>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('dashboard.manageCoursesTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageCoursesDescription')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex gap-2">
+                            <Button asChild><Link href="/admin/courses">{t('dashboard.manageCoursesButton')}</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('dashboard.manageUsersTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageUsersDescription')}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild><Link href="/admin/users">{t('dashboard.manageUsersButton')}</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('dashboard.manageSubscriptionsTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.manageSubscriptionsDescription')}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild><Link href="/admin/subscriptions">{t('dashboard.manageSubscriptionsButton')}</Link></Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('dashboard.settingsTitle')}</CardTitle>
+                            <CardDescription>{t('dashboard.settingsDescription')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="instructorName">{t('dashboard.instructorName')}</Label>
+                                <Input 
+                                    id="instructorName" 
+                                    value={instructorName} 
+                                    onChange={(e) => setInstructorName(e.target.value)}
+                                    disabled={dataLoading}
+                                />
+                            </div>
+                            <Button onClick={handleSaveSettings} disabled={isSavingSettings || dataLoading || !instructorName}>
+                                {isSavingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                {t('dashboard.save')}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+        )}
+      </>
+  );
+}
