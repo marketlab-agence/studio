@@ -10,12 +10,13 @@ export const mockTutorials: Tutorial[] = [
     title: 'Introduction (Mock)',
     description: 'Ceci est une description de test.',
     lessons: [
-      {
-        id: 'mock-1-1',
-        title: 'Première Étape de Test',
-        objective: 'Découvrir le contenu de démonstration.',
-        content: 'Contenu de la première étape.',
-      },
+        {
+          id: 'mock-1-1',
+          title: 'Première Étape de Test',
+          objective: 'Découvrir le contenu de démonstration.',
+          content: 'Contenu de la première étape.',
+          components: [],
+        },
     ],
   },
 ];

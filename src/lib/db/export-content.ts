@@ -36,7 +36,8 @@ type JsonLesson = {
   id: string;
   title: string;
   objective?: string;
-  interactiveComponentName?: string;
+  /** Composants ordonnés, tels qu'écrits dans le JSON. */
+  components?: { name: string; position: number; config?: unknown }[];
   bloomLevel?: string;
   [key: string]: unknown;
 };
@@ -54,7 +55,7 @@ type LessonRow = {
   title: string;
   objective: string;
   bloom_level: string | null;
-  interactive_component_name: string | null;
+  components: { name: string; position: number; config: unknown }[];
 };
 
 type JsonCourse = {
@@ -80,7 +81,15 @@ async function main(): Promise<void> {
   // **que dans son chapitre** : « 1-1 » existe dans plusieurs formations. Apparier sur `id`
   // ne trouvait rien ; apparier sur `source_id` seul aurait mélangé les formations.
   const { rows } = await query<LessonRow>(
-    'SELECT id, chapter_id, source_id, title, objective, bloom_level, interactive_component_name FROM lessons',
+    `SELECT id, chapter_id, source_id, title, objective, bloom_level,
+            COALESCE(
+              (SELECT json_agg(json_build_object(
+                 'name', lc.component_name, 'position', lc.position, 'config', lc.config
+               ) ORDER BY lc.position)
+               FROM lesson_components lc WHERE lc.lesson_id = lessons.id),
+              '[]'::json
+            ) AS components
+     FROM lessons`,
   );
   const parCle = new Map(rows.map((row) => [`${row.chapter_id}::${row.source_id}`, row]));
 
@@ -111,11 +120,34 @@ async function main(): Promise<void> {
         niveaux++;
       }
 
-      // ⚠️ Un composant interactif **retiré** en base doit l'être aussi ici : sinon le seed
-      // ressusciterait l'ancien type de la leçon (le seed déduit le type de ce champ).
-      const composantBase = fait.interactive_component_name ?? undefined;
-      if (composantBase && lesson.interactiveComponentName !== composantBase) {
-        lesson.interactiveComponentName = composantBase;
+      // ⚠️ **Normalisation avant comparaison, sur deux plans :**
+      // 1. le JSON omet `config` quand il est vide, la base renvoie `{}` ;
+      // 2. **PostgreSQL `jsonb` réordonne les clés** des objets. Or `JSON.stringify`
+      //    est sensible à l'ordre : sans tri, les leçons corrigées paraîtraient
+      //    modifiées à chaque exécution, éternellement.
+      const clesTriees = (valeur: unknown): unknown => {
+        if (Array.isArray(valeur)) return valeur.map(clesTriees);
+        if (valeur && typeof valeur === 'object') {
+          return Object.fromEntries(
+            Object.entries(valeur as Record<string, unknown>)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([cle, v]) => [cle, clesTriees(v)]),
+          );
+        }
+        return valeur;
+      };
+
+      const normaliser = (composants: LessonRow['components'] | undefined) =>
+        JSON.stringify(
+          (composants ?? [])
+            .map((c) => ({ name: c.name, position: c.position, config: c.config ?? {} }))
+            .sort((a, b) => a.position - b.position),
+          (_, valeur) => clesTriees(valeur),
+        );
+
+      const composantsBase = normaliser(fait.components);
+      if (normaliser(lesson.components as LessonRow['components']) !== composantsBase) {
+        lesson.components = fait.components ?? [];
         composants++;
       }
     }

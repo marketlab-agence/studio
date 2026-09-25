@@ -46,20 +46,24 @@ async function prepare(): Promise<boolean> {
     role: rows[0].role as OrgScope['role'],
   };
 
-  // Une formation seedée, son premier chapitre et ses premières leçons.
-  const course = await pool.query<{ id: string }>(
-    'SELECT id FROM courses WHERE organization_id = $1 ORDER BY created_at LIMIT 1',
+  // ⚠️ **On cherche directement une PAIRE (cours, chapitre) valide**, et non un
+  // cours puis son premier chapitre. Le test s'appuie sur `lessonIds[2]` : il lui
+  // faut un chapitre d'**au moins 3 leçons**. Chercher le cours d'abord rendait le
+  // test dépendant de l'ordre des lignes — un ordre que PostgreSQL ne garantit pas
+  // sans `ORDER BY`, et qui change après un re-seed.
+  const paire = await pool.query<{ course_id: string; chapter_id: string }>(
+    `SELECT c.course_id, c.id AS chapter_id
+     FROM chapters c
+     JOIN courses co ON co.id = c.course_id
+     WHERE co.organization_id = $1
+       AND (SELECT COUNT(*) FROM lessons l WHERE l.chapter_id = c.id) >= 3
+     ORDER BY co.created_at, c.position
+     LIMIT 1`,
     [scopeA.organizationId],
   );
-  if (course.rows.length === 0) return false;
-  courseId = course.rows[0].id;
-
-  const chapter = await pool.query<{ id: string }>(
-    'SELECT id FROM chapters WHERE course_id = $1 ORDER BY position LIMIT 1',
-    [courseId],
-  );
-  if (chapter.rows.length === 0) return false;
-  chapterId = chapter.rows[0].id;
+  if (paire.rows.length === 0) return false;
+  courseId = paire.rows[0].course_id;
+  chapterId = paire.rows[0].chapter_id;
 
   const lessons = await pool.query<{ id: string }>(
     'SELECT id FROM lessons WHERE chapter_id = $1 ORDER BY position LIMIT 3',

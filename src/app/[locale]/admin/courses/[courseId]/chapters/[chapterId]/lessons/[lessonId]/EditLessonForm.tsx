@@ -44,6 +44,30 @@ export function EditLessonForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  /**
+   * Met à jour le composant à une position donnée, ou le retire si le nom est vide.
+   *
+   * ⚠️ **Les positions sont renumérotées après chaque modification.** Laisser un
+   * trou (position 0 puis 2) ferait échouer la contrainte d'unicité dès la
+   * prochaine insertion au même endroit — et l'ordre d'affichage dépend d'une
+   * suite continue.
+   */
+  const majComposant = (position: number, nom: string) => {
+    setLesson((prev) => {
+      const composants = [...(prev.components ?? [])];
+
+      if (!nom.trim()) {
+        composants.splice(position, 1);
+      } else if (composants[position]) {
+        composants[position] = { ...composants[position], name: nom };
+      } else {
+        composants[position] = { name: nom, position, config: {} };
+      }
+
+      return { ...prev, components: composants.map((c, i) => ({ ...c, position: i })) };
+    });
+  };
+
   const getIndices = () => {
     const chapterIndexMatch = chapterId.match(/-ch(\d+)$/);
     const lessonIndexMatch = lesson.id.match(/-l(\d+)$/);
@@ -186,8 +210,8 @@ export function EditLessonForm({
                     <Label htmlFor="interactiveComponent">{t('editLesson.interactiveComponent')}</Label>
                     <Input
                         id="interactiveComponent"
-                        value={lesson.interactiveComponentName || ''}
-                        onChange={(e) => setLesson(prev => ({...prev, interactiveComponentName: e.target.value || undefined}))}
+                        value={lesson.components?.[0]?.name ?? ''}
+                        onChange={(e) => majComposant(0, e.target.value)}
                         placeholder={t('editLesson.interactiveComponentPlaceholder')}
                     />
                 </div>
@@ -195,8 +219,8 @@ export function EditLessonForm({
                     <Label htmlFor="visualComponent">{t('editLesson.visualComponent')}</Label>
                     <Input
                         id="visualComponent"
-                        value={lesson.visualComponentName || ''}
-                        onChange={(e) => setLesson(prev => ({...prev, visualComponentName: e.target.value || undefined}))}
+                        value={lesson.components?.[1]?.name ?? ''}
+                        onChange={(e) => majComposant(1, e.target.value)}
                         placeholder={t('editLesson.visualComponentPlaceholder')}
                     />
                 </div>

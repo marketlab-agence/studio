@@ -324,8 +324,7 @@ export class PostgresContentProvider implements ContentProvider {
    * référence `lessons(id)` avec `ON DELETE CASCADE`, et une simple édition de
    * contenu effacerait la progression des apprenants.
    */
-  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {
-    await query(
+  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {    await query(
       'UPDATE lessons SET position = position + $2 WHERE chapter_id = $1',
       [chapterId, PostgresContentProvider.POSITION_OFFSET],
     );
@@ -336,24 +335,25 @@ export class PostgresContentProvider implements ContentProvider {
       await query(
         `INSERT INTO lessons (
            id, chapter_id, source_id, title, objective, content, type, points,
-           interactive_component_name, visual_component_name, bloom_level, position
+           bloom_level, position
          )
-         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8, $9, $10)
+         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8)
          ON CONFLICT (id) DO UPDATE SET
            chapter_id = EXCLUDED.chapter_id,
            title = EXCLUDED.title,
            objective = EXCLUDED.objective,
            content = EXCLUDED.content,
-           interactive_component_name = EXCLUDED.interactive_component_name,
-           visual_component_name = EXCLUDED.visual_component_name,
            bloom_level = EXCLUDED.bloom_level,
            position = EXCLUDED.position`,
         [
           lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
-          lesson.content ?? '', lesson.interactiveComponentName ?? null,
-          lesson.visualComponentName ?? null, lesson.bloomLevel ?? null, index,
+          lesson.content ?? '', lesson.bloomLevel ?? null, index,
         ],
       );
+
+      // ⚠️ Les composants vivent dans leur propre table : ils sont réécrits APRÈS
+      // la leçon, dont ils dépendent par clé étrangère.
+      await this.remplacerComposants(lesson.id, lesson.components ?? []);
     }
 
     await query(
@@ -367,6 +367,47 @@ export class PostgresContentProvider implements ContentProvider {
        WHERE l.id = r.id`,
       [chapterId, lessons.length, PostgresContentProvider.POSITION_OFFSET],
     );
+  }
+
+  /**
+   * Réécrit les composants d'une leçon.
+   *
+   * ⚠️ **L'`id` d'un composant est réutilisé quand c'est le MÊME composant**, car
+   * `lesson_interactions.lesson_component_id` le référence : le recréer
+   * orphelinerait l'historique d'apprentissage.
+   *
+   * ⚠️ **Mais pas s'il a changé de nom.** Réutiliser l'`id` d'un `RecallQuiz`
+   * devenu `MatchingPairs` ferait croire que les traces passées appartiennent au
+   * nouveau composant — une fausse attribution, pire qu'une perte. Dans ce cas on
+   * supprime (la trace passe à `NULL`) puis on insère un composant neuf.
+   */
+  private async remplacerComposants(
+    lessonId: string,
+    composants: Lesson['components'],
+  ): Promise<void> {
+    const positions = composants.map((composant) => composant.position);
+
+    // ⚠️ `<> ALL('{}')` vaut VRAI partout : une liste vide supprime donc bien tous
+    // les composants de la leçon, ce qui est le comportement attendu.
+    await query(
+      `DELETE FROM lesson_components WHERE lesson_id = $1 AND position <> ALL($2::int[])`,
+      [lessonId, positions],
+    );
+
+    for (const composant of composants) {
+      await query(
+        `DELETE FROM lesson_components
+         WHERE lesson_id = $1 AND position = $2 AND component_name <> $3`,
+        [lessonId, composant.position, composant.name],
+      );
+
+      await query(
+        `INSERT INTO lesson_components (lesson_id, component_name, position, config)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (lesson_id, position) DO UPDATE SET config = EXCLUDED.config`,
+        [lessonId, composant.name, composant.position, JSON.stringify(composant.config ?? {})],
+      );
+    }
   }
 
   async deleteChapter(scope: OrgScope, id: string): Promise<void> {

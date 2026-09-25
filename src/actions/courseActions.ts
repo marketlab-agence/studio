@@ -90,14 +90,15 @@ export async function buildCourseFromPlanAction(courseId: string) {
         // Skip if chapter (tutorial) already exists to avoid duplication
         if (tutorials.find(t => t.id === chapterId)) return;
 
-        const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
-            id: `${chapterId}-l${lessonIndex + 1}`,
-            title: lessonPlan.title,
-            objective: lessonPlan.objective,
-            content: `Contenu en attente de génération pour "${lessonPlan.title}"...`,
-            interactiveComponentName: undefined,
-            visualComponentName: undefined,
-        }));
+          const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
+              id: `${chapterId}-l${lessonIndex + 1}`,
+              title: lessonPlan.title,
+              objective: lessonPlan.objective,
+              content: `Contenu en attente de génération pour "${lessonPlan.title}"...`,
+              // Aucun composant à la création : ils seront choisis à la génération
+              // du contenu de la leçon, selon son niveau de Bloom.
+              components: [],
+          }));
 
         const newTutorial: Tutorial = {
             id: chapterId,
@@ -325,14 +326,28 @@ export async function generateLessonContentAction(
       availableVisualComponents: relevantVisual,
     };
 
-    const result = await generateLessonContent(input);
-    const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
+      const result = await generateLessonContent(input);
+      const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
 
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
+      const leconCible = tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex];
+      leconCible.content = illustrativeContent;
 
-    await saveTutorials(tutorials);
+      /**
+       * ⚠️ **L'interactif d'abord (position 0), le visuel ensuite (position 1).**
+       * C'est l'ordre pédagogique historique — la pratique avant l'illustration.
+       * Les deux peuvent être absents : une leçon notionnelle n'a pas forcément
+       * d'exercice, et le plancher de composants n'est **pas bloquant**.
+       */
+      leconCible.components = [
+        ...(interactiveComponentName
+          ? [{ name: interactiveComponentName, position: 0, config: {} }]
+          : []),
+        ...(visualComponentName
+          ? [{ name: visualComponentName, position: 1, config: {} }]
+          : []),
+      ];
+
+      await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);
