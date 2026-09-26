@@ -3,6 +3,7 @@
 import React from 'react';
 import { Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart';
+import type { ComponentConfig } from '@/lib/schemas/component-config';
 
 type ChartData = {
     name: string;
@@ -10,8 +11,10 @@ type ChartData = {
     fill: string;
 };
 
-export function LanguagesChart({ data }: { data: ChartData[] }) {
-    if (!data || data.length === 0) {
+export function LanguagesChart({ data, config }: { data?: ChartData[]; config?: ComponentConfig }) {
+    // ⚠️ La donnée vient de `config.data.entries` (IA ou créateur) ; le repli sur la prop préserve l'existant.
+    const donnees = (config?.data as { entries?: ChartData[] } | undefined)?.entries ?? data;
+    if (!donnees || donnees.length === 0) {
         return (
             <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed">
                 <p className="text-sm text-muted-foreground">Aucune donnée sur les langages disponible.</p>
@@ -20,13 +23,18 @@ export function LanguagesChart({ data }: { data: ChartData[] }) {
     }
 
     return (
-        <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-                <Tooltip
-                    content={<ChartTooltipContent nameKey="name" />}
-                />
-                <Pie
-                    data={data}
+        <>
+            {/* ⚠️ Titre affiché uniquement s'il est configuré : sans config, le rendu est identique. */}
+            {config?.labels?.title ? (
+                <h3 className="text-xl font-bold mb-4">{config.labels.title}</h3>
+            ) : null}
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                    <Tooltip
+                        content={<ChartTooltipContent nameKey="name" />}
+                    />
+                    <Pie
+                        data={donnees}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -48,5 +56,6 @@ export function LanguagesChart({ data }: { data: ChartData[] }) {
                 <Legend content={<ChartLegendContent />} />
             </PieChart>
         </ResponsiveContainer>
+        </>
     );
 }

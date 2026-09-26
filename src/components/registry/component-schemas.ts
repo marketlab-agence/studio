@@ -278,19 +278,28 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   AiHelper: z.object({ prompt: z.string().min(1) }),
 
   // --- Composants visuels (illustratifs, sans obligation de niveau Bloom) ---
-  GitGraph: z.object({ commits: Textes }),
-  BranchDiagram: z.object({ branches: Textes }),
-  CommitTimeline: z.object({ commits: Textes }),
-  AnimatedFlow: z.object({ steps: z.array(Etape).min(1) }),
-  ConceptDiagram: z.object({ blocks: Textes }),
-  ConceptExplanation: z.object({ blocks: Textes }),
-  DiffViewer: z.object({ files: Textes }),
-  FileTreeViewer: z.object({ files: Textes }),
-  RepoComparison: z.object({ criteria: Textes }),
-  WorkflowComparisonTable: z.object({ criteria: Textes }),
-  LanguagesChart: z.object({ entries: Textes }),
-  StatisticsChart: z.object({ entries: Textes }),
-  ProjectDashboard: z.object({ entries: Textes }),
+  // ⚠️ Réalignés sur ce que chaque composant consomme RÉELLEMENT. Les illustrations
+  // n'ont aucune donnée structurée (pas de props de données) : `{}`. Les deux graphiques
+  // lisent `config.data.entries`.
+  GitGraph: z.object({}),
+  BranchDiagram: z.object({}),
+  CommitTimeline: z.object({}),
+  AnimatedFlow: z.object({}),
+  ConceptDiagram: z.object({}),
+  ConceptExplanation: z.object({}),
+  DiffViewer: z.object({}),
+  FileTreeViewer: z.object({}),
+  RepoComparison: z.object({}),
+  WorkflowComparisonTable: z.object({}),
+  LanguagesChart: z.object({
+    entries: z
+      .array(z.object({ name: z.string().min(1), value: z.number(), fill: z.string().min(1) }))
+      .min(1),
+  }),
+  StatisticsChart: z.object({
+    entries: z.array(z.object({ name: z.string().min(1), commits: z.number() })).min(1),
+  }),
+  ProjectDashboard: z.object({}),
 };
 
 /**
@@ -351,17 +360,20 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
   AiHelper: { title: 'Assistant IA', description: 'Pose ta question.' },
 
   // --- Composants visuels (illustratifs) ---
-  GitGraph: { title: 'Graphe Git', description: 'Visualise l’historique.' },
-  BranchDiagram: { title: 'Diagramme des branches', description: 'Comprends les branches.' },
-  CommitTimeline: { title: 'Chronologie des commits', description: 'Situe les commits.' },
-  AnimatedFlow: { title: 'Flux animé', description: 'Suis le mouvement.' },
-  ConceptDiagram: { title: 'Schéma de concept', description: 'Rends le concept lisible.' },
-  ConceptExplanation: { title: 'Explication illustrée', description: 'Comprends rapidement.' },
-  DiffViewer: { title: 'Vue des différences', description: 'Compare les versions.' },
-  FileTreeViewer: { title: 'Arborescence', description: 'Situe les fichiers.' },
-  RepoComparison: { title: 'Comparaison de dépôts', description: 'Confronte deux approches.' },
-  WorkflowComparisonTable: { title: 'Tableau comparatif', description: 'Compare les workflows.' },
-  LanguagesChart: { title: 'Répartition des langages', description: 'Visualise la composition.' },
-  StatisticsChart: { title: 'Statistiques', description: 'Visualise les chiffres.' },
-  ProjectDashboard: { title: 'Tableau de bord projet', description: 'Suis l’avancement.' },
+  // ⚠️ Réalignés sur le texte RÉELLEMENT affiché : modifier ce libellé par configuration
+  // doit produire exactement la valeur par défaut. Les composants qui n'affichent pas de
+  // description n'en déclarent donc pas.
+  GitGraph: { title: 'Illustration du Flux Git' },
+  BranchDiagram: { title: 'Diagramme des Branches' },
+  CommitTimeline: { title: 'Frise Chronologique des Commits' },
+  AnimatedFlow: { title: 'Flux Animé (ex: Push)' },
+  ConceptDiagram: { title: 'Diagramme de Concept' },
+  ConceptExplanation: { title: 'Pourquoi le Versioning est Important ?' },
+  DiffViewer: { title: 'Visualiseur de Différences' },
+  FileTreeViewer: { title: 'Explorateur de Fichiers', description: 'Visualisez la structure de votre projet.' },
+  RepoComparison: { title: 'Comparaison Local vs Distant' },
+  WorkflowComparisonTable: { title: 'Tableau Comparatif des Workflows Git', description: 'Comparez les approches populaires de gestion de branches pour choisir celle qui convient à votre projet.' },
+  LanguagesChart: { title: 'Répartition des langages' },
+  StatisticsChart: { title: 'Statistiques' },
+  ProjectDashboard: { title: 'Tableau de Bord du Projet Final', description: 'Un résumé de vos accomplissements durant le projet final simulé.' },
 };

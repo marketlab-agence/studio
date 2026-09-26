@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { GitPullRequest, Bug, GitCommitHorizontal, CheckCircle, Star } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const stats = [
     { title: "Pull Requests", value: 3, icon: GitPullRequest, color: "text-primary" },
@@ -24,12 +25,20 @@ const recentActivity = [
     { text: "Commit e4f5g6 poussé vers `feature/profile-page`", time: "il y a 1h" },
 ];
 
-export function ProjectDashboard() {
+export function ProjectDashboard({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défauts = textes historiques : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Tableau de Bord du Projet Final',
+      description: 'Un résumé de vos accomplissements durant le projet final simulé.',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6 w-full">
       <CardHeader>
-        <CardTitle>Tableau de Bord du Projet Final</CardTitle>
-        <CardDescription>Un résumé de vos accomplissements durant le projet final simulé.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
         {/* Stats Grid */}

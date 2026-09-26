@@ -1,12 +1,15 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GitCompare } from 'lucide-react';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function RepoComparison() {
+export function RepoComparison({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = titre historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles({ title: 'Comparaison Local vs Distant' }, config?.labels);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Comparaison Local vs Distant</CardTitle>
+        <CardTitle>{libelles.title}</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4">
         <div>

@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Check, GitBranch, Minus } from 'lucide-react';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const workflows = [
   {
@@ -27,12 +28,20 @@ const workflows = [
   },
 ];
 
-export function WorkflowComparisonTable() {
+export function WorkflowComparisonTable({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défauts = textes historiques : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Tableau Comparatif des Workflows Git',
+      description: 'Comparez les approches populaires de gestion de branches pour choisir celle qui convient à votre projet.',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Tableau Comparatif des Workflows Git</CardTitle>
-        <CardDescription>Comparez les approches populaires de gestion de branches pour choisir celle qui convient à votre projet.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

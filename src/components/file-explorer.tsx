@@ -1,5 +1,6 @@
 import { Folder, FileText, FileCode } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const fileTree: FileNode[] = [
   { name: '.git', type: 'folder', children: [{ name: 'config', type: 'file' }, { name: 'HEAD', type: 'file' }] },
@@ -39,12 +40,17 @@ function renderTree(nodes: FileNode[], level = 0) {
   );
 }
 
-export function FileTreeViewer() {
+export function FileTreeViewer({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défauts = textes historiques : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    { title: 'Explorateur de Fichiers', description: 'Visualisez la structure de votre projet.' },
+    config?.labels,
+  );
   return (
     <Card className="my-6">
         <CardHeader>
-            <CardTitle>Explorateur de Fichiers</CardTitle>
-            <CardDescription>Visualisez la structure de votre projet.</CardDescription>
+            <CardTitle>{libelles.title}</CardTitle>
+            <CardDescription>{libelles.description}</CardDescription>
         </CardHeader>
         <CardContent>
             {renderTree(fileTree)}
