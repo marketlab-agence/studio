@@ -108,13 +108,17 @@ export function EditLessonForm({
     
     setIsGenerating(true);
     try {
-      const { illustrativeContent, interactiveComponentName, visualComponentName } = await generateLessonContentAction(courseId, indices.chapterIndex, indices.lessonIndex);
+      const { illustrativeContent, components } = await generateLessonContentAction(courseId, indices.chapterIndex, indices.lessonIndex);
       
       setLesson(prev => ({ 
           ...prev, 
           content: illustrativeContent,
-          interactiveComponentName: interactiveComponentName || undefined,
-          visualComponentName: visualComponentName || undefined
+          // L'ordre renvoyé par l'IA devient l'ordre des positions persistées.
+          components: components.map((composant, index) => ({
+              name: composant.name,
+              position: index,
+              config: composant.config ?? {},
+          })),
       }));
       
       toast({ title: t('editLesson.generatedTitle'), description: t('editLesson.generatedDescription') });

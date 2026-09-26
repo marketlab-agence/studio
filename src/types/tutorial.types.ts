@@ -5,6 +5,8 @@
 
 
 
+import type { ComponentConfig } from '@/lib/schemas/component-config';
+
 export interface Tutorial {
   id: string;
   courseId: string;
@@ -93,8 +95,19 @@ export interface UserProgress {
   currentStepId: string | null;
 }
 
+/** Un composant proposé par l'IA pour une leçon, **avant** persistance. */
+export type GeneratedLessonComponent = {
+  name: string;
+  config?: ComponentConfig;
+  /** Pourquoi ce composant sert l'objectif — affiché au formateur, non persisté. */
+  justification: string;
+};
+
 export type GenerateLessonContentOutput = {
   illustrativeContent: string;
-  interactiveComponentName?: string;
-  visualComponentName?: string;
+  /**
+   * Composants proposés, ordonnés. **Peut être vide** : une leçon purement notionnelle
+   * n'exige aucune mise en pratique ni illustration.
+   */
+  components: GeneratedLessonComponent[];
 };

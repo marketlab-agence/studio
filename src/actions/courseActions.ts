@@ -13,8 +13,10 @@ import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flo
 import {
   listNamesForDomain,
   listFunctionalInteractiveNamesForDomain,
+  listByBloomLevel,
   type ComponentDomain,
 } from '@/components/registry/catalog';
+import { BLOOM_LEVELS, type BloomLevel } from '@/lib/content/bloom';
 
 const slugify = (text: string) =>
   text
@@ -238,23 +240,48 @@ function inferDomain(course: CourseInfo): ComponentDomain | undefined {
 }
 
 /**
+ * Retient un niveau de Bloom **valide**, ou `undefined`.
+ *
+ * `Lesson.bloomLevel` est un `string` en base : le cast direct vers `BloomLevel` mentirait sur
+ * une donnée corrompue. On valide donc à l'exécution avant de filtrer le catalogue.
+ */
+function resolveBloomLevel(value?: string): BloomLevel | undefined {
+  return value && (BLOOM_LEVELS as readonly string[]).includes(value)
+    ? (value as BloomLevel)
+    : undefined;
+}
+
+/**
  * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry/catalog.ts`).
  *
- * Deux filtres, tous deux nécessaires :
+ * Trois filtres, tous nécessaires :
  *
- * 1. **Placeholders exclus** — les 13 composants dont l'interface existe sans interaction
- *    ne doivent pas servir de « mise en pratique » : l'IA générerait des leçons pointant
- *    vers des coquilles.
+ * 1. **Placeholders exclus** — un composant dont l'interface existe sans interaction ne doit
+ *    pas servir de « mise en pratique » : l'IA générerait des leçons pointant vers des coquilles.
  * 2. **Domaine filtré** (2026-09-23) — sans ce filtre, l'IA recevait le catalogue **entier** :
- *    sur une formation de vente, elle se voyait proposer `MergeSimulator`. Elle ne le
- *    choisissait probablement pas, mais rien ne l'en empêchait structurellement.
+ *    sur une formation de vente, elle se voyait proposer `MergeSimulator`.
+ * 3. **Niveau de Bloom** (2026-09-23) — les interactifs sont restreints à ceux qui couvrent le
+ *    niveau visé. C'est un filtrage **par construction** : l'IA ne peut pas choisir hors niveau,
+ *    au lieu d'être censée s'y tenir.
  *
- * ⚠️ Le domaine est **optionnel** : s'il n'est pas connu, on ne filtre pas. Mieux vaut
- * proposer trop que priver l'IA de tout composant faute d'information.
+ * ⚠️ **Seuls les INTERACTIFS sont filtrés par Bloom.** Les visuels sont illustratifs, sans
+ * obligation de niveau : les filtrer les écarterait à tort de leçons pourtant éligibles.
+ *
+ * ⚠️ Domaine et niveau sont **optionnels** : sans eux, on ne filtre pas. Mieux vaut proposer
+ * trop que priver l'IA de tout composant faute d'information.
  */
-function getRelevantComponents(domain?: ComponentDomain): { interactive: string[]; visual: string[] } {
+function getRelevantComponents(
+  domain: ComponentDomain | undefined,
+  bloomLevel: BloomLevel | undefined,
+): { interactive: string[]; visual: string[] } {
+  const interactifs = bloomLevel
+    ? listByBloomLevel('interactive', bloomLevel, domain)
+        .filter((meta) => meta.status === 'functional')
+        .map((meta) => meta.name)
+    : listFunctionalInteractiveNamesForDomain(domain);
+
   return {
-    interactive: listFunctionalInteractiveNamesForDomain(domain),
+    interactive: interactifs,
     visual: listNamesForDomain('visual', domain),
   };
 }
@@ -312,7 +339,14 @@ export async function generateLessonContentAction(
   // filtrage, ce qui conserve le comportement antérieur.
   const domain = resolveCourseDomain(course);
 
-  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(domain);
+  // La leçon en base porte déjà son niveau de Bloom (complété par l'auteur ou l'alignement).
+  const leconCible = tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex];
+  const bloomLevel = resolveBloomLevel(leconCible.bloomLevel);
+
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(
+    domain,
+    bloomLevel,
+  );
 
     const input: GenerateLessonContentInput = {
       lessonTitle: lessonPlan.title,
@@ -322,30 +356,30 @@ export async function generateLessonContentAction(
       courseLanguage: generationParams?.courseLanguage || 'Français',
       lessonLength: generationParams?.lessonLength || 'Moyen',
       chapterContext,
+      bloomLevel,
       availableInteractiveComponents: relevantInteractive,
       availableVisualComponents: relevantVisual,
     };
 
       const result = await generateLessonContent(input);
-      const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
+      const { illustrativeContent, components } = result;
 
-      const leconCible = tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex];
       leconCible.content = illustrativeContent;
 
       /**
-       * ⚠️ **L'interactif d'abord (position 0), le visuel ensuite (position 1).**
-       * C'est l'ordre pédagogique historique — la pratique avant l'illustration.
-       * Les deux peuvent être absents : une leçon notionnelle n'a pas forcément
+       * ⚠️ **L'ordre vient de l'IA, les positions de l'index.** Le flux reçoit une liste
+       * déjà ordonnée (pratique puis illustration, s'il y a lieu) ; on la persiste telle
+       * quelle. La liste peut être **vide** : une leçon notionnelle n'a pas forcément
        * d'exercice, et le plancher de composants n'est **pas bloquant**.
+       *
+       * ⚠️ **La `config` de chaque composant est préservée** : c'est elle qui porte les
+       * libellés (dans la langue de la formation) et les données de l'instance.
        */
-      leconCible.components = [
-        ...(interactiveComponentName
-          ? [{ name: interactiveComponentName, position: 0, config: {} }]
-          : []),
-        ...(visualComponentName
-          ? [{ name: visualComponentName, position: 1, config: {} }]
-          : []),
-      ];
+      leconCible.components = components.map((composant, index) => ({
+        name: composant.name,
+        position: index,
+        config: composant.config ?? {},
+      }));
 
       await saveTutorials(tutorials);
 

@@ -57,7 +57,7 @@ export const COMPONENT_DOMAINS: readonly ComponentDomain[] = [
 export type ComponentStatus = 'functional' | 'placeholder';
 
 export interface ComponentMeta {
-  /** Nom technique, tel qu'utilisé dans `interactiveComponentName` / `visualComponentName`. */
+  /** Nom technique du composant, tel qu'utilisé dans `LessonComponent.name`. */
   name: string;
   kind: ComponentKind;
   status: ComponentStatus;
@@ -474,8 +474,8 @@ export function listWithoutBloomLevels(kind?: ComponentKind): ComponentMeta[] {
 /**
  * Retourne les métadonnées attendues, ou lève une erreur explicite.
  *
- * Vérifie l'existence ET la nature : un composant visuel placé dans
- * `interactiveComponentName` (ou l'inverse) est refusé.
+ * Vérifie l'existence ET la nature : un composant visuel proposé comme mise en
+ * pratique (ou l'inverse) est refusé.
  */
 export function assertKnownComponent(name: string, kind: ComponentKind): ComponentMeta {
   const meta = resolveComponentMeta(name);

@@ -36,6 +36,7 @@ import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { Badge } from '@/components/ui/badge';
+import { resolveComponentMeta } from '@/components/registry/catalog';
 import { useFormatter, useTranslations } from 'next-intl';
 
 
@@ -242,7 +243,7 @@ export default function CreateCoursePage() {
                         const result = await generateLessonContentAction(buildingCourseId, step.chapterIndex, step.lessonIndex);
                         setGeneratedContent(result);
                     } else if (step.type === 'quiz') {
-                        setGeneratedContent({ illustrativeContent: t('createCourse.quizGeneratedContent', { title: step.title }) });
+                        setGeneratedContent({ illustrativeContent: t('createCourse.quizGeneratedContent', { title: step.title }), components: [] });
                     }
                 } catch (e) {
                     setError(t('createCourse.errorGenerateContent'));
@@ -517,22 +518,25 @@ export default function CreateCoursePage() {
                                                             </ReactMarkdown>
                                                         </div>
                                                     )}
-                                                    {(generatedContent.interactiveComponentName || generatedContent.visualComponentName) && (
+                                                    {generatedContent.components.length > 0 && (
                                                         <>
                                                             <Separator />
                                                             <div className="grid grid-cols-2 gap-4">
-                                                                {generatedContent.interactiveComponentName && (
-                                                                    <div>
-                                                                        <h3 className="font-bold text-lg mb-2">{t('createCourse.suggestedInteractiveComponent')}</h3>
-                                                                        <Badge variant="secondary">{generatedContent.interactiveComponentName}</Badge>
-                                                                    </div>
-                                                                )}
-                                                                {generatedContent.visualComponentName && (
-                                                                    <div>
-                                                                        <h3 className="font-bold text-lg mb-2">{t('createCourse.suggestedVisualComponent')}</h3>
-                                                                        <Badge variant="secondary">{generatedContent.visualComponentName}</Badge>
-                                                                    </div>
-                                                                )}
+                                                                {generatedContent.components.map((composant, index) => {
+                                                                    // La nature vient du catalogue, jamais de la donnée.
+                                                                    const meta = resolveComponentMeta(composant.name);
+                                                                    const titre = meta?.kind === 'visual'
+                                                                        ? t('createCourse.suggestedVisualComponent')
+                                                                        : t('createCourse.suggestedInteractiveComponent');
+
+                                                                    return (
+                                                                        <div key={`${composant.name}-${index}`}>
+                                                                            <h3 className="font-bold text-lg mb-2">{titre}</h3>
+                                                                            <Badge variant="secondary">{composant.name}</Badge>
+                                                                            <p className="text-sm text-muted-foreground mt-1">{composant.justification}</p>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </>
                                                     )}
