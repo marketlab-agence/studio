@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Lightbulb, Stethoscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `CaseDiagnosis` — primitive de **diagnostic** (niveau Bloom : Analyser).
@@ -54,6 +55,8 @@ export interface CaseDiagnosisProps {
   /** Identifiant de la cause correcte. */
   correctCauseId: string;
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function CaseDiagnosis({
@@ -64,7 +67,23 @@ export function CaseDiagnosis({
   causes,
   correctCauseId,
   lessonId,
+  config,
 }: CaseDiagnosisProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Diagnostic de cas', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as
+    | { situation?: string; clues?: DiagnosticClue[]; causes?: DiagnosticCause[]; correctCauseId?: string }
+    | undefined;
+  const situationEffective = donnees?.situation ?? situation;
+  const indices = donnees?.clues ?? clues;
+  const causesEffectives = donnees?.causes ?? causes;
+  const causeCorrecteId = donnees?.correctCauseId ?? correctCauseId;
+
   const [selectedClueIds, setSelectedClueIds] = useState<Set<string>>(new Set());
   const [selectedCauseId, setSelectedCauseId] = useState<string | null>(null);
   const [justification, setJustification] = useState('');
@@ -84,8 +103,8 @@ export function CaseDiagnosis({
   const validate = useCallback(() => {
     if (!selectedCauseId) return;
 
-    const causeCorrect = selectedCauseId === correctCauseId;
-    const relevantClues = clues.filter((clue) => clue.relevant).map((clue) => clue.id);
+    const causeCorrect = selectedCauseId === causeCorrecteId;
+    const relevantClues = indices.filter((clue) => clue.relevant).map((clue) => clue.id);
     const chosenRelevant = [...selectedClueIds].filter((id) => relevantClues.includes(id));
     const irrelevantChosen = [...selectedClueIds].filter((id) => !relevantClues.includes(id));
 
@@ -99,7 +118,7 @@ export function CaseDiagnosis({
       outcome: causeCorrect ? 'SUCCESS' : 'FAILURE',
       payload: {
         selectedCause: selectedCauseId,
-        correctCause: correctCauseId,
+        correctCause: causeCorrecteId,
         relevantCluesChosen: chosenRelevant.length,
         relevantCluesTotal: relevantClues.length,
         irrelevantCluesChosen: irrelevantChosen.length,
@@ -108,7 +127,7 @@ export function CaseDiagnosis({
     });
 
     setValidated(true);
-  }, [selectedCauseId, correctCauseId, clues, selectedClueIds, justification, recordStep]);
+  }, [selectedCauseId, causeCorrecteId, indices, selectedClueIds, justification, recordStep]);
 
   const restart = useCallback(() => {
     setSelectedClueIds(new Set());
@@ -117,8 +136,8 @@ export function CaseDiagnosis({
     setValidated(false);
   }, []);
 
-  const causeCorrect = validated && selectedCauseId === correctCauseId;
-  const relevantClues = clues.filter((clue) => clue.relevant);
+  const causeCorrect = validated && selectedCauseId === causeCorrecteId;
+  const relevantClues = indices.filter((clue) => clue.relevant);
   const chosenRelevantCount = [...selectedClueIds].filter((id) => relevantClues.some((clue) => clue.id === id)).length;
 
   return (
@@ -126,16 +145,16 @@ export function CaseDiagnosis({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Stethoscope className="h-5 w-5 text-primary" aria-hidden="true" />
-          {title}
+          {libelles.title}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         {/* Situation */}
         <div className="rounded-md border bg-muted/40 p-4">
           <p className="text-sm font-medium">Situation</p>
-          <p className="mt-1 text-sm leading-relaxed">{situation}</p>
+          <p className="mt-1 text-sm leading-relaxed">{situationEffective}</p>
         </div>
 
         {/* Indices — l'apprenant trie le pertinent du bruit. */}
@@ -148,7 +167,7 @@ export function CaseDiagnosis({
           </p>
 
           <div className="space-y-1.5" role="group" aria-label="Indices observables">
-            {clues.map((clue) => {
+            {indices.map((clue) => {
               const selected = selectedClueIds.has(clue.id);
               return (
                 <button
@@ -198,9 +217,9 @@ export function CaseDiagnosis({
           <Label className="text-sm font-medium">Quelle est la cause la plus probable ?</Label>
 
           <div className="space-y-1.5" role="radiogroup" aria-label="Causes candidates">
-            {causes.map((cause) => {
+            {causesEffectives.map((cause) => {
               const selected = selectedCauseId === cause.id;
-              const isCorrect = cause.id === correctCauseId;
+              const isCorrect = cause.id === causeCorrecteId;
 
               return (
                 <button

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `PeerReviewSimulator` — primitive d'**évaluation par critères** (niveau Bloom : Évaluer).
@@ -47,6 +48,8 @@ export interface PeerReviewSimulatorProps {
   /** Commentaire attendu à partir de cette longueur. */
   minCommentLength?: number;
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 /** Échelle de notation : 4 niveaux, du plus faible au plus fort. */
@@ -60,7 +63,19 @@ export function PeerReviewSimulator({
   criteria,
   minCommentLength = 60,
   lessonId,
+  config,
 }: PeerReviewSimulatorProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Revue par les pairs', description: description ?? '', authorLabel },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { workToReview?: string; criteria?: ReviewCriterion[] } | undefined;
+  const production = donnees?.workToReview ?? workToReview;
+  const criteres = donnees?.criteria ?? criteria;
+
   const [scores, setScores] = useState<Record<string, number>>({});
   const [metCriteria, setMetCriteria] = useState<Set<string>>(new Set());
   const [comment, setComment] = useState('');
@@ -69,19 +84,19 @@ export function PeerReviewSimulator({
   const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'PeerReviewSimulator' });
 
   const scoredCount = useMemo(
-    () => criteria.filter((criterion) => scores[criterion.id] !== undefined).length,
-    [criteria, scores],
+    () => criteres.filter((criterion) => scores[criterion.id] !== undefined).length,
+    [criteres, scores],
   );
 
   const commentOk = comment.trim().length >= minCommentLength;
-  const canValidate = scoredCount === criteria.length && commentOk;
+  const canValidate = scoredCount === criteres.length && commentOk;
 
   /** Moyenne des notes — un indicateur de synthèse, pas une note finale. */
   const average = useMemo(() => {
-    const values = criteria.map((criterion) => scores[criterion.id]).filter((value) => value !== undefined);
+    const values = criteres.map((criterion) => scores[criterion.id]).filter((value) => value !== undefined);
     if (values.length === 0) return 0;
     return values.reduce((total, value) => total + value, 0) / values.length;
-  }, [criteria, scores]);
+  }, [criteres, scores]);
 
   const validate = useCallback(() => {
     // La production de l'apprenant (notes + commentaire) **est** la trace : c'est son
@@ -97,12 +112,12 @@ export function PeerReviewSimulator({
     void recordStep({
       stepId: 'review',
       kind: 'ANSWER',
-      outcome: scoredCount === criteria.length && commentOk ? 'SUCCESS' : 'PARTIAL',
-      payload: { criteriaScored: scoredCount, criteriaTotal: criteria.length },
+      outcome: scoredCount === criteres.length && commentOk ? 'SUCCESS' : 'PARTIAL',
+      payload: { criteriaScored: scoredCount, criteriaTotal: criteres.length },
     });
 
     setValidated(true);
-  }, [scores, average, metCriteria, comment, scoredCount, criteria.length, commentOk, recordProduction, recordStep]);
+  }, [scores, average, metCriteria, comment, scoredCount, criteres.length, commentOk, recordProduction, recordStep]);
 
   const restart = useCallback(() => {
     setScores({});
@@ -111,7 +126,7 @@ export function PeerReviewSimulator({
     setValidated(false);
   }, []);
 
-  if (criteria.length === 0) {
+  if (criteres.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -127,19 +142,19 @@ export function PeerReviewSimulator({
         <CardTitle className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-            {title}
+            {libelles.title}
           </span>
           {validated && <Badge variant="secondary">{average.toFixed(1)}/4</Badge>}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         {/* Production à évaluer */}
         <div className="rounded-md border bg-muted/40 p-4">
-          <p className="text-sm font-medium">{authorLabel}</p>
+          <p className="text-sm font-medium">{libelles.authorLabel}</p>
           {/* `whitespace-pre-wrap` : les retours à la ligne de la production sont signifiants. */}
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{workToReview}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{production}</p>
         </div>
 
         {/* ⚠️ Les critères sont donnés **avant** l'exercice — exigence de l'indicateur 11
@@ -148,11 +163,11 @@ export function PeerReviewSimulator({
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Évalue selon chaque critère</Label>
             <span className="text-xs text-muted-foreground">
-              {scoredCount}/{criteria.length} critère(s) noté(s)
+              {scoredCount}/{criteres.length} critère(s) noté(s)
             </span>
           </div>
 
-          {criteria.map((criterion) => (
+          {criteres.map((criterion) => (
             <div key={criterion.id} className="space-y-2 rounded-md border p-3">
               <div>
                 <p className="text-sm font-medium">{criterion.label}</p>
@@ -236,7 +251,7 @@ export function PeerReviewSimulator({
               Évaluation enregistrée — moyenne : {average.toFixed(1)}/4
             </p>
             <p className="text-xs text-muted-foreground">
-              {metCriteria.size}/{criteria.length} critère(s) marqué(s) comme satisfait(s).
+              {metCriteria.size}/{criteres.length} critère(s) marqué(s) comme satisfait(s).
             </p>
             <Button variant="outline" size="sm" onClick={restart}>
               <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />

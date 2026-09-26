@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { CheckCircle2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `GuidedProcedure` — primitive de **checklist ordonnée** (niveau Bloom : Appliquer).
@@ -45,9 +46,27 @@ export interface GuidedProcedureProps {
   description?: string;
   checkpoints: ProcedureCheckpoint[];
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
-export function GuidedProcedure({ title, description, checkpoints, lessonId }: GuidedProcedureProps) {
+export function GuidedProcedure({
+  title,
+  description,
+  checkpoints,
+  lessonId,
+  config,
+}: GuidedProcedureProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Procédure guidée', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { checkpoints?: ProcedureCheckpoint[] } | undefined;
+  const points = donnees?.checkpoints ?? checkpoints;
+
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [values, setValues] = useState<Record<string, string>>({});
 
@@ -58,15 +77,15 @@ export function GuidedProcedure({ title, description, checkpoints, lessonId }: G
    * ⚠️ Les suivantes sont désactivées — c'est la contrainte d'ordre, pas un simple confort.
    */
   const nextIndex = useMemo(
-    () => checkpoints.findIndex((checkpoint) => !checkedIds.has(checkpoint.id)),
-    [checkpoints, checkedIds],
+    () => points.findIndex((checkpoint) => !checkedIds.has(checkpoint.id)),
+    [points, checkedIds],
   );
 
   const isFinished = nextIndex === -1;
 
   const toggle = useCallback(
     (checkpointId: string, checked: boolean) => {
-      const checkpoint = checkpoints.find((candidate) => candidate.id === checkpointId);
+      const checkpoint = points.find((candidate) => candidate.id === checkpointId);
       if (!checkpoint) return;
 
       if (!checked) {
@@ -91,11 +110,11 @@ export function GuidedProcedure({ title, description, checkpoints, lessonId }: G
         },
       });
 
-      if (checkedIds.size + 1 >= checkpoints.length) {
+      if (checkedIds.size + 1 >= points.length) {
         void recordDuration();
       }
     },
-    [checkpoints, checkedIds.size, values, recordStep, recordDuration],
+    [points, checkedIds.size, values, recordStep, recordDuration],
   );
 
   const restart = useCallback(() => {
@@ -103,7 +122,7 @@ export function GuidedProcedure({ title, description, checkpoints, lessonId }: G
     setValues({});
   }, []);
 
-  if (checkpoints.length === 0) {
+  if (points.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -117,17 +136,17 @@ export function GuidedProcedure({ title, description, checkpoints, lessonId }: G
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4">
-          <span>{title}</span>
+          <span>{libelles.title}</span>
           <Badge variant={isFinished ? 'default' : 'secondary'}>
-            {checkedIds.size}/{checkpoints.length}
+            {checkedIds.size}/{points.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-4">
         <ol className="space-y-3" aria-label="Points de contrôle">
-          {checkpoints.map((checkpoint, index) => {
+          {points.map((checkpoint, index) => {
             const checked = checkedIds.has(checkpoint.id);
             // Une étape est accessible si elle est déjà cochée, ou si c'est la prochaine.
             const accessible = checked || index === nextIndex;

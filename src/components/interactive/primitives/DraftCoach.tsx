@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, PenLine, RotateCcw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `DraftCoach` — primitive de **rédaction guidée** (niveau Bloom : Créer).
@@ -52,6 +53,8 @@ export interface DraftCoachProps {
   /** Nombre minimal de caractères pour considérer le texte rédigé. */
   minLength?: number;
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function DraftCoach({
@@ -62,7 +65,20 @@ export function DraftCoach({
   criteria,
   minLength = 80,
   lessonId,
+  config,
 }: DraftCoachProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Rédaction guidée', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { prompt?: string; example?: string; criteria?: DraftCriterion[] } | undefined;
+  const consigne = donnees?.prompt ?? prompt;
+  const exemple = donnees?.example ?? example;
+  const criteres = donnees?.criteria ?? criteria;
+
   const [draft, setDraft] = useState('');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   /** Critères que l'apprenant déclare avoir traités, après relecture. */
@@ -83,11 +99,11 @@ export function DraftCoach({
   const patternHits = useMemo(() => {
     const source = `${draft}\n${revision}`.toLowerCase();
     return Object.fromEntries(
-      criteria
+      criteres
         .filter((criterion) => criterion.pattern)
         .map((criterion) => [criterion.id, source.includes((criterion.pattern ?? '').toLowerCase())]),
     );
-  }, [draft, revision, criteria]);
+  }, [draft, revision, criteres]);
 
   /** Différence de longueur : un indicateur simple et honnête de l'effort de révision. */
   const lengthDelta = revision.trim().length - draft.trim().length;
@@ -112,18 +128,18 @@ export function DraftCoach({
       revisionLength: revision.trim().length,
       lengthDelta,
       criteriaAddressed: [...addressed],
-      criteriaTotal: criteria.length,
+      criteriaTotal: criteres.length,
     });
 
     void recordStep({
       stepId: 'revision',
       kind: 'REVISION',
       outcome: revisionLongEnough && addressed.size > 0 ? 'SUCCESS' : 'PARTIAL',
-      payload: { criteriaAddressed: addressed.size, criteriaTotal: criteria.length },
+      payload: { criteriaAddressed: addressed.size, criteriaTotal: criteres.length },
     });
 
     setValidated(true);
-  }, [draft, revision, lengthDelta, addressed, criteria.length, revisionLongEnough, recordProduction, recordStep]);
+  }, [draft, revision, lengthDelta, addressed, criteres.length, revisionLongEnough, recordProduction, recordStep]);
 
   const restart = useCallback(() => {
     setDraft('');
@@ -139,25 +155,25 @@ export function DraftCoach({
         <CardTitle className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <PenLine className="h-5 w-5 text-primary" aria-hidden="true" />
-            {title}
+            {libelles.title}
           </span>
           {draftLongEnough && (
             <Badge variant={validated ? 'default' : 'secondary'}>
-              {addressed.size}/{criteria.length} critère(s)
+              {addressed.size}/{criteres.length} critère(s)
             </Badge>
           )}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         {/* Consigne */}
         <div className="rounded-md border bg-muted/40 p-4">
           <p className="text-sm font-medium">Consigne</p>
-          <p className="mt-1 text-sm leading-relaxed">{prompt}</p>
-          {example && (
+          <p className="mt-1 text-sm leading-relaxed">{consigne}</p>
+          {exemple && (
             <p className="mt-2 border-t pt-2 text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">Exemple de repère :</span> {example}
+              <span className="font-medium text-foreground">Exemple de repère :</span> {exemple}
             </p>
           )}
         </div>
@@ -198,7 +214,7 @@ export function DraftCoach({
             </p>
 
             <ul className="space-y-2">
-              {criteria.map((criterion) => {
+              {criteres.map((criterion) => {
                 const hit = patternHits[criterion.id];
                 const isAddressed = addressed.has(criterion.id);
 
@@ -301,7 +317,7 @@ export function DraftCoach({
                   ? `Ta version révisée compte ${Math.abs(lengthDelta)} caractère(s) de moins — tu l’as resserré.`
                   : 'La longueur est restée la même : le contenu, lui, a évolué.'}
               {' '}
-              {addressed.size}/{criteria.length} critère(s) traité(s).
+              {addressed.size}/{criteres.length} critère(s) traité(s).
             </p>
 
             <Button variant="outline" size="sm" onClick={restart}>

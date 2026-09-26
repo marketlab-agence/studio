@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Circle, Lightbulb, RotateCcw, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `StepByStepRunner` — primitive générique d'**exécution guidée** (niveau Bloom : Appliquer).
@@ -44,27 +45,56 @@ export interface ProcedureStep {
 }
 
 export interface StepByStepRunnerProps {
-  /** Titre de la procédure (« Mettre en place un workflow n8n »…). */
-  title: string;
+  /**
+   * Titre de la procédure (« Mettre en place un workflow n8n »…).
+   * ⚠️ Optionnel : une instance peut fournir son titre via `config.labels.title`.
+   */
+  title?: string;
   /** Description ou contexte. */
   description?: string;
-  /** Les étapes à exécuter, dans l'ordre. */
-  steps: ProcedureStep[];
+  /**
+   * Les étapes à exécuter, dans l'ordre.
+   * ⚠️ Optionnel : une instance configurée les fournit via `config.data.steps`.
+   */
+  steps?: ProcedureStep[];
   /** Identifiant de la leçon — nécessaire à la trace. */
   lessonId: string;
   /** Message final, affiché quand toutes les étapes sont validées. */
   completionMessage?: string;
+  /**
+   * Configuration de l'instance (libellés, données).
+   * ⚠️ Facultative : sans elle, le composant rend **exactement** comme avant.
+   */
+  config?: ComponentConfig;
 }
 
 type StepState = 'pending' | 'current' | 'done';
 
 export function StepByStepRunner({
-  title,
+  title = 'Procédure guidée',
   description,
   steps,
   lessonId,
   completionMessage = 'Procédure terminée. Les étapes sont maîtrisées.',
+  config,
 }: StepByStepRunnerProps) {
+  /**
+   * ⚠️ **Les libellés de `config` priment sur les valeurs par défaut, mot par mot.**
+   * Une formation anglophone fournit ses propres libellés ; une formation française ne
+   * fournit rien et garde les défauts — aucune traduction n'est produite ici.
+   */
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Procédure guidée', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ **Repli `config?.data ?? props`** : une instance sans données rend comme aujourd'hui.
+  // Mémorisé : sans cela, la table `stepStates` dépendrait d'une nouvelle référence à chaque rendu.
+  const etapes = useMemo<ProcedureStep[]>(() => {
+    const donnees = config?.data as { steps?: ProcedureStep[] } | undefined;
+    return donnees?.steps ?? steps ?? [];
+  }, [config?.data, steps]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -73,18 +103,18 @@ export function StepByStepRunner({
 
   const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'StepByStepRunner' });
 
-  const step = steps[currentIndex];
-  const isFinished = currentIndex >= steps.length;
+  const step = etapes[currentIndex];
+  const isFinished = currentIndex >= etapes.length;
 
   const stepStates = useMemo<Record<string, StepState>>(
     () =>
       Object.fromEntries(
-        steps.map((candidate, index) => [
+        etapes.map((candidate, index) => [
           candidate.id,
           completed.has(candidate.id) ? 'done' : index === currentIndex ? 'current' : 'pending',
         ]),
       ),
-    [steps, completed, currentIndex],
+    [etapes, completed, currentIndex],
   );
 
   /** Normalise une réponse : la casse et les espaces ne doivent pas faire échouer. */
@@ -123,10 +153,10 @@ export function StepByStepRunner({
 
     // Fin de procédure : on enregistre la durée totale d'interaction, mesure la plus directe
     // de l'effectivité du suivi (indicateur 19).
-    if (currentIndex + 1 >= steps.length) {
+    if (currentIndex + 1 >= etapes.length) {
       void recordDuration();
     }
-  }, [step, answer, currentIndex, steps.length, recordStep, recordDuration]);
+  }, [step, answer, currentIndex, etapes.length, recordStep, recordDuration]);
 
   const restart = useCallback(() => {
     setCurrentIndex(0);
@@ -136,7 +166,7 @@ export function StepByStepRunner({
     setCompleted(new Set());
   }, []);
 
-  if (steps.length === 0) {
+  if (etapes.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -150,18 +180,18 @@ export function StepByStepRunner({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4">
-          <span>{title}</span>
+          <span>{libelles.title}</span>
           <Badge variant="secondary">
-            {completed.size}/{steps.length}
+            {completed.size}/{etapes.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Progression : chaque étape montre son état. L'apprenant sait où il en est. */}
         <ol className="space-y-2" aria-label="Étapes de la procédure">
-          {steps.map((candidate, index) => {
+          {etapes.map((candidate, index) => {
             const state = stepStates[candidate.id];
             return (
               <li

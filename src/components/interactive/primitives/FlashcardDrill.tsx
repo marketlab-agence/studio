@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `FlashcardDrill` — primitive de **mémorisation active** (niveau Bloom : Connaître).
@@ -39,9 +40,21 @@ export interface FlashcardDrillProps {
   description?: string;
   cards: Flashcard[];
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
-export function FlashcardDrill({ title, description, cards, lessonId }: FlashcardDrillProps) {
+export function FlashcardDrill({ title, description, cards, lessonId, config }: FlashcardDrillProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Cartes mémoire', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { cards?: Flashcard[] } | undefined;
+  const cartes = donnees?.cards ?? cards;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   /** Cartes que l'apprenant a signalées comme non sues : c'est le résultat le plus utile. */
@@ -49,12 +62,12 @@ export function FlashcardDrill({ title, description, cards, lessonId }: Flashcar
 
   const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'FlashcardDrill' });
 
-  const card = cards[currentIndex];
-  const isFinished = currentIndex >= cards.length;
+  const card = cartes[currentIndex];
+  const isFinished = currentIndex >= cartes.length;
 
   const progress = useMemo(
-    () => ({ current: Math.min(currentIndex + 1, cards.length), total: cards.length }),
-    [currentIndex, cards.length],
+    () => ({ current: Math.min(currentIndex + 1, cartes.length), total: cartes.length }),
+    [currentIndex, cartes.length],
   );
 
   const answer = useCallback(
@@ -79,11 +92,11 @@ export function FlashcardDrill({ title, description, cards, lessonId }: Flashcar
       setRevealed(false);
       setCurrentIndex((index) => index + 1);
 
-      if (currentIndex + 1 >= cards.length) {
+      if (currentIndex + 1 >= cartes.length) {
         void recordDuration();
       }
     },
-    [card, recordStep, recordDuration, currentIndex, cards.length],
+    [card, recordStep, recordDuration, currentIndex, cartes.length],
   );
 
   const restart = useCallback(() => {
@@ -92,7 +105,7 @@ export function FlashcardDrill({ title, description, cards, lessonId }: Flashcar
     setNotKnownIds(new Set());
   }, []);
 
-  if (cards.length === 0) {
+  if (cartes.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -106,14 +119,14 @@ export function FlashcardDrill({ title, description, cards, lessonId }: Flashcar
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4">
-          <span>{title}</span>
+          <span>{libelles.title}</span>
           {!isFinished && (
             <Badge variant="secondary">
               {progress.current}/{progress.total}
             </Badge>
           )}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -158,14 +171,14 @@ export function FlashcardDrill({ title, description, cards, lessonId }: Flashcar
         {isFinished && (
           <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
             <p className="text-sm font-medium">
-              Révision terminée : {cards.length - notKnownIds.size} carte(s) sue(s) sur {cards.length}.
+              Révision terminée : {cartes.length - notKnownIds.size} carte(s) sue(s) sur {cartes.length}.
             </p>
 
             {notKnownIds.size > 0 && (
               <div className="text-xs text-muted-foreground">
                 À revoir :
                 <ul className="mt-1 list-inside list-disc">
-                  {cards
+                  {cartes
                     .filter((candidate) => notKnownIds.has(candidate.id))
                     .map((candidate) => (
                       <li key={candidate.id}>{candidate.front}</li>

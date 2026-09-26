@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `MatchingPairs` — primitive d'**appariement** (niveau Bloom : Comprendre).
@@ -40,9 +41,21 @@ export interface MatchingPairsProps {
   description?: string;
   pairs: MatchingPair[];
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
-export function MatchingPairs({ title, description, pairs, lessonId }: MatchingPairsProps) {
+export function MatchingPairs({ title, description, pairs, lessonId, config }: MatchingPairsProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Associe les paires', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { pairs?: MatchingPair[] } | undefined;
+  const paires = donnees?.pairs ?? pairs;
+
   const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
   const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
   const [lastError, setLastError] = useState<{ left: string; right: string } | null>(null);
@@ -56,7 +69,7 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
    * recalculé à chaque rendu ferait sauter les éléments pendant que l'apprenant clique.
    */
   const [shuffledRights] = useState(() => {
-    const rights = pairs.map((pair) => ({ id: pair.id, label: pair.right }));
+    const rights = paires.map((pair) => ({ id: pair.id, label: pair.right }));
     for (let index = rights.length - 1; index > 0; index--) {
       const swap = Math.floor(Math.random() * (index + 1));
       [rights[index], rights[swap]] = [rights[swap], rights[index]];
@@ -64,11 +77,11 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
     return rights;
   });
 
-  const isFinished = matchedIds.size === pairs.length;
+  const isFinished = matchedIds.size === paires.length;
 
   const selectedLeft = useMemo(
-    () => pairs.find((pair) => pair.id === selectedLeftId) ?? null,
-    [pairs, selectedLeftId],
+    () => paires.find((pair) => pair.id === selectedLeftId) ?? null,
+    [paires, selectedLeftId],
   );
 
   const tryMatch = useCallback(
@@ -105,7 +118,7 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
     setLastError(null);
   }, []);
 
-  if (pairs.length === 0) {
+  if (paires.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -119,12 +132,12 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4">
-          <span>{title}</span>
+          <span>{libelles.title}</span>
           <Badge variant={isFinished ? 'default' : 'secondary'}>
-            {matchedIds.size}/{pairs.length}
+            {matchedIds.size}/{paires.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -144,7 +157,7 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Colonne gauche : les termes */}
           <div className="space-y-2" role="group" aria-label="Termes">
-            {pairs.map((pair) => {
+            {paires.map((pair) => {
               const matched = matchedIds.has(pair.id);
               return (
                 <Button
@@ -187,7 +200,7 @@ export function MatchingPairs({ title, description, pairs, lessonId }: MatchingP
           <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
             <p className="text-sm font-medium">Toutes les paires sont associées.</p>
             <ul className="space-y-1">
-              {pairs
+              {paires
                 .filter((pair) => pair.explanation)
                 .map((pair) => (
                   <li key={pair.id} className="text-xs text-muted-foreground">

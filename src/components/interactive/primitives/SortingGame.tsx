@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `SortingGame` — primitive de **classification** (niveau Bloom : Comprendre).
@@ -44,6 +45,8 @@ export interface SortingGameProps {
   categories: SortingCategory[];
   items: SortingItem[];
   lessonId: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 /**
@@ -57,14 +60,25 @@ interface Placement {
   correct: boolean;
 }
 
-export function SortingGame({ title, description, categories, items, lessonId }: SortingGameProps) {
+export function SortingGame({ title, description, categories, items, lessonId, config }: SortingGameProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Tri par catégorie', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { categories?: SortingCategory[]; items?: SortingItem[] } | undefined;
+  const categoriesEffectives = donnees?.categories ?? categories;
+  const itemsEffectifs = donnees?.items ?? items;
+
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const { recordStep } = useLessonTrace({ lessonId, componentName: 'SortingGame' });
 
   const placedIds = useMemo(() => new Set(placements.map((placement) => placement.itemId)), [placements]);
-  const remaining = useMemo(() => items.filter((item) => !placedIds.has(item.id)), [items, placedIds]);
+  const remaining = useMemo(() => itemsEffectifs.filter((item) => !placedIds.has(item.id)), [itemsEffectifs, placedIds]);
   const errors = useMemo(() => placements.filter((placement) => !placement.correct), [placements]);
   const correctCount = placements.length - errors.length;
   const isFinished = remaining.length === 0;
@@ -77,7 +91,7 @@ export function SortingGame({ title, description, categories, items, lessonId }:
     (categoryId: string) => {
       if (!selectedItemId) return;
 
-      const item = items.find((candidate) => candidate.id === selectedItemId);
+      const item = itemsEffectifs.find((candidate) => candidate.id === selectedItemId);
       if (!item) return;
 
       const correct = item.categoryId === categoryId;
@@ -96,7 +110,7 @@ export function SortingGame({ title, description, categories, items, lessonId }:
 
       setSelectedItemId(null);
     },
-    [selectedItemId, items, recordStep],
+    [selectedItemId, itemsEffectifs, recordStep],
   );
 
   const restart = useCallback(() => {
@@ -104,7 +118,7 @@ export function SortingGame({ title, description, categories, items, lessonId }:
     setSelectedItemId(null);
   }, []);
 
-  if (items.length === 0) {
+  if (itemsEffectifs.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -118,12 +132,12 @@ export function SortingGame({ title, description, categories, items, lessonId }:
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4">
-          <span>{title}</span>
+          <span>{libelles.title}</span>
           <Badge variant={isFinished && errors.length === 0 ? 'default' : 'secondary'}>
-            {correctCount}/{items.length}
+            {correctCount}/{itemsEffectifs.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -152,12 +166,12 @@ export function SortingGame({ title, description, categories, items, lessonId }:
 
         {/* Catégories : chaque élément bien classé apparaît sous SA catégorie attendue. */}
         <div className="grid gap-3 sm:grid-cols-2">
-          {categories.map((category) => {
+          {categoriesEffectives.map((category) => {
             // Éléments attendus dans cette catégorie **et** correctement placés.
             const placedHere = placements.filter(
               (placement) =>
                 placement.correct &&
-                items.find((item) => item.id === placement.itemId)?.categoryId === category.id,
+                itemsEffectifs.find((item) => item.id === placement.itemId)?.categoryId === category.id,
             );
 
             return (
@@ -178,7 +192,7 @@ export function SortingGame({ title, description, categories, items, lessonId }:
                     {placedHere.map((placement) => (
                       <li key={placement.itemId} className="flex items-center gap-1.5 text-xs">
                         <CheckCircle2 className="h-3 w-3 text-primary" aria-hidden="true" />
-                        {items.find((item) => item.id === placement.itemId)?.label}
+                        {itemsEffectifs.find((item) => item.id === placement.itemId)?.label}
                       </li>
                     ))}
                   </ul>
@@ -198,8 +212,8 @@ export function SortingGame({ title, description, categories, items, lessonId }:
           <div className="space-y-1 rounded-md border border-destructive/30 bg-destructive/5 p-3">
             <p className="text-sm font-medium text-destructive">À revoir</p>
             {errors.map((placement) => {
-              const item = items.find((candidate) => candidate.id === placement.itemId);
-              const chosen = categories.find((category) => category.id === placement.categoryId);
+              const item = itemsEffectifs.find((candidate) => candidate.id === placement.itemId);
+              const chosen = categoriesEffectives.find((category) => category.id === placement.categoryId);
 
               return (
                 <p key={placement.itemId} className="flex items-start gap-1.5 text-xs text-destructive">
@@ -219,7 +233,7 @@ export function SortingGame({ title, description, categories, items, lessonId }:
             <p className="text-sm font-medium">
               {errors.length === 0
                 ? 'Classement complet et exact.'
-                : `${correctCount} élément(s) sur ${items.length} correctement classé(s).`}
+                : `${correctCount} élément(s) sur ${itemsEffectifs.length} correctement classé(s).`}
             </p>
             <Button variant="outline" size="sm" onClick={restart}>
               <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
