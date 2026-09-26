@@ -5,6 +5,8 @@
 
 
 
+import type { ComponentConfig } from '@/lib/schemas/component-config';
+
 export interface Tutorial {
   id: string;
   courseId: string;
@@ -18,8 +20,28 @@ export interface Lesson {
   title: string;
   objective: string;
   content: string; // Illustrative markdown content
-  interactiveComponentName?: string;
-  visualComponentName?: string;
+  /**
+   * Composants pédagogiques, **ordonnés**.
+   *
+   * ⚠️ **Une liste, pas deux emplacements.** Le même composant peut apparaître
+   * plusieurs fois (deux procédures, deux quiz) : c'est la `position` qui définit
+   * l'enchaînement.
+   *
+   * ⚠️ **La nature (`interactive`/`visual`) vient du catalogue**, jamais de la
+   * donnée — sinon deux vérités pourraient diverger.
+   */
+  components: LessonComponent[];
+  /**
+   * Champs lus en base, exposés pour que la lecture soit **fidèle**.
+   *
+   * ⚠️ Ils sont **en lecture seule** du point de vue du provider : `type`/`points` sont
+   * initialisés à la création et préservés en mise à jour (absents du `DO UPDATE`), et
+   * `position` est recalculée depuis l'ordre du tableau. Les exposer ne change donc pas
+   * l'écriture — cela rend seulement la leçon relue conforme à ce qui est stocké.
+   */
+  type?: string;
+  points?: number;
+  position?: number;
   /**
    * Niveau de Bloom visé par l'objectif de cette leçon.
    *
@@ -28,6 +50,27 @@ export interface Lesson {
    * (`@docs/katalyst/regles-conformite.md`, règle R6).
    */
   bloomLevel?: string;
+}
+
+/** Une instance de composant dans une leçon : son nom, sa place, sa configuration. */
+export interface LessonComponent {
+  /**
+   * Identifiant de l'**instance** en base (`lesson_components.id`).
+   *
+   * ⚠️ **Optionnel** : une leçon non encore persistée n'en a pas, et les traces
+   * existantes restent valides (`lesson_component_id` vaut alors `NULL`). C'est
+   * cet `id` qui permet d'attribuer une trace à *l'instance* qui l'a produite —
+   * et donc de distinguer deux occurrences du même composant dans une leçon.
+   */
+  id?: string;
+  name: string;
+  position: number;
+  config?: {
+    /** Libellés propres à cette instance, dans la langue de la formation. */
+    labels?: Record<string, string>;
+    /** Données structurées, validées par le schéma du composant (catalogue). */
+    data?: unknown;
+  };
 }
 
 export interface Quiz {
@@ -72,8 +115,19 @@ export interface UserProgress {
   currentStepId: string | null;
 }
 
+/** Un composant proposé par l'IA pour une leçon, **avant** persistance. */
+export type GeneratedLessonComponent = {
+  name: string;
+  config?: ComponentConfig;
+  /** Pourquoi ce composant sert l'objectif — affiché au formateur, non persisté. */
+  justification: string;
+};
+
 export type GenerateLessonContentOutput = {
   illustrativeContent: string;
-  interactiveComponentName?: string;
-  visualComponentName?: string;
+  /**
+   * Composants proposés, ordonnés. **Peut être vide** : une leçon purement notionnelle
+   * n'exige aucune mise en pratique ni illustration.
+   */
+  components: GeneratedLessonComponent[];
 };

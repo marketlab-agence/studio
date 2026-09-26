@@ -4,6 +4,7 @@ import { config as loadEnv } from 'dotenv';
 import type { PoolClient } from 'pg';
 import { getPool, closePool } from './pool';
 import { contentDomainFor } from '@/lib/content/course-domain';
+import { resolveComponentMeta } from '@/components/registry/catalog';
 
 // Un script autonome ne bénéficie pas du chargement automatique de Next.
 loadEnv({ path: '.env.local' });
@@ -66,21 +67,27 @@ interface SourceCourse {
   generationParams?: unknown;
 }
 
-interface SourceLesson {
-  id: string;
-  title: string;
-  objective?: string;
-  content?: string;
-  interactiveComponentName?: string;
-  visualComponentName?: string;
-  /**
-   * Niveau de Bloom visé par l'objectif.
-   *
-   * ⚠️ **Optionnel, et c'est délibéré** : absent vaut « à compléter » (méthode REWORK). Un
-   * JSON sans ce champ ne casse pas le seed et n'efface pas la valeur stockée en base.
-   */
-  bloomLevel?: string;
-}
+  interface SourceLesson {
+    id: string;
+    title: string;
+    objective?: string;
+    content?: string;
+    /**
+     * Composants pédagogiques, **ordonnés**.
+     *
+     * ⚠️ **Une liste, et non plus deux champs fixes.** Le même composant peut
+     * apparaître plusieurs fois ; c'est `position` qui porte l'enchaînement.
+     * `config` reste optionnel : absent = configuration par défaut du composant.
+     */
+    components?: { name: string; position: number; config?: unknown }[];
+    /**
+     * Niveau de Bloom visé par l'objectif.
+     *
+     * ⚠️ **Optionnel, et c'est délibéré** : absent vaut « à compléter » (méthode REWORK). Un
+     * JSON sans ce champ ne casse pas le seed et n'efface pas la valeur stockée en base.
+     */
+    bloomLevel?: string;
+  }
 
 interface SourceTutorial {
   id: string;
@@ -128,12 +135,23 @@ interface SourceUser {
 
 /**
  * Déduit le type de leçon à partir des données sources.
- * Les sources ne portent pas de type : on le dérive de la présence d'un
- * composant interactif (pratique) ou visuel (capsule illustrée).
+ *
+ * Les sources ne portent pas de type : on le dérive de la présence d'un composant
+ * **interactif** (mise en pratique) ou **visuel** (capsule illustrée).
+ *
+ * ⚠️ **La nature du composant vient du catalogue**, pas de sa position : un
+ * composant peut apparaître n'importe où dans la liste. On interroge donc
+ * `resolveComponentMeta`, seule source de vérité.
  */
 function inferLessonType(lesson: SourceLesson): string {
-  if (lesson.interactiveComponentName) return 'MISE_EN_PRATIQUE';
-  if (lesson.visualComponentName) return 'CAPSULE';
+  const composants = lesson.components ?? [];
+
+  if (composants.some((c) => resolveComponentMeta(c.name)?.kind === 'interactive')) {
+    return 'MISE_EN_PRATIQUE';
+  }
+  if (composants.some((c) => resolveComponentMeta(c.name)?.kind === 'visual')) {
+    return 'CAPSULE';
+  }
   return 'TEXTE';
 }
 
@@ -226,34 +244,50 @@ async function seedContent(client: PoolClient, organizationId: string): Promise<
       for (const [lessonIndex, lesson] of lessons.entries()) {
         const lessonId = `${tutorial.id}__${lessonIndex + 1}`;
 
-        await client.query(
-          `INSERT INTO lessons (
-             id, chapter_id, source_id, title, objective, content, type,
-             points, interactive_component_name, visual_component_name, position, bloom_level
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-           ON CONFLICT (id) DO UPDATE SET
-             source_id = EXCLUDED.source_id, title = EXCLUDED.title,
-             objective = EXCLUDED.objective,
-             content = EXCLUDED.content, type = EXCLUDED.type, points = EXCLUDED.points,
-             interactive_component_name = EXCLUDED.interactive_component_name,
-             visual_component_name = EXCLUDED.visual_component_name,
-             position = EXCLUDED.position,
-             -- COALESCE volontaire : un bloom_level absent du JSON ne doit PAS écraser
-             -- un niveau déclaré en base. Re-seeder ne doit jamais détruire un travail de
-             -- conformité (T6.8) : la donnée pédagogique saisie survit à la ré-initialisation.
-             bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level)`,
-          [
-            lessonId, tutorial.id, lesson.id, lesson.title,
-            lesson.objective ?? '', lesson.content ?? '',
-            inferLessonType(lesson), DEFAULT_LESSON_POINTS,
-            lesson.interactiveComponentName ?? null,
-            lesson.visualComponentName ?? null,
-            lessonIndex,
-            lesson.bloomLevel ?? null,
-          ],
-        );
-      }
+          await client.query(
+            `INSERT INTO lessons (
+               id, chapter_id, source_id, title, objective, content, type,
+               points, position, bloom_level
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             ON CONFLICT (id) DO UPDATE SET
+               source_id = EXCLUDED.source_id, title = EXCLUDED.title,
+               objective = EXCLUDED.objective,
+               content = EXCLUDED.content, type = EXCLUDED.type, points = EXCLUDED.points,
+               position = EXCLUDED.position,
+               -- COALESCE volontaire : un bloom_level absent du JSON ne doit PAS écraser
+               -- un niveau déclaré en base. Re-seeder ne doit jamais détruire un travail de
+               -- conformité (T6.8) : la donnée pédagogique saisie survit à la ré-initialisation.
+               bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level)`,
+            [
+              lessonId, tutorial.id, lesson.id, lesson.title,
+              lesson.objective ?? '', lesson.content ?? '',
+              inferLessonType(lesson), DEFAULT_LESSON_POINTS,
+              lessonIndex,
+              lesson.bloomLevel ?? null,
+            ],
+          );
+
+          // ⚠️ Les composants vivent dans leur propre table et sont réécrits APRÈS la
+          // leçon, dont ils dépendent par clé étrangère. On **remplace** la liste :
+          // un composant retiré du JSON doit disparaître de la base, sinon le seed
+          // ne serait pas rejouable (il ne ferait qu'ajouter).
+          const composants = lesson.components ?? [];
+          await client.query(
+            `DELETE FROM lesson_components WHERE lesson_id = $1 AND position <> ALL($2::int[])`,
+            [lessonId, composants.map((c) => c.position)],
+          );
+
+          for (const composant of composants) {
+            await client.query(
+              `INSERT INTO lesson_components (lesson_id, component_name, position, config)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT (lesson_id, position) DO UPDATE SET
+                 component_name = EXCLUDED.component_name, config = EXCLUDED.config`,
+              [lessonId, composant.name, composant.position, JSON.stringify(composant.config ?? {})],
+            );
+          }
+        }
 
       // Un quiz par chapitre : la clé de quizzes.json correspond à l'id du chapitre.
       const quiz = quizzes[tutorial.id];

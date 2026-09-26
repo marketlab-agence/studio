@@ -129,8 +129,14 @@ describe('filtrage par niveau de Bloom', () => {
     const connaitre = listByBloomLevel('interactive', 'Connaître', undefined);
     const creer = listByBloomLevel('interactive', 'Créer', undefined);
 
-    // Aucun composant ne doit prétendre couvrir les deux extrêmes de la taxonomie.
-    const intersection = connaitre.filter((meta) => creer.includes(meta));
+    // ⚠️ Exception documentée (Task 8, décision contrôleur du 2026-09-26) : `AiHelper` est un
+    // assistant contextuel **générique** — sa nature lui permet d'accompagner les 6 niveaux.
+    // L'invariant « aucun composant ne couvre les deux extrêmes » vise les composants
+    // **spécialisés** (un QCM ne fait pas créer) ; il ne s'applique pas à l'assistant générique.
+    const assistantsTousNiveaux = ['AiHelper'];
+    const intersection = connaitre
+      .filter((meta) => creer.includes(meta))
+      .filter((meta) => !assistantsTousNiveaux.includes(meta.name));
     expect(intersection).toEqual([]);
   });
 

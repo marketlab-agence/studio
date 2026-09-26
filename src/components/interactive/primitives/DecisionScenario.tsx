@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Gavel, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `DecisionScenario` — primitive d'**arbitrage** (niveau Bloom : Évaluer).
@@ -54,6 +55,10 @@ export interface DecisionScenarioProps {
   /** Longueur minimale de la justification (en caractères), pour éviter le « oui » de complaisance. */
   minJustificationLength?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function DecisionScenario({
@@ -63,16 +68,29 @@ export function DecisionScenario({
   options,
   minJustificationLength = 40,
   lessonId,
+  lessonComponentId,
+  config,
 }: DecisionScenarioProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Scénario de décision', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { scenario?: string; options?: DecisionOption[] } | undefined;
+  const scenarioEffectif = donnees?.scenario ?? scenario;
+  const choix = donnees?.options ?? options;
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [justification, setJustification] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'DecisionScenario' });
+  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'DecisionScenario', lessonComponentId });
 
   const selected = useMemo(
-    () => options.find((option) => option.id === selectedId) ?? null,
-    [options, selectedId],
+    () => choix.find((option) => option.id === selectedId) ?? null,
+    [choix, selectedId],
   );
 
   const justificationOk = justification.trim().length >= minJustificationLength;
@@ -107,7 +125,7 @@ export function DecisionScenario({
     setValidated(false);
   }, []);
 
-  if (options.length === 0) {
+  if (choix.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -122,22 +140,22 @@ export function DecisionScenario({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Gavel className="h-5 w-5 text-primary" aria-hidden="true" />
-          {title}
+          {libelles.title}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         <div className="rounded-md border bg-muted/40 p-4">
           <p className="text-sm font-medium">Scénario</p>
-          <p className="mt-1 text-sm leading-relaxed">{scenario}</p>
+          <p className="mt-1 text-sm leading-relaxed">{scenarioEffectif}</p>
         </div>
 
         {/* Options avec leurs avantages et inconvénients : l'arbitrage doit être informé. */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Quelle décision prends-tu ?</Label>
 
-          {options.map((option) => {
+          {choix.map((option) => {
             const isSelected = selectedId === option.id;
             const isBest = option.quality === 'best';
 

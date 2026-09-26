@@ -49,11 +49,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // ⚠️ **Le composant doit appartenir à CETTE leçon.** Sans ce contrôle, un client
+    // pourrait rattacher sa trace à l'instance d'une autre leçon — une fausse
+    // attribution, pire qu'une absence de trace en audit.
+    if (body.data.lessonComponentId) {
+      const composant = await query<{ id: string }>(
+        `SELECT id FROM lesson_components WHERE id = $1 AND lesson_id = $2`,
+        [body.data.lessonComponentId, body.data.lessonId],
+      );
+
+      if (composant.rows.length === 0) {
+        return errorResponse(
+          'Composant introuvable dans cette leçon : trace refusée.',
+          403,
+        );
+      }
+    }
+
     const { rows } = await query<{ id: string }>(
       `INSERT INTO lesson_interactions (
-         organization_id, user_id, lesson_id, component_name, kind, payload, outcome, duration_seconds
+         organization_id, user_id, lesson_id, component_name, kind, payload, outcome, duration_seconds,
+         lesson_component_id
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
       [
         organizationId,
@@ -65,6 +83,8 @@ export async function POST(request: Request) {
         body.data.outcome ?? null,
         // `null` et non 0 : une durée non mesurée n'est pas une durée nulle.
         body.data.durationSeconds ?? null,
+        // `null` pour les traces sans instance : compatibilité des traces historiques.
+        body.data.lessonComponentId ?? null,
       ],
     );
 

@@ -45,11 +45,23 @@ type LessonRow = {
   type: string;
   duration_minutes: number | null;
   points: number;
-  media_ref: unknown | null;
-  interactive_component_name: string | null;
-  visual_component_name: string | null;
-  position: number;
-}
+    media_ref: unknown | null;
+    /**
+     * Composants ordonnés, agrégés depuis `lesson_components`.
+     *
+     * ⚠️ **La nature (`interactive`/`visual`) n'est pas dans la donnée** : elle vient
+     * du catalogue (`resolveComponentMeta`). La dupliquer ici créerait deux vérités.
+     */
+    components: { id: string; name: string; position: number; config: unknown }[];
+    position: number;
+    /**
+     * Niveau de Bloom de la leçon, ou `null` en base.
+     *
+     * ⚠️ **Sa présence ici est indispensable** : sans elle, `toLesson` retombait sur
+     * `undefined` et la sélection par Bloom devenait un no-op silencieux.
+     */
+    bloom_level: string | null;
+  }
 
 function toCourseInfo(row: CourseRow): CourseInfo {
   return {
@@ -64,16 +76,30 @@ function toCourseInfo(row: CourseRow): CourseInfo {
     };
   }
 
-function toLesson(row: LessonRow): Lesson {
-  return {
-    id: row.id,
-    title: row.title,
-    objective: row.objective,
-    content: row.content,
-    interactiveComponentName: row.interactive_component_name ?? undefined,
-    visualComponentName: row.visual_component_name ?? undefined,
-  };
-}
+  function toLesson(row: LessonRow): Lesson {
+    return {
+      id: row.id,
+      title: row.title,
+      objective: row.objective,
+      content: row.content,
+      components: (row.components ?? []).map((composant) => ({
+        // ⚠️ `id` propagé jusqu'ici : c'est lui que `LessonView` transmet aux composants,
+        // qui le joignent à leurs traces (`lesson_component_id`). Sans lui, deux instances
+        // du même composant seraient indiscernables en audit.
+        id: composant.id,
+        name: composant.name,
+        position: composant.position,
+        config: (composant.config ?? {}) as Lesson['components'][number]['config'],
+      })),
+      // ⚠️ **Champs relus fidèlement.** Les omettre rendait la leçon infidèle : le niveau
+      // de Bloom disparaissait (sélection Bloom inopérante) et l'écriture suivante,
+      // dépourvue du niveau, le réécrivait à `null` (d'où le `COALESCE` ci-dessous).
+      type: row.type,
+      points: row.points,
+      position: row.position,
+      bloomLevel: row.bloom_level ?? undefined,
+    };
+  }
 
 export class PostgresContentProvider implements ContentProvider {
   // --- Formations -----------------------------------------------------------
@@ -196,10 +222,19 @@ export class PostgresContentProvider implements ContentProvider {
     if (chapters.length === 0) return [];
 
     const { rows: lessons } = await query<LessonRow>(
-      `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
-              l.duration_minutes, l.points, l.media_ref,
-              l.interactive_component_name, l.visual_component_name, l.position
-       FROM lessons l
+        `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
+                l.duration_minutes, l.points, l.media_ref, l.position, l.bloom_level,
+                COALESCE(
+                  (SELECT json_agg(json_build_object(
+                     'id', lc.id,
+                     'name', lc.component_name,
+                     'position', lc.position,
+                     'config', lc.config
+                   ) ORDER BY lc.position)
+                   FROM lesson_components lc WHERE lc.lesson_id = l.id),
+                  '[]'::json
+                ) AS components
+         FROM lessons l
        JOIN chapters ch ON ch.id = l.chapter_id
        JOIN courses co ON co.id = ch.course_id
        WHERE co.organization_id = $1
@@ -308,36 +343,40 @@ export class PostgresContentProvider implements ContentProvider {
    * référence `lessons(id)` avec `ON DELETE CASCADE`, et une simple édition de
    * contenu effacerait la progression des apprenants.
    */
-  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {
-    await query(
+  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {    await query(
       'UPDATE lessons SET position = position + $2 WHERE chapter_id = $1',
       [chapterId, PostgresContentProvider.POSITION_OFFSET],
     );
 
     for (const [index, lesson] of lessons.entries()) {
-      // `type` et `points` ne figurent pas dans `Lesson` : ils sont posés à la
-      // création et **préservés** en mise à jour (absents du DO UPDATE).
+      // `type` et `points` sont initialisés à la création et **préservés** en mise à jour
+      // (absents du `DO UPDATE`) : la relecture les expose, mais l'écriture ne les écrase pas.
+      //
+      // ⚠️ **`bloom_level` en `COALESCE`.** Un appelant qui omet le niveau (génération
+      // ancienne, ou leçon non encore alignée) ne doit PAS le remettre à NULL : le niveau
+      // en base est la source de vérité, et l'effacer ferait perdre un travail d'alignement.
       await query(
         `INSERT INTO lessons (
            id, chapter_id, source_id, title, objective, content, type, points,
-           interactive_component_name, visual_component_name, bloom_level, position
+           bloom_level, position
          )
-         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8, $9, $10)
+         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8)
          ON CONFLICT (id) DO UPDATE SET
            chapter_id = EXCLUDED.chapter_id,
            title = EXCLUDED.title,
            objective = EXCLUDED.objective,
            content = EXCLUDED.content,
-           interactive_component_name = EXCLUDED.interactive_component_name,
-           visual_component_name = EXCLUDED.visual_component_name,
-           bloom_level = EXCLUDED.bloom_level,
+           bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level),
            position = EXCLUDED.position`,
         [
           lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
-          lesson.content ?? '', lesson.interactiveComponentName ?? null,
-          lesson.visualComponentName ?? null, lesson.bloomLevel ?? null, index,
+          lesson.content ?? '', lesson.bloomLevel ?? null, index,
         ],
       );
+
+      // ⚠️ Les composants vivent dans leur propre table : ils sont réécrits APRÈS
+      // la leçon, dont ils dépendent par clé étrangère.
+      await this.remplacerComposants(lesson.id, lesson.components ?? []);
     }
 
     await query(
@@ -351,6 +390,47 @@ export class PostgresContentProvider implements ContentProvider {
        WHERE l.id = r.id`,
       [chapterId, lessons.length, PostgresContentProvider.POSITION_OFFSET],
     );
+  }
+
+  /**
+   * Réécrit les composants d'une leçon.
+   *
+   * ⚠️ **L'`id` d'un composant est réutilisé quand c'est le MÊME composant**, car
+   * `lesson_interactions.lesson_component_id` le référence : le recréer
+   * orphelinerait l'historique d'apprentissage.
+   *
+   * ⚠️ **Mais pas s'il a changé de nom.** Réutiliser l'`id` d'un `RecallQuiz`
+   * devenu `MatchingPairs` ferait croire que les traces passées appartiennent au
+   * nouveau composant — une fausse attribution, pire qu'une perte. Dans ce cas on
+   * supprime (la trace passe à `NULL`) puis on insère un composant neuf.
+   */
+  private async remplacerComposants(
+    lessonId: string,
+    composants: Lesson['components'],
+  ): Promise<void> {
+    const positions = composants.map((composant) => composant.position);
+
+    // ⚠️ `<> ALL('{}')` vaut VRAI partout : une liste vide supprime donc bien tous
+    // les composants de la leçon, ce qui est le comportement attendu.
+    await query(
+      `DELETE FROM lesson_components WHERE lesson_id = $1 AND position <> ALL($2::int[])`,
+      [lessonId, positions],
+    );
+
+    for (const composant of composants) {
+      await query(
+        `DELETE FROM lesson_components
+         WHERE lesson_id = $1 AND position = $2 AND component_name <> $3`,
+        [lessonId, composant.position, composant.name],
+      );
+
+      await query(
+        `INSERT INTO lesson_components (lesson_id, component_name, position, config)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (lesson_id, position) DO UPDATE SET config = EXCLUDED.config`,
+        [lessonId, composant.name, composant.position, JSON.stringify(composant.config ?? {})],
+      );
+    }
   }
 
   async deleteChapter(scope: OrgScope, id: string): Promise<void> {

@@ -10,11 +10,10 @@ import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 // Métadonnées seules : éviter de tirer les 46 composants (et Genkit via AiHelper)
 // dans une action serveur qui n'a besoin que des noms et descriptions.
-import {
-  listNamesForDomain,
-  listFunctionalInteractiveNamesForDomain,
-  type ComponentDomain,
-} from '@/components/registry/catalog';
+import type { ComponentDomain } from '@/components/registry/catalog';
+import { getRelevantComponents } from '@/lib/content/component-selection';
+import { BLOOM_LEVELS, type BloomLevel } from '@/lib/content/bloom';
+import { renumeroter, validerComposantsGeneres, validerConfigurationComposant } from '@/lib/content/lesson-components';
 
 const slugify = (text: string) =>
   text
@@ -90,14 +89,15 @@ export async function buildCourseFromPlanAction(courseId: string) {
         // Skip if chapter (tutorial) already exists to avoid duplication
         if (tutorials.find(t => t.id === chapterId)) return;
 
-        const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
-            id: `${chapterId}-l${lessonIndex + 1}`,
-            title: lessonPlan.title,
-            objective: lessonPlan.objective,
-            content: `Contenu en attente de génération pour "${lessonPlan.title}"...`,
-            interactiveComponentName: undefined,
-            visualComponentName: undefined,
-        }));
+          const lessons: Lesson[] = chapterPlan.lessons.map((lessonPlan, lessonIndex) => ({
+              id: `${chapterId}-l${lessonIndex + 1}`,
+              title: lessonPlan.title,
+              objective: lessonPlan.objective,
+              content: `Contenu en attente de génération pour "${lessonPlan.title}"...`,
+              // Aucun composant à la création : ils seront choisis à la génération
+              // du contenu de la leçon, selon son niveau de Bloom.
+              components: [],
+          }));
 
         const newTutorial: Tutorial = {
             id: chapterId,
@@ -171,6 +171,29 @@ export async function getCourseAndChaptersAction(courseId: string): Promise<{ co
 }
 
 export async function updateLessonContentAction(courseId: string, chapterId: string, updatedLesson: Lesson) {
+    /**
+     * ⚠️ **Validation au serveur, pas seulement dans le formulaire.** Un `config` invalide
+     * stocké en base ferait échouer le rendu de la leçon pour l'apprenant — un défaut qui ne
+     * se verrait qu'en production. Le formulaire peut être contourné (appel direct de
+     * l'action) ; le serveur est la seule garantie.
+     *
+     * ⚠️ **La donnée absente est valide** (« appliquer les défauts du composant ») : on ne
+     * valide que les `config.data` réellement fournies. Voir `validerConfigurationComposant`.
+     */
+    for (const composant of updatedLesson.components ?? []) {
+        const resultat = validerConfigurationComposant(composant.name, composant.config);
+        if (!resultat.valide) {
+            throw new Error(resultat.message);
+        }
+    }
+
+    // ⚠️ **L'ordre du tableau fait foi**, pas la `position` reçue : on renumérote pour
+    // garantir l'invariant `0..N-1` même si le client l'a mal calculé.
+    const leconNormalisee: Lesson = {
+        ...updatedLesson,
+        components: renumeroter(updatedLesson.components ?? []),
+    };
+
     const tutorials = await getTutorials();
     const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
@@ -180,7 +203,7 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
     if (lessonIndex === -1) {
         throw new Error('Lesson not found');
     }
-    tutorials[chapterIndex].lessons[lessonIndex] = updatedLesson;
+    tutorials[chapterIndex].lessons[lessonIndex] = leconNormalisee;
     await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${updatedLesson.id}`);
@@ -237,27 +260,19 @@ function inferDomain(course: CourseInfo): ComponentDomain | undefined {
 }
 
 /**
- * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry/catalog.ts`).
+ * Retient un niveau de Bloom **valide**, ou `undefined`.
  *
- * Deux filtres, tous deux nécessaires :
- *
- * 1. **Placeholders exclus** — les 13 composants dont l'interface existe sans interaction
- *    ne doivent pas servir de « mise en pratique » : l'IA générerait des leçons pointant
- *    vers des coquilles.
- * 2. **Domaine filtré** (2026-09-23) — sans ce filtre, l'IA recevait le catalogue **entier** :
- *    sur une formation de vente, elle se voyait proposer `MergeSimulator`. Elle ne le
- *    choisissait probablement pas, mais rien ne l'en empêchait structurellement.
- *
- * ⚠️ Le domaine est **optionnel** : s'il n'est pas connu, on ne filtre pas. Mieux vaut
- * proposer trop que priver l'IA de tout composant faute d'information.
+ * `Lesson.bloomLevel` est un `string` en base : le cast direct vers `BloomLevel` mentirait sur
+ * une donnée corrompue. On valide donc à l'exécution avant de filtrer le catalogue.
  */
-function getRelevantComponents(domain?: ComponentDomain): { interactive: string[]; visual: string[] } {
-  return {
-    interactive: listFunctionalInteractiveNamesForDomain(domain),
-    visual: listNamesForDomain('visual', domain),
-  };
+function resolveBloomLevel(value?: string): BloomLevel | undefined {
+  return value && (BLOOM_LEVELS as readonly string[]).includes(value)
+    ? (value as BloomLevel)
+    : undefined;
 }
 
+// La sélection des composants (domaine, Bloom, placeholders) vit dans un module pur
+// `@/lib/content/component-selection` : elle y est testable sans tirer l'action serveur.
 
 export async function generateLessonContentAction(
   courseId: string,
@@ -311,7 +326,14 @@ export async function generateLessonContentAction(
   // filtrage, ce qui conserve le comportement antérieur.
   const domain = resolveCourseDomain(course);
 
-  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(domain);
+  // La leçon en base porte déjà son niveau de Bloom (complété par l'auteur ou l'alignement).
+  const leconCible = tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex];
+  const bloomLevel = resolveBloomLevel(leconCible.bloomLevel);
+
+  const { interactive: relevantInteractive, visual: relevantVisual } = getRelevantComponents(
+    domain,
+    bloomLevel,
+  );
 
     const input: GenerateLessonContentInput = {
       lessonTitle: lessonPlan.title,
@@ -321,18 +343,36 @@ export async function generateLessonContentAction(
       courseLanguage: generationParams?.courseLanguage || 'Français',
       lessonLength: generationParams?.lessonLength || 'Moyen',
       chapterContext,
+      bloomLevel,
       availableInteractiveComponents: relevantInteractive,
       availableVisualComponents: relevantVisual,
     };
 
-    const result = await generateLessonContent(input);
-    const { illustrativeContent, interactiveComponentName, visualComponentName } = result;
+      const result = await generateLessonContent(input);
+      const { illustrativeContent, components } = result;
 
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].content = illustrativeContent;
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].interactiveComponentName = interactiveComponentName;
-    tutorials[tutorialChapterIndex].lessons[tutorialLessonIndex].visualComponentName = visualComponentName;
+      leconCible.content = illustrativeContent;
 
-    await saveTutorials(tutorials);
+      /**
+       * ⚠️ **La sortie de l'IA passe la MÊME validation que l'enregistrement manuel.**
+       * Un modèle peut nommer un composant absent du catalogue ou fournir une
+       * `config.data` hors schéma ; le persister ferait échouer le rendu de la leçon.
+       * On écarte donc le composant fautif — en journalisant la raison — au lieu de
+       * faire confiance à la sortie. L'ordre de l'IA est conservé, les positions
+       * renumérotées en `0..N-1`.
+       */
+      const { composants: composantsValides, rejetes } = validerComposantsGeneres(components);
+
+      for (const rejet of rejetes) {
+        // Signalé, jamais ignoré en silence : une proposition écartée est une information.
+        console.warn(
+          `[generateLessonContentAction] composant IA écarté — ${rejet.message}`,
+        );
+      }
+
+      leconCible.components = composantsValides;
+
+      await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lessonId}`);
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}`);

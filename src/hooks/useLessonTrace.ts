@@ -31,9 +31,17 @@ export interface UseLessonTraceOptions {
   lessonId: string;
   /** Nom du composant du registre qui produit la trace. */
   componentName: string;
+  /**
+   * Identifiant de l'**instance** de composant (`lesson_components.id`).
+   *
+   * ⚠️ **Facultatif** : une leçon non persistée (ou un rendu hors leçon) n'en a pas.
+   * Quand il est fourni, la trace est attribuée à l'instance exacte — c'est ce qui
+   * distingue deux occurrences du même composant dans une même leçon.
+   */
+  lessonComponentId?: string;
 }
 
-export function useLessonTrace({ lessonId, componentName }: UseLessonTraceOptions) {
+export function useLessonTrace({ lessonId, componentName, lessonComponentId }: UseLessonTraceOptions) {
   // Horodatage du début : sert à mesurer la durée d'interaction sans dépendre du serveur.
   const startedAt = useRef<number>(Date.now());
 
@@ -54,6 +62,9 @@ export function useLessonTrace({ lessonId, componentName }: UseLessonTraceOption
         body: JSON.stringify({
           lessonId,
           componentName,
+          // Omis quand absent : le serveur insère `NULL`, et les traces historiques
+          // restent valides (attribution à l'instance rendue **optionnelle**).
+          ...(lessonComponentId ? { lessonComponentId } : {}),
           ...body,
         }),
       }).catch((error) => {
@@ -62,7 +73,7 @@ export function useLessonTrace({ lessonId, componentName }: UseLessonTraceOption
         console.warn('[useLessonTrace] trace non enregistrée :', error);
       });
     },
-    [lessonId, componentName],
+    [lessonId, componentName, lessonComponentId],
   );
 
   /**

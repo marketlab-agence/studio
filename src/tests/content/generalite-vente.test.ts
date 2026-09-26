@@ -44,7 +44,7 @@ function lesson(input: {
     bloomLevel: input.bloomLevel,
     points: 0,
     position: 0,
-    interactiveComponentName: input.componentName,
+    components: input.componentName ? [{ name: input.componentName, position: 0, config: {} }] : [],
   };
 }
 
@@ -159,7 +159,7 @@ describe('généralité — une formation de VENTE peut être conforme', () => {
     const course = buildSalesCourse();
     const noms = course.chapters
       .flatMap((chapter) => chapter.lessons)
-      .map((lesson) => lesson.interactiveComponentName)
+      .map((lesson) => lesson.components[0]?.name)
       .filter((name): name is string => Boolean(name));
 
     const inertes = noms.filter((name) => resolveComponentMeta(name)?.status !== 'functional');
@@ -174,7 +174,7 @@ describe('généralité — une formation de VENTE peut être conforme', () => {
 
     const horsDomaine = course.chapters
       .flatMap((chapter) => chapter.lessons)
-      .map((lesson) => lesson.interactiveComponentName)
+      .map((lesson) => lesson.components[0]?.name)
       .filter((name): name is string => Boolean(name))
       .filter((name) => !pourVente.has(name));
 

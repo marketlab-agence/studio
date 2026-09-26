@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Hammer, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `BuilderCanvas` — primitive de **construction** (niveau Bloom : Créer).
@@ -41,10 +42,17 @@ export interface CanvasSection {
 }
 
 export interface BuilderCanvasProps {
-  title: string;
+  /**
+   * Titre du canevas.
+   * ⚠️ Optionnel : une instance peut fournir son titre via `config.labels.title`.
+   */
+  title?: string;
   description?: string;
-  /** Rubriques du canevas, dans l'ordre d'un document réel. */
-  sections: CanvasSection[];
+  /**
+   * Rubriques du canevas, dans l'ordre d'un document réel.
+   * ⚠️ Optionnel : une instance configurée les fournit via `config.data.blocks`.
+   */
+  sections?: CanvasSection[];
   /**
    * Éléments répétables (lignes d'un tableau, étapes d'un déroulé).
    * `undefined` = canevas à rubriques fixes.
@@ -56,6 +64,10 @@ export interface BuilderCanvasProps {
     max?: number;
   };
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function BuilderCanvas({
@@ -64,16 +76,40 @@ export function BuilderCanvas({
   sections,
   repeatable,
   lessonId,
+  lessonComponentId,
+  config,
 }: BuilderCanvasProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Construis ton artefact', description: description ?? '' },
+    config?.labels,
+  );
+
+  /**
+   * ⚠️ `config.data` parle de `blocks` (termes du `dataSchema`) et non de `sections` : c'est
+   * une liste d'intitulés de rubriques fournie par le créateur. On la projette en `CanvasSection`.
+   * Le repli garantit qu'une instance sans configuration rend comme aujourd'hui.
+   * Mémorisé : sans cela, les tables dérivées dépendraient d'une nouvelle référence à chaque rendu.
+   */
+  const rubriques = useMemo<CanvasSection[]>(() => {
+    const donnees = config?.data as { blocks?: string[]; sections?: CanvasSection[] } | undefined;
+    return (
+      donnees?.sections ??
+      donnees?.blocks?.map((label, index) => ({ id: `block-${index}`, label })) ??
+      sections ??
+      []
+    );
+  }, [config?.data, sections]);
+
   /** Réponses aux rubriques fixes. */
   const [values, setValues] = useState<Record<string, string>>({});
   /** Éléments répétables : chaque entrée porte ses propres rubriques. */
   const [rows, setRows] = useState<Record<string, string>[]>(repeatable ? [{}] : []);
   const [validated, setValidated] = useState(false);
 
-  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'BuilderCanvas' });
+  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'BuilderCanvas', lessonComponentId });
 
-  const requiredSections = useMemo(() => sections.filter((section) => section.required), [sections]);
+  const requiredSections = useMemo(() => rubriques.filter((section) => section.required), [rubriques]);
 
   const filledRequired = useMemo(
     () =>
@@ -82,8 +118,8 @@ export function BuilderCanvas({
   );
 
   const filledTotal = useMemo(
-    () => sections.filter((section) => (values[section.id] ?? '').trim().length > 0).length,
-    [sections, values],
+    () => rubriques.filter((section) => (values[section.id] ?? '').trim().length > 0).length,
+    [rubriques, values],
   );
 
   // Pour un canevas répétable, il faut au moins une ligne renseignée.
@@ -97,18 +133,18 @@ export function BuilderCanvas({
       sections: values,
       rows: repeatable ? rows : undefined,
       filledSections: filledTotal,
-      totalSections: sections.length,
+      totalSections: rubriques.length,
     });
 
     void recordStep({
       stepId: 'canvas',
       kind: 'ANSWER',
       outcome: canValidate ? 'SUCCESS' : 'PARTIAL',
-      payload: { filledSections: filledTotal, totalSections: sections.length },
+      payload: { filledSections: filledTotal, totalSections: rubriques.length },
     });
 
     setValidated(true);
-  }, [values, rows, repeatable, filledTotal, sections.length, canValidate, recordProduction, recordStep]);
+  }, [values, rows, repeatable, filledTotal, rubriques.length, canValidate, recordProduction, recordStep]);
 
   const restart = useCallback(() => {
     setValues({});
@@ -122,19 +158,19 @@ export function BuilderCanvas({
         <CardTitle className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <Hammer className="h-5 w-5 text-primary" aria-hidden="true" />
-            {title}
+            {libelles.title}
           </span>
           <Badge variant={validated && canValidate ? 'default' : 'secondary'}>
-            {filledTotal}/{sections.length}
+            {filledTotal}/{rubriques.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         {/* Rubriques fixes */}
         <div className="space-y-4">
-          {sections.map((section) => {
+          {rubriques.map((section) => {
             const value = values[section.id] ?? '';
             const filled = value.trim().length > 0;
 
@@ -266,7 +302,7 @@ export function BuilderCanvas({
           <div className="space-y-3 rounded-md border border-primary/30 bg-primary/5 p-4">
             <p className="flex items-center gap-2 text-sm font-medium">
               <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
-              Canevas enregistré ({filledTotal}/{sections.length} rubriques renseignées).
+              Canevas enregistré ({filledTotal}/{rubriques.length} rubriques renseignées).
             </p>
             <p className="text-xs text-muted-foreground">
               Ta production est conservée : elle constitue la trace de ton travail.

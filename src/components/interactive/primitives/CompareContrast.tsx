@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Scale, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `CompareContrast` — primitive de **comparaison** (niveau Bloom : Analyser).
@@ -56,6 +57,10 @@ export interface CompareContrastProps {
   /** Conclusion attendue, si elle est vérifiable. Sinon, l'analyse seule est évaluée. */
   expectedConclusion?: string;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function CompareContrast({
@@ -66,26 +71,48 @@ export function CompareContrast({
   criteria,
   expectedConclusion,
   lessonId,
+  lessonComponentId,
+  config,
 }: CompareContrastProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Compare et contraste', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as
+    | {
+        optionA?: ComparisonOption;
+        optionB?: ComparisonOption;
+        criteria?: ComparisonCriterion[];
+        expectedConclusion?: string;
+      }
+    | undefined;
+  const optionAEffective = donnees?.optionA ?? optionA;
+  const optionBEffective = donnees?.optionB ?? optionB;
+  const criteres = donnees?.criteria ?? criteria;
+  const conclusionAttendue = donnees?.expectedConclusion ?? expectedConclusion;
+
   /** Observations de l'apprenant, par critère et par option. */
   const [observations, setObservations] = useState<Record<string, { a: string; b: string }>>({});
   const [conclusion, setConclusion] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'CompareContrast' });
+  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'CompareContrast', lessonComponentId });
 
   /** Nombre de critères renseignés **des deux côtés** — la condition pour un vrai comparatif. */
   const filledCriteria = useMemo(
     () =>
-      criteria.filter(
+      criteres.filter(
         (criterion) =>
           (observations[criterion.id]?.a ?? '').trim().length > 0 &&
           (observations[criterion.id]?.b ?? '').trim().length > 0,
       ).length,
-    [criteria, observations],
+    [criteres, observations],
   );
 
-  const canValidate = filledCriteria === criteria.length && conclusion.trim().length > 0;
+  const canValidate = filledCriteria === criteres.length && conclusion.trim().length > 0;
 
   const update = useCallback((criterionId: string, side: 'a' | 'b', value: string) => {
     setObservations((previous) => {
@@ -103,7 +130,7 @@ export function CompareContrast({
     // La production est enregistrée comme trace : c'est la **démarche d'analyse** que
     // l'encadrant doit pouvoir examiner, pas seulement une note.
     void recordProduction({
-      criteriaCount: criteria.length,
+      criteriaCount: criteres.length,
       criteriaFilled: filledCriteria,
       conclusionLength: conclusion.trim().length,
       observations,
@@ -112,12 +139,12 @@ export function CompareContrast({
     void recordStep({
       stepId: 'comparison',
       kind: 'ANSWER',
-      outcome: filledCriteria === criteria.length ? 'SUCCESS' : 'PARTIAL',
-      payload: { criteriaFilled: filledCriteria, criteriaTotal: criteria.length },
+      outcome: filledCriteria === criteres.length ? 'SUCCESS' : 'PARTIAL',
+      payload: { criteriaFilled: filledCriteria, criteriaTotal: criteres.length },
     });
 
     setValidated(true);
-  }, [criteria.length, filledCriteria, conclusion, observations, recordProduction, recordStep]);
+  }, [criteres.length, filledCriteria, conclusion, observations, recordProduction, recordStep]);
 
   const restart = useCallback(() => {
     setObservations({});
@@ -130,15 +157,15 @@ export function CompareContrast({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Scale className="h-5 w-5 text-primary" aria-hidden="true" />
-          {title}
+          {libelles.title}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-5">
         {/* Présentation des deux options */}
         <div className="grid gap-3 sm:grid-cols-2">
-          {[optionA, optionB].map((option) => (
+          {[optionAEffective, optionBEffective].map((option) => (
             <div key={option.id} className="rounded-md border p-3">
               <p className="text-sm font-medium">{option.label}</p>
               {option.description && (
@@ -153,11 +180,11 @@ export function CompareContrast({
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Compare selon chaque critère</Label>
             <span className="text-xs text-muted-foreground">
-              {filledCriteria}/{criteria.length} renseigné(s)
+              {filledCriteria}/{criteres.length} renseigné(s)
             </span>
           </div>
 
-          {criteria.map((criterion, index) => (
+          {criteres.map((criterion, index) => (
             <div key={criterion.id} className="space-y-2 rounded-md border p-3">
               <div className="flex items-start gap-2">
                 <span className={cn('text-xs text-muted-foreground', 'mt-0.5')}>{index + 1}.</span>
@@ -173,18 +200,18 @@ export function CompareContrast({
                 <Textarea
                   value={observations[criterion.id]?.a ?? ''}
                   onChange={(event) => update(criterion.id, 'a', event.target.value)}
-                  placeholder={`${optionA.label}…`}
+                  placeholder={`${optionAEffective.label}…`}
                   rows={2}
                   disabled={validated}
-                  aria-label={`${optionA.label} — ${criterion.label}`}
+                  aria-label={`${optionAEffective.label} — ${criterion.label}`}
                 />
                 <Textarea
                   value={observations[criterion.id]?.b ?? ''}
                   onChange={(event) => update(criterion.id, 'b', event.target.value)}
-                  placeholder={`${optionB.label}…`}
+                  placeholder={`${optionBEffective.label}…`}
                   rows={2}
                   disabled={validated}
-                  aria-label={`${optionB.label} — ${criterion.label}`}
+                  aria-label={`${optionBEffective.label} — ${criterion.label}`}
                 />
               </div>
             </div>
@@ -218,16 +245,16 @@ export function CompareContrast({
             </p>
 
             <p className="text-xs text-muted-foreground">
-              {filledCriteria === criteria.length
+              {filledCriteria === criteres.length
                 ? 'Tous les critères ont été examinés : le comparatif est complet.'
-                : `${filledCriteria} critère(s) sur ${criteria.length} ont été renseignés.`}
+                : `${filledCriteria} critère(s) sur ${criteres.length} ont été renseignés.`}
             </p>
 
             {/* La conclusion attendue n'est révélée qu'après : la donner avant orienterait
                 l'analyse, ce qui viderait l'exercice de sa valeur. */}
-            {expectedConclusion && (
+            {conclusionAttendue && (
               <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Éléments attendus :</span> {expectedConclusion}
+                <span className="font-medium text-foreground">Éléments attendus :</span> {conclusionAttendue}
               </p>
             )}
 

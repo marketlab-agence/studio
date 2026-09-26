@@ -19,6 +19,7 @@ import {
   resolveComponentMeta,
 } from '@/components/registry/catalog';
 import { BLOOM_LEVELS } from '@/lib/content/bloom';
+import { fusionnerLibelles } from '@/lib/schemas/component-config';
 
 /** Les 11 primitives génériques de l'étape 15 (+ RecallQuiz). */
 const PRIMITIVES = [
@@ -131,5 +132,20 @@ describe('primitives — utiles hors du domaine Git', () => {
 
     expect(visuelsPourVente).toContain('ConceptDiagram');
     expect(visuelsPourVente).toContain('AnimatedFlow');
+  });
+});
+
+describe('primitives — libellés en configuration', () => {
+  it('remplace les libellés par défaut par ceux de la configuration', () => {
+    const defauts = { title: 'Titre par défaut', description: 'Description par défaut' };
+    const config = { labels: { title: 'Custom title' } };
+
+    const resultat = fusionnerLibelles(defauts, config.labels);
+    expect(resultat.title).toBe('Custom title');
+    expect(resultat.description).toBe('Description par défaut');
+  });
+
+  it('accepte une configuration absente sans casser', () => {
+    expect(fusionnerLibelles({ title: 'T' }, undefined).title).toBe('T');
   });
 });

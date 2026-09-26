@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import type { GenerateLessonContentOutput } from '@/types/tutorial.types';
 import { generateLessonMarkdown } from './generate-lesson-markdown-flow';
 import { suggestLessonComponents } from './suggest-lesson-components-flow';
+import { SuggestedLessonComponentSchema } from './suggest-lesson-components-schema';
 
 
 const GenerateLessonContentInputSchema = z.object({
@@ -44,8 +45,15 @@ export type GenerateLessonContentInput = z.infer<typeof GenerateLessonContentInp
 
 const GenerateLessonContentOutputSchema = z.object({
   illustrativeContent: z.string().describe("The main educational content for the lesson in well-structured Markdown format. It should include headings, lists, code blocks, and bold text to explain the concepts clearly."),
-  interactiveComponentName: z.string().optional().describe("The name of a single, most relevant interactive component selected from the provided list that would provide a hands-on experience. If no component is relevant, this field can be omitted."),
-  visualComponentName: z.string().optional().describe("The name of a single, most relevant visualization component selected from the provided list that would help illustrate a key concept. If no component is relevant, this field can be omitted."),
+  /**
+   * Composants pédagogiques proposés, **ordonnés**.
+   *
+   * ⚠️ **Un tableau, pas deux emplacements.** Une leçon peut mobiliser autant de composants
+   * que son objectif l'exige, et le même composant peut revenir. Le filtrage par niveau de
+   * Bloom est fait **en amont** de l'IA (voir `generateLessonContentAction`) ; la sortie peut
+   * être vide pour une leçon purement notionnelle.
+   */
+  components: z.array(SuggestedLessonComponentSchema).describe("Les composants pédagogiques proposés, ordonnés. Peut être vide."),
   /**
    * Niveau de Bloom **confirmé** par l'IA après rédaction.
    *
@@ -80,6 +88,8 @@ const generateLessonContentFlow = ai.defineFlow(
     const { illustrativeContent } = markdownOutput;
 
     // Étape 2 : Suggérer des composants basés sur le contenu généré.
+    // Le niveau de Bloom est transmis pour que la justification de l'IA s'y rapporte ;
+    // le filtrage, lui, a déjà été appliqué à `availableInteractiveComponents`.
     const componentSuggestions = await suggestLessonComponents({
         lessonTitle: input.lessonTitle,
         lessonObjective: input.lessonObjective,
@@ -89,12 +99,12 @@ const generateLessonContentFlow = ai.defineFlow(
         illustrativeContent,
         availableInteractiveComponents: input.availableInteractiveComponents,
         availableVisualComponents: input.availableVisualComponents,
+        bloomLevel: input.bloomLevel,
     });
 
     return {
         illustrativeContent,
-        interactiveComponentName: componentSuggestions.interactiveComponentName,
-        visualComponentName: componentSuggestions.visualComponentName,
+        components: componentSuggestions.components,
     };
   }
 );

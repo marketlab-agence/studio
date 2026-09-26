@@ -9,6 +9,8 @@
  */
 
 import type { BloomLevel } from '@/lib/content/bloom';
+import { z } from 'zod';
+import { DATA_SCHEMAS, LABEL_KEYS } from './component-schemas';
 
 export type ComponentKind = 'interactive' | 'visual';
 
@@ -55,7 +57,7 @@ export const COMPONENT_DOMAINS: readonly ComponentDomain[] = [
 export type ComponentStatus = 'functional' | 'placeholder';
 
 export interface ComponentMeta {
-  /** Nom technique, tel qu'utilisé dans `interactiveComponentName` / `visualComponentName`. */
+  /** Nom technique du composant, tel qu'utilisé dans `LessonComponent.name`. */
   name: string;
   kind: ComponentKind;
   status: ComponentStatus;
@@ -74,6 +76,22 @@ export interface ComponentMeta {
    * tableau vide est donc un défaut, pas une option.
    */
   bloomLevels: readonly BloomLevel[];
+  /**
+   * Libellés personnalisables du composant, avec leur valeur par défaut (français).
+   *
+   * ⚠️ **Le catalogue expose ce qui est personnalisable** — ni plus, ni moins. L'IA
+   * sait ainsi *quels* libellés produire pour une formation anglophone, et le
+   * formulaire ne propose pas de modifier un texte qui n'existe pas.
+   */
+  labelKeys: Record<string, string>;
+  /**
+   * Structure attendue de `config.data`, validée à l'écriture ET au rendu.
+   *
+   * ⚠️ Un schéma **par composant**, et non un schéma générique : c'est ce qui
+   * attrape une étape manquante dans un `StepByStepRunner` ou une paire
+   * incomplète dans un `MatchingPairs`.
+   */
+  dataSchema: z.ZodType;
 }
 
 /**
@@ -311,6 +329,31 @@ const COMPONENT_BLOOM_BY_NAME: Record<string, readonly BloomLevel[]> = {
   WorkflowDesigner: ['Créer'],
   TrunkBasedDevelopmentVisualizer: ['Comprendre', 'Analyser'],
 
+  // --- Interactifs Git complétés (R8, Task 8) --------------------------------
+  //
+  // ⚠️ **Complément R8 (2026-09-26).** Ces 15 composants interactifs n'avaient AUCUN niveau :
+  // le catalogue violait son propre invariant (« un tableau vide est un défaut, pas une
+  // option »). Les niveaux sont **déduits de la nature du composant** (sa description), pas
+  // inventés — même méthode que la table ci-dessus.
+  //
+  //  - `AiHelper` est un assistant contextuel générique : il peut accompagner TOUS les niveaux
+  //    cognitifs (poser une question sert aussi bien à se souvenir qu'à créer) → 6 niveaux.
+  ConflictResolver: ['Appliquer', 'Créer'], // choisir les hunks = appliquer, produire la version finale = créer
+  PushPullAnimator: ['Comprendre', 'Appliquer'], // observer la divergence = comprendre, pousser/tirer = appliquer
+  PRWorkflowSimulator: ['Appliquer'], // dérouler le cycle d'une PR = appliquer
+  GitHubInterfaceSimulator: ['Connaître', 'Comprendre'], // s'orienter dans l'interface = connaître/comprendre
+  IssueTracker: ['Appliquer'], // créer/prioriser/assigner des tickets = appliquer
+  ActionsWorkflowBuilder: ['Créer'], // assembler déclencheurs, jobs et étapes = créer
+  WorkflowSimulator: ['Appliquer'], // appliquer un modèle de workflow étape par étape = appliquer
+  FlowDiagramBuilder: ['Créer'], // construire un diagramme de flux = créer
+  TimelineNavigator: ['Comprendre', 'Analyser'], // situer les commits = comprendre, inspecter chaque état = analyser
+  CommitMessageLinter: ['Appliquer'], // saisir un message et vérifier les règles = appliquer
+  GitignoreTester: ['Appliquer'], // saisir des motifs et vérifier l'effet = appliquer
+  AliasCreator: ['Appliquer', 'Créer'], // définir un raccourci = appliquer, le concevoir = créer
+  SecurityScanner: ['Analyser'], // détecter un secret et comprendre la remédiation = analyser
+  OpenSourceSimulator: ['Appliquer'], // dérouler fork/branche/PR/revue = appliquer
+  AiHelper: ['Connaître', 'Comprendre', 'Appliquer', 'Analyser', 'Évaluer', 'Créer'], // assistant contextuel, tous niveaux
+
   // --- Visuels -------------------------------------------------------------
   GitGraph: ['Connaître', 'Comprendre'],
   BranchDiagram: ['Connaître', 'Comprendre'],
@@ -338,10 +381,14 @@ function toMeta(
     description,
     // Un composant sans domaine déclaré est traité comme **générique** : c'est le défaut le
     // plus sûr (il reste proposé partout) — l'inverse masquerait des composants utiles.
-    domains: COMPONENT_DOMAINS_BY_NAME[name] ?? ['*'],
-    bloomLevels: COMPONENT_BLOOM_BY_NAME[name] ?? [],
-  }));
-}
+      domains: COMPONENT_DOMAINS_BY_NAME[name] ?? ['*'],
+      bloomLevels: COMPONENT_BLOOM_BY_NAME[name] ?? [],
+      // Un composant sans schéma déclaré n'accepte aucune donnée structurée : `{}`.
+      // Le test exige en outre que `labelKeys` soit non vide pour CHAQUE composant.
+      dataSchema: DATA_SCHEMAS[name] ?? z.object({}),
+      labelKeys: LABEL_KEYS[name] ?? {},
+    }));
+  }
 
 /** Catalogue complet, métadonnées seules. */
 export const COMPONENT_CATALOG: ComponentMeta[] = [
@@ -452,8 +499,8 @@ export function listWithoutBloomLevels(kind?: ComponentKind): ComponentMeta[] {
 /**
  * Retourne les métadonnées attendues, ou lève une erreur explicite.
  *
- * Vérifie l'existence ET la nature : un composant visuel placé dans
- * `interactiveComponentName` (ou l'inverse) est refusé.
+ * Vérifie l'existence ET la nature : un composant visuel proposé comme mise en
+ * pratique (ou l'inverse) est refusé.
  */
 export function assertKnownComponent(name: string, kind: ComponentKind): ComponentMeta {
   const meta = resolveComponentMeta(name);

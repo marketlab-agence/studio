@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, HelpCircle, RotateCcw, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLessonTrace } from '@/hooks/useLessonTrace';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `RecallQuiz` — primitive de **restitution** (niveau Bloom : Connaître).
@@ -52,6 +53,10 @@ export interface RecallQuizProps {
   /** Seuil de réussite en pourcentage. Défaut 80 — valeur REWORK. */
   passingScore?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
+  /** Configuration de l'instance (libellés, données). Facultative. */
+  config?: ComponentConfig;
 }
 
 export function RecallQuiz({
@@ -60,22 +65,34 @@ export function RecallQuiz({
   questions,
   passingScore = 80,
   lessonId,
+  lessonComponentId,
+  config,
 }: RecallQuizProps) {
+  // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
+  const libelles = fusionnerLibelles(
+    { title: title ?? 'Quiz de rappel', description: description ?? '' },
+    config?.labels,
+  );
+
+  // ⚠️ Repli `config?.data ?? props` : une instance sans données rend comme aujourd'hui.
+  const donnees = config?.data as { questions?: RecallQuestion[] } | undefined;
+  const questionsEffectives = donnees?.questions ?? questions;
+
   const [answersByQuestion, setAnswersByQuestion] = useState<Record<string, string[]>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   /** Réponses **figées** au moment de la validation : on ne modifie pas après coup. */
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
 
-  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'RecallQuiz' });
+  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'RecallQuiz', lessonComponentId });
 
-  const question = questions[currentIndex];
+  const question = questionsEffectives[currentIndex];
   const answeredCount = locked.size;
 
   const score = useMemo(() => {
-    if (questions.length === 0) return 0;
+    if (questionsEffectives.length === 0) return 0;
 
-    const correct = questions.filter((candidate) => {
+    const correct = questionsEffectives.filter((candidate) => {
       const given = [...(answersByQuestion[candidate.id] ?? [])].sort();
       const expected = candidate.answers
         .filter((answer) => answer.isCorrect)
@@ -85,8 +102,8 @@ export function RecallQuiz({
       return given.length === expected.length && given.every((value, index) => value === expected[index]);
     }).length;
 
-    return Math.round((correct / questions.length) * 100);
-  }, [questions, answersByQuestion]);
+    return Math.round((correct / questionsEffectives.length) * 100);
+  }, [questionsEffectives, answersByQuestion]);
 
   const passed = score >= passingScore;
 
@@ -128,18 +145,18 @@ export function RecallQuiz({
 
     setLocked((previous) => new Set(previous).add(question.id));
 
-    if (currentIndex + 1 >= questions.length) {
+    if (currentIndex + 1 >= questionsEffectives.length) {
       void recordDuration();
     }
-  }, [question, answersByQuestion, currentIndex, questions.length, recordStep, recordDuration]);
+  }, [question, answersByQuestion, currentIndex, questionsEffectives.length, recordStep, recordDuration]);
 
   const next = useCallback(() => {
-    if (currentIndex + 1 >= questions.length) {
+    if (currentIndex + 1 >= questionsEffectives.length) {
       setFinished(true);
       return;
     }
     setCurrentIndex((index) => index + 1);
-  }, [currentIndex, questions.length]);
+  }, [currentIndex, questionsEffectives.length]);
 
   const restart = useCallback(() => {
     setAnswersByQuestion({});
@@ -148,7 +165,7 @@ export function RecallQuiz({
     setFinished(false);
   }, []);
 
-  if (questions.length === 0) {
+  if (questionsEffectives.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -169,7 +186,7 @@ export function RecallQuiz({
             ) : (
               <XCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
             )}
-            {title}
+            {libelles.title}
           </CardTitle>
           <CardDescription>
             {passed
@@ -188,7 +205,7 @@ export function RecallQuiz({
           </div>
 
           <ul className="space-y-2">
-            {questions.map((candidate) => {
+            {questionsEffectives.map((candidate) => {
               const given = [...(answersByQuestion[candidate.id] ?? [])].sort();
               const expected = candidate.answers
                 .filter((answer) => answer.isCorrect)
@@ -243,19 +260,19 @@ export function RecallQuiz({
         <CardTitle className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-primary" aria-hidden="true" />
-            {title}
+            {libelles.title}
           </span>
           <Badge variant="secondary">
-            {currentIndex + 1}/{questions.length}
+            {currentIndex + 1}/{questionsEffectives.length}
           </Badge>
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {libelles.description && <CardDescription>{libelles.description}</CardDescription>}
       </CardHeader>
 
       <CardContent className="space-y-4">
         <Progress
-          value={(answeredCount / questions.length) * 100}
-          aria-label={`${answeredCount} question(s) sur ${questions.length} répondue(s)`}
+          value={(answeredCount / questionsEffectives.length) * 100}
+          aria-label={`${answeredCount} question(s) sur ${questionsEffectives.length} répondue(s)`}
         />
 
         <p className="text-base font-medium leading-relaxed">{question.text}</p>
@@ -316,7 +333,7 @@ export function RecallQuiz({
             </Button>
           ) : (
             <Button onClick={next}>
-              {currentIndex + 1 >= questions.length ? 'Voir le résultat' : 'Question suivante'}
+              {currentIndex + 1 >= questionsEffectives.length ? 'Voir le résultat' : 'Question suivante'}
             </Button>
           )}
         </div>

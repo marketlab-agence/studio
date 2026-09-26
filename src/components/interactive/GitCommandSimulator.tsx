@@ -1,6 +1,7 @@
 'use client';
 
 import { StepByStepRunner, type ProcedureStep } from './primitives/StepByStepRunner';
+import type { ComponentConfig } from '@/lib/schemas/component-config';
 
 /**
  * `GitCommandSimulator` — **configuration Git de la primitive `StepByStepRunner`**.
@@ -23,6 +24,14 @@ import { StepByStepRunner, type ProcedureStep } from './primitives/StepByStepRun
 interface GitCommandSimulatorProps {
   /** Identifiant de la leçon — nécessaire à la trace d'interaction. */
   lessonId?: string;
+  /** Instance de composant (`lesson_components.id`), transmise à la primitive pour la trace. */
+  lessonComponentId?: string;
+  /**
+   * Configuration de l'instance : libellés (langue du créateur) et données.
+   * ⚠️ Une instance peut fournir sa propre procédure via `config.data.steps` ; sans elle, la
+   * procédure de référence ci-dessous est utilisée.
+   */
+  config?: ComponentConfig;
 }
 
 /**
@@ -75,13 +84,18 @@ const GIT_COMMANDS_PROCEDURE: ProcedureStep[] = [
   },
 ];
 
-export function GitCommandSimulator({ lessonId = 'unknown' }: GitCommandSimulatorProps) {
+export function GitCommandSimulator({ lessonId = 'unknown', lessonComponentId, config }: GitCommandSimulatorProps) {
+  // ⚠️ Repli `config?.data ?? constante` : sans données fournies, la procédure de référence reste.
+  const donnees = config?.data as { steps?: ProcedureStep[] } | undefined;
+
   return (
     <StepByStepRunner
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
+      config={config}
       title="Commandes Git essentielles"
       description="Exécute la procédure dans l’ordre. Chaque étape est validée avant de passer à la suivante : les commandes que tu maîtrises sont ainsi distinguées de celles que tu découvres."
-      steps={GIT_COMMANDS_PROCEDURE}
+      steps={donnees?.steps ?? GIT_COMMANDS_PROCEDURE}
       completionMessage="Les cinq commandes essentielles de Git sont maîtrisées."
     />
   );

@@ -61,10 +61,10 @@ type LessonRow = {
   type: string;
     points: number;
     position: number;
-    bloom_level: string | null;
-    interactive_component_name: string | null;
-    visual_component_name: string | null;
-  }
+      bloom_level: string | null;
+      /** Composants ordonnés, agrégés depuis `lesson_components`. */
+      components: { name: string; position: number; config: unknown }[];
+    }
 
 type QuizRow = {
   id: string;
@@ -87,7 +87,14 @@ async function loadCourses(): Promise<CourseContent[]> {
 
   const { rows: lessons } = await query<LessonRow>(
     `SELECT id, chapter_id, title, objective, content, type, points, position,
-            bloom_level, interactive_component_name, visual_component_name
+            bloom_level,
+            COALESCE(
+              (SELECT json_agg(json_build_object(
+                 'name', lc.component_name, 'position', lc.position, 'config', lc.config
+               ) ORDER BY lc.position)
+               FROM lesson_components lc WHERE lc.lesson_id = lessons.id),
+              '[]'::json
+            ) AS components
      FROM lessons ORDER BY chapter_id, position`,
   );
 
@@ -146,11 +153,14 @@ async function loadCourses(): Promise<CourseContent[]> {
             position: lesson.position,
             // ⚠️ Sans cette propagation, la règle R3 voyait `undefined` partout et signalait
             // à tort des leçons « sans niveau » alors que la colonne était renseignée en base.
-            bloomLevel: (lesson.bloom_level ?? undefined) as
-              | CourseContent['chapters'][number]['lessons'][number]['bloomLevel'],
-            interactiveComponentName: lesson.interactive_component_name ?? undefined,
-            visualComponentName: lesson.visual_component_name ?? undefined,
-          })),
+              bloomLevel: (lesson.bloom_level ?? undefined) as
+                | CourseContent['chapters'][number]['lessons'][number]['bloomLevel'],
+              components: (lesson.components ?? []).map((composant) => ({
+                name: composant.name,
+                position: composant.position,
+                config: (composant.config ?? {}) as CourseContent['chapters'][number]['lessons'][number]['components'][number]['config'],
+              })),
+            })),
           quiz: quiz
             ? {
                 id: quiz.id,
@@ -164,7 +174,7 @@ async function loadCourses(): Promise<CourseContent[]> {
             : undefined,
         };
       }),
-    } as CourseContent;
+    } as unknown as CourseContent;
   });
 }
 
@@ -184,10 +194,13 @@ function report(course: CourseContent, audit: ContentComplianceReport): void {
 
     // ⚠️ Les deux motifs de non-évaluation ne veulent pas dire la même chose :
     // - un arrêté non publié ne dépend pas de nous ;
-    // - des données à compléter sont un **travail à faire**.
+    // - des données à compléter sont un **travail à faire** (R3 et R7 : constats mesurés ;
+    //   R5.2 : contrôle à brancher sur les traces, donc sans constat).
     const suffix = !rule.evaluable
       ? rule.notEvaluableReason === 'donnees-a-completer'
-        ? `  (à compléter : ${count} leçon(s) sans niveau)`
+        ? rule.rule === 'R5.2'
+          ? '  (à compléter — contrôle à brancher)'
+          : `  (à compléter : ${count} constat(s))`
         : '  (non évaluable — seuil en attente d’arrêté)'
       : count === 0
         ? ''

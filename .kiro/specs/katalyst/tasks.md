@@ -293,19 +293,61 @@ Dépend de : 8 · Voir `adr/0013` · Spec : `@docs/superpowers/specs/2026-09-23-
 > Le décret ne mentionne **jamais** les composants visuels — `kind` a donc un sens réglementaire :
 > `interactive` → trace obligatoire ; `visual` → illustration, aucune trace exigée.
 
-- [ ] T8bis.1 — **Table `lesson_components`** (migration 014) : `id UUID` (clé de substitution), `lesson_id`, `component_name`, `position`, `config JSONB` · REQ-CNT-09 · vérif: 121 références → 121 lignes, **0 perte**
+- [x] T8bis.1 — **Table `lesson_components`** (migration 014) : `id UUID` (clé de substitution), `lesson_id`, `component_name`, `position`, `config JSONB` · REQ-CNT-09 · vérif: 121 références → 121 lignes, **0 perte** · ✅ `e1fdaa7` — **124 lignes pour 80 leçons** (≥ 121 ; l'écart de +3 vient de **3 leçons à 3 composants** : le plafond structurel est bien levé). Reprise `interactive` (position 0) puis `visual` (position 1) ; **round-trip export/seed vérifié, 0 écart**.
   > La clé de substitution autorise **deux instances du même composant** dans une leçon (décision utilisateur). `UNIQUE (lesson_id, position)` garantit l'ordre d'affichage.
-- [ ] T8bis.2 — **`lesson_interactions.lesson_component_id`** (`NULL` + `ON DELETE SET NULL`) · REQ-CNT-10 · vérif: 2 instances → 2 traces distinctes ; supprimer un composant **préserve** l'historique
-- [ ] T8bis.3 — **Contrat de configuration uniforme** (`labels` + `data`) · REQ-CNT-09 · vérif: un composant sans config rend **comme aujourd'hui**
-- [ ] T8bis.4 — **Schéma strict pour les 58 composants** (`labelKeys` + `dataSchema` Zod dans le catalogue) · REQ-CNT-12 · vérif: `CATALOG_SIZE` composants couverts, aucun sans schéma
+- [x] T8bis.2 — **`lesson_interactions.lesson_component_id`** (`NULL` + `ON DELETE SET NULL`) · REQ-CNT-10 · vérif: 2 instances → 2 traces distinctes ; supprimer un composant **préserve** l'historique · ✅ `e1fdaa7` — `ON DELETE SET NULL` et non `CASCADE` : couvert par `src/tests/db/lesson-components.db.test.ts`.
+- [x] T8bis.3 — **Contrat de configuration uniforme** (`labels` + `data`) · REQ-CNT-09 · vérif: un composant sans config rend **comme aujourd'hui** · ✅ `4bb0ddb` — `config:{}` → rendu par défaut ; `fusionnerLibelles` fusionne mot à mot, `config.data ?? props` ; test de rendu réel (`primitives-config.test.tsx`).
+- [x] T8bis.4 — **Schéma strict pour les 58 composants** (`labelKeys` + `dataSchema` Zod dans le catalogue) · REQ-CNT-12 · vérif: `CATALOG_SIZE` composants couverts, aucun sans schéma · ✅ `4bb0ddb` — **58 `dataSchema` + 58 `labelKeys` explicites** (45 interactifs + 13 visuels) ; `component-config.test.ts` verrouille l'exhaustivité (aucun sans libellé, aucun sans schéma).
   > Décision utilisateur : *« un schéma strict pour tous les 34 composants comme les 12 »*. Le catalogue ne contient **aucun import React** : les schémas sont donc utilisables par les schémas, actions serveur, tests et prompts. La documentation parle de « 46 composants » — le compte réel est **58** (45 interactifs + 13 visuels).
-- [ ] T8bis.5 — **Sélection IA pilotée par Bloom** · REQ-CNT-11 · vérif: candidats filtrés par `listByBloomLevel`, sortie en tableau
-- [ ] T8bis.6 — **Rendu de N composants ordonnés** (`LessonView`) · REQ-CNT-09 · vérif: une leçon à 1 composant rend **à l'identique**
-- [ ] T8bis.7 — **Édition créateur** (ajout/retrait/réordonnancement + `config`) · REQ-CNT-09 · vérif: toute formation reste modifiable
-- [ ] T8bis.8 — **Règles de conformité** : `R5.2` renforcée (par composant), `R7` (couverture Bloom), `R8` (Bloom déclaré), `R9` (config valide) · REQ-CNT-10/11 · vérif: `audit:content` reflète les nouvelles règles
+- [x] T8bis.5 — **Sélection IA pilotée par Bloom** · REQ-CNT-11 · vérif: candidats filtrés par `listByBloomLevel`, sortie en tableau · ✅ `ddcb2e2` + `f53ce83` — le flux reçoit `bloomLevel` et rend un **tableau** `components[]` (chacun avec `config` et justification) ; **trou corrigé** : le provider ne sélectionnait pas `bloom_level`, la sélection Bloom était inopérante.
+- [x] T8bis.6 — **Rendu de N composants ordonnés** (`LessonView`) · REQ-CNT-09 · vérif: une leçon à 1 composant rend **à l'identique** · ✅ `52e69d8` — l'ordre vient de `position` (pas de la nature du composant), clé `name-position`.
+- [x] T8bis.7 — **Édition créateur** (ajout/retrait/réordonnancement + `config`) · REQ-CNT-09 · vérif: toute formation reste modifiable · ✅ `a6dfe5a` — éditeur **N composants** (doublon du même composant autorisé) + éditeur de `config` (un champ par `labelKeys`, JSON pour `data`) ; validation **serveur** (absent = défauts = valide ; présent invalide = rejet ; nom inconnu = rejet).
+- [x] T8bis.8 — **Règles de conformité** : `R5.2` renforcée (par composant), `R7` (couverture Bloom), `R8` (Bloom déclaré), `R9` (config valide) · REQ-CNT-10/11 · vérif: `audit:content` reflète les nouvelles règles · ✅ `b6d66c0` (R5.2 + R9) + `95d1b32` (R7 + R8) — **`R5.2` reformulée** « une trace par **composant** interactif » (indicateur 19, littéralement comme le décret) ; **`R8` satisfait** (invariant catalogue : les 15 interactifs sans niveau l'ont reçu, `AiHelper` = 6 niveaux) ; **`R9`** valide `config.data` contre `dataSchema`. ⚠️ **`R7` est active mais `evaluable:false` (`donnees-a-completer`)** : elle **rapporte 28 écarts réels** composant ↔ niveau (**Jira 10, Git 18**) sans bloquer. Les corriger est un **travail de contenu pédagogique** distinct (alignement composant/niveau), **hors phase** — pas un défaut de code.
   > ⚠️ `R7` et `R8` ne s'appliquent **qu'aux composants interactifs** : les visuels sont illustratifs et n'ont **aucune obligation de niveau Bloom** (décision utilisateur).
-- [ ] T8bis.9 — **Plancher non bloquant** : cible IA ≥ 2, rapport en audit · REQ-CNT-13 · vérif: jamais un rouge, 0 composant autorisé
-- [ ] **Sortie** : une leçon porte **N composants** ; chaque composant interactif produit **sa** trace ; le créateur peut en ajouter autant que son cahier des charges l'exige
+- [x] T8bis.9 — **Plancher non bloquant** : cible IA ≥ 2, rapport en audit · REQ-CNT-13 · vérif: jamais un rouge, 0 composant autorisé · ✅ `3a9262d`/`a6dfe5a` — la cible ≥ 2 reste **incitative** : le flux peut rendre une liste **vide** (une leçon notionnelle n'a pas d'exercice, cf. `courseActions.ts:360`) ; **0 composant autorisé** ; l'audit ne produit **aucun rouge** (`R7` en rapport).
+- [x] **Sortie** : une leçon porte **N composants** ; chaque composant interactif produit **sa** trace ; le créateur peut en ajouter autant que son cahier des charges l'exige · ✅ vérifié en base : **124 composants**, dont **3 leçons à 3 composants**.
+
+> **Note de fin de phase 8bis (2026-09-26)**
+>
+> **Ce qui est fait, et mesuré.** Le plafond de 2 composants par leçon — qui n'était pas
+> une règle métier mais une **conséquence du schéma** (`interactive_component_name` +
+> `visual_component_name`, chacune `text`) — est **levé**. Une leçon porte désormais
+> **N composants ordonnés** (`lesson_components`, **clé de substitution `UUID`**), chacun
+> avec sa `config` `{labels, data}` ; la trace d'interaction est attribuée à **l'instance**
+> qui l'a produite (`lesson_interactions.lesson_component_id`, `ON DELETE SET NULL` —
+> retirer un composant **ne détruit jamais** l'historique d'apprentissage).
+>
+> **Preuves en base** : `lesson_components` = **124 lignes** (≥ 121), dont **3 leçons à
+> 3 composants** ; les colonnes `lessons.%component%` ont **disparu** (0 ligne dans
+> `information_schema.columns`). Round-trip export/seed : **0 écart**.
+>
+> **Décisions structurantes.**
+> 1. **Clé de substitution** : le même composant peut apparaître **plusieurs fois** dans
+>    une leçon (deux procédures, deux quiz) — une clé `(lesson_id, component_name)`
+>    l'interdirait.
+> 2. **Config `{labels, data}`** avec **schéma strict par composant** (**58/58**) : les
+>    **libellés sont des données**, jamais traduits — le créateur écrit dans **sa** langue
+>    (même principe que la phase 8). `kind` vient du **catalogue**, plus des colonnes.
+> 3. **Sélection pilotée par Bloom** : `listByBloomLevel` filtre les candidats et l'IA
+>    rend un **tableau** de composants, pas « le seul plus pertinent ».
+> 4. **Plancher non bloquant** : ≥ 2 est une **cible**, **0 est autorisé** ; l'audit
+>    **rapporte**, il ne bloque jamais.
+>
+> **Conformité — `R7` en rapport, 28 écarts de contenu à aligner.** `R5.2` est **reformulée**
+> (« une trace par **composant** », indicateur 19) : avec N composants, « par composant »
+> et « par leçon » ne se confondent plus et la règle rejoint **littéralement** le décret.
+> `R8` (invariant catalogue) est **satisfait** ; `R9` (validation de `config`) est active.
+> **`R7` est active mais `evaluable:false` (`donnees-a-completer`)** : elle mesure **28
+> incohérences réelles** entre le niveau déclaré de la leçon et celui du composant choisi
+> (**Jira 10, Git 18**) sans faire échouer les 6 formations — les corriger relève d'un
+> **alignement de contenu** (choisir le bon composant ou réviser l'objectif), **suivi
+> distinct**, et non d'une migration.
+>
+> **Vérifié** : typecheck **0** · lint **0** · **lint:i18n 576 clés** · **340** tests
+> unitaires (33 suites) · **199** tests DB (18 suites) · audit contenu **6/6**. *(E2E non
+> exécutés lors de la consignation : environnement à court de mémoire — le serveur
+> Turbopack échoue en `Fatal process out of memory` ; à relancer sur une machine disposant
+> de ≥ 2 Go libres.)*
 
 > **Prérequis** : la Phase 8 doit être terminée et fusionnée. Les deux touchent `content.ts`, les providers,
 > le seed et `LessonView` — les mener ensemble créerait des conflits sur une même branche.

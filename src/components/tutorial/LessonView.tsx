@@ -9,8 +9,11 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { resolveComponent } from '@/components/registry';
 
 /**
- * Rend une leçon : contenu markdown, mise en pratique (composant interactif)
- * et visualisation (composant visuel).
+ * Rend une leçon : contenu markdown, puis ses composants pédagogiques **ordonnés**.
+ *
+ * ⚠️ **Autant de composants que la leçon en porte**, et le **même composant peut
+ * apparaître plusieurs fois** (deux procédures, deux quiz) — c'est la `position`
+ * qui définit l'enchaînement, pas la nature du composant.
  *
  * Les composants sont résolus via le registre unique (`src/components/registry.ts`).
  * La résolution est volontairement **tolérante** ici : un nom inconnu n'empêche
@@ -25,32 +28,19 @@ type LessonViewProps = {
 export function LessonView({ lesson }: LessonViewProps) {
     const { course } = useTutorial();
 
-    const interactiveEntry = lesson.interactiveComponentName
-        ? resolveComponent(lesson.interactiveComponentName)
-        : undefined;
-    const visualEntry = lesson.visualComponentName
-        ? resolveComponent(lesson.visualComponentName)
-        : undefined;
-
-    if (process.env.NODE_ENV !== 'production') {
-        if (lesson.interactiveComponentName && !interactiveEntry) {
-            console.warn(
-                `[LessonView] interactiveComponentName inconnu : "${lesson.interactiveComponentName}" (leçon ${lesson.id}).`,
-            );
-        }
-        if (lesson.visualComponentName && !visualEntry) {
-            console.warn(
-                `[LessonView] visualComponentName inconnu : "${lesson.visualComponentName}" (leçon ${lesson.id}).`,
-            );
-        }
-    }
-
-    const InteractiveComponent = interactiveEntry?.component ?? null;
-    const VisualComponent = visualEntry?.component ?? null;
+    /**
+     * ⚠️ **Ordre par `position`, pas par nature.** Une leçon peut enchaîner
+     * plusieurs composants du même type : c'est la position qui porte la
+     * progression pédagogique décidée par le créateur.
+     */
+    const composants = [...(lesson.components ?? [])].sort((a, b) => a.position - b.position);
 
     const componentProps = {
         lessonContext: lesson.title,
         courseTopic: course?.title || 'le sujet actuel',
+        // ⚠️ **Sans `lessonId`, aucune trace n'aboutit** : le serveur refuse une leçon
+        // inconnue. La valeur vient de la leçon rendue, pas du composant.
+        lessonId: lesson.id,
     };
 
     return (
@@ -89,19 +79,34 @@ export function LessonView({ lesson }: LessonViewProps) {
                 }}>{lesson.content}</ReactMarkdown>
             </article>
 
-            {InteractiveComponent && (
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Mise en Pratique</h2>
-                    <InteractiveComponent {...componentProps} />
-                </div>
-            )}
+            {composants.map((entree) => {
+                const resolved = resolveComponent(entree.name);
 
-            {VisualComponent && (
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold tracking-tight mb-4 border-b pb-2">Visualisation</h2>
-                    <VisualComponent {...componentProps} />
-                </div>
-            )}
+                // ⚠️ Un composant inconnu est **signalé**, jamais ignoré en silence :
+                // il disparaîtrait de la leçon sans que personne ne le sache.
+                if (!resolved) {
+                    console.error(
+                        `[LessonView] composant inconnu : « ${entree.name} » (leçon ${lesson.id}).`,
+                    );
+                    return null;
+                }
+
+                const Composant = resolved.component;
+                // ⚠️ La clé combine le nom ET la position : le même composant peut
+                // apparaître deux fois, une clé fondée sur le seul nom serait dupliquée.
+                return (
+                    <div key={`${entree.name}-${entree.position}`} className="mt-12">
+                        {/* ⚠️ `lessonComponentId` = l'**instance** en base : c'est lui qui
+                            permet d'attribuer la trace à la bonne occurrence quand le même
+                            composant apparaît plusieurs fois dans la leçon. */}
+                        <Composant
+                            {...componentProps}
+                            lessonComponentId={entree.id}
+                            config={entree.config ?? {}}
+                        />
+                    </div>
+                );
+            })}
         </div>
     );
 }

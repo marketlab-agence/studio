@@ -12,11 +12,11 @@
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
 | Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** (code complet : T4.1-T4.14, SAML inclus) |
-| Phase en cours | ✅ **Phase 8 — Internationalisation terminée** : interface **bilingue FR/EN** (`next-intl`, routage `/fr` `/en`, **561 clés** par langue, `lint:i18n` bloquant en CI) · ~250 chaînes extraites en 4 vagues · `courses.language` déclarée par le créateur |
+| Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** · ✅ **Phase 8bis — Composants multiples** (T8bis.1-T8bis.9) |
+| Phase en cours | ✅ **Phase 8bis — Composants pédagogiques multiples par leçon terminée** : une leçon porte **N composants ordonnés** (`lesson_components`, clé de substitution `UUID`) · `config {labels,data}` avec **schéma strict 58/58** · sélection IA **pilotée par Bloom** · trace attribuée à **l'instance** (`lesson_component_id`, `ON DELETE SET NULL`) |
 | 🔴 **DÉCISION ATTENDUE** | **Révoquer la clé de service account Firebase** dans la console (retirer la variable d'environnement **ne l'invalide pas**). Tant que ce n'est pas fait, la clé reste valide pour qui la détiendrait. **Action manuelle, hors dépôt.** |
-| Prochaine phase | **Phase 8bis — Composants pédagogiques multiples par leçon** (voir `adr/0013`) puis **Phase 9 — API centrale v1** |
-| Qualité | `typecheck` 0 · `lint` 0 · **`lint:i18n`** 561 clés · tests **28 suites / 280** · tests DB **17 suites / 191** · **E2E 84** (76 + 8 i18n) |
+| Prochaine phase | **Phase 9 — API centrale v1** (`/api/v1/*`, chaîne auth → scope → autorisation → Zod → handler) |
+| Qualité | `typecheck` 0 · `lint` 0 · **`lint:i18n`** 576 clés · tests **33 suites / 340** · tests DB **18 suites / 199** · **E2E 84** *(non re-exécutés à la consignation : mémoire insuffisante, cf. décision 51)* |
 | **Conformité — progrès mesuré** | **6/6 formations conformes** · `R2` : 142 → **0** · `R3` : 80 niveaux · `R6` conforme · `R5.1` : 6/6 · `PLACEHOLDER_COMPONENTS` vide |
 | **Documentation** | `@docs/rework/` (3 f.) et `@docs/katalyst/` (4 f. dont `conformite-rnq-v10.md`, `regles-conformite.md`, `primitives-pedagogiques.md`) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |
@@ -85,6 +85,12 @@ npm run db:seed:test        # seed sur la base de test
     - **Une erreur affichée vaut mieux qu'une erreur effacée.** Toutes les primitives conservent les erreurs de l'apprenant : elles montrent *où* il bloque, information la plus utile à l'encadrant.
     - **Déclarer une primitive sans l'ajouter aux tables domaines/Bloom la rend invisible.** `StepByStepRunner` a échoué **deux fois** ainsi ; seule la vérification automatisée de couverture l'a détecté. **Un test par exigence, pas par composant.**
     - **Progrès mesuré** : `R5.1` (appropriation) **0/6 → 6/6**. Bilan global **0/6** à cause de `R2` (142 constats d'objectifs) — du **contenu**, pas du code.
+
+51. 🟢 **Phase 8bis — composants multiples par leçon** (détail : `@memory/decisions-architecturales.md`). Le plafond de 2 composants n'était **pas une règle métier** mais une **conséquence du schéma** (`interactive_component_name` + `visual_component_name`) ; il est **levé**.
+    - **Table de jointure `lesson_components` avec clé de substitution `UUID`** : permet **deux instances du même composant** dans une leçon. `UNIQUE (lesson_id, position)` porte l'ordre ; `kind` vient du **catalogue**, plus des colonnes.
+    - **Config `{labels, data}`** avec **schéma strict par composant (58/58)**. Les **libellés sont des données** — **aucune traduction** : le créateur écrit dans **sa** langue (même principe que la phase 8).
+    - **Sélection IA pilotée par Bloom** : `listByBloomLevel` filtre, le flux rend un **tableau**. **Plancher non bloquant** : ≥ 2 est une cible, **0 est autorisé**.
+    - **Conformité** : `R5.2` **reformulée** (« une trace par **composant** », indicateur 19) ; `R8` **satisfait** (catalogue ; `AiHelper` = 6 niveaux) ; `R9` valide la `config`. **`R7` active mais `evaluable:false` (`donnees-a-completer`)** : **28 écarts réels** composant ↔ niveau (**Jira 10, Git 18**) restent à aligner — **travail de contenu**, hors phase.
 
 ---
 
