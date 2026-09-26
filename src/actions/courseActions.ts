@@ -13,6 +13,7 @@ import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flo
 import type { ComponentDomain } from '@/components/registry/catalog';
 import { getRelevantComponents } from '@/lib/content/component-selection';
 import { BLOOM_LEVELS, type BloomLevel } from '@/lib/content/bloom';
+import { renumeroter, validerConfigurationComposant } from '@/lib/content/lesson-components';
 
 const slugify = (text: string) =>
   text
@@ -170,6 +171,29 @@ export async function getCourseAndChaptersAction(courseId: string): Promise<{ co
 }
 
 export async function updateLessonContentAction(courseId: string, chapterId: string, updatedLesson: Lesson) {
+    /**
+     * ⚠️ **Validation au serveur, pas seulement dans le formulaire.** Un `config` invalide
+     * stocké en base ferait échouer le rendu de la leçon pour l'apprenant — un défaut qui ne
+     * se verrait qu'en production. Le formulaire peut être contourné (appel direct de
+     * l'action) ; le serveur est la seule garantie.
+     *
+     * ⚠️ **La donnée absente est valide** (« appliquer les défauts du composant ») : on ne
+     * valide que les `config.data` réellement fournies. Voir `validerConfigurationComposant`.
+     */
+    for (const composant of updatedLesson.components ?? []) {
+        const resultat = validerConfigurationComposant(composant.name, composant.config);
+        if (!resultat.valide) {
+            throw new Error(resultat.message);
+        }
+    }
+
+    // ⚠️ **L'ordre du tableau fait foi**, pas la `position` reçue : on renumérote pour
+    // garantir l'invariant `0..N-1` même si le client l'a mal calculé.
+    const leconNormalisee: Lesson = {
+        ...updatedLesson,
+        components: renumeroter(updatedLesson.components ?? []),
+    };
+
     const tutorials = await getTutorials();
     const chapterIndex = tutorials.findIndex(t => t.id === chapterId);
     if (chapterIndex === -1) {
@@ -179,7 +203,7 @@ export async function updateLessonContentAction(courseId: string, chapterId: str
     if (lessonIndex === -1) {
         throw new Error('Lesson not found');
     }
-    tutorials[chapterIndex].lessons[lessonIndex] = updatedLesson;
+    tutorials[chapterIndex].lessons[lessonIndex] = leconNormalisee;
     await saveTutorials(tutorials);
 
     revalidatePath(`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${updatedLesson.id}`);

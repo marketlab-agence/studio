@@ -371,7 +371,22 @@
       "generatedTitle": "Contenu généré !",
       "generatedDescription": "Le contenu et les composants ont été mis à jour par lIA.",
       "generateErrorTitle": "Erreur de Génération",
-      "generateErrorDescription": "Impossible de générer le contenu."
+      "generateErrorDescription": "Impossible de générer le contenu.",
+      "addComponent": "Ajouter un composant",
+      "add": "Ajouter",
+      "interactiveGroup": "Interactifs",
+      "visualGroup": "Visuels",
+      "componentName": "Composant",
+      "positionLabel": "Composant {position}",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "remove": "Retirer",
+      "labelsTitle": "Libellés",
+      "dataTitle": "Données (JSON)",
+      "dataHint": "Données validées par le schéma du composant. Vide = valeurs par défaut.",
+      "invalidJson": "JSON invalide : {message}",
+      "emptyComponents": "Aucun composant. Choisissez-en un ci-dessus pour l'ajouter.",
+      "unknownComponent": "Composant inconnu du catalogue : {name}"
     },
     "users": {
       "breadcrumb": "Utilisateurs",

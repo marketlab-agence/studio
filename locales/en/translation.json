@@ -371,7 +371,22 @@
       "generatedTitle": "Content generated!",
       "generatedDescription": "The content and the components were updated by the AI.",
       "generateErrorTitle": "Generation Error",
-      "generateErrorDescription": "Unable to generate the content."
+      "generateErrorDescription": "Unable to generate the content.",
+      "addComponent": "Add a component",
+      "add": "Add",
+      "interactiveGroup": "Interactive",
+      "visualGroup": "Visual",
+      "componentName": "Component",
+      "positionLabel": "Component {position}",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove",
+      "labelsTitle": "Labels",
+      "dataTitle": "Data (JSON)",
+      "dataHint": "Data validated by the component schema. Empty = default values.",
+      "invalidJson": "Invalid JSON: {message}",
+      "emptyComponents": "No component yet. Pick one above to add it.",
+      "unknownComponent": "Unknown catalog component: {name}"
     },
     "users": {
       "breadcrumb": "Users",
