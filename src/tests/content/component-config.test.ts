@@ -1,5 +1,6 @@
 import { ComponentConfigSchema, fusionnerLibelles } from '@/lib/schemas/component-config';
 import { COMPONENT_CATALOG, COMPONENT_CATALOG_BY_NAME } from '@/components/registry/catalog';
+import { DATA_SCHEMAS, LABEL_KEYS } from '@/components/registry/component-schemas';
 
 /**
  * Vérifie le contrat de configuration et l'exhaustivité des schémas.
@@ -28,15 +29,28 @@ describe('contrat de configuration', () => {
   });
 
   it('déclare des libellés personnalisables pour CHAQUE composant', () => {
-    const sansLibelles = COMPONENT_CATALOG.filter(
-      (meta) => Object.keys(meta.labelKeys).length === 0,
-    ).map((meta) => meta.name);
-    expect(sansLibelles).toEqual([]);
+    // ⚠️ On lit la carte EXPORTÉE `LABEL_KEYS`, pas `meta.labelKeys` : `toMeta` retombe sur
+    // `{}` quand l'entrée manque, si bien que filtrer sur `meta.labelKeys` ne pouvait
+    // jamais échouer. Comparer les CLÉS des deux côtés est la seule vérification à dents.
+    const noms = new Set(COMPONENT_CATALOG.map((meta) => meta.name));
+    const orphelins = Object.keys(LABEL_KEYS).filter((nom) => !noms.has(nom));
+    const manquants = COMPONENT_CATALOG
+      .filter((meta) => !(meta.name in LABEL_KEYS))
+      .map((meta) => meta.name);
+    expect(orphelins).toEqual([]);
+    expect(manquants).toEqual([]);
   });
 
   it('déclare un schéma de données pour CHAQUE composant', () => {
-    const sansSchema = COMPONENT_CATALOG.filter((meta) => !meta.dataSchema).map((m) => m.name);
-    expect(sansSchema).toEqual([]);
+    // ⚠️ Même raisonnement : `toMeta` garantit `dataSchema` non nul, donc `!meta.dataSchema`
+    // était tautologique. On exige que la carte `DATA_SCHEMAS` couvre exactement le catalogue.
+    const noms = new Set(COMPONENT_CATALOG.map((meta) => meta.name));
+    const orphelins = Object.keys(DATA_SCHEMAS).filter((nom) => !noms.has(nom));
+    const manquants = COMPONENT_CATALOG
+      .filter((meta) => !(meta.name in DATA_SCHEMAS))
+      .map((meta) => meta.name);
+    expect(orphelins).toEqual([]);
+    expect(manquants).toEqual([]);
   });
 
   it('expose des libellés par défaut en français, non vides', () => {

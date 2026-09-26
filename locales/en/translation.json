@@ -385,6 +385,8 @@
       "dataTitle": "Data (JSON)",
       "dataHint": "Data validated by the component schema. Empty = default values.",
       "invalidJson": "Invalid JSON: {message}",
+      "invalidJsonTitle": "Invalid JSON",
+      "invalidJsonBlocking": "Fix the data JSON before saving: the invalid input is not taken into account.",
       "emptyComponents": "No component yet. Pick one above to add it.",
       "unknownComponent": "Unknown catalog component: {name}"
     },

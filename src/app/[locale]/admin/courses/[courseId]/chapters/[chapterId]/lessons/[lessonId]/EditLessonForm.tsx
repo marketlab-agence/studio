@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -86,6 +86,13 @@ interface LigneComposantProps {
   onChangerDonnees: (data: unknown) => void;
   onDeplacer: (direction: 'haut' | 'bas') => void;
   onRetirer: () => void;
+  /**
+   * ⚠️ **Remonte la validité du JSON au parent.** Sans cela, un `config.data` invalide
+   * resterait local : le formulaire enregistrerait l'ANCIENNE donnée en affichant un
+   * succès, et le créateur croirait sa saisie appliquée. Le parent bloque donc
+   * l'enregistrement tant qu'une ligne signale une erreur.
+   */
+  onInvalidite: (index: number, message: string | null) => void;
 }
 
 /**
@@ -105,6 +112,7 @@ function LigneComposant({
   onChangerDonnees,
   onDeplacer,
   onRetirer,
+  onInvalidite,
 }: LigneComposantProps) {
   const t = useTranslations('admin');
   const meta = resolveComponentMeta(composant.name);
@@ -139,6 +147,14 @@ function LigneComposant({
     dernierEnvoye.current = serialiserDonnees(resultat.data);
     onChangerDonnees(resultat.data);
   };
+
+  // ⚠️ Signale l'état courant au parent, et le nettoie au démontage : après un
+  // réordonnancement, chaque ligne rejoue cet effet avec son NOUVEL index, si bien qu'un
+  // index périmé ne peut pas faire croire à une erreur fantôme.
+  useEffect(() => {
+    onInvalidite(index, erreurJson);
+    return () => onInvalidite(index, null);
+  }, [index, erreurJson, onInvalidite]);
 
   return (
     <div className="rounded-lg border p-4 space-y-4">
@@ -273,6 +289,28 @@ export function EditLessonForm({
   const [nomAAjouter, setNomAAjouter] = useState('');
 
   /**
+   * ⚠️ **Index des lignes dont le JSON est invalide → message d'erreur.** Tant qu'il n'est
+   * pas vide, l'enregistrement est bloqué : sans cela, on persisterait l'ancienne donnée en
+   * annonçant un succès (perte silencieuse de la saisie du créateur).
+   */
+  const [invaliditesData, setInvaliditesData] = useState<Record<number, string>>({});
+
+  const signalerInvalidite = useCallback((index: number, message: string | null) => {
+    setInvaliditesData((precedent) => {
+      if (message === null) {
+        if (!(index in precedent)) return precedent;
+        const copie = { ...precedent };
+        delete copie[index];
+        return copie;
+      }
+      if (precedent[index] === message) return precedent;
+      return { ...precedent, [index]: message };
+    });
+  }, []);
+
+  const aUneDonneeInvalide = Object.keys(invaliditesData).length > 0;
+
+  /**
    * Applique une transformation **pure** à la liste des composants.
    *
    * ⚠️ Toute la logique (renumérotation, réordonnancement…) vit dans
@@ -303,6 +341,18 @@ export function EditLessonForm({
   }
 
   const handleSave = async () => {
+    // ⚠️ **Une donnée invalide bloque l'enregistrement.** Continuer persisterait
+    // l'ancienne valeur tout en affichant un succès : le créateur perdrait sa saisie
+    // sans le savoir.
+    if (aUneDonneeInvalide) {
+        toast({
+            title: t('editLesson.invalidJsonTitle'),
+            description: t('editLesson.invalidJsonBlocking'),
+            variant: 'destructive',
+        });
+        return;
+    }
+
     setIsSaving(true);
     try {
         // ⚠️ La position n'est pas une donnée de confiance : on l'aligne sur l'ordre avant
@@ -315,9 +365,11 @@ export function EditLessonForm({
         });
     } catch (error) {
         console.error(error);
+        // ⚠️ On affiche le motif RENVOYÉ par le serveur (composant inconnu, config hors
+        // schéma) : un message générique priverait le créateur de l'information utile.
         toast({
             title: tc('errorTitle'),
-            description: t('editLesson.saveErrorDescription'),
+            description: error instanceof Error ? error.message : t('editLesson.saveErrorDescription'),
             variant: "destructive",
         });
     } finally {
@@ -381,7 +433,7 @@ export function EditLessonForm({
             <p className="text-muted-foreground">{t('editLesson.chapterLabel', { title: initialChapterTitle })}</p>
             </div>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={isSaving || aUneDonneeInvalide}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           {t('editLesson.save')}
         </Button>
@@ -499,6 +551,7 @@ export function EditLessonForm({
                             onRetirer={() =>
                                 transformerComposants((liste) => retirerComposant(liste, index))
                             }
+                            onInvalidite={signalerInvalidite}
                         />
                     ))}
                 </div>
