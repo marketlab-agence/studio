@@ -128,10 +128,17 @@ C'est **l'indicateur structurant** : Katalyst **est** un LMS distanciel.
 composant `status: 'functional'`. **Un placeholder rend l'organisme non conforme**, pas
 seulement la formation incomplète.
 
-**Vérification R5.2 — effectivité du suivi** : chaque formation produit, par apprenant, **au
-moins une trace non triviale** par leçon : réponse, tentative, correction commentée, ou temps
-d'interaction. *(Une simple ouverture ne compte pas — le décret dit « les relevés de connexion
-seuls ne suffisent plus », source secondaire digi-certif.)*
+**Vérification R5.2 — effectivité du suivi** : le décret exige une **trace d'interaction par
+composant** — et non une trace par leçon. Une leçon peut désormais porter **N** composants
+(phase 8bis) : exiger une trace au seul niveau de la leçon laisserait un composant sans
+interaction enregistrée. Chaque composant `interactive` de la leçon doit donc produire, **pour
+chaque apprenant**, une trace non triviale (réponse, tentative, correction commentée, temps
+d'interaction). *(Une simple ouverture ne compte pas — le décret dit « les relevés de connexion
+seuls ne suffisent plus ».)*
+
+⚠️ **Statut : `evaluable: false` (`donnees-a-completer`).** La règle est **mesurable**, mais le
+contrôle n'est pas encore branché sur `lesson_interactions` : le constat est **un travail à
+faire**, pas un seuil réglementaire en attente (à la différence de R5.3).
 
 **Vérification R5.3 — référent pédagogique** : `[SEUIL PARAMÉTRABLE]`. Le seuil (nombre
 d'intervenants par formation) est **fixé par un arrêté non publié**. La fonctionnalité est
@@ -160,6 +167,87 @@ mémorisation). **Toute incohérence est signalée par l'audit.**
 
 ---
 
+## R7 — Couverture du niveau de Bloom par composant interactif (indicateur 19)
+
+> **Texte du décret** : *« Le prestataire met à disposition du bénéficiaire des ressources
+> pédagogiques et permet à celui-ci de se les approprier. »*
+
+Avec **N** composants par leçon (phase 8bis), une mise en pratique n'est réellement appropriable
+que si **chaque composant interactif** travaille le niveau de Bloom que la leçon déclare. Un
+composant qui ne couvre pas ce niveau ne peut pas atteindre l'objectif qu'il est censé servir.
+
+| Dimension | Valeur |
+|---|---|
+| **Exigence Katalyst** | Pour chaque composant `interactive` d'une leçon, `meta.bloomLevels` contient le `bloomLevel` déclaré de la leçon. |
+| **Champs concernés** | `lesson_components.component_name` · `lessons.bloom_level` · `catalog.bloomLevels` |
+| **Preuve produite** | Adéquation composant ↔ objectif |
+| **Testable** | ⏳ Spécifiée — **non activée** (BLOCKED, voir « Constat du 2026-09-26 ») |
+
+⚠️ **Composants `interactive` uniquement.** Les composants `visual` sont **illustratifs**
+(décision utilisateur) : aucune obligation de niveau ne leur est opposable.
+
+⚠️ **Sans `bloomLevel` déclaré**, la couverture est indécidable : la leçon est ignorée par R7,
+R3 portant déjà le constat.
+
+---
+
+## R8 — Invariant du catalogue : niveaux de Bloom déclarés (hors formation)
+
+> **Invariant** : tout composant `interactive` du catalogue déclare **au moins un** niveau de
+> Bloom.
+
+R8 n'est **pas** une règle par formation : c'est une propriété du **catalogue**. Un composant
+interactif sans niveau ne peut être mis en correspondance avec aucun objectif (R7 ne peut donc
+pas le valider). R8 est **destiné à être vérifié par un test** (et non par `auditCourseContent`,
+qui n'a pas de constat par formation) : le test est **en attente** — le catalogue ne satisfait
+pas encore l'invariant (voir « Constat du 2026-09-26 »).
+
+---
+
+## R9 — Configuration conforme au schéma de données du composant (indicateur 19)
+
+> **Invariant** : `config.data`, **quand il est présent**, valide le `dataSchema` du composant.
+
+| Dimension | Valeur |
+|---|---|
+| **Exigence Katalyst** | Une donnée structurée fournie à un composant (étapes, paires, cartes…) respecte le schéma publié par le catalogue. |
+| **Champs concernés** | `lesson_components.config` · `catalog.dataSchema` |
+| **Testable** | ✅ Oui (évaluable) |
+
+⚠️ **`config.data === undefined` = valeurs par défaut : toujours valide, aucun constat.** Seule
+une donnée **réellement fournie** et invalide est signalée. Sans cette règle, tout composant non
+configuré (ex. `AiHelper`) serait déclaré non conforme à tort.
+
+---
+
+## Constat du 2026-09-26 (Task 8) — R7/R8 en attente de décision
+
+L'activation de R7 sur les 6 formations existantes a produit **60 constats**, dont :
+
+- **50** proviennent de **15 composants interactifs du catalogue sans niveau de Bloom** (R8
+  échoue) : `ConflictResolver`, `PushPullAnimator`, `PRWorkflowSimulator`,
+  `GitHubInterfaceSimulator`, `IssueTracker`, `ActionsWorkflowBuilder`, `WorkflowSimulator`,
+  `FlowDiagramBuilder`, `TimelineNavigator`, `CommitMessageLinter`, `GitignoreTester`,
+  `AliasCreator`, `SecurityScanner`, `OpenSourceSimulator`, `AiHelper` ;
+- **10** sont de **vraies inadéquations** composant ↔ niveau (formulairement : `GitCommandSimulator`
+  admis `Appliquer` pour des leçons `Comprendre`/`Créer`, `WorkflowDesigner` admis `Créer` pour
+  des leçons `Appliquer`, `BranchCreator`, `CollaborationSimulator`, `UndoCommandComparison`,
+  `GitDoctorTool`, `ReflogExplorer`).
+
+⚠️ **Rien n'a été masqué.** Les niveaux de ces 15 composants sont des **données pédagogiques** :
+les attribuer en silence serait inventer, ce que la méthode REWORK interdit. De plus, `AiHelper`
+(assistant contextuel) est le **seul** composant interactif de 25 leçons à des niveaux
+`Comprendre`/`Appliquer`/`Créer` : aucun niveau unique ne peut honnêtement le rendre conforme.
+La correction relève d'une **décision pédagogique** (compléter le catalogue + concevoir la
+pratique manquante), hors du périmètre d'une correction « minimale ».
+
+**Conséquence** : R5.2 et R9 sont livrées et **vertes** ; R7 et R8 sont **spécifiées** mais
+**non activées** — les activer fait tomber les 6 formations de **6/6 à 0/6**. **Task 8 = BLOCKED**
+en attente d'une décision pédagogique (compléter le catalogue, puis concevoir la pratique
+manquante). **Aucune donnée n'a été inventée** pour faire passer la porte d'audit.
+
+---
+
 ## Récapitulatif — ce que l'audit (T6.1) vérifiera
 
 | Règle | Indicateur | Contrôles | Automatisable |
@@ -169,9 +257,12 @@ mémorisation). **Toute incohérence est signalée par l'audit.**
 | **R3** | 6 | Type + niveau déclaré + cohérence | ✅ |
 | **R4** | 11 | Quiz rattaché, composant fonctionnel, seuil défini | ✅ |
 | **R5.1** | 19 | Aucun placeholder en `MISE_EN_PRATIQUE` | ✅ |
-| **R5.2** | 19 | Trace non triviale par leçon | ⏳ nécessite les traces d'interaction (étape 14+) |
+| **R5.2** | 19 | Trace non triviale **par composant interactif** | ⏳ nécessite les traces d'interaction (`lesson_interactions`) |
 | **R5.3** | 19 | Référent pédagogique | ⏳ seuil paramétrable (arrêté à venir) |
 | **R6** | 6, 11 | Cohérence (type, niveau) | ✅ |
+| **R7** | 19 | Composant interactif ↔ niveau de Bloom de la leçon | ⏳ spécifiée — non activée (BLOCKED) |
+| **R8** | — | Tout interactif du catalogue a ≥ 1 niveau de Bloom | ⏳ spécifiée — non activée (catalogue incomplet) |
+| **R9** | 19 | `config.data` valide le schéma du composant | ✅ |
 
 **Attendu de l'audit initial** : il **échouera** sur les 6 formations existantes — leurs
 objectifs, leurs types et leurs composants ont été produits avant ces règles. **C'est le

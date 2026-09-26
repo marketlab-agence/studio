@@ -194,10 +194,13 @@ function report(course: CourseContent, audit: ContentComplianceReport): void {
 
     // ⚠️ Les deux motifs de non-évaluation ne veulent pas dire la même chose :
     // - un arrêté non publié ne dépend pas de nous ;
-    // - des données à compléter sont un **travail à faire**.
+    // - des données à compléter sont un **travail à faire** (R3 : niveaux manquants ;
+    //   R5.2 : contrôle à brancher sur les traces).
     const suffix = !rule.evaluable
       ? rule.notEvaluableReason === 'donnees-a-completer'
-        ? `  (à compléter : ${count} leçon(s) sans niveau)`
+        ? count > 0
+          ? `  (à compléter : ${count} constat(s))`
+          : '  (à compléter — contrôle à brancher)'
         : '  (non évaluable — seuil en attente d’arrêté)'
       : count === 0
         ? ''

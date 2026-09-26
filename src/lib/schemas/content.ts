@@ -294,7 +294,9 @@ export interface ContentComplianceReport {
  * - **R2** (indicateur 5) — objectifs au format Bloom ;
  * - **R3/R6** (indicateurs 6, 11) — cohérence type de leçon ↔ niveau ;
  * - **R4** (indicateur 11) — évaluation de l'atteinte ;
- * - **R5.1** (indicateur 19) — aucun placeholder en mise en pratique.
+ * - **R5.1/R5.2** (indicateur 19) — appropriation, trace par composant interactif ;
+ * - **R7** (indicateur 19) — spécifiée, **différée** (BLOCKED : catalogue/contenu à compléter) ;
+ * - **R9** (indicateur 19) — `config.data` conforme au schéma du composant.
  *
  * ⚠️ **R1 (analyse du besoin) n'est pas évaluable ici** : elle porte sur les
  * `generation_params` de la formation, absents du contenu pédagogique. Elle est vérifiée
@@ -359,6 +361,56 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     indicator: 11,
     label: 'Cohérence entre le type de leçon et le niveau de Bloom',
     findings: r6Findings,
+    evaluable: true,
+  });
+
+  // --- R7 · indicateur 19 — couverture Bloom par composant interactif --------
+  // ⚠️ **RÈGLE SPÉCIFIÉE MAIS NON ACTIVÉE — Task 8 BLOCKED (voir le rapport).**
+  //
+  // L'implémentation est prête (documentée dans `@docs/katalyst/regles-conformite.md`) :
+  // pour chaque composant `interactive` d'une leçon ayant un `bloomLevel` déclaré,
+  // `meta.bloomLevels` doit contenir ce niveau (les visuels sont exemptés ; les leçons sans
+  // niveau sont ignorées, R3 portant déjà le constat).
+  //
+  // ⚠️ **Pourquoi elle n'est pas poussée ici.** Activée, elle fait tomber les 6 formations de
+  // 6/6 à 0/6 (60 constats) :
+  //  - 50 viennent de 15 composants du catalogue **sans niveau de Bloom** (R8 échoue) ;
+  //  - 10 sont de vraies inadéquations composant ↔ niveau.
+  // Attribuer des niveaux à ces 15 composants est une **décision pédagogique** (AiHelper couvre
+  // à lui seul 25 leçons à des niveaux `Comprendre`/`Appliquer`/`Créer` — aucun niveau unique
+  // ne le rendrait honnêtement conforme). La méthode REWORK interdit d'inventer ces données en
+  // silence : la règle est donc **différée**, pas affaiblie.
+  // ⚠️ **NON ACTIVER cette règle** sans avoir d'abord complété le catalogue et le contenu.
+
+  // --- R9 · indicateur 19 — `config.data` conforme au schéma du composant -----
+  const r9Findings: string[] = [];
+  for (const lesson of lessons) {
+    for (const composant of lesson.components) {
+      const config = composant.config as { data?: unknown } | undefined;
+
+      // ⚠️ **`data === undefined` signifie « valeurs par défaut » : toujours valide.**
+      // Ne signaler que la donnée **réellement fournie** — sinon tout composant non
+      // configuré (ex. `AiHelper`) serait déclaré non conforme, et la porte d'audit
+      // échouerait sur des leçons pourtant saines.
+      if (config?.data === undefined) continue;
+
+      const meta = resolveComponentMeta(composant.name);
+      if (!meta) continue;
+
+      const parsed = meta.dataSchema.safeParse(config.data);
+      if (!parsed.success) {
+        r9Findings.push(
+          `« ${lesson.title} » : la configuration fournie au composant « ${composant.name} » ` +
+            `ne respecte pas son schéma (${parsed.error.issues[0]?.message ?? 'données invalides'}).`,
+        );
+      }
+    }
+  }
+  rules.push({
+    rule: 'R9',
+    indicator: 19,
+    label: 'Configuration des composants conforme à leur schéma de données',
+    findings: r9Findings,
     evaluable: true,
   });
 
@@ -439,6 +491,21 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     label: 'Appropriation — aucune mise en pratique sans interaction réelle',
     findings: r5Findings,
     evaluable: true,
+  });
+
+  // --- R5.2 · indicateur 19 — trace par composant interactif ------------------
+  // ⚠️ **Reformulation : « par composant », et non « par leçon ».** Une leçon peut porter N
+  // composants ; exiger une trace au niveau de la leçon permettrait qu'un composant reste
+  // sans interaction enregistrée. Le décret parle d'une « trace d'interaction par composant ».
+  rules.push({
+    rule: 'R5.2',
+    indicator: 19,
+    label: 'Effectivité du suivi — une trace d’interaction par composant interactif',
+    findings: [],
+    // La règle est mesurable, mais le contrôle n'est pas encore branché sur
+    // `lesson_interactions` : `donnees-a-completer` (travail à faire), jamais `arrete`.
+    evaluable: false,
+    notEvaluableReason: 'donnees-a-completer',
   });
 
   // --- R5.3 · indicateur 19 — référent pédagogique (seuil en attente) --------
