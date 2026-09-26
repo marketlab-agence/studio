@@ -41,11 +41,13 @@ export interface MatchingPairsProps {
   description?: string;
   pairs: MatchingPair[];
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
 
-export function MatchingPairs({ title, description, pairs, lessonId, config }: MatchingPairsProps) {
+export function MatchingPairs({ title, description, pairs, lessonId, lessonComponentId, config }: MatchingPairsProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
   const libelles = fusionnerLibelles(
     { title: title ?? 'Associe les paires', description: description ?? '' },
@@ -60,7 +62,7 @@ export function MatchingPairs({ title, description, pairs, lessonId, config }: M
   const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
   const [lastError, setLastError] = useState<{ left: string; right: string } | null>(null);
 
-  const { recordStep } = useLessonTrace({ lessonId, componentName: 'MatchingPairs' });
+  const { recordStep } = useLessonTrace({ lessonId, componentName: 'MatchingPairs', lessonComponentId });
 
   /**
    * Colonne de droite **mélangée**.

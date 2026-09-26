@@ -46,6 +46,8 @@ export interface GuidedProcedureProps {
   description?: string;
   checkpoints: ProcedureCheckpoint[];
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -55,6 +57,7 @@ export function GuidedProcedure({
   description,
   checkpoints,
   lessonId,
+  lessonComponentId,
   config,
 }: GuidedProcedureProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -70,7 +73,7 @@ export function GuidedProcedure({
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [values, setValues] = useState<Record<string, string>>({});
 
-  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'GuidedProcedure' });
+  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'GuidedProcedure', lessonComponentId });
 
   /**
    * Prochaine étape **autorisée** : la première non cochée.

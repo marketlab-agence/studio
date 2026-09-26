@@ -57,6 +57,8 @@ export interface CompareContrastProps {
   /** Conclusion attendue, si elle est vérifiable. Sinon, l'analyse seule est évaluée. */
   expectedConclusion?: string;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -69,6 +71,7 @@ export function CompareContrast({
   criteria,
   expectedConclusion,
   lessonId,
+  lessonComponentId,
   config,
 }: CompareContrastProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -96,7 +99,7 @@ export function CompareContrast({
   const [conclusion, setConclusion] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'CompareContrast' });
+  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'CompareContrast', lessonComponentId });
 
   /** Nombre de critères renseignés **des deux côtés** — la condition pour un vrai comparatif. */
   const filledCriteria = useMemo(

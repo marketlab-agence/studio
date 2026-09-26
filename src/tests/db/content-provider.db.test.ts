@@ -219,6 +219,31 @@ describe('PostgresContentProvider', () => {
     expect(restored.map((c) => c.id)).toEqual(original.map((c) => c.id));
   });
 
+  it('expose l’id d’instance des composants (lecture fidèle)', async () => {
+    // ⚠️ **Sans ce mapping, `LessonView` ne peut rien transmettre aux composants** :
+    // l'attribution de la trace (`lesson_component_id`) resterait « schema-only ».
+    if (!(await requireDatabaseOrSkip())) return;
+    const provider = getContentProvider();
+
+    const chapter = (await provider.listChapters(scope)).find((c) =>
+      c.lessons.some((l) => (l.components?.length ?? 0) > 0),
+    );
+    if (!chapter) throw new Error('Aucune leçon avec composant dans le jeu de données de test.');
+
+    const lesson = chapter.lessons.find((l) => (l.components?.length ?? 0) > 0)!;
+    for (const composant of lesson.components) {
+      expect(typeof composant.id).toBe('string');
+      expect(composant.id).toBeTruthy();
+    }
+
+    // Les identifiants relus correspondent à ceux stockés pour cette leçon.
+    const { rows } = await pool.query<{ id: string }>(
+      `SELECT id FROM lesson_components WHERE lesson_id = $1`,
+      [lesson.id],
+    );
+    expect(lesson.components.map((c) => c.id).sort()).toEqual(rows.map((r) => r.id).sort());
+  });
+
   it('n’expose pas de formule propre à une autre organisation (catalogue global)', async () => {
     if (!(await requireDatabaseOrSkip())) return;
 

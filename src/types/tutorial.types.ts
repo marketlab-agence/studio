@@ -54,6 +54,15 @@ export interface Lesson {
 
 /** Une instance de composant dans une leçon : son nom, sa place, sa configuration. */
 export interface LessonComponent {
+  /**
+   * Identifiant de l'**instance** en base (`lesson_components.id`).
+   *
+   * ⚠️ **Optionnel** : une leçon non encore persistée n'en a pas, et les traces
+   * existantes restent valides (`lesson_component_id` vaut alors `NULL`). C'est
+   * cet `id` qui permet d'attribuer une trace à *l'instance* qui l'a produite —
+   * et donc de distinguer deux occurrences du même composant dans une leçon.
+   */
+  id?: string;
   name: string;
   position: number;
   config?: {

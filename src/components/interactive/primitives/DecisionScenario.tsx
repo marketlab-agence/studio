@@ -55,6 +55,8 @@ export interface DecisionScenarioProps {
   /** Longueur minimale de la justification (en caractères), pour éviter le « oui » de complaisance. */
   minJustificationLength?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -66,6 +68,7 @@ export function DecisionScenario({
   options,
   minJustificationLength = 40,
   lessonId,
+  lessonComponentId,
   config,
 }: DecisionScenarioProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -83,7 +86,7 @@ export function DecisionScenario({
   const [justification, setJustification] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'DecisionScenario' });
+  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'DecisionScenario', lessonComponentId });
 
   const selected = useMemo(
     () => choix.find((option) => option.id === selectedId) ?? null,

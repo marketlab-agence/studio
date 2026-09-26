@@ -48,6 +48,8 @@ export interface PeerReviewSimulatorProps {
   /** Commentaire attendu à partir de cette longueur. */
   minCommentLength?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -63,6 +65,7 @@ export function PeerReviewSimulator({
   criteria,
   minCommentLength = 60,
   lessonId,
+  lessonComponentId,
   config,
 }: PeerReviewSimulatorProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -81,7 +84,7 @@ export function PeerReviewSimulator({
   const [comment, setComment] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'PeerReviewSimulator' });
+  const { recordStep, recordProduction } = useLessonTrace({ lessonId, componentName: 'PeerReviewSimulator', lessonComponentId });
 
   const scoredCount = useMemo(
     () => criteres.filter((criterion) => scores[criterion.id] !== undefined).length,

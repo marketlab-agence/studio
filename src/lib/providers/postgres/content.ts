@@ -52,7 +52,7 @@ type LessonRow = {
      * ⚠️ **La nature (`interactive`/`visual`) n'est pas dans la donnée** : elle vient
      * du catalogue (`resolveComponentMeta`). La dupliquer ici créerait deux vérités.
      */
-    components: { name: string; position: number; config: unknown }[];
+    components: { id: string; name: string; position: number; config: unknown }[];
     position: number;
     /**
      * Niveau de Bloom de la leçon, ou `null` en base.
@@ -83,6 +83,10 @@ function toCourseInfo(row: CourseRow): CourseInfo {
       objective: row.objective,
       content: row.content,
       components: (row.components ?? []).map((composant) => ({
+        // ⚠️ `id` propagé jusqu'ici : c'est lui que `LessonView` transmet aux composants,
+        // qui le joignent à leurs traces (`lesson_component_id`). Sans lui, deux instances
+        // du même composant seraient indiscernables en audit.
+        id: composant.id,
         name: composant.name,
         position: composant.position,
         config: (composant.config ?? {}) as Lesson['components'][number]['config'],
@@ -222,6 +226,7 @@ export class PostgresContentProvider implements ContentProvider {
                 l.duration_minutes, l.points, l.media_ref, l.position, l.bloom_level,
                 COALESCE(
                   (SELECT json_agg(json_build_object(
+                     'id', lc.id,
                      'name', lc.component_name,
                      'position', lc.position,
                      'config', lc.config

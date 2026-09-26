@@ -53,6 +53,8 @@ export interface RecallQuizProps {
   /** Seuil de réussite en pourcentage. Défaut 80 — valeur REWORK. */
   passingScore?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -63,6 +65,7 @@ export function RecallQuiz({
   questions,
   passingScore = 80,
   lessonId,
+  lessonComponentId,
   config,
 }: RecallQuizProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -81,7 +84,7 @@ export function RecallQuiz({
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
 
-  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'RecallQuiz' });
+  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'RecallQuiz', lessonComponentId });
 
   const question = questionsEffectives[currentIndex];
   const answeredCount = locked.size;

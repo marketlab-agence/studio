@@ -34,6 +34,8 @@ import type { ComponentConfig } from '@/lib/schemas/component-config';
 
 interface ConfigurationProps {
   lessonId?: string;
+  /** Instance de composant (`lesson_components.id`), transmise à la primitive pour la trace. */
+  lessonComponentId?: string;
   /**
    * Configuration de l'instance : libellés (langue du créateur) et données.
    * ⚠️ Transmise telle quelle à la primitive — les constantes françaises restent le repli.
@@ -47,10 +49,11 @@ interface ConfigurationProps {
  * `GitDoctorTool` : diagnostiquer un dépôt en état anormal.
  * Primitive : `CaseDiagnosis` (Analyser) — la démarche compte autant que la conclusion.
  */
-export function GitDoctorTool({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function GitDoctorTool({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <CaseDiagnosis
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Diagnostiquer un dépôt Git en difficulté"
       description="Examine les indices, écarte les leurres, puis identifie la cause la plus probable."
@@ -97,10 +100,11 @@ export function GitDoctorTool({ lessonId = 'unknown', config }: ConfigurationPro
  * `GitRepositoryPlayground` : construire un dépôt de A à Z.
  * Primitive : `BuilderCanvas` (Créer) — l'apprenant **produit**, il ne choisit pas.
  */
-export function GitRepositoryPlayground({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function GitRepositoryPlayground({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <BuilderCanvas
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Construire un dépôt Git de bout en bout"
       description="Crée un dépôt pour un projet et documente chaque étape : ta production est conservée comme trace."
@@ -147,10 +151,11 @@ export function GitRepositoryPlayground({ lessonId = 'unknown', config }: Config
  * `MergeSimulator` : choisir une stratégie de fusion.
  * Primitive : `CompareContrast` (Analyser) — comparer deux stratégies selon des critères.
  */
-export function MergeStrategyComparison({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function MergeStrategyComparison({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <CompareContrast
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Fast-forward ou merge commit : quelle stratégie ?"
       description="Compare les deux approches selon chaque critère, puis conclus sur un cas concret."
@@ -197,10 +202,11 @@ export function MergeStrategyComparison({ lessonId = 'unknown', config }: Config
  * `UndoCommandComparison` : choisir la bonne commande d'annulation.
  * Primitive : `CompareContrast` (Analyser) — trois commandes, un cas à trancher.
  */
-export function UndoCommandComparison({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function UndoCommandComparison({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <CompareContrast
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Annuler un changement : quelle commande ?"
       description="Compare `revert`, `reset` et `restore` avant de choisir."
@@ -222,10 +228,11 @@ export function UndoCommandComparison({ lessonId = 'unknown', config }: Configur
  * `ForkVsCloneDemo` : distinguer fork et clone.
  * Primitive : `CompareContrast` (Comprendre/Analyser) — deux notions souvent confondues.
  */
-export function ForkVsCloneDemo({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function ForkVsCloneDemo({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <CompareContrast
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Fork ou clone : quelle différence ?"
       description="Deux opérations qui copient un dépôt, mais avec des liens très différents à l’origine."
@@ -247,10 +254,11 @@ export function ForkVsCloneDemo({ lessonId = 'unknown', config }: ConfigurationP
  * `TrunkBasedDevelopmentVisualizer` : comparer deux modèles de branches.
  * Primitive : `CompareContrast` (Analyser).
  */
-export function TrunkBasedDevelopmentVisualizer({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function TrunkBasedDevelopmentVisualizer({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <CompareContrast
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Trunk-based ou GitFlow ?"
       description="Deux organisations du travail, pour un même objectif : livrer sans casser."
@@ -281,10 +289,11 @@ export function TrunkBasedDevelopmentVisualizer({ lessonId = 'unknown', config }
  * `ReflogExplorer` : retrouver un commit perdu.
  * Primitive : `StepByStepRunner` (Appliquer) — une procédure de récupération.
  */
-export function ReflogExplorer({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function ReflogExplorer({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <StepByStepRunner
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Retrouver un commit perdu"
       description="Procédure de récupération après un `reset` malencontreux. Le reflog conserve ce que `git log` ne montre plus."
@@ -324,10 +333,11 @@ export function ReflogExplorer({ lessonId = 'unknown', config }: ConfigurationPr
  * `ResolutionGuide` : checklist de résolution de conflit.
  * Primitive : `GuidedProcedure` (Appliquer) — des vérifications ordonnées, sans réponse à saisir.
  */
-export function ResolutionGuide({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function ResolutionGuide({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <GuidedProcedure
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Résoudre un conflit de fusion"
       description="Procédure de vérification, étape par étape. Aucune étape ne peut être sautée."
@@ -355,10 +365,11 @@ export function ResolutionGuide({ lessonId = 'unknown', config }: ConfigurationP
  * `PullRequestCreator` : rédiger une Pull Request.
  * Primitive : `DraftCoach` (Créer) — écrire, relire selon des critères, réviser.
  */
-export function PullRequestCreator({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function PullRequestCreator({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <DraftCoach
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Rédiger une Pull Request utile"
       description="Une PR n’est pas un formulaire : c’est un message à destination d’un relecteur pressé."
@@ -381,10 +392,11 @@ export function PullRequestCreator({ lessonId = 'unknown', config }: Configurati
  * `CollaborationSimulator` : arbitrer une situation d'équipe.
  * Primitive : `DecisionScenario` (Évaluer) — plusieurs choix défendables.
  */
-export function CollaborationSimulator({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function CollaborationSimulator({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <DecisionScenario
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Arbitrer un conflit de collaboration"
       description="Deux personnes modifient le même fichier en parallèle. Que fais-tu ?"
@@ -429,10 +441,11 @@ export function CollaborationSimulator({ lessonId = 'unknown', config }: Configu
  * `WorkflowDesigner` : concevoir un flux de branches.
  * Primitive : `BuilderCanvas` (Créer) — l'apprenant produit et documente.
  */
-export function WorkflowDesigner({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function WorkflowDesigner({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <BuilderCanvas
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Concevoir un flux de branches pour une équipe"
       description="Décris l’organisation des branches que tu mettrais en place, et justifie chaque choix."
@@ -478,10 +491,11 @@ export function WorkflowDesigner({ lessonId = 'unknown', config }: Configuration
  * `ConflictVisualizer` : trier les éléments d'un conflit.
  * Primitive : `SortingGame` (Comprendre) — classer par rôle.
  */
-export function ConflictVisualizer({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function ConflictVisualizer({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <SortingGame
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Les éléments d’un conflit de fusion"
       description="Classe chaque élément selon sa fonction dans la résolution."
@@ -519,10 +533,11 @@ export function ConflictVisualizer({ lessonId = 'unknown', config }: Configurati
  * `GitTimeTravel` : associer une commande à son effet sur l'historique.
  * Primitive : `MatchingPairs` (Comprendre) — relier deux représentations.
  */
-export function GitTimeTravel({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function GitTimeTravel({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <MatchingPairs
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Explorer l’historique : chaque commande et son effet"
       description="Associe chaque commande à ce qu’elle permet d’observer."
@@ -568,10 +583,11 @@ export function GitTimeTravel({ lessonId = 'unknown', config }: ConfigurationPro
  * `StagingAreaVisualizer` : trier les états d'un fichier dans le flux Git.
  * Primitive : `SortingGame` (Comprendre) — les trois zones de Git.
  */
-export function StagingAreaVisualizer({ lessonId = 'unknown', config }: ConfigurationProps) {
+export function StagingAreaVisualizer({ lessonId = 'unknown', lessonComponentId, config }: ConfigurationProps) {
   return (
     <SortingGame
       lessonId={lessonId}
+      lessonComponentId={lessonComponentId}
       config={config}
       title="Les trois zones de Git"
       description="Classe chaque état à la zone correspondante. C’est la confusion la plus fréquente chez les débutants."

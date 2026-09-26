@@ -55,6 +55,8 @@ export interface CaseDiagnosisProps {
   /** Identifiant de la cause correcte. */
   correctCauseId: string;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -67,6 +69,7 @@ export function CaseDiagnosis({
   causes,
   correctCauseId,
   lessonId,
+  lessonComponentId,
   config,
 }: CaseDiagnosisProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -89,7 +92,7 @@ export function CaseDiagnosis({
   const [justification, setJustification] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordStep } = useLessonTrace({ lessonId, componentName: 'CaseDiagnosis' });
+  const { recordStep } = useLessonTrace({ lessonId, componentName: 'CaseDiagnosis', lessonComponentId });
 
   const toggleClue = useCallback((clueId: string) => {
     setSelectedClueIds((previous) => {

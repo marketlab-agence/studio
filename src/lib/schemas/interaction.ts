@@ -32,6 +32,15 @@ export const interactionRecordSchema = z.object({
   /** Nom du composant du registre. Permet de savoir *comment* l'apprenant s'est approprié. */
   componentName: z.string().trim().min(1).max(120),
 
+  /**
+   * Instance de composant visée (`lesson_components.id`).
+   *
+   * ⚠️ **Facultative.** Les traces antérieures et les rendus hors leçon n'en ont pas :
+   * l'imposer casserait la compatibilité. Quand elle est présente, elle attribue la
+   * trace à *l'instance* — indispensable dès que le même composant apparaît deux fois.
+   */
+  lessonComponentId: z.string().uuid().optional(),
+
   kind: z.enum(INTERACTION_KINDS),
 
   outcome: z.enum(INTERACTION_OUTCOMES).optional(),

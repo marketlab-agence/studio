@@ -40,11 +40,13 @@ export interface FlashcardDrillProps {
   description?: string;
   cards: Flashcard[];
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
 
-export function FlashcardDrill({ title, description, cards, lessonId, config }: FlashcardDrillProps) {
+export function FlashcardDrill({ title, description, cards, lessonId, lessonComponentId, config }: FlashcardDrillProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
   const libelles = fusionnerLibelles(
     { title: title ?? 'Cartes mémoire', description: description ?? '' },
@@ -60,7 +62,7 @@ export function FlashcardDrill({ title, description, cards, lessonId, config }: 
   /** Cartes que l'apprenant a signalées comme non sues : c'est le résultat le plus utile. */
   const [notKnownIds, setNotKnownIds] = useState<Set<string>>(new Set());
 
-  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'FlashcardDrill' });
+  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'FlashcardDrill', lessonComponentId });
 
   const card = cartes[currentIndex];
   const isFinished = currentIndex >= cartes.length;

@@ -38,6 +38,9 @@ export function LessonView({ lesson }: LessonViewProps) {
     const componentProps = {
         lessonContext: lesson.title,
         courseTopic: course?.title || 'le sujet actuel',
+        // ⚠️ **Sans `lessonId`, aucune trace n'aboutit** : le serveur refuse une leçon
+        // inconnue. La valeur vient de la leçon rendue, pas du composant.
+        lessonId: lesson.id,
     };
 
     return (
@@ -93,7 +96,14 @@ export function LessonView({ lesson }: LessonViewProps) {
                 // apparaître deux fois, une clé fondée sur le seul nom serait dupliquée.
                 return (
                     <div key={`${entree.name}-${entree.position}`} className="mt-12">
-                        <Composant {...componentProps} config={entree.config ?? {}} />
+                        {/* ⚠️ `lessonComponentId` = l'**instance** en base : c'est lui qui
+                            permet d'attribuer la trace à la bonne occurrence quand le même
+                            composant apparaît plusieurs fois dans la leçon. */}
+                        <Composant
+                            {...componentProps}
+                            lessonComponentId={entree.id}
+                            config={entree.config ?? {}}
+                        />
                     </div>
                 );
             })}

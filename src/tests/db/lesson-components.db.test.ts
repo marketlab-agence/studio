@@ -126,4 +126,55 @@ describe('lesson_components', () => {
     );
     expect(rows.map((r) => r.position)).toEqual([400, 401]);
   });
+
+  it('attribue deux traces DISTINCTES à deux instances du MÊME composant', async () => {
+    // ⚠️ **Le cœur de la traçabilité par instance (indicateur 19).** Sans
+    // `lesson_component_id`, deux `StepByStepRunner` d'une même leçon produiraient
+    // des traces indiscernables : l'auditeur ne saurait pas *quelle* occurrence a
+    // été travaillée. Ce test relie chaque trace à son instance et vérifie que les
+    // deux valeurs sont différentes et non nulles.
+    const lessonId = await uneLecon();
+
+    const { rows: org } = await pool.query<{ organization_id: string; user_id: string }>(
+      `SELECT organization_id, id AS user_id FROM users LIMIT 1`,
+    );
+    if (org.length === 0) throw new Error('Aucun utilisateur : lancer `npm run db:seed`.');
+
+    const { rows: composants } = await pool.query<{ id: string }>(
+      `INSERT INTO lesson_components (lesson_id, component_name, position)
+       VALUES ($1, 'TestTraceMultiple', 500), ($1, 'TestTraceMultiple', 501)
+       RETURNING id`,
+      [lessonId],
+    );
+
+    expect(composants).toHaveLength(2);
+    const idsInstances = composants.map((c) => c.id);
+    expect(new Set(idsInstances).size).toBe(2);
+
+    const traces: string[] = [];
+    for (const instanceId of idsInstances) {
+      const { rows } = await pool.query<{ id: string; lesson_component_id: string }>(
+        `INSERT INTO lesson_interactions
+           (organization_id, user_id, lesson_id, component_name, kind, payload, lesson_component_id)
+         VALUES ($1, $2, $3, 'TestTraceMultiple', 'ATTEMPT', '{}'::jsonb, $4)
+         RETURNING id, lesson_component_id`,
+        [org[0].organization_id, org[0].user_id, lessonId, instanceId],
+      );
+      expect(rows[0].lesson_component_id).toBe(instanceId);
+      traces.push(rows[0].id);
+    }
+
+    // Les deux traces pointent vers deux instances différentes : c'est ce qui rend
+    // l'attribution opposable en audit.
+    const { rows: releve } = await pool.query<{ lesson_component_id: string }>(
+      `SELECT DISTINCT lesson_component_id FROM lesson_interactions
+       WHERE id = ANY($1::uuid[])`,
+      [traces],
+    );
+    expect(releve).toHaveLength(2);
+    expect(releve.map((r) => r.lesson_component_id).sort()).toEqual([...idsInstances].sort());
+
+    // Nettoyage : les traces d'abord (la FK est `ON DELETE SET NULL`).
+    await pool.query(`DELETE FROM lesson_interactions WHERE id = ANY($1::uuid[])`, [traces]);
+  });
 });

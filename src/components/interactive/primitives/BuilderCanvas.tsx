@@ -64,6 +64,8 @@ export interface BuilderCanvasProps {
     max?: number;
   };
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -74,6 +76,7 @@ export function BuilderCanvas({
   sections,
   repeatable,
   lessonId,
+  lessonComponentId,
   config,
 }: BuilderCanvasProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -104,7 +107,7 @@ export function BuilderCanvas({
   const [rows, setRows] = useState<Record<string, string>[]>(repeatable ? [{}] : []);
   const [validated, setValidated] = useState(false);
 
-  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'BuilderCanvas' });
+  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'BuilderCanvas', lessonComponentId });
 
   const requiredSections = useMemo(() => rubriques.filter((section) => section.required), [rubriques]);
 

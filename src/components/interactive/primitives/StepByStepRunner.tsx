@@ -59,6 +59,8 @@ export interface StepByStepRunnerProps {
   steps?: ProcedureStep[];
   /** Identifiant de la leçon — nécessaire à la trace. */
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Message final, affiché quand toutes les étapes sont validées. */
   completionMessage?: string;
   /**
@@ -75,6 +77,7 @@ export function StepByStepRunner({
   description,
   steps,
   lessonId,
+  lessonComponentId,
   completionMessage = 'Procédure terminée. Les étapes sont maîtrisées.',
   config,
 }: StepByStepRunnerProps) {
@@ -101,7 +104,7 @@ export function StepByStepRunner({
   const [showHint, setShowHint] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 
-  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'StepByStepRunner' });
+  const { recordStep, recordDuration } = useLessonTrace({ lessonId, componentName: 'StepByStepRunner', lessonComponentId });
 
   const step = etapes[currentIndex];
   const isFinished = currentIndex >= etapes.length;

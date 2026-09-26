@@ -53,6 +53,8 @@ export interface DraftCoachProps {
   /** Nombre minimal de caractères pour considérer le texte rédigé. */
   minLength?: number;
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -65,6 +67,7 @@ export function DraftCoach({
   criteria,
   minLength = 80,
   lessonId,
+  lessonComponentId,
   config,
 }: DraftCoachProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
@@ -86,7 +89,7 @@ export function DraftCoach({
   const [revision, setRevision] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'DraftCoach' });
+  const { recordProduction, recordStep } = useLessonTrace({ lessonId, componentName: 'DraftCoach', lessonComponentId });
 
   const draftLongEnough = draft.trim().length >= minLength;
   const revisionLongEnough = revision.trim().length >= minLength;

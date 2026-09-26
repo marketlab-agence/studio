@@ -45,6 +45,8 @@ export interface SortingGameProps {
   categories: SortingCategory[];
   items: SortingItem[];
   lessonId: string;
+  /** Instance de composant (`lesson_components.id`), pour attribuer la trace à l'occurrence. */
+  lessonComponentId?: string;
   /** Configuration de l'instance (libellés, données). Facultative. */
   config?: ComponentConfig;
 }
@@ -60,7 +62,7 @@ interface Placement {
   correct: boolean;
 }
 
-export function SortingGame({ title, description, categories, items, lessonId, config }: SortingGameProps) {
+export function SortingGame({ title, description, categories, items, lessonId, lessonComponentId, config }: SortingGameProps) {
   // ⚠️ Les libellés personnalisés priment, mot par mot ; sans configuration, les défauts restent.
   const libelles = fusionnerLibelles(
     { title: title ?? 'Tri par catégorie', description: description ?? '' },
@@ -75,7 +77,7 @@ export function SortingGame({ title, description, categories, items, lessonId, c
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  const { recordStep } = useLessonTrace({ lessonId, componentName: 'SortingGame' });
+  const { recordStep } = useLessonTrace({ lessonId, componentName: 'SortingGame', lessonComponentId });
 
   const placedIds = useMemo(() => new Set(placements.map((placement) => placement.itemId)), [placements]);
   const remaining = useMemo(() => itemsEffectifs.filter((item) => !placedIds.has(item.id)), [itemsEffectifs, placedIds]);
