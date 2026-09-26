@@ -54,6 +54,13 @@ type LessonRow = {
      */
     components: { name: string; position: number; config: unknown }[];
     position: number;
+    /**
+     * Niveau de Bloom de la leçon, ou `null` en base.
+     *
+     * ⚠️ **Sa présence ici est indispensable** : sans elle, `toLesson` retombait sur
+     * `undefined` et la sélection par Bloom devenait un no-op silencieux.
+     */
+    bloom_level: string | null;
   }
 
 function toCourseInfo(row: CourseRow): CourseInfo {
@@ -80,6 +87,13 @@ function toCourseInfo(row: CourseRow): CourseInfo {
         position: composant.position,
         config: (composant.config ?? {}) as Lesson['components'][number]['config'],
       })),
+      // ⚠️ **Champs relus fidèlement.** Les omettre rendait la leçon infidèle : le niveau
+      // de Bloom disparaissait (sélection Bloom inopérante) et l'écriture suivante,
+      // dépourvue du niveau, le réécrivait à `null` (d'où le `COALESCE` ci-dessous).
+      type: row.type,
+      points: row.points,
+      position: row.position,
+      bloomLevel: row.bloom_level ?? undefined,
     };
   }
 
@@ -205,7 +219,7 @@ export class PostgresContentProvider implements ContentProvider {
 
     const { rows: lessons } = await query<LessonRow>(
         `SELECT l.id, l.chapter_id, l.source_id, l.title, l.objective, l.content, l.type,
-                l.duration_minutes, l.points, l.media_ref, l.position,
+                l.duration_minutes, l.points, l.media_ref, l.position, l.bloom_level,
                 COALESCE(
                   (SELECT json_agg(json_build_object(
                      'name', lc.component_name,
@@ -330,8 +344,12 @@ export class PostgresContentProvider implements ContentProvider {
     );
 
     for (const [index, lesson] of lessons.entries()) {
-      // `type` et `points` ne figurent pas dans `Lesson` : ils sont posés à la
-      // création et **préservés** en mise à jour (absents du DO UPDATE).
+      // `type` et `points` sont initialisés à la création et **préservés** en mise à jour
+      // (absents du `DO UPDATE`) : la relecture les expose, mais l'écriture ne les écrase pas.
+      //
+      // ⚠️ **`bloom_level` en `COALESCE`.** Un appelant qui omet le niveau (génération
+      // ancienne, ou leçon non encore alignée) ne doit PAS le remettre à NULL : le niveau
+      // en base est la source de vérité, et l'effacer ferait perdre un travail d'alignement.
       await query(
         `INSERT INTO lessons (
            id, chapter_id, source_id, title, objective, content, type, points,
@@ -343,7 +361,7 @@ export class PostgresContentProvider implements ContentProvider {
            title = EXCLUDED.title,
            objective = EXCLUDED.objective,
            content = EXCLUDED.content,
-           bloom_level = EXCLUDED.bloom_level,
+           bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level),
            position = EXCLUDED.position`,
         [
           lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',

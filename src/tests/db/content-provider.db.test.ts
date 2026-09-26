@@ -126,6 +126,78 @@ describe('PostgresContentProvider', () => {
     await provider.saveChapters(scope, [chapter]);
   });
 
+  it('expose le niveau de Bloom d’une leçon (lecture fidèle)', async () => {
+    // ⚠️ **Sans cette lecture, la sélection par Bloom est un no-op silencieux.** Si `toLesson`
+    // ne mappe pas `bloom_level`, l'appelant reçoit toujours `undefined` et retombe sur le
+    // catalogue complet, sans qu'aucune erreur ne le signale.
+    if (!(await requireDatabaseOrSkip())) return;
+    const provider = getContentProvider();
+
+    const chapter = (await provider.listChapters(scope)).find((c) => c.lessons.length > 0);
+    if (!chapter) throw new Error('Aucun chapitre avec leçon dans le jeu de données de test.');
+    const lessonId = chapter.lessons[0].id;
+
+    const { rows: avant } = await pool.query<{ bloom_level: string | null }>(
+      'SELECT bloom_level FROM lessons WHERE id = $1',
+      [lessonId],
+    );
+
+    await pool.query(`UPDATE lessons SET bloom_level = 'Appliquer' WHERE id = $1`, [lessonId]);
+
+    const relu = (await provider.listChapters(scope, chapter.courseId))
+      .find((c) => c.id === chapter.id)!
+      .lessons.find((l) => l.id === lessonId)!;
+
+    expect(relu.bloomLevel).toBe('Appliquer');
+
+    await pool.query('UPDATE lessons SET bloom_level = $2 WHERE id = $1', [
+      lessonId, avant[0].bloom_level,
+    ]);
+  });
+
+  it('n’efface pas un niveau de Bloom existant quand l’écriture l’omet', async () => {
+    // ⚠️ **Une génération qui ne porte pas le niveau ne doit pas le détruire.** Sans
+    // `COALESCE(EXCLUDED.bloom_level, lessons.bloom_level)`, chaque round-trip de génération
+    // remettrait `bloom_level` à NULL.
+    if (!(await requireDatabaseOrSkip())) return;
+    const provider = getContentProvider();
+
+    const chapter = (await provider.listChapters(scope)).find((c) => c.lessons.length > 0);
+    if (!chapter) throw new Error('Aucun chapitre avec leçon dans le jeu de données de test.');
+    const lessonId = chapter.lessons[0].id;
+
+    const { rows: avant } = await pool.query<{ bloom_level: string | null }>(
+      'SELECT bloom_level FROM lessons WHERE id = $1',
+      [lessonId],
+    );
+
+    await pool.query(`UPDATE lessons SET bloom_level = 'Créer' WHERE id = $1`, [lessonId]);
+
+    // Liste complète de la formation : on ne bouscule pas les positions des chapitres voisins.
+    const chapitres = await provider.listChapters(scope, chapter.courseId);
+    const sansNiveau = chapitres.map((c) =>
+      c.id === chapter.id
+        ? {
+            ...c,
+            lessons: c.lessons.map((lesson) =>
+              lesson.id === lessonId ? { ...lesson, bloomLevel: undefined } : lesson,
+            ),
+          }
+        : c,
+    );
+    await provider.saveChapters(scope, sansNiveau);
+
+    const { rows: apres } = await pool.query<{ bloom_level: string | null }>(
+      'SELECT bloom_level FROM lessons WHERE id = $1',
+      [lessonId],
+    );
+    expect(apres[0].bloom_level).toBe('Créer');
+
+    await pool.query('UPDATE lessons SET bloom_level = $2 WHERE id = $1', [
+      lessonId, avant[0].bloom_level,
+    ]);
+  });
+
   it('accepte un réordonnancement complet des chapitres d’une formation', async () => {
     if (!(await requireDatabaseOrSkip())) return;
     const provider = getContentProvider();

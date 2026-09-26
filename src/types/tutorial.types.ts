@@ -32,6 +32,17 @@ export interface Lesson {
    */
   components: LessonComponent[];
   /**
+   * Champs lus en base, exposés pour que la lecture soit **fidèle**.
+   *
+   * ⚠️ Ils sont **en lecture seule** du point de vue du provider : `type`/`points` sont
+   * initialisés à la création et préservés en mise à jour (absents du `DO UPDATE`), et
+   * `position` est recalculée depuis l'ordre du tableau. Les exposer ne change donc pas
+   * l'écriture — cela rend seulement la leçon relue conforme à ce qui est stocké.
+   */
+  type?: string;
+  points?: number;
+  position?: number;
+  /**
    * Niveau de Bloom visé par l'objectif de cette leçon.
    *
    * ⚠️ `undefined` signifie **« à compléter »**, jamais « aucun niveau » : la conformité

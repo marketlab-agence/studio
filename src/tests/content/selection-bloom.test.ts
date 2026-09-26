@@ -10,7 +10,12 @@
  *
  * Les contrats de schéma sont vérifiés **à l'import**, sans invoquer l'IA.
  */
-import { listByBloomLevel } from '@/components/registry/catalog';
+import {
+  listByBloomLevel,
+  listNamesForDomain,
+  resolveComponentMeta,
+} from '@/components/registry/catalog';
+import { getRelevantComponents } from '@/lib/content/component-selection';
 import {
   SuggestLessonComponentsInputSchema,
   SuggestLessonComponentsOutputSchema,
@@ -27,11 +32,28 @@ describe('sélection des composants par Bloom', () => {
     }
   });
 
+  it('filtre les composants INTERACTIFS par Bloom (sélection de production)', () => {
+    // Le cœur de l'étape 6 : le filtrage est fait **par construction** dans l'appelant.
+    // Ne pas le tester laisserait une régression silencieuse — le flux recevrait tout le
+    // catalogue et l'IA choisirait librement hors niveau.
+    const selection = getRelevantComponents(undefined, 'Créer');
+
+    expect(selection.interactive.length).toBeGreaterThan(0);
+    for (const nom of selection.interactive) {
+      expect(resolveComponentMeta(nom)?.bloomLevels).toContain('Créer');
+    }
+  });
+
   it('laisse les composants VISUELS hors du filtrage Bloom', () => {
-    // ⚠️ Décision utilisateur : les visuels sont illustratifs, sans obligation de
-    // niveau. Les filtrer par Bloom les écarterait à tort.
-    const visuels = listByBloomLevel('visual', 'Appliquer', undefined);
-    expect(Array.isArray(visuels)).toBe(true);
+    // ⚠️ Décision utilisateur : les visuels sont illustratifs, sans obligation de niveau.
+    // Preuve : la liste visuelle est **identique quel que soit le niveau** — elle ne dépend
+    // que du domaine. Si un filtre Bloom s'y glissait, ces deux listes divergeraient.
+    const pourCreer = getRelevantComponents(undefined, 'Créer').visual;
+    const pourConnaitre = getRelevantComponents(undefined, 'Connaître').visual;
+
+    expect(pourCreer).toEqual(pourConnaitre);
+    expect(pourCreer).toEqual(listNamesForDomain('visual', undefined));
+    expect(pourCreer.length).toBeGreaterThan(0);
   });
 
   it('accepte un niveau de Bloom en entrée', () => {

@@ -10,12 +10,8 @@ import type { CourseInfo } from '@/types/course.types';
 import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flows/generate-lesson-content-flow';
 // Métadonnées seules : éviter de tirer les 46 composants (et Genkit via AiHelper)
 // dans une action serveur qui n'a besoin que des noms et descriptions.
-import {
-  listNamesForDomain,
-  listFunctionalInteractiveNamesForDomain,
-  listByBloomLevel,
-  type ComponentDomain,
-} from '@/components/registry/catalog';
+import type { ComponentDomain } from '@/components/registry/catalog';
+import { getRelevantComponents } from '@/lib/content/component-selection';
 import { BLOOM_LEVELS, type BloomLevel } from '@/lib/content/bloom';
 
 const slugify = (text: string) =>
@@ -251,41 +247,8 @@ function resolveBloomLevel(value?: string): BloomLevel | undefined {
     : undefined;
 }
 
-/**
- * Composants proposés à l'IA, issus du **registre unique** (`src/components/registry/catalog.ts`).
- *
- * Trois filtres, tous nécessaires :
- *
- * 1. **Placeholders exclus** — un composant dont l'interface existe sans interaction ne doit
- *    pas servir de « mise en pratique » : l'IA générerait des leçons pointant vers des coquilles.
- * 2. **Domaine filtré** (2026-09-23) — sans ce filtre, l'IA recevait le catalogue **entier** :
- *    sur une formation de vente, elle se voyait proposer `MergeSimulator`.
- * 3. **Niveau de Bloom** (2026-09-23) — les interactifs sont restreints à ceux qui couvrent le
- *    niveau visé. C'est un filtrage **par construction** : l'IA ne peut pas choisir hors niveau,
- *    au lieu d'être censée s'y tenir.
- *
- * ⚠️ **Seuls les INTERACTIFS sont filtrés par Bloom.** Les visuels sont illustratifs, sans
- * obligation de niveau : les filtrer les écarterait à tort de leçons pourtant éligibles.
- *
- * ⚠️ Domaine et niveau sont **optionnels** : sans eux, on ne filtre pas. Mieux vaut proposer
- * trop que priver l'IA de tout composant faute d'information.
- */
-function getRelevantComponents(
-  domain: ComponentDomain | undefined,
-  bloomLevel: BloomLevel | undefined,
-): { interactive: string[]; visual: string[] } {
-  const interactifs = bloomLevel
-    ? listByBloomLevel('interactive', bloomLevel, domain)
-        .filter((meta) => meta.status === 'functional')
-        .map((meta) => meta.name)
-    : listFunctionalInteractiveNamesForDomain(domain);
-
-  return {
-    interactive: interactifs,
-    visual: listNamesForDomain('visual', domain),
-  };
-}
-
+// La sélection des composants (domaine, Bloom, placeholders) vit dans un module pur
+// `@/lib/content/component-selection` : elle y est testable sans tirer l'action serveur.
 
 export async function generateLessonContentAction(
   courseId: string,
