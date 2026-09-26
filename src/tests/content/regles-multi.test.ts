@@ -5,40 +5,52 @@
  *
  * ⚠️ **Ce que ces tests protègent.** Une leçon porte désormais **N** composants (liste
  * ordonnée). La conformité doit donc porter sur **chaque composant**, et non plus sur
- * « la leçon a-t-elle un composant ? ». Ces tests couvrent les règles **livrées** :
+ * « la leçon a-t-elle un composant ? ». Ces tests couvrent les règles livrées :
  * - **R5.2** — trace d'interaction reformulée « par composant » (indicateur 19) ;
- * - **R9** — `config.data`, quand il est fourni, doit valider le `dataSchema` du composant.
+ * - **R7** — un composant `interactive` doit couvrir le niveau de Bloom de la leçon
+ *   (rapport **non bloquant** : `evaluable: false`, `donnees-a-completer`) ;
+ * - **R8** — invariant du catalogue : tout interactif déclare ≥ 1 niveau ;
+ * - **R9** — `config.data`, quand il est fourni, doit valider le `dataSchema`.
  *
- * ⚠️ **R7 (couverture Bloom par composant) et R8 (invariant du catalogue) sont spécifiées
- * mais NON ACTIVÉES** — Task 8 BLOCKED : les activer fait tomber les 6 formations de 6/6 à
- * 0/6 (catalogue incomplet + inadéquations de niveau). Voir
- * `@docs/katalyst/regles-conformite.md` (« Constat du 2026-09-26 »). Ne pas les ajouter au
- * rapport d'audit sans avoir d'abord complété le catalogue et le contenu.
+ * ⚠️ **Décision utilisateur** : les composants **visuels** sont illustratifs — R7 ne
+ * s'applique **jamais** à eux.
  *
  * Le modèle de contenu est décrit dans `@docs/katalyst/regles-conformite.md`.
  */
 import { auditCourseContent, type RuleReport } from '@/lib/schemas/content';
+import { COMPONENT_CATALOG } from '@/components/registry/catalog';
+import type { BloomLevel } from '@/lib/content/bloom';
 
 /** Forme minimale d'une instance de composant telle que stockée dans la leçon. */
 type ComposantTest = { name: string; position: number; config: unknown };
 
-/** Construit une leçon de test, conforme R6 (type `MISE_EN_PRATIQUE`, niveau `Appliquer`). */
-function lecon(components: ComposantTest[]) {
+/** Options du montage : type de leçon et niveau de Bloom (explicitement absent si `undefined`). */
+type OptionsLecon = { type?: string; bloomLevel?: BloomLevel };
+
+/**
+ * Construit une leçon de test.
+ *
+ * ⚠️ Le niveau par défaut est `Appliquer` (type `MISE_EN_PRATIQUE`, compatible R6) : les
+ * cas de mismatch R7 se lisent alors directement dans le choix du composant. Passer
+ * `bloomLevel: undefined` **déclare le niveau absent** (R3 le signalera), ce qui permet de
+ * vérifier que R7 ne se prononce pas sans niveau de référence.
+ */
+function lecon(components: ComposantTest[], options: OptionsLecon = {}) {
   return {
     id: 'l1',
     title: 'Leçon',
     objective: 'Décrire (en reformulant).',
     content: '',
-    type: 'MISE_EN_PRATIQUE',
+    type: options.type ?? 'MISE_EN_PRATIQUE',
     points: 0,
     position: 0,
-    bloomLevel: 'Appliquer',
+    bloomLevel: 'bloomLevel' in options ? options.bloomLevel : ('Appliquer' as BloomLevel),
     components,
   };
 }
 
 /** Compose une formation à un chapitre et une leçon, puis en retourne le rapport d'audit. */
-function rapport(components: ComposantTest[]) {
+function rapport(components: ComposantTest[], options?: OptionsLecon) {
   return auditCourseContent({
     id: 'c',
     title: 'C',
@@ -51,7 +63,7 @@ function rapport(components: ComposantTest[]) {
         id: 'ch1',
         title: 'Ch',
         position: 0,
-        lessons: [lecon(components)],
+        lessons: [lecon(components, options)],
         quiz: undefined,
       },
     ],
@@ -66,6 +78,45 @@ function regle(resultat: ReturnType<typeof auditCourseContent>, id: string): Rul
 }
 
 describe('règles de conformité multi-composants', () => {
+  describe('R7 — couverture du niveau de Bloom par composant interactif', () => {
+    it('signale un composant interactif dont le Bloom ne couvre pas celui de la leçon', () => {
+      // `RecallQuiz` ne couvre que « Connaître » ; la leçon vise « Appliquer ».
+      const r = rapport([{ name: 'RecallQuiz', position: 0, config: {} }]);
+      expect(regle(r, 'R7').findings.length).toBeGreaterThan(0);
+    });
+
+    it('ne signale rien quand le composant interactif couvre le niveau de la leçon', () => {
+      // Contrôle positif : `StepByStepRunner` couvre « Appliquer ». Sans cette assertion,
+      // une règle qui signale TOUT passerait le test précédent.
+      const r = rapport([{ name: 'StepByStepRunner', position: 0, config: {} }]);
+      expect(regle(r, 'R7').findings).toEqual([]);
+    });
+
+    it('n’applique AUCUNE contrainte de Bloom aux composants visuels', () => {
+      // ⚠️ Décision utilisateur : les visuels sont illustratifs. `GitGraph` ne couvre pas
+      // « Appliquer » — il ne doit pourtant produire aucun constat.
+      const r = rapport([{ name: 'GitGraph', position: 0, config: {} }]);
+      expect(regle(r, 'R7').findings).toEqual([]);
+    });
+
+    it('ne se prononce pas quand la leçon n’a pas de niveau de Bloom déclaré', () => {
+      // Sans niveau de référence, la couverture est indécidable : R3 porte déjà le constat.
+      const r = rapport([{ name: 'RecallQuiz', position: 0, config: {} }], {
+        bloomLevel: undefined,
+      });
+      expect(regle(r, 'R7').findings).toEqual([]);
+    });
+
+    it('est un RAPPORT non bloquant (`donnees-a-completer`), jamais un rejet', () => {
+      // ⚠️ Le contrôle est réel (R7 mesure l'écart), mais la porte d'audit ne doit pas tomber
+      // tant que les formations n'ont pas été alignées : même classification que R3.
+      const r7 = regle(rapport([{ name: 'RecallQuiz', position: 0, config: {} }]), 'R7');
+      expect(r7.indicator).toBe(19);
+      expect(r7.evaluable).toBe(false);
+      expect(r7.notEvaluableReason).toBe('donnees-a-completer');
+    });
+  });
+
   describe('R5.1 — appropriation d’une mise en pratique', () => {
     it('signale une mise en pratique sans composant interactif', () => {
       const r = rapport([]);
@@ -111,5 +162,18 @@ describe('règles de conformité multi-composants', () => {
       ]);
       expect(regle(r, 'R9').findings).toEqual([]);
     });
+  });
+});
+
+describe('R8 — invariant du catalogue', () => {
+  it('tout composant interactif déclare au moins un niveau de Bloom', () => {
+    // ⚠️ R8 n'est PAS une règle par formation : c'est une propriété du catalogue. Un
+    // composant interactif sans niveau ne peut pas être mis en correspondance avec un
+    // objectif (R7), donc le catalogue lui-même est en défaut.
+    const sansNiveau = COMPONENT_CATALOG.filter((meta) => meta.kind === 'interactive')
+      .filter((meta) => meta.bloomLevels.length === 0)
+      .map((meta) => meta.name);
+
+    expect(sansNiveau).toEqual([]);
   });
 });

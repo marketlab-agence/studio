@@ -329,6 +329,31 @@ const COMPONENT_BLOOM_BY_NAME: Record<string, readonly BloomLevel[]> = {
   WorkflowDesigner: ['Créer'],
   TrunkBasedDevelopmentVisualizer: ['Comprendre', 'Analyser'],
 
+  // --- Interactifs Git complétés (R8, Task 8) --------------------------------
+  //
+  // ⚠️ **Complément R8 (2026-09-26).** Ces 15 composants interactifs n'avaient AUCUN niveau :
+  // le catalogue violait son propre invariant (« un tableau vide est un défaut, pas une
+  // option »). Les niveaux sont **déduits de la nature du composant** (sa description), pas
+  // inventés — même méthode que la table ci-dessus.
+  //
+  //  - `AiHelper` est un assistant contextuel générique : il peut accompagner TOUS les niveaux
+  //    cognitifs (poser une question sert aussi bien à se souvenir qu'à créer) → 6 niveaux.
+  ConflictResolver: ['Appliquer', 'Créer'], // choisir les hunks = appliquer, produire la version finale = créer
+  PushPullAnimator: ['Comprendre', 'Appliquer'], // observer la divergence = comprendre, pousser/tirer = appliquer
+  PRWorkflowSimulator: ['Appliquer'], // dérouler le cycle d'une PR = appliquer
+  GitHubInterfaceSimulator: ['Connaître', 'Comprendre'], // s'orienter dans l'interface = connaître/comprendre
+  IssueTracker: ['Appliquer'], // créer/prioriser/assigner des tickets = appliquer
+  ActionsWorkflowBuilder: ['Créer'], // assembler déclencheurs, jobs et étapes = créer
+  WorkflowSimulator: ['Appliquer'], // appliquer un modèle de workflow étape par étape = appliquer
+  FlowDiagramBuilder: ['Créer'], // construire un diagramme de flux = créer
+  TimelineNavigator: ['Comprendre', 'Analyser'], // situer les commits = comprendre, inspecter chaque état = analyser
+  CommitMessageLinter: ['Appliquer'], // saisir un message et vérifier les règles = appliquer
+  GitignoreTester: ['Appliquer'], // saisir des motifs et vérifier l'effet = appliquer
+  AliasCreator: ['Appliquer', 'Créer'], // définir un raccourci = appliquer, le concevoir = créer
+  SecurityScanner: ['Analyser'], // détecter un secret et comprendre la remédiation = analyser
+  OpenSourceSimulator: ['Appliquer'], // dérouler fork/branche/PR/revue = appliquer
+  AiHelper: ['Connaître', 'Comprendre', 'Appliquer', 'Analyser', 'Évaluer', 'Créer'], // assistant contextuel, tous niveaux
+
   // --- Visuels -------------------------------------------------------------
   GitGraph: ['Connaître', 'Comprendre'],
   BranchDiagram: ['Connaître', 'Comprendre'],

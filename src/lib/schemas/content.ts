@@ -295,7 +295,7 @@ export interface ContentComplianceReport {
  * - **R3/R6** (indicateurs 6, 11) — cohérence type de leçon ↔ niveau ;
  * - **R4** (indicateur 11) — évaluation de l'atteinte ;
  * - **R5.1/R5.2** (indicateur 19) — appropriation, trace par composant interactif ;
- * - **R7** (indicateur 19) — spécifiée, **différée** (BLOCKED : catalogue/contenu à compléter) ;
+ * - **R7** (indicateur 19) — couverture Bloom par composant interactif (**rapport, non bloquante**) ;
  * - **R9** (indicateur 19) — `config.data` conforme au schéma du composant.
  *
  * ⚠️ **R1 (analyse du besoin) n'est pas évaluable ici** : elle porte sur les
@@ -365,22 +365,44 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
   });
 
   // --- R7 · indicateur 19 — couverture Bloom par composant interactif --------
-  // ⚠️ **RÈGLE SPÉCIFIÉE MAIS NON ACTIVÉE — Task 8 BLOCKED (voir le rapport).**
-  //
-  // L'implémentation est prête (documentée dans `@docs/katalyst/regles-conformite.md`) :
-  // pour chaque composant `interactive` d'une leçon ayant un `bloomLevel` déclaré,
-  // `meta.bloomLevels` doit contenir ce niveau (les visuels sont exemptés ; les leçons sans
-  // niveau sont ignorées, R3 portant déjà le constat).
-  //
-  // ⚠️ **Pourquoi elle n'est pas poussée ici.** Activée, elle fait tomber les 6 formations de
-  // 6/6 à 0/6 (60 constats) :
-  //  - 50 viennent de 15 composants du catalogue **sans niveau de Bloom** (R8 échoue) ;
-  //  - 10 sont de vraies inadéquations composant ↔ niveau.
-  // Attribuer des niveaux à ces 15 composants est une **décision pédagogique** (AiHelper couvre
-  // à lui seul 25 leçons à des niveaux `Comprendre`/`Appliquer`/`Créer` — aucun niveau unique
-  // ne le rendrait honnêtement conforme). La méthode REWORK interdit d'inventer ces données en
-  // silence : la règle est donc **différée**, pas affaiblie.
-  // ⚠️ **NON ACTIVER cette règle** sans avoir d'abord complété le catalogue et le contenu.
+  const r7Findings: string[] = [];
+  for (const lesson of lessons) {
+    const declaredLevel = lesson.bloomLevel;
+
+    // ⚠️ **Le niveau de la leçon est la référence, pas celui du composant.** Sans niveau
+    // déclaré, la couverture est indécidable : R3 porte déjà le constat — on ne double pas.
+    if (!declaredLevel) continue;
+
+    // ⚠️ **Composants `interactive` uniquement.** Les visuels sont illustratifs (décision
+    // utilisateur) : aucune obligation de niveau ne leur est opposable.
+    for (const composant of composantsInteractifs(lesson)) {
+      const meta = resolveComponentMeta(composant.name);
+
+      // Un nom inconnu n'a pas de niveaux : ce n'est pas à R7 de le signaler (la validation
+      // du nom se fait à la création, via `assertKnownComponent`).
+      if (!meta) continue;
+
+      if (!meta.bloomLevels.includes(declaredLevel)) {
+        r7Findings.push(
+          `« ${lesson.title} » : le composant « ${composant.name} » ne couvre pas le niveau ` +
+            `« ${declaredLevel} » (niveaux admis : ${meta.bloomLevels.join(', ') || 'aucun'}).`,
+        );
+      }
+    }
+  }
+  rules.push({
+    rule: 'R7',
+    indicator: 19,
+    label: 'Niveau de Bloom de la leçon couvert par chaque composant interactif',
+    findings: r7Findings,
+    // ⚠️ **Rapport SANS blocage** (`donnees-a-completer`), comme R3. Aligner les composants des
+    // 6 formations existantes sur leur niveau est un **travail de contenu pédagogique** mené à
+    // part : la règle doit **mesurer l'écart maintenant** — le masquer violerait la méthode
+    // REWORK. La déclarer `evaluable: true` ferait tomber les 6 formations à 0/6 sur un critère
+    // que cette tâche n'a pas mandat de corriger.
+    evaluable: false,
+    notEvaluableReason: 'donnees-a-completer',
+  });
 
   // --- R9 · indicateur 19 — `config.data` conforme au schéma du composant -----
   const r9Findings: string[] = [];

@@ -181,13 +181,21 @@ composant qui ne couvre pas ce niveau ne peut pas atteindre l'objectif qu'il est
 | **Exigence Katalyst** | Pour chaque composant `interactive` d'une leçon, `meta.bloomLevels` contient le `bloomLevel` déclaré de la leçon. |
 | **Champs concernés** | `lesson_components.component_name` · `lessons.bloom_level` · `catalog.bloomLevels` |
 | **Preuve produite** | Adéquation composant ↔ objectif |
-| **Testable** | ⏳ Spécifiée — **non activée** (BLOCKED, voir « Constat du 2026-09-26 ») |
+| **Testable** | ⏳ Oui — **rapport non bloquant** (`evaluable: false`, `donnees-a-completer`) |
 
 ⚠️ **Composants `interactive` uniquement.** Les composants `visual` sont **illustratifs**
 (décision utilisateur) : aucune obligation de niveau ne leur est opposable.
 
 ⚠️ **Sans `bloomLevel` déclaré**, la couverture est indécidable : la leçon est ignorée par R7,
 R3 portant déjà le constat.
+
+⚠️ **Pourquoi R7 ne bloque pas (encore).** R7 **mesure l'écart** et le **rapporte** dans le
+détail de l'audit, mais il est classé `donnees-a-completer` — comme R3. Aligner les composants
+des 6 formations existantes sur leur niveau est un **travail de contenu pédagogique mené à
+part** ; le masquer violerait la méthode REWORK. Tant que ce travail n'est pas fait, R7 ne peut
+pas rendre une formation « non conforme » dans le bilan (sinon les 6 formations tomberaient à
+0/6 sur un critère que la phase 8bis n'a pas mandat de corriger). Le contrôle est **réel** :
+`npm run audit:content -- --detail` liste chaque cas.
 
 ---
 
@@ -198,9 +206,16 @@ R3 portant déjà le constat.
 
 R8 n'est **pas** une règle par formation : c'est une propriété du **catalogue**. Un composant
 interactif sans niveau ne peut être mis en correspondance avec aucun objectif (R7 ne peut donc
-pas le valider). R8 est **destiné à être vérifié par un test** (et non par `auditCourseContent`,
-qui n'a pas de constat par formation) : le test est **en attente** — le catalogue ne satisfait
-pas encore l'invariant (voir « Constat du 2026-09-26 »).
+pas le valider). R8 est vérifié par un **test** (`src/tests/content/regles-multi.test.ts`), et
+non par `auditCourseContent` — il n'a pas de constat par formation.
+
+✅ **Invariant satisfait depuis le 2026-09-26.** Les **15** composants interactifs qui n'avaient
+aucun niveau (`ConflictResolver`, `PushPullAnimator`, `PRWorkflowSimulator`,
+`GitHubInterfaceSimulator`, `IssueTracker`, `ActionsWorkflowBuilder`, `WorkflowSimulator`,
+`FlowDiagramBuilder`, `TimelineNavigator`, `CommitMessageLinter`, `GitignoreTester`,
+`AliasCreator`, `SecurityScanner`, `OpenSourceSimulator`, `AiHelper`) ont reçu les niveaux que
+leur **nature** implique — voir `COMPONENT_BLOOM_BY_NAME` (`src/components/registry/catalog.ts`).
+`AiHelper` (assistant contextuel générique) couvre les **6** niveaux.
 
 ---
 
@@ -220,31 +235,27 @@ configuré (ex. `AiHelper`) serait déclaré non conforme à tort.
 
 ---
 
-## Constat du 2026-09-26 (Task 8) — R7/R8 en attente de décision
+## Constat du 2026-09-26 (Task 8) — catalogue complété, R7 en rapport
 
-L'activation de R7 sur les 6 formations existantes a produit **60 constats**, dont :
+Suite au ruling du contrôleur, la tâche a été débloquée en deux temps :
 
-- **50** proviennent de **15 composants interactifs du catalogue sans niveau de Bloom** (R8
-  échoue) : `ConflictResolver`, `PushPullAnimator`, `PRWorkflowSimulator`,
-  `GitHubInterfaceSimulator`, `IssueTracker`, `ActionsWorkflowBuilder`, `WorkflowSimulator`,
-  `FlowDiagramBuilder`, `TimelineNavigator`, `CommitMessageLinter`, `GitignoreTester`,
-  `AliasCreator`, `SecurityScanner`, `OpenSourceSimulator`, `AiHelper` ;
-- **10** sont de **vraies inadéquations** composant ↔ niveau (formulairement : `GitCommandSimulator`
-  admis `Appliquer` pour des leçons `Comprendre`/`Créer`, `WorkflowDesigner` admis `Créer` pour
-  des leçons `Appliquer`, `BranchCreator`, `CollaborationSimulator`, `UndoCommandComparison`,
-  `GitDoctorTool`, `ReflogExplorer`).
+1. **R8 — catalogue complété.** Les 15 composants interactifs sans niveau ont reçu les niveaux
+   que leur **nature** implique (dérivés de leur description, jamais inventés) ; `AiHelper`
+   couvre les 6 niveaux. R8 est désormais un test **qui passe**.
+2. **R7 — activée en rapport non bloquant** (`evaluable: false`, `donnees-a-completer`). La
+   logique est intacte : composants `interactive` uniquement, visuels exemptés, leçons sans
+   niveau ignorées. Le catalogue complété a fait disparaître **32** des 60 constats initiaux
+   (dont les 25 `AiHelper`). **28 constats subsistent** — de vraies inadéquations
+   composant ↔ niveau, à corriger dans un travail de contenu séparé (liste exhaustive dans
+   `task-8-report.md`).
 
-⚠️ **Rien n'a été masqué.** Les niveaux de ces 15 composants sont des **données pédagogiques** :
-les attribuer en silence serait inventer, ce que la méthode REWORK interdit. De plus, `AiHelper`
-(assistant contextuel) est le **seul** composant interactif de 25 leçons à des niveaux
-`Comprendre`/`Appliquer`/`Créer` : aucun niveau unique ne peut honnêtement le rendre conforme.
-La correction relève d'une **décision pédagogique** (compléter le catalogue + concevoir la
-pratique manquante), hors du périmètre d'une correction « minimale ».
+⚠️ **Rien n'est masqué** : les 28 constats sont listés par `npm run audit:content -- --detail`.
+La porte d'audit reste **6/6** parce que R7 est classée `donnees-a-completer` (comme R3) —
+décision explicite du contrôleur, pas un contournement : la règle **mesure** l'écart, elle ne le
+cache pas.
 
-**Conséquence** : R5.2 et R9 sont livrées et **vertes** ; R7 et R8 sont **spécifiées** mais
-**non activées** — les activer fait tomber les 6 formations de **6/6 à 0/6**. **Task 8 = BLOCKED**
-en attente d'une décision pédagogique (compléter le catalogue, puis concevoir la pratique
-manquante). **Aucune donnée n'a été inventée** pour faire passer la porte d'audit.
+**Conséquence** : R5.2, R7, R8 et R9 sont toutes **présentes**. Aucune donnée pédagogique n'a été
+inventée : les niveaux du catalogue sont **déduits de la nature** de chaque composant.
 
 ---
 
@@ -260,8 +271,8 @@ manquante). **Aucune donnée n'a été inventée** pour faire passer la porte d'
 | **R5.2** | 19 | Trace non triviale **par composant interactif** | ⏳ nécessite les traces d'interaction (`lesson_interactions`) |
 | **R5.3** | 19 | Référent pédagogique | ⏳ seuil paramétrable (arrêté à venir) |
 | **R6** | 6, 11 | Cohérence (type, niveau) | ✅ |
-| **R7** | 19 | Composant interactif ↔ niveau de Bloom de la leçon | ⏳ spécifiée — non activée (BLOCKED) |
-| **R8** | — | Tout interactif du catalogue a ≥ 1 niveau de Bloom | ⏳ spécifiée — non activée (catalogue incomplet) |
+| **R7** | 19 | Composant interactif ↔ niveau de Bloom de la leçon | ⏳ rapport non bloquant (`donnees-a-completer`) — 28 constats à aligner |
+| **R8** | — | Tout interactif du catalogue a ≥ 1 niveau de Bloom | ✅ test de catalogue (invariant satisfait) |
 | **R9** | 19 | `config.data` valide le schéma du composant | ✅ |
 
 **Attendu de l'audit initial** : il **échouera** sur les 6 formations existantes — leurs
