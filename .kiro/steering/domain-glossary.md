@@ -39,11 +39,17 @@ applicables à la formation, au chapitre ou à la leçon — ouverture à une da
 
 ## Interactivité et composants
 
+> Depuis la phase 8bis (voir `adr/0013`), une leçon porte **N composants ordonnés**
+> (table `lesson_components`, clé de substitution `UUID`). Les anciens champs
+> `interactiveComponentName` / `visualComponentName` **n'existent plus**.
+
 | Terme | Définition |
 |---|---|
-| **Composant interactif** | Simulateur manipulable par l'apprenant (`interactiveComponentName`). **Obligatoire** sur toute leçon — c'est le cœur de Katalyst. |
-| **Composant visuel** | Diagramme/visualisation non manipulable (`visualComponentName`). |
-| **Registre** | `src/components/registry.ts` — source unique des composants disponibles. Alimente l'UI, l'IA et l'outil de création. |
+| **Composant interactif** | Simulateur manipulable par l'apprenant. **Produit une trace** (indicateur 19). Cible ≥ 2 par leçon quand c'est pertinent — **plancher non bloquant : 0 est autorisé** (une leçon notionnelle peut n'avoir aucun exercice in-app). |
+| **Composant visuel** | Diagramme/visualisation **non manipulable**, **illustratif**. **Aucune obligation de niveau Bloom** et **aucune trace** exigée (le décret ne les mentionne pas). |
+| **`kind`** | Attribut du **catalogue** (`interactive` \| `visual`), à sens réglementaire : il détermine **qui doit produire une trace**. Plus stocké sur la leçon. |
+| **`config`** | `{ labels, data }` d'une **instance** de composant. Les **libellés sont des données** (jamais traduits) ; `{}` rend le composant comme avant, par défaut. |
+| **Registre** | `src/components/registry/` — source unique des composants : `catalog.ts` (métadonnées + schémas Zod, **sans import React**) et `index.ts` (liaison au rendu). Alimente l'UI, l'IA et l'outil de création. |
 
 ## Déblocage et progression
 
