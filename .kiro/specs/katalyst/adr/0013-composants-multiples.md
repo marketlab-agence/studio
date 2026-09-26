@@ -74,6 +74,28 @@ Le registre porte déjà `bloomLevels` par composant et expose `listByBloomLevel
 - Le rendu doit gérer **N composants ordonnés** au lieu de 2 emplacements fixes.
 - `R5.2` change de portée : l'audit peut découvrir des formations jusque-là « conformes » qui ne l'étaient que par confusion entre leçon et composant.
 
+## Amendement du 2026-09-26 — portée réelle de `config` (tous les composants)
+
+### Constat (revue finale de branche)
+
+La décision 6 (libellés en données) et la décision 7 (schema strict pour les 58) n'étaient **réellement appliquées qu'à ~27 composants** : les 12 primitives et les 15 configurations Git. Pour les autres, `src/components/registry/index.ts` mappe les noms vers des composants qui **ignorent `config`** — un créateur (ou l'IA) peut donc éditer un libellé ou une donnée qui est **silencieusement écarté au rendu**. Neuf variantes config-aware (`*Config`) étaient de plus importées sans être câblées. C'est un écart entre la décision et le livré, pas une nouvelle exigence.
+
+### Décision
+
+1. **Les décisions 6 et 7 s'appliquent à TOUS les composants du catalogue** — y compris les composants spécialisés et les composants visuels. Un libellé ou une donnée éditée par le créateur (ou produite par l'IA) doit être **visible au rendu**.
+2. **Principe de non-régression (impératif).** Les libellés par défaut d'un composant sont **exactement ce qu'il affiche déjà** : un composant sans configuration rend **à l'identique**. On n'introduit aucun titre ni bloc nouveau sans configuration.
+3. **`labelKeys` décrit ce que le composant expose réellement.** Si un composant n'affiche aucun titre ou texte remplaçable, ses `labelKeys` sont **réalignés sur ce qu'il expose** (ou restreints) — cohérent avec la spec §4.4 : « le formulaire ne propose pas de modifier un texte qui n'existe pas ».
+4. **`config.data` est honorée là où le schéma décrit réellement ce que le composant consomme.** Pour les composants non data-driven, les `DATA_SCHEMAS` sont **réalignés sur la forme réellement lue** (ou ramenés à `z.object({})` lorsqu'aucune donnée structurée n'est attendue) — **sans réécriture de comportement**. Le schéma reste le contrat, mais il décrit la vérité du composant.
+
+### Exécution (par lots, porte qualité après chacun)
+
+- Lot 0 : **ne pas substituer** de variantes qui changeraient le rendu — conserver les composants rendus aujourd'hui et les rendre **eux-mêmes** config-aware ; supprimer les imports `*Config` devenus morts (ou les aligner si un composant rendu pointe déjà dessus).
+- Lot 1 : composants **visuels** (13) — config-aware (libellés) + schémas réalignés.
+- Lots 2..n : composants **interactifs spécialisés**, par paquets, avec `typecheck`/`lint`/tests/audit après chaque paquet.
+- Porte finale : suite complète (unitaires, DB, E2E) avant fusion.
+
+> Le lot 0 et le lot 1 doivent confirmer la règle « sans config = rendu identique » sur un composant représentatif de chaque catégorie.
+
 ## Alternatives écartées
 
 | Alternative | Raison du rejet |
