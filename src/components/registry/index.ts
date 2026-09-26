@@ -6,18 +6,9 @@ import { COMPONENT_CATALOG, type ComponentMeta } from './catalog';
 // primitives génériques et produisent une trace. Voir git-configurations.tsx.
 import {
   GitDoctorTool as GitDoctorToolConfig,
-  GitRepositoryPlayground as GitRepositoryPlaygroundConfig,
   MergeStrategyComparison,
   UndoCommandComparison as UndoCommandComparisonConfig,
-  ForkVsCloneDemo as ForkVsCloneDemoConfig,
-  TrunkBasedDevelopmentVisualizer as TrunkBasedDevelopmentVisualizerConfig,
-  ReflogExplorer as ReflogExplorerConfig,
-  ResolutionGuide as ResolutionGuideConfig,
-  PullRequestCreator as PullRequestCreatorConfig,
-  CollaborationSimulator as CollaborationSimulatorConfig,
-  WorkflowDesigner as WorkflowDesignerConfig,
   ConflictVisualizer as ConflictVisualizerConfig,
-  GitTimeTravel as GitTimeTravelConfig,
   StagingAreaVisualizer as StagingAreaVisualizerConfig,
 } from '@/components/interactive/git-configurations';
 import { AiHelper } from '@/components/interactive/AiHelper';
