@@ -187,3 +187,59 @@ export function validerConfigurationComposant(
 
   return { valide: true };
 }
+
+/** Composant brut, tel que proposé par une source non fiable (IA notamment). */
+export type ComposantPropose = {
+  name: string;
+  config?: ComponentConfig;
+};
+
+export type ResultatFiltrageComposants = {
+  /** Composants retenus, renumérotés en `0..N-1`. */
+  composants: LessonComponent[];
+  /** Composants écartés, avec la raison — journalisée, jamais passée sous silence. */
+  rejetes: { nom: string; message: string }[];
+};
+
+/**
+ * Filtre une liste de composants proposés par une source **non fiable** (la sortie IA).
+ *
+ * ⚠️ **L'IA propose, le catalogue dispose.** Une sortie de modèle peut nommer un composant
+ * absent du registre ou fournir une `config.data` hors schéma : la persister ferait échouer
+ * le rendu pour l'apprenant, et le défaut ne se verrait qu'en production. On applique donc
+ * *exactement* la même validation que l'enregistrement manuel
+ * (`resolveComponentMeta` + `validerConfigurationComposant`), mais on **écarte** le composant
+ * fautif — en conservant la raison — plutôt que de rejeter toute la leçon.
+ *
+ * ⚠️ **La liste vide est un résultat valide** : une leçon notionnelle peut n'avoir aucun
+ * composant.
+ */
+export function validerComposantsGeneres(
+  composants: readonly ComposantPropose[],
+): ResultatFiltrageComposants {
+  const retenus: LessonComponent[] = [];
+  const rejetes: ResultatFiltrageComposants['rejetes'] = [];
+
+  for (const composant of composants) {
+    if (!resolveComponentMeta(composant.name)) {
+      rejetes.push({ nom: composant.name, message: `Composant inconnu : ${composant.name}` });
+      continue;
+    }
+
+    const resultat = validerConfigurationComposant(composant.name, composant.config);
+    if (!resultat.valide) {
+      rejetes.push({ nom: composant.name, message: resultat.message });
+      continue;
+    }
+
+    // ⚠️ La `position` vient de l'index des composants **retenus** : filtrer un composant
+    // ne doit pas laisser de trou dans la suite `0..N-1`.
+    retenus.push({
+      name: composant.name,
+      position: retenus.length,
+      config: composant.config ?? {},
+    });
+  }
+
+  return { composants: retenus, rejetes };
+}

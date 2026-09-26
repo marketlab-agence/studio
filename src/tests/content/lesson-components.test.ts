@@ -11,6 +11,7 @@ import {
   analyserDonneesJson,
   attendDesDonnees,
   validerConfigurationComposant,
+  validerComposantsGeneres,
 } from '@/lib/content/lesson-components';
 import { resolveComponentMeta, type ComponentMeta } from '@/components/registry/catalog';
 import type { LessonComponent } from '@/types/tutorial.types';
@@ -182,5 +183,50 @@ describe('validation d’une configuration de composant', () => {
     if (!resultat.valide) {
       expect(resultat.message).toContain('Composant inconnu : ComposantFantome');
     }
+  });
+});
+
+describe('filtrage des composants proposés par l’IA avant persistance', () => {
+  it('écarte un composant inconnu en conservant la raison', () => {
+    const resultat = validerComposantsGeneres([
+      { name: 'RecallQuiz' },
+      { name: 'ComposantFantome' },
+    ]);
+
+    expect(resultat.composants.map((c) => c.name)).toEqual(['RecallQuiz']);
+    expect(resultat.rejetes).toHaveLength(1);
+    expect(resultat.rejetes[0].nom).toBe('ComposantFantome');
+    expect(resultat.rejetes[0].message).toContain('Composant inconnu');
+  });
+
+  it('écarte un composant dont config.data ne valide pas le schéma', () => {
+    const resultat = validerComposantsGeneres([
+      { name: 'MatchingPairs', config: { data: { pairs: [] } } },
+    ]);
+
+    expect(resultat.composants).toHaveLength(0);
+    expect(resultat.rejetes).toHaveLength(1);
+    expect(resultat.rejetes[0].message).toContain('Configuration invalide pour MatchingPairs');
+  });
+
+  it('conserve les composants valides et renumérote les positions en 0..N-1', () => {
+    const resultat = validerComposantsGeneres([
+      { name: 'ComposantFantome' },
+      { name: 'RecallQuiz' },
+      { name: 'GitGraph' },
+    ]);
+
+    expect(resultat.composants.map((c) => c.name)).toEqual(['RecallQuiz', 'GitGraph']);
+    expect(resultat.composants.map((c) => c.position)).toEqual([0, 1]);
+    expect(resultat.rejetes).toHaveLength(1);
+  });
+
+  it('accepte une liste vide et accepte deux fois le même composant', () => {
+    expect(validerComposantsGeneres([])).toEqual({ composants: [], rejetes: [] });
+
+    const deux = validerComposantsGeneres([{ name: 'RecallQuiz' }, { name: 'RecallQuiz' }]);
+    expect(deux.composants).toHaveLength(2);
+    expect(deux.composants.map((c) => c.position)).toEqual([0, 1]);
+    expect(deux.rejetes).toHaveLength(0);
   });
 });

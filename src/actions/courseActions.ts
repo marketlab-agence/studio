@@ -13,7 +13,7 @@ import { generateLessonContent, type GenerateLessonContentInput } from '@/ai/flo
 import type { ComponentDomain } from '@/components/registry/catalog';
 import { getRelevantComponents } from '@/lib/content/component-selection';
 import { BLOOM_LEVELS, type BloomLevel } from '@/lib/content/bloom';
-import { renumeroter, validerConfigurationComposant } from '@/lib/content/lesson-components';
+import { renumeroter, validerComposantsGeneres, validerConfigurationComposant } from '@/lib/content/lesson-components';
 
 const slugify = (text: string) =>
   text
@@ -354,19 +354,23 @@ export async function generateLessonContentAction(
       leconCible.content = illustrativeContent;
 
       /**
-       * ⚠️ **L'ordre vient de l'IA, les positions de l'index.** Le flux reçoit une liste
-       * déjà ordonnée (pratique puis illustration, s'il y a lieu) ; on la persiste telle
-       * quelle. La liste peut être **vide** : une leçon notionnelle n'a pas forcément
-       * d'exercice, et le plancher de composants n'est **pas bloquant**.
-       *
-       * ⚠️ **La `config` de chaque composant est préservée** : c'est elle qui porte les
-       * libellés (dans la langue de la formation) et les données de l'instance.
+       * ⚠️ **La sortie de l'IA passe la MÊME validation que l'enregistrement manuel.**
+       * Un modèle peut nommer un composant absent du catalogue ou fournir une
+       * `config.data` hors schéma ; le persister ferait échouer le rendu de la leçon.
+       * On écarte donc le composant fautif — en journalisant la raison — au lieu de
+       * faire confiance à la sortie. L'ordre de l'IA est conservé, les positions
+       * renumérotées en `0..N-1`.
        */
-      leconCible.components = components.map((composant, index) => ({
-        name: composant.name,
-        position: index,
-        config: composant.config ?? {},
-      }));
+      const { composants: composantsValides, rejetes } = validerComposantsGeneres(components);
+
+      for (const rejet of rejetes) {
+        // Signalé, jamais ignoré en silence : une proposition écartée est une information.
+        console.warn(
+          `[generateLessonContentAction] composant IA écarté — ${rejet.message}`,
+        );
+      }
+
+      leconCible.components = composantsValides;
 
       await saveTutorials(tutorials);
 
