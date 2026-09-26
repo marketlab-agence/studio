@@ -21,20 +21,121 @@ const Etape = z.object({
   explanation: z.string().optional(),
 });
 
-const Carte = z.object({ front: z.string().min(1), back: z.string().min(1) });
-const Paire = z.object({ left: z.string().min(1), right: z.string().min(1) });
-const ItemTrie = z.object({ label: z.string().min(1), category: z.string().min(1) });
+const Carte = z.object({ id: z.string().min(1), front: z.string().min(1), back: z.string().min(1) });
+const Paire = z.object({
+  id: z.string().min(1),
+  left: z.string().min(1),
+  right: z.string().min(1),
+  explanation: z.string().optional(),
+});
+const CategorieTri = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  explanation: z.string().optional(),
+});
+const ItemTrie = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  categoryId: z.string().min(1),
+  hint: z.string().optional(),
+});
 const Checkpoint = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  // ⚠️ Le composant lit `detail`, pas `description` : le schéma doit décrire ce qui est rendu.
+  detail: z.string().optional(),
+  requiresInput: z.boolean().optional(),
+});
+
+/**
+ * Question de `RecallQuiz`.
+ * ⚠️ La forme suit exactement ce que le composant rend : un `id`, un `text` et des `answers`
+ * typées. `isCorrect` et `explanation` sont tolérés par le composant (le premier peut être faux
+ * partout, la seconde peut manquer) : ils restent donc optionnels côté schéma.
+ */
+const QuestionRappel = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  answers: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        text: z.string().min(1),
+        isCorrect: z.boolean().optional(),
+      }),
+    )
+    .min(1),
+  isMultipleChoice: z.boolean().optional(),
+  explanation: z.string().optional(),
+});
+
+/** Cause de `CaseDiagnosis` : le composant ne lit que `id` et `label`. */
+const CauseDiagnostic = z.object({ id: z.string().min(1), label: z.string().min(1) });
+
+const IndiceDiagnostic = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  relevant: z.boolean(),
+  significance: z.string().optional(),
+});
+
+const OptionComparaison = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   description: z.string().optional(),
 });
 
+const CritereComparaison = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  guidance: z.string().optional(),
+});
+
+const OptionDecision = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  pros: z.array(z.string().min(1)).optional(),
+  cons: z.array(z.string().min(1)).optional(),
+  quality: z.enum(['best', 'acceptable', 'poor']).nullish(),
+  feedback: z.string().optional(),
+});
+
+const CritereRevue = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  guidance: z.string().min(1),
+});
+
+const CritereRedaction = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  guidance: z.string().min(1),
+  pattern: z.string().optional(),
+});
+
+/** Rubrique de `BuilderCanvas` : le composant lit `id`, `label`, `prompt`, `placeholder`, `required`. */
+const RubriqueCanevas = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  prompt: z.string().optional(),
+  placeholder: z.string().optional(),
+  required: z.boolean().optional(),
+});
+
 /** Chaînes non vides : une liste vide n'a pas de sens pédagogique. */
 const Textes = z.array(z.string().min(1)).min(1);
 
+const BlocRepetable = z.object({
+  label: z.string().min(1),
+  max: z.number().int().positive().optional(),
+});
+
 /**
  * Schémas par nom de composant.
+ *
+ * ⚠️ **Chaque schéma décrit EXACTEMENT les données que le composant lit dans `config.data`.**
+ * Un schéma qui ne correspond pas au rendu rendrait la validation (écriture Task 7, audit R9
+ * Task 8) trompeuse : elle accepterait des données qu'aucun composant ne saurait afficher.
  *
  * ⚠️ **Un composant absent reçoit `z.object({})`** — il n'accepte alors aucune
  * donnée structurée. C'est un repli sûr, mais le test exige que **les 58**
@@ -44,54 +145,110 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   // --- Les 12 primitives génériques ---
   StepByStepRunner: z.object({ steps: z.array(Etape).min(1) }),
   GuidedProcedure: z.object({ checkpoints: z.array(Checkpoint).min(1) }),
-  RecallQuiz: z.object({
-    questions: z.array(z.object({ question: z.string().min(1), answer: z.string().min(1) })).min(1),
-  }),
+  RecallQuiz: z.object({ questions: z.array(QuestionRappel).min(1) }),
   FlashcardDrill: z.object({ cards: z.array(Carte).min(1) }),
-  SortingGame: z.object({ categories: Textes, items: z.array(ItemTrie).min(1) }),
+  SortingGame: z.object({
+    categories: z.array(CategorieTri).min(1),
+    items: z.array(ItemTrie).min(1),
+  }),
   MatchingPairs: z.object({ pairs: z.array(Paire).min(1) }),
   CaseDiagnosis: z.object({
-    symptoms: Textes,
-    causes: z.array(z.object({ label: z.string().min(1), correct: z.boolean() })).min(1),
+    situation: z.string().min(1),
+    clues: z.array(IndiceDiagnostic).min(1),
+    causes: z.array(CauseDiagnostic).min(2),
+    correctCauseId: z.string().min(1),
   }),
-  CompareContrast: z.object({ criteria: Textes }),
-  DecisionScenario: z.object({ choices: Textes }),
-  PeerReviewSimulator: z.object({ rubric: Textes }),
-  BuilderCanvas: z.object({ blocks: Textes }),
-  DraftCoach: z.object({ prompt: z.string().min(1) }),
+  CompareContrast: z.object({
+    optionA: OptionComparaison,
+    optionB: OptionComparaison,
+    criteria: z.array(CritereComparaison).min(1),
+    expectedConclusion: z.string().optional(),
+  }),
+  DecisionScenario: z.object({
+    scenario: z.string().min(1),
+    options: z.array(OptionDecision).min(1),
+  }),
+  PeerReviewSimulator: z.object({
+    workToReview: z.string().min(1),
+    criteria: z.array(CritereRevue).min(1),
+  }),
+  BuilderCanvas: z.object({
+    sections: z.array(RubriqueCanevas).min(1).optional(),
+    blocks: Textes.optional(),
+    repeatable: BlocRepetable.optional(),
+  }),
+  DraftCoach: z.object({
+    prompt: z.string().min(1),
+    example: z.string().optional(),
+    criteria: z.array(CritereRedaction).optional(),
+  }),
 
   // --- Configurations Git (elles dérivent les données des primitives) ---
+  // ⚠️ Une configuration qui transmet `config` à une primitive décrit **la même forme** que
+  // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitCommandSimulator: z.object({ steps: z.array(Etape).min(1) }),
   GitRepositoryPlayground: z.object({ blocks: Textes }),
-  GitTimeTravel: z.object({ commits: Textes }),
-  GitDoctorTool: z.object({ symptoms: Textes }),
-  StagingAreaVisualizer: z.object({ files: Textes }),
+  GitTimeTravel: z.object({ pairs: z.array(Paire).min(1) }),
+  GitDoctorTool: z.object({
+    situation: z.string().min(1),
+    clues: z.array(IndiceDiagnostic).min(1),
+    causes: z.array(CauseDiagnostic).min(2),
+    correctCauseId: z.string().min(1),
+  }),
+  StagingAreaVisualizer: z.object({
+    categories: z.array(CategorieTri).min(1),
+    items: z.array(ItemTrie).min(1),
+  }),
   VersioningDemo: z.object({ commits: Textes }),
   BranchCreator: z.object({ branches: z.array(z.string().min(1)).optional() }),
   MergeSimulator: z.object({ branches: Textes }),
   ConflictPlayground: z.object({ files: Textes }),
-  ConflictVisualizer: z.object({ files: Textes }),
+  ConflictVisualizer: z.object({
+    categories: z.array(CategorieTri).min(1),
+    items: z.array(ItemTrie).min(1),
+  }),
   ConflictResolver: z.object({ files: Textes }),
-  ResolutionGuide: z.object({ steps: z.array(Etape).min(1) }),
+  ResolutionGuide: z.object({ checkpoints: z.array(Checkpoint).min(1) }),
   PushPullAnimator: z.object({ steps: z.array(Etape).min(1) }),
-  ForkVsCloneDemo: z.object({ criteria: Textes }),
+  ForkVsCloneDemo: z.object({
+    optionA: OptionComparaison,
+    optionB: OptionComparaison,
+    criteria: z.array(CritereComparaison).min(1),
+    expectedConclusion: z.string().optional(),
+  }),
   PRWorkflowSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  PullRequestCreator: z.object({ steps: z.array(Etape).min(1) }),
+  PullRequestCreator: z.object({
+    prompt: z.string().min(1),
+    example: z.string().optional(),
+    criteria: z.array(CritereRedaction).optional(),
+  }),
   GitHubInterfaceSimulator: z.object({ blocks: Textes }),
   IssueTracker: z.object({ items: z.array(ItemTrie).min(1) }),
   ActionsWorkflowBuilder: z.object({ steps: z.array(Etape).min(1) }),
   WorkflowSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  WorkflowDesigner: z.object({ blocks: Textes }),
+  WorkflowDesigner: z.object({
+    sections: z.array(RubriqueCanevas).min(1).optional(),
+    blocks: Textes.optional(),
+    repeatable: BlocRepetable.optional(),
+  }),
   FlowDiagramBuilder: z.object({ blocks: Textes }),
-  TrunkBasedDevelopmentVisualizer: z.object({ steps: z.array(Etape).min(1) }),
-  ReflogExplorer: z.object({ commits: Textes }),
+  TrunkBasedDevelopmentVisualizer: z.object({
+    optionA: OptionComparaison,
+    optionB: OptionComparaison,
+    criteria: z.array(CritereComparaison).min(1),
+    expectedConclusion: z.string().optional(),
+  }),
+  ReflogExplorer: z.object({ steps: z.array(Etape).min(1) }),
   TimelineNavigator: z.object({ commits: Textes }),
   UndoCommandComparison: z.object({ criteria: Textes }),
   CommitMessageLinter: z.object({ examples: Textes }),
   GitignoreTester: z.object({ patterns: Textes }),
   AliasCreator: z.object({ examples: z.array(z.string().min(1)).optional() }),
   SecurityScanner: z.object({ patterns: Textes }),
-  CollaborationSimulator: z.object({ steps: z.array(Etape).min(1) }),
+  CollaborationSimulator: z.object({
+    scenario: z.string().min(1),
+    options: z.array(OptionDecision).min(1),
+  }),
   OpenSourceSimulator: z.object({ steps: z.array(Etape).min(1) }),
   AiHelper: z.object({ prompt: z.string().min(1) }),
 

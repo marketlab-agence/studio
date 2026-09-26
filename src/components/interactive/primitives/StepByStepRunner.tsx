@@ -71,7 +71,7 @@ export interface StepByStepRunnerProps {
 type StepState = 'pending' | 'current' | 'done';
 
 export function StepByStepRunner({
-  title = 'Procédure guidée',
+  title,
   description,
   steps,
   lessonId,
