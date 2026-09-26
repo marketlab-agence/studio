@@ -187,7 +187,16 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   // ⚠️ Une configuration qui transmet `config` à une primitive décrit **la même forme** que
   // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitCommandSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  GitRepositoryPlayground: z.object({ blocks: Textes }),
+  // ⚠️ Le composant enregistré (`src/components/interactive/GitRepositoryPlayground.tsx`) n'est
+  // pas encore config-aware, mais `git-configurations.tsx` expose une configuration qui forward
+  // vers `BuilderCanvas`. Le schéma décrit donc la forme de `BuilderCanvas` pour que la donnée
+  // soit valide le jour où le câblage l'utilise — et pour ne pas accepter un `blocks` requis
+  // quand `BuilderCanvas` accepte aussi `sections`.
+  GitRepositoryPlayground: z.object({
+    sections: z.array(RubriqueCanevas).min(1).optional(),
+    blocks: Textes.optional(),
+    repeatable: BlocRepetable.optional(),
+  }),
   GitTimeTravel: z.object({ pairs: z.array(Paire).min(1) }),
   GitDoctorTool: z.object({
     situation: z.string().min(1),
@@ -201,7 +210,14 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   }),
   VersioningDemo: z.object({ commits: Textes }),
   BranchCreator: z.object({ branches: z.array(z.string().min(1)).optional() }),
-  MergeSimulator: z.object({ branches: Textes }),
+  // ⚠️ `MergeSimulator` est enregistré sur `MergeStrategyComparison`, qui transmet `config`
+  // à `CompareContrast` : le schéma doit donc décrire la forme de `CompareContrast`.
+  MergeSimulator: z.object({
+    optionA: OptionComparaison,
+    optionB: OptionComparaison,
+    criteria: z.array(CritereComparaison).min(1),
+    expectedConclusion: z.string().optional(),
+  }),
   ConflictPlayground: z.object({ files: Textes }),
   ConflictVisualizer: z.object({
     categories: z.array(CategorieTri).min(1),
@@ -240,7 +256,16 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   }),
   ReflogExplorer: z.object({ steps: z.array(Etape).min(1) }),
   TimelineNavigator: z.object({ commits: Textes }),
-  UndoCommandComparison: z.object({ criteria: Textes }),
+  // ⚠️ `UndoCommandComparison` est enregistré sur `UndoCommandComparisonConfig`, qui transmet
+  // `config` à `CompareContrast` : le schéma doit décrire la forme de `CompareContrast`
+  // (et non un `{ criteria: string[] }` que `CompareContrast` interpréterait comme des critères
+  // structurés — donc inutilisable).
+  UndoCommandComparison: z.object({
+    optionA: OptionComparaison,
+    optionB: OptionComparaison,
+    criteria: z.array(CritereComparaison).min(1),
+    expectedConclusion: z.string().optional(),
+  }),
   CommitMessageLinter: z.object({ examples: Textes }),
   GitignoreTester: z.object({ patterns: Textes }),
   AliasCreator: z.object({ examples: z.array(z.string().min(1)).optional() }),

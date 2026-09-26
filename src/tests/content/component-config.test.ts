@@ -75,6 +75,45 @@ describe('contrat de configuration', () => {
  * de la primitive, projetée). Le test échoue dès qu'un schéma dérive de son composant.
  */
 describe('DATA_SCHEMAS — alignés sur les données réellement lues par les composants', () => {
+  /**
+   * ⚠️ **Périmètre verrouillé.** Les composants rendus config-aware par la Task 5 : les 12
+   * primitives + les 14 configurations Git éditées dans `git-configurations.tsx` (dont
+   * `GitCommandSimulator`, config-aware à part). Une omission ici est exactement ce qui a laissé
+   * passer les dérives `MergeSimulator` / `UndoCommandComparison`.
+   */
+  const PERIMETRE = [
+    // 12 primitives
+    'StepByStepRunner',
+    'GuidedProcedure',
+    'RecallQuiz',
+    'FlashcardDrill',
+    'SortingGame',
+    'MatchingPairs',
+    'CaseDiagnosis',
+    'CompareContrast',
+    'DecisionScenario',
+    'PeerReviewSimulator',
+    'BuilderCanvas',
+    'DraftCoach',
+    // 14 configurations Git config-aware
+    'GitCommandSimulator',
+    'GitDoctorTool',
+    'GitRepositoryPlayground',
+    'MergeSimulator',
+    'UndoCommandComparison',
+    'ForkVsCloneDemo',
+    'TrunkBasedDevelopmentVisualizer',
+    'ReflogExplorer',
+    'ResolutionGuide',
+    'PullRequestCreator',
+    'CollaborationSimulator',
+    'WorkflowDesigner',
+    'ConflictVisualizer',
+    'GitTimeTravel',
+    'StagingAreaVisualizer',
+  ] as const;
+
+  /** Échantillon = exactement la forme que le composant consomme (props de la primitive, projetée). */
   const ECHANTILLONS: Record<string, unknown> = {
     StepByStepRunner: { steps: [{ id: 's1', instruction: 'Fais X', expected: 'x' }] },
     GuidedProcedure: { checkpoints: [{ id: 'c1', label: 'Vérifie', detail: 'Détail', requiresInput: true }] },
@@ -121,7 +160,8 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       example: 'Repère',
       criteria: [{ id: 'd1', label: 'Critère', guidance: 'Ce qu’on vérifie', pattern: 'motif' }],
     },
-    // Configurations Git : même forme que leur primitive (transmission verbatim).
+
+    // --- Configurations Git : même forme que la primitive cible (transmission verbatim) ---
     GitCommandSimulator: { steps: [{ id: 's1', instruction: 'Fais X', expected: 'x' }] },
     GitDoctorTool: {
       situation: 'Un cas',
@@ -129,17 +169,19 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       causes: [{ id: 'ca1', label: 'Cause A' }, { id: 'ca2', label: 'Cause B' }],
       correctCauseId: 'ca1',
     },
-    GitTimeTravel: { pairs: [{ id: 'p1', left: 'Gauche', right: 'Droite' }] },
-    StagingAreaVisualizer: {
-      categories: [{ id: 'cat1', label: 'Catégorie' }],
-      items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
+    GitRepositoryPlayground: { blocks: ['Rubrique A'] },
+    // MergeSimulator → MergeStrategyComparison → CompareContrast
+    MergeSimulator: {
+      optionA: { id: 'ff', label: 'Fast-forward' },
+      optionB: { id: 'mc', label: 'Merge commit' },
+      criteria: [{ id: 'history', label: 'Lisibilité' }],
     },
-    ConflictVisualizer: {
-      categories: [{ id: 'cat1', label: 'Catégorie' }],
-      items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
+    // UndoCommandComparison → UndoCommandComparisonConfig → CompareContrast
+    UndoCommandComparison: {
+      optionA: { id: 'revert', label: 'git revert' },
+      optionB: { id: 'reset', label: 'git reset' },
+      criteria: [{ id: 'shared', label: 'Historique partagé' }],
     },
-    ReflogExplorer: { steps: [{ id: 's1', instruction: 'Fais X', expected: 'x' }] },
-    ResolutionGuide: { checkpoints: [{ id: 'c1', label: 'Vérifie', detail: 'Détail' }] },
     ForkVsCloneDemo: {
       optionA: { id: 'a', label: 'Option A' },
       optionB: { id: 'b', label: 'Option B' },
@@ -150,11 +192,29 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       optionB: { id: 'b', label: 'Option B' },
       criteria: [{ id: 'cr1', label: 'Critère', guidance: 'À observer' }],
     },
-    CollaborationSimulator: { scenario: 'Un scénario', options: [{ id: 'o1', label: 'Choix' }] },
+    ReflogExplorer: { steps: [{ id: 's1', instruction: 'Fais X', expected: 'x' }] },
+    ResolutionGuide: { checkpoints: [{ id: 'c1', label: 'Vérifie', detail: 'Détail' }] },
     PullRequestCreator: { prompt: 'Consigne', criteria: [{ id: 'd1', label: 'Critère', guidance: 'Vérif' }] },
+    CollaborationSimulator: { scenario: 'Un scénario', options: [{ id: 'o1', label: 'Choix' }] },
     WorkflowDesigner: { blocks: ['Rubrique A', 'Rubrique B'] },
-    GitRepositoryPlayground: { blocks: ['Rubrique A'] },
+    ConflictVisualizer: {
+      categories: [{ id: 'cat1', label: 'Catégorie' }],
+      items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
+    },
+    GitTimeTravel: { pairs: [{ id: 'p1', left: 'Gauche', right: 'Droite' }] },
+    StagingAreaVisualizer: {
+      categories: [{ id: 'cat1', label: 'Catégorie' }],
+      items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
+    },
   };
+
+  it('couvre EXACTEMENT les 12 primitives + les 14 configurations Git config-aware', () => {
+    // ⚠️ Un nom manquant est précisément la faille qui a laissé passer une dérive silencieuse.
+    expect(Object.keys(ECHANTILLONS).sort()).toEqual([...PERIMETRE].sort());
+    for (const nom of PERIMETRE) {
+      expect(COMPONENT_CATALOG_BY_NAME[nom]).toBeDefined();
+    }
+  });
 
   it('accepte la forme réellement consommée par chaque composant', () => {
     const incoherents: string[] = [];
@@ -167,5 +227,20 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
 
     // Le tableau nomme le composant fautif : le diagnostic est immédiat si un schéma dérive.
     expect(incoherents).toEqual([]);
+  });
+
+  it('refuse les anciennes formes erronées des configurations Git réalignées', () => {
+    // ⚠️ Ces formes étaient acceptées avant la correction : elles sont inutilisables par la
+    // primitive cible. Le test les rejette pour empêcher tout retour en arrière.
+    const ANCIENNES: Record<string, unknown> = {
+      MergeSimulator: { branches: ['main', 'feature'] },
+      UndoCommandComparison: { criteria: ['Historique partagé'] },
+    };
+
+    const encoreAcceptees = Object.entries(ANCIENNES)
+      .filter(([nom, donnees]) => COMPONENT_CATALOG_BY_NAME[nom].dataSchema.safeParse(donnees).success)
+      .map(([nom]) => nom);
+
+    expect(encoreAcceptees).toEqual([]);
   });
 });
