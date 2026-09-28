@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, Lightbulb } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const reflogEntries = [
   { hash: 'f0a4f21', ref: 'HEAD@{0}', action: 'commit:', message: 'feat: add user authentication' },
@@ -13,17 +14,24 @@ const reflogEntries = [
   { hash: 'k9l8m7n', ref: 'HEAD@{4}', action: 'commit:', message: 'docs: update README' },
 ];
 
-export function ReflogExplorer() {
+export function ReflogExplorer({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Explorateur Reflog',
+      description:
+        'Le `reflog` est le filet de sécurité de Git. Il enregistre tous les mouvements de `HEAD`.',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <History className="h-5 w-5 text-primary"/>
-            Explorateur Reflog
+            {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Le `reflog` est le filet de sécurité de Git. Il enregistre tous les mouvements de `HEAD`.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>

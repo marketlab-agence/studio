@@ -187,17 +187,17 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   // ⚠️ Une configuration qui transmet `config` à une primitive décrit **la même forme** que
   // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitCommandSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  // ⚠️ Le composant enregistré (`src/components/interactive/GitRepositoryPlayground.tsx`) n'est
-  // pas encore config-aware, mais `git-configurations.tsx` expose une configuration qui forward
-  // vers `BuilderCanvas`. Le schéma décrit donc la forme de `BuilderCanvas` pour que la donnée
-  // soit valide le jour où le câblage l'utilise — et pour ne pas accepter un `blocks` requis
-  // quand `BuilderCanvas` accepte aussi `sections`.
+  // ⚠️ Lot 2 : `GitRepositoryPlayground` transmis à `BuilderCanvas` décrit **la même forme** que
+  // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitRepositoryPlayground: z.object({
     sections: z.array(RubriqueCanevas).min(1).optional(),
     blocks: Textes.optional(),
     repeatable: BlocRepetable.optional(),
   }),
-  GitTimeTravel: z.object({ pairs: z.array(Paire).min(1) }),
+  // ⚠️ Lot 2 : `GitTimeTravel` est rendu par le composant **spécialisé** (machine à remonter le
+  // temps), qui n'expose aucune donnée structurée configurable. Le schéma vide dit la vérité du
+  // rendu : aucune donnée n'est attendue (l'ancien `{ pairs }` décrivait la configuration morte).
+  GitTimeTravel: z.object({}),
   GitDoctorTool: z.object({
     situation: z.string().min(1),
     clues: z.array(IndiceDiagnostic).min(1),
@@ -224,14 +224,12 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
     items: z.array(ItemTrie).min(1),
   }),
   ConflictResolver: z.object({ files: Textes }),
-  ResolutionGuide: z.object({ checkpoints: z.array(Checkpoint).min(1) }),
+  ResolutionGuide: z.object({}),
   PushPullAnimator: z.object({ steps: z.array(Etape).min(1) }),
-  ForkVsCloneDemo: z.object({
-    optionA: OptionComparaison,
-    optionB: OptionComparaison,
-    criteria: z.array(CritereComparaison).min(1),
-    expectedConclusion: z.string().optional(),
-  }),
+  // ⚠️ Lot 2 : rendu par le composant spécialisé « Fork vs Clone » (onglets), sans donnée
+  // structurée configurable. `{}` = aucune donnée attendue (l'ancienne forme `CompareContrast`
+  // décrivait la configuration morte).
+  ForkVsCloneDemo: z.object({}),
   PRWorkflowSimulator: z.object({ steps: z.array(Etape).min(1) }),
   PullRequestCreator: z.object({
     prompt: z.string().min(1),
@@ -248,13 +246,8 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
     repeatable: BlocRepetable.optional(),
   }),
   FlowDiagramBuilder: z.object({ blocks: Textes }),
-  TrunkBasedDevelopmentVisualizer: z.object({
-    optionA: OptionComparaison,
-    optionB: OptionComparaison,
-    criteria: z.array(CritereComparaison).min(1),
-    expectedConclusion: z.string().optional(),
-  }),
-  ReflogExplorer: z.object({ steps: z.array(Etape).min(1) }),
+  TrunkBasedDevelopmentVisualizer: z.object({}),
+  ReflogExplorer: z.object({}),
   TimelineNavigator: z.object({ commits: Textes }),
   // ⚠️ `UndoCommandComparison` est enregistré sur `UndoCommandComparisonConfig`, qui transmet
   // `config` à `CompareContrast` : le schéma doit décrire la forme de `CompareContrast`
@@ -327,7 +320,7 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
   // --- Configurations Git ---
   GitCommandSimulator: { title: 'Commandes Git essentielles', description: 'Exécute la procédure dans l’ordre.' },
   GitRepositoryPlayground: { title: 'Dépôt à construire', description: 'Crée ton dépôt.' },
-  GitTimeTravel: { title: 'Voyage dans l’historique', description: 'Explore les versions.' },
+  GitTimeTravel: { title: 'Machine à Remonter le Temps Git', description: "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments." },
   GitDoctorTool: { title: 'Diagnostic de dépôt', description: 'Répare un état anormal.' },
   StagingAreaVisualizer: { title: 'Zone de staging', description: 'Suis l’état des fichiers.' },
   VersioningDemo: { title: 'Le versioning en action', description: 'Crée des versions.' },
@@ -336,9 +329,9 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
   ConflictPlayground: { title: 'Terrain de conflit', description: 'Provoque un conflit.' },
   ConflictVisualizer: { title: 'Visualise le conflit', description: 'Comprends l’origine.' },
   ConflictResolver: { title: 'Résous le conflit', description: 'Répare le conflit.' },
-  ResolutionGuide: { title: 'Guide de résolution', description: 'Suis la procédure.' },
+  ResolutionGuide: { title: 'Guide Pas-à-Pas de Résolution de Conflits', description: 'Suivez ces étapes pour résoudre un conflit de fusion comme un pro.' },
   PushPullAnimator: { title: 'Push et Pull', description: 'Synchronise avec le distant.' },
-  ForkVsCloneDemo: { title: 'Fork ou Clone ?', description: 'Choisis la bonne approche.' },
+  ForkVsCloneDemo: { title: 'Démonstration Fork vs Clone', description: "Visualisez les deux flux de travail principaux pour obtenir une copie d'un projet." },
   PRWorkflowSimulator: { title: 'Cycle d’une Pull Request', description: 'Suis le parcours complet.' },
   PullRequestCreator: { title: 'Créer une Pull Request', description: 'Propose tes changements.' },
   GitHubInterfaceSimulator: { title: 'Interface de GitHub', description: 'Repère les éléments.' },
@@ -347,8 +340,8 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
   WorkflowSimulator: { title: 'Simulateur de workflow', description: 'Exécute le flux.' },
   WorkflowDesigner: { title: 'Concevoir un workflow', description: 'Organise les étapes.' },
   FlowDiagramBuilder: { title: 'Construis le diagramme', description: 'Représente le flux.' },
-  TrunkBasedDevelopmentVisualizer: { title: 'Trunk-Based Development', description: 'Comprends le flux minimaliste.' },
-  ReflogExplorer: { title: 'Explorateur de reflog', description: 'Retrouve les commits perdus.' },
+  TrunkBasedDevelopmentVisualizer: { title: 'Visualisation du Trunk-Based Development', description: 'Dans ce flux, tous les développeurs travaillent directement sur une seule branche : le "trunk" (souvent `main`).' },
+  ReflogExplorer: { title: 'Explorateur Reflog', description: 'Le `reflog` est le filet de sécurité de Git. Il enregistre tous les mouvements de `HEAD`.' },
   TimelineNavigator: { title: 'Navigateur de timeline', description: 'Voyage dans le temps.' },
   UndoCommandComparison: { title: 'Annuler : quelle commande ?', description: 'Choisis la bonne annulation.' },
   CommitMessageLinter: { title: 'Messages de commit', description: 'Rédige un message clair.' },

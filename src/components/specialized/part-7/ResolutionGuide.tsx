@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { CodeBlock } from '@/components/ui/CodeBlock';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const steps = [
     {
@@ -56,14 +57,20 @@ const steps = [
     }
 ]
 
-export function ResolutionGuide() {
+export function ResolutionGuide({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Guide Pas-à-Pas de Résolution de Conflits',
+      description: 'Suivez ces étapes pour résoudre un conflit de fusion comme un pro.',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Guide Pas-à-Pas de Résolution de Conflits</CardTitle>
-        <CardDescription>
-          Suivez ces étapes pour résoudre un conflit de fusion comme un pro.
-        </CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full" defaultValue="item-0">

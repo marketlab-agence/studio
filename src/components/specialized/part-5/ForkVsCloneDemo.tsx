@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Server, HardDrive, ArrowRight, User } from 'lucide-react';
 import { CodeBlock } from '@/components/ui/CodeBlock';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const FlowBox = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
     <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-background/50 w-48 h-48 justify-center">
@@ -22,12 +23,21 @@ const ActionArrow = ({ command }: { command: string }) => (
     </div>
 );
 
-export function ForkVsCloneDemo() {
+export function ForkVsCloneDemo({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Démonstration Fork vs Clone',
+      description:
+        "Visualisez les deux flux de travail principaux pour obtenir une copie d'un projet.",
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6 bg-transparent border-border/50">
       <CardHeader>
-        <CardTitle>Démonstration Fork vs Clone</CardTitle>
-        <CardDescription>Visualisez les deux flux de travail principaux pour obtenir une copie d'un projet.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="fork" className="w-full">

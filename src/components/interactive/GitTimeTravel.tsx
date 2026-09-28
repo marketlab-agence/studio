@@ -3,18 +3,25 @@ import { History } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function GitTimeTravel() {
+export function GitTimeTravel({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Machine à Remonter le Temps Git',
+      description: "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments.",
+    },
+    config?.labels,
+  );
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
-          Machine à Remonter le Temps Git
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Naviguez dans l'historique des commits pour voir l'état du projet à différents moments.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
