@@ -31,6 +31,11 @@ import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanne
 import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
 import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
 import { AiHelper } from '@/components/interactive/AiHelper';
+import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
+import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
+import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
+import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
+import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
 
 /**
  * ⚠️ **`next-intl` est mocké.** `VersioningDemo` appelle `useFormatter()`, qui exige un
@@ -367,5 +372,69 @@ describe('interactifs spécialisés (lot final) — libellés en configuration (
     expect(screen.getByText('Assistant maison')).toBeInTheDocument();
     expect(screen.getByText('Interroger')).toBeInTheDocument();
     expect(screen.queryByText("Demander à l'IA")).toBeNull();
+  });
+});
+
+describe('interactifs spécialisés (paquet 5) — libellés en configuration (non-régression)', () => {
+  it('ActionsWorkflowBuilder affiche son titre historique sans configuration', () => {
+    render(<ActionsWorkflowBuilder />);
+    expect(screen.getByText('Constructeur de Workflow GitHub Actions')).toBeInTheDocument();
+  });
+
+  it('FlowDiagramBuilder affiche son titre historique sans configuration', () => {
+    render(<FlowDiagramBuilder />);
+    expect(screen.getByText('Constructeur de Diagrammes de Flux')).toBeInTheDocument();
+  });
+
+  it('GitHubInterfaceSimulator affiche son titre historique sans configuration', () => {
+    render(<GitHubInterfaceSimulator />);
+    expect(screen.getByText("Simulateur d'Interface GitHub")).toBeInTheDocument();
+  });
+
+  it('OpenSourceSimulator affiche son titre historique sans configuration', () => {
+    render(<OpenSourceSimulator />);
+    expect(screen.getByText('Simulateur de Contribution Open Source')).toBeInTheDocument();
+  });
+
+  it('WorkflowSimulator affiche son titre historique sans configuration', () => {
+    render(<WorkflowSimulator />);
+    expect(screen.getByText('Simulateur de Workflow GitFlow')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 5) — libellés en configuration (surcharge)', () => {
+  it('ActionsWorkflowBuilder remplace titre ET description de la configuration', () => {
+    render(
+      <ActionsWorkflowBuilder
+        config={{ labels: { title: 'Mon pipeline', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon pipeline')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('FlowDiagramBuilder remplace le titre par celui de la configuration', () => {
+    render(<FlowDiagramBuilder config={{ labels: { title: 'Mon diagramme' } }} />);
+    expect(screen.getByText('Mon diagramme')).toBeInTheDocument();
+  });
+
+  it('GitHubInterfaceSimulator remplace le titre par celui de la configuration', () => {
+    render(<GitHubInterfaceSimulator config={{ labels: { title: 'Mon GitHub' } }} />);
+    expect(screen.getByText('Mon GitHub')).toBeInTheDocument();
+  });
+
+  it('OpenSourceSimulator remplace le titre sans toucher à la description par défaut', () => {
+    render(<OpenSourceSimulator config={{ labels: { title: 'Contribuer' } }} />);
+    expect(screen.getByText('Contribuer')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Suivez le flux de travail complet pour proposer une modification à un projet.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('WorkflowSimulator remplace le titre par celui de la configuration', () => {
+    render(<WorkflowSimulator config={{ labels: { title: 'Mon GitFlow' } }} />);
+    expect(screen.getByText('Mon GitFlow')).toBeInTheDocument();
   });
 });

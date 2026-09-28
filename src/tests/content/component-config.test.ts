@@ -272,6 +272,11 @@ describe('DATA_SCHEMAS — composants spécialisés non data-driven : aucune don
     'PushPullAnimator',
     'GitRepositoryPlayground',
     'AiHelper',
+    'ActionsWorkflowBuilder',
+    'FlowDiagramBuilder',
+    'GitHubInterfaceSimulator',
+    'OpenSourceSimulator',
+    'WorkflowSimulator',
   ] as const;
 
   it('déclarent un schéma objet sans aucune clé', () => {
