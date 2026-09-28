@@ -187,13 +187,10 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   // ⚠️ Une configuration qui transmet `config` à une primitive décrit **la même forme** que
   // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitCommandSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  // ⚠️ Lot 2 : `GitRepositoryPlayground` transmis à `BuilderCanvas` décrit **la même forme** que
-  // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
-  GitRepositoryPlayground: z.object({
-    sections: z.array(RubriqueCanevas).min(1).optional(),
-    blocks: Textes.optional(),
-    repeatable: BlocRepetable.optional(),
-  }),
+  // ⚠️ Lot final : `GitRepositoryPlayground` est rendu par le composant **spécialisé** (arbre de
+  // fichiers statique), qui n'expose aucune donnée structurée. L'ancienne forme (`BuilderCanvas`)
+  // décrivait la configuration morte de la variante non câblée.
+  GitRepositoryPlayground: z.object({}),
   // ⚠️ Lot 2 : `GitTimeTravel` est rendu par le composant **spécialisé** (machine à remonter le
   // temps), qui n'expose aucune donnée structurée configurable. Le schéma vide dit la vérité du
   // rendu : aucune donnée n'est attendue (l'ancien `{ pairs }` décrivait la configuration morte).
@@ -257,7 +254,7 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   SecurityScanner: z.object({}),
   CollaborationSimulator: z.object({}),
   OpenSourceSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  AiHelper: z.object({ prompt: z.string().min(1) }),
+  AiHelper: z.object({}),
 
   // --- Composants visuels (illustratifs, sans obligation de niveau Bloom) ---
   // ⚠️ Réalignés sur ce que chaque composant consomme RÉELLEMENT. Les illustrations
@@ -308,7 +305,7 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
 
   // --- Configurations Git ---
   GitCommandSimulator: { title: 'Commandes Git essentielles', description: 'Exécute la procédure dans l’ordre.' },
-  GitRepositoryPlayground: { title: 'Dépôt à construire', description: 'Crée ton dépôt.' },
+  GitRepositoryPlayground: { title: 'Bac à Sable de Dépôt Git', description: 'Visualisez et interagissez avec un système de fichiers de dépôt simulé.' },
   GitTimeTravel: { title: 'Machine à Remonter le Temps Git', description: "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments." },
   GitDoctorTool: { title: 'Diagnostic de dépôt', description: 'Répare un état anormal.' },
   StagingAreaVisualizer: { title: 'Zone de staging', description: 'Suis l’état des fichiers.' },
@@ -339,7 +336,9 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
   SecurityScanner: { title: 'Démonstration des Bonnes Pratiques de Sécurité', description: 'Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.' },
   CollaborationSimulator: { title: 'Simulateur de Collaboration', description: 'Simulez un flux de travail collaboratif avec plusieurs contributeurs.' },
   OpenSourceSimulator: { title: 'Contribuer à l’open source', description: 'Suis le processus complet.' },
-  AiHelper: { title: 'Assistant IA', description: 'Pose ta question.' },
+  // ⚠️ `AiHelper` interpole le sujet du cours dans sa description : elle n'est donc PAS un libellé
+  // statique personnalisable. Seuls le titre et le libellé du bouton le sont.
+  AiHelper: { title: 'Playground IA Katalyst', askButton: "Demander à l'IA" },
 
   // --- Composants visuels (illustratifs) ---
   // ⚠️ Réalignés sur le texte RÉELLEMENT affiché : modifier ce libellé par configuration

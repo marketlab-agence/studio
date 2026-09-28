@@ -12,18 +12,32 @@ import { CodeBlock } from '../ui/CodeBlock';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type AiHelperProps = {
     lessonContext: string;
     courseTopic: string;
+    /**
+     * Configuration de l'instance : libellés (langue du créateur).
+     * ⚠️ `config.data` n'est pas consommée : les options de longueur sont un état interne.
+     */
+    config?: ComponentConfig;
 };
 
-export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
+export function AiHelper({ lessonContext, courseTopic, config }: AiHelperProps) {
     const [query, setQuery] = useState('');
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [responseLength, setResponseLength] = useState<'Court' | 'Moyen' | 'Long'>('Moyen');
+    // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+    const libelles = fusionnerLibelles(
+        {
+            title: 'Playground IA Katalyst',
+            askButton: "Demander à l'IA",
+        },
+        config?.labels,
+    );
 
 
     const placeholderQuery = courseTopic.toLowerCase().includes('git') 
@@ -57,7 +71,7 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-primary" />
-                    Playground IA Katalyst
+                    {libelles.title}
                 </CardTitle>
                 <CardDescription>
                     Posez une question sur <span className="font-semibold">{courseTopic}</span>, demandez une explication sur un concept, ou demandez à corriger une erreur.
@@ -94,7 +108,7 @@ export function AiHelper({ lessonContext, courseTopic }: AiHelperProps) {
                 </div>
                 <Button onClick={handleSubmit} disabled={isLoading || !query.trim()}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Demander à l'IA
+                    {libelles.askButton}
                 </Button>
                 
                 {error && (

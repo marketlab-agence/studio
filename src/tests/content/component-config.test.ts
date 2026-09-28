@@ -118,7 +118,6 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
     // configurations Git réellement câblées sur une primitive
     'GitCommandSimulator',
     'GitDoctorTool',
-    'GitRepositoryPlayground',
     'MergeSimulator',
     'UndoCommandComparison',
     'ConflictVisualizer',
@@ -181,7 +180,6 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       causes: [{ id: 'ca1', label: 'Cause A' }, { id: 'ca2', label: 'Cause B' }],
       correctCauseId: 'ca1',
     },
-    GitRepositoryPlayground: { blocks: ['Rubrique A'] },
     // MergeSimulator → MergeStrategyComparison → CompareContrast
     MergeSimulator: {
       optionA: { id: 'ff', label: 'Fast-forward' },
@@ -272,6 +270,8 @@ describe('DATA_SCHEMAS — composants spécialisés non data-driven : aucune don
     'GitignoreTester',
     'SecurityScanner',
     'PushPullAnimator',
+    'GitRepositoryPlayground',
+    'AiHelper',
   ] as const;
 
   it('déclarent un schéma objet sans aucune clé', () => {

@@ -29,6 +29,8 @@ import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMess
 import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
 import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
+import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
+import { AiHelper } from '@/components/interactive/AiHelper';
 
 /**
  * ⚠️ **`next-intl` est mocké.** `VersioningDemo` appelle `useFormatter()`, qui exige un
@@ -37,6 +39,23 @@ import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimat
  */
 jest.mock('next-intl', () => ({
   useFormatter: () => ({ dateTime: () => '01/01/2026, 00:00' }),
+}));
+
+/**
+ * ⚠️ **Le flux Genkit est mocké.** `AiHelper` importe `contextual-helper-flow` (Genkit + Gemini) :
+ * l'importer tirerait le SDK IA dans un test unitaire. On n'observe ici que les libellés.
+ */
+jest.mock('@/ai/flows/contextual-helper-flow', () => ({
+  getContextualHelp: jest.fn().mockResolvedValue({ explanation: 'Réponse simulée.' }),
+}));
+
+/**
+ * ⚠️ **`react-markdown` est mocké.** Il tire tout l'écosystème unified/remark (ESM) dans le test ;
+ * on ne rend que les libellés de `config`, pas la réponse markdown.
+ */
+jest.mock('react-markdown', () => ({
+  __esModule: true,
+  default: ({ children }: { children?: unknown }) => <div>{children as never}</div>,
 }));
 
 describe('interactifs spécialisés — libellés en configuration (non-régression)', () => {
@@ -310,5 +329,43 @@ describe('interactifs spécialisés (paquet 4) — libellés en configuration (s
     expect(screen.getByText('Ma synchro')).toBeInTheDocument();
     expect(screen.getByText('En local')).toBeInTheDocument();
     expect(screen.getByText('Sur le serveur')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (lot final) — libellés en configuration (non-régression)', () => {
+  it('GitRepositoryPlayground affiche son titre historique sans configuration', () => {
+    render(<GitRepositoryPlayground />);
+    expect(screen.getByText('Bac à Sable de Dépôt Git')).toBeInTheDocument();
+  });
+
+  it('AiHelper affiche ses textes historiques sans configuration', () => {
+    render(<AiHelper lessonContext="Leçon" courseTopic="Git" />);
+    expect(screen.getByText('Playground IA Katalyst')).toBeInTheDocument();
+    expect(screen.getByText("Demander à l'IA")).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (lot final) — libellés en configuration (surcharge)', () => {
+  it('GitRepositoryPlayground remplace titre ET description de la configuration', () => {
+    render(
+      <GitRepositoryPlayground
+        config={{ labels: { title: 'Mon dépôt', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon dépôt')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('AiHelper remplace titre et libellé du bouton de la configuration', () => {
+    render(
+      <AiHelper
+        lessonContext="Leçon"
+        courseTopic="Git"
+        config={{ labels: { title: 'Assistant maison', askButton: 'Interroger' } }}
+      />,
+    );
+    expect(screen.getByText('Assistant maison')).toBeInTheDocument();
+    expect(screen.getByText('Interroger')).toBeInTheDocument();
+    expect(screen.queryByText("Demander à l'IA")).toBeNull();
   });
 });
