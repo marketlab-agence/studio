@@ -14,6 +14,11 @@ import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
 import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
 import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
 import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
+import { PullRequestCreator } from '@/components/interactive/PullRequestCreator';
+import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
+import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
+import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
+import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
 
 describe('interactifs spécialisés — libellés en configuration (non-régression)', () => {
   it('GitTimeTravel affiche son titre historique sans configuration', () => {
@@ -78,5 +83,68 @@ describe('interactifs spécialisés — libellés en configuration (surcharge)',
       <TrunkBasedDevelopmentVisualizer config={{ labels: { title: 'Trunk-based en pratique' } }} />,
     );
     expect(screen.getByText('Trunk-based en pratique')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 2) — libellés en configuration (non-régression)', () => {
+  it('PullRequestCreator affiche son titre historique sans configuration', () => {
+    render(<PullRequestCreator />);
+    expect(screen.getByText('Créateur de Pull Request')).toBeInTheDocument();
+  });
+
+  it('WorkflowDesigner affiche son titre historique sans configuration', () => {
+    render(<WorkflowDesigner />);
+    expect(screen.getByText('Designer de Workflow Git')).toBeInTheDocument();
+  });
+
+  it('CollaborationSimulator affiche son titre historique sans configuration', () => {
+    render(<CollaborationSimulator />);
+    expect(screen.getByText('Simulateur de Collaboration')).toBeInTheDocument();
+  });
+
+  it('ConflictPlayground affiche son titre historique sans configuration', () => {
+    render(<ConflictPlayground />);
+    expect(screen.getByText('Terrain de Jeu pour Conflits')).toBeInTheDocument();
+  });
+
+  it('TimelineNavigator affiche son titre historique sans configuration', () => {
+    render(<TimelineNavigator />);
+    expect(screen.getByText('Navigateur de Timeline')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 2) — libellés en configuration (surcharge)', () => {
+  it('PullRequestCreator remplace le titre par celui de la configuration', () => {
+    render(<PullRequestCreator config={{ labels: { title: 'Ma Pull Request' } }} />);
+    expect(screen.getByText('Ma Pull Request')).toBeInTheDocument();
+    expect(screen.queryByText('Créateur de Pull Request')).toBeNull();
+  });
+
+  it('WorkflowDesigner remplace titre ET description de la configuration', () => {
+    render(
+      <WorkflowDesigner
+        config={{ labels: { title: 'Mon workflow', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon workflow')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('CollaborationSimulator remplace le titre par celui de la configuration', () => {
+    render(<CollaborationSimulator config={{ labels: { title: 'Travail d’équipe' } }} />);
+    expect(screen.getByText('Travail d’équipe')).toBeInTheDocument();
+  });
+
+  it('ConflictPlayground remplace le titre sans toucher à la description par défaut', () => {
+    render(<ConflictPlayground config={{ labels: { title: 'Résous le conflit' } }} />);
+    expect(screen.getByText('Résous le conflit')).toBeInTheDocument();
+    expect(
+      screen.getByText('Modifiez le texte ci-dessous pour résoudre le conflit manuellement.'),
+    ).toBeInTheDocument();
+  });
+
+  it('TimelineNavigator remplace le titre par celui de la configuration', () => {
+    render(<TimelineNavigator config={{ labels: { title: 'Ma timeline' } }} />);
+    expect(screen.getByText('Ma timeline')).toBeInTheDocument();
   });
 });

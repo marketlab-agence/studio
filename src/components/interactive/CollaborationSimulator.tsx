@@ -3,18 +3,25 @@ import { Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function CollaborationSimulator() {
+export function CollaborationSimulator({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de Collaboration',
+      description: 'Simulez un flux de travail collaboratif avec plusieurs contributeurs.',
+    },
+    config?.labels,
+  );
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          Simulateur de Collaboration
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Simulez un flux de travail collaboratif avec plusieurs contributeurs.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="font-semibold">Contributeurs actifs :</p>

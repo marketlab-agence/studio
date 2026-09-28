@@ -95,10 +95,11 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
    * (`GitDoctorTool`, `MergeSimulator`, `UndoCommandComparison`, `ConflictVisualizer`,
    * `StagingAreaVisualizer`, `GitRepositoryPlayground`) + `GitCommandSimulator`.
    *
-   * Les composants spécialisés non data-driven (lot 2 : `GitTimeTravel`, `ReflogExplorer`,
-   * `ResolutionGuide`, `ForkVsCloneDemo`, `TrunkBasedDevelopmentVisualizer`) sont sortis de ce
-   * périmètre : leur rendu n'exploite aucune donnée structurée. Ils sont couverts par le bloc
-   * « aucun donnée structurée attendue » plus bas.
+   * Les composants spécialisés non data-driven (lots 2 paquets 1 et 2 : `GitTimeTravel`,
+   * `ReflogExplorer`, `ResolutionGuide`, `ForkVsCloneDemo`, `TrunkBasedDevelopmentVisualizer`,
+   * `PullRequestCreator`, `WorkflowDesigner`, `CollaborationSimulator`, `ConflictPlayground`,
+   * `TimelineNavigator`) sont hors de ce périmètre : leur rendu n'exploite aucune donnée
+   * structurée. Ils sont couverts par le bloc « aucune donnée attendue » plus bas.
    */
   const PERIMETRE = [
     // 12 primitives
@@ -120,9 +121,6 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
     'GitRepositoryPlayground',
     'MergeSimulator',
     'UndoCommandComparison',
-    'PullRequestCreator',
-    'CollaborationSimulator',
-    'WorkflowDesigner',
     'ConflictVisualizer',
     'StagingAreaVisualizer',
   ] as const;
@@ -196,9 +194,6 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       optionB: { id: 'reset', label: 'git reset' },
       criteria: [{ id: 'shared', label: 'Historique partagé' }],
     },
-    PullRequestCreator: { prompt: 'Consigne', criteria: [{ id: 'd1', label: 'Critère', guidance: 'Vérif' }] },
-    CollaborationSimulator: { scenario: 'Un scénario', options: [{ id: 'o1', label: 'Choix' }] },
-    WorkflowDesigner: { blocks: ['Rubrique A', 'Rubrique B'] },
     ConflictVisualizer: {
       categories: [{ id: 'cat1', label: 'Catégorie' }],
       items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
@@ -262,6 +257,11 @@ describe('DATA_SCHEMAS — composants spécialisés non data-driven : aucune don
     'ResolutionGuide',
     'ForkVsCloneDemo',
     'TrunkBasedDevelopmentVisualizer',
+    'PullRequestCreator',
+    'WorkflowDesigner',
+    'CollaborationSimulator',
+    'ConflictPlayground',
+    'TimelineNavigator',
   ] as const;
 
   it('déclarent un schéma objet sans aucune clé', () => {
