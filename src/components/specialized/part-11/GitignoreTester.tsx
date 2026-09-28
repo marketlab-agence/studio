@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { EyeOff, Eye } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 // Simplified .gitignore matching logic for the demo
 const isIgnored = (filepath: string, gitignoreContent: string): boolean => {
@@ -32,10 +33,19 @@ const isIgnored = (filepath: string, gitignoreContent: string): boolean => {
 };
 
 
-export function GitignoreTester() {
+export function GitignoreTester({ config }: { config?: ComponentConfig }) {
   const [gitignoreContent, setGitignoreContent] = useState('node_modules/\n*.log\n.env');
   const [testPath, setTestPath] = useState('node_modules/express/index.js');
   const [result, setResult] = useState<boolean | null>(null);
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de `.gitignore`',
+      description:
+        'Testez vos règles `.gitignore` pour voir si un chemin de fichier serait ignoré. Le résultat se met à jour automatiquement.',
+    },
+    config?.labels,
+  );
   
   const debouncedGitignore = useDebounce(gitignoreContent, 300);
   const debouncedTestPath = useDebounce(testPath, 300);
@@ -48,8 +58,8 @@ export function GitignoreTester() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Simulateur de `.gitignore`</CardTitle>
-        <CardDescription>Testez vos règles `.gitignore` pour voir si un chemin de fichier serait ignoré. Le résultat se met à jour automatiquement.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">

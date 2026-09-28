@@ -24,6 +24,11 @@ import { ConflictResolver } from '@/components/interactive/ConflictResolver';
 import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
 import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
 import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
+import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
+import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
+import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
+import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
+import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
 
 /**
  * ⚠️ **`next-intl` est mocké.** `VersioningDemo` appelle `useFormatter()`, qui exige un
@@ -234,5 +239,76 @@ describe('interactifs spécialisés (paquet 3) — libellés en configuration (s
     expect(screen.getByText('Mon versioning')).toBeInTheDocument();
     expect(screen.getByText('Mes versions')).toBeInTheDocument();
     expect(screen.getByText('Enregistrer la version')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 4) — libellés en configuration (non-régression)', () => {
+  it('AliasCreator affiche son titre historique sans configuration', () => {
+    render(<AliasCreator />);
+    expect(screen.getByText("Assistant de Création d'Alias Git")).toBeInTheDocument();
+  });
+
+  it('CommitMessageLinter affiche son titre historique sans configuration', () => {
+    render(<CommitMessageLinter />);
+    expect(screen.getByText('Linter de Messages de Commit')).toBeInTheDocument();
+  });
+
+  it('GitignoreTester affiche son titre historique sans configuration', () => {
+    render(<GitignoreTester />);
+    expect(screen.getByText('Simulateur de `.gitignore`')).toBeInTheDocument();
+  });
+
+  it('SecurityScanner affiche son titre historique sans configuration', () => {
+    render(<SecurityScanner />);
+    expect(screen.getByText('Démonstration des Bonnes Pratiques de Sécurité')).toBeInTheDocument();
+  });
+
+  it('PushPullAnimator affiche ses textes historiques sans configuration', () => {
+    render(<PushPullAnimator />);
+    expect(screen.getByText('Animateur Push & Pull')).toBeInTheDocument();
+    expect(screen.getByText('Dépôt Local')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 4) — libellés en configuration (surcharge)', () => {
+  it('AliasCreator remplace titre ET description de la configuration', () => {
+    render(
+      <AliasCreator
+        config={{ labels: { title: 'Mes alias', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mes alias')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('CommitMessageLinter remplace le titre par celui de la configuration', () => {
+    render(<CommitMessageLinter config={{ labels: { title: 'Mon linter' } }} />);
+    expect(screen.getByText('Mon linter')).toBeInTheDocument();
+  });
+
+  it('GitignoreTester remplace le titre par celui de la configuration', () => {
+    render(<GitignoreTester config={{ labels: { title: 'Mes règles' } }} />);
+    expect(screen.getByText('Mes règles')).toBeInTheDocument();
+  });
+
+  it('SecurityScanner remplace le titre sans toucher à la description par défaut', () => {
+    render(<SecurityScanner config={{ labels: { title: 'Analyse de sécurité' } }} />);
+    expect(screen.getByText('Analyse de sécurité')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('PushPullAnimator remplace les trois libellés de dépôt', () => {
+    render(
+      <PushPullAnimator
+        config={{ labels: { title: 'Ma synchro', localHeading: 'En local', remoteHeading: 'Sur le serveur' } }}
+      />,
+    );
+    expect(screen.getByText('Ma synchro')).toBeInTheDocument();
+    expect(screen.getByText('En local')).toBeInTheDocument();
+    expect(screen.getByText('Sur le serveur')).toBeInTheDocument();
   });
 });

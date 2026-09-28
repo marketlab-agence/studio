@@ -6,12 +6,21 @@ import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import { Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function AliasCreator() {
+export function AliasCreator({ config }: { config?: ComponentConfig }) {
   const [alias, setAlias] = useState('st');
   const [command, setCommand] = useState('status');
   const [generatedCommand, setGeneratedCommand] = useState('');
   const { toast } = useToast();
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: "Assistant de Création d'Alias Git",
+      description: 'Créez des raccourcis pour vos commandes Git les plus utilisées.',
+    },
+    config?.labels,
+  );
 
   const handleGenerate = () => {
     if (!alias.trim() || !command.trim()) {
@@ -32,8 +41,8 @@ export function AliasCreator() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Assistant de Création d'Alias Git</CardTitle>
-        <CardDescription>Créez des raccourcis pour vos commandes Git les plus utilisées.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4 items-end">
