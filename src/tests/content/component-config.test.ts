@@ -202,7 +202,7 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
     },
   };
 
-  it('couvre EXACTEMENT les 12 primitives + les 14 configurations Git config-aware', () => {
+  it('couvre EXACTEMENT les composants dont `config.data` est consommée', () => {
     // ⚠️ Un nom manquant est précisément la faille qui a laissé passer une dérive silencieuse.
     expect(Object.keys(ECHANTILLONS).sort()).toEqual([...PERIMETRE].sort());
     for (const nom of PERIMETRE) {

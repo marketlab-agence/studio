@@ -152,6 +152,14 @@ describe('règles de conformité multi-composants', () => {
       expect(regle(r, 'R9').findings).toEqual([]);
     });
 
+    it('ne signale rien quand `config.data` vaut `null` (absence de donnée, pas donnée invalide)', () => {
+      // ⚠️ `null` n'est pas une donnée fournie : c'est une colonne JSONB vide, ou un client qui
+      // envoie explicitement `null`. Le confondre avec une donnée présente signalait à tort un
+      // composant non configuré (`null` ne valide aucun schéma).
+      const r = rapport([{ name: 'StepByStepRunner', position: 0, config: { data: null } }]);
+      expect(regle(r, 'R9').findings).toEqual([]);
+    });
+
     it('ne signale rien quand `config.data` est valide', () => {
       const r = rapport([
         {
@@ -175,5 +183,17 @@ describe('R8 — invariant du catalogue', () => {
       .map((meta) => meta.name);
 
     expect(sansNiveau).toEqual([]);
+  });
+});
+
+describe('rapport de conformité — ordre canonique des règles', () => {
+  it('présente les règles par identifiant croissant, et non dans l’ordre du code', () => {
+    // ⚠️ Les règles sont produites par blocs (R2, R6, R9, R3…) : sans tri, la lecture du rapport
+    // — CLI comme UI — dépendait de l'ordre d'écriture du code, pas de la numérotation.
+    const CANON = ['R1', 'R2', 'R3', 'R4', 'R5.1', 'R5.2', 'R5.3', 'R6', 'R7', 'R8', 'R9'];
+    const rangs = rapport([]).rules.map((r) => CANON.indexOf(r.rule));
+
+    // `rangs` doit être croissant : tout identifiant inconnu vaut -1 et échouerait ici.
+    expect(rangs).toEqual([...rangs].sort((a, b) => a - b));
   });
 });

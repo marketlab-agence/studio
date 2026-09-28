@@ -1,4 +1,4 @@
-import { query } from '@/lib/db/pool';
+import { query, withTransaction } from '@/lib/db/pool';
 import type { CourseInfo } from '@/types/course.types';
 import type { Lesson, Quiz } from '@/types/tutorial.types';
 import type { SubscriptionPlan } from '@/types/plans.types';
@@ -100,6 +100,16 @@ function toCourseInfo(row: CourseRow): CourseInfo {
       bloomLevel: row.bloom_level ?? undefined,
     };
   }
+
+/**
+ * Exécuteur SQL : le pool partagé **ou** une connexion de transaction.
+ *
+ * ⚠️ **L'indirection est ce qui rend l'écriture atomique possible** : une méthode privée qui
+ * n'appelle que `query()` ignore la transaction ouverte par son appelant. En recevant l'exécuteur,
+ * `remplacerComposants` participe réellement au « tout ou rien » de `saveLessons`.
+ * Aucune de ces méthodes ne lit `rows` : `unknown` suffit comme type de retour.
+ */
+type SqlRunner = (text: string, params?: unknown[]) => Promise<unknown>;
 
 export class PostgresContentProvider implements ContentProvider {
   // --- Formations -----------------------------------------------------------
@@ -343,53 +353,62 @@ export class PostgresContentProvider implements ContentProvider {
    * référence `lessons(id)` avec `ON DELETE CASCADE`, et une simple édition de
    * contenu effacerait la progression des apprenants.
    */
-  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {    await query(
-      'UPDATE lessons SET position = position + $2 WHERE chapter_id = $1',
-      [chapterId, PostgresContentProvider.POSITION_OFFSET],
-    );
+  private async saveLessons(chapterId: string, lessons: Lesson[]): Promise<void> {
+    // ⚠️ **Tout ou rien.** Le décalage des positions (+10000), les upserts de leçons, la réécriture
+    // des composants et la repose des positions forment une seule unité. Sans transaction, une
+    // erreur en cours de boucle laissait des leçons à `position >= 10000` (donc en fin de chapitre)
+    // et des composants à moitié remplacés — un état incohérent non détecté.
+    await withTransaction(async (client) => {
+      const run: SqlRunner = (text, params) => client.query(text, params);
 
-    for (const [index, lesson] of lessons.entries()) {
-      // `type` et `points` sont initialisés à la création et **préservés** en mise à jour
-      // (absents du `DO UPDATE`) : la relecture les expose, mais l'écriture ne les écrase pas.
-      //
-      // ⚠️ **`bloom_level` en `COALESCE`.** Un appelant qui omet le niveau (génération
-      // ancienne, ou leçon non encore alignée) ne doit PAS le remettre à NULL : le niveau
-      // en base est la source de vérité, et l'effacer ferait perdre un travail d'alignement.
-      await query(
-        `INSERT INTO lessons (
-           id, chapter_id, source_id, title, objective, content, type, points,
-           bloom_level, position
-         )
-         VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8)
-         ON CONFLICT (id) DO UPDATE SET
-           chapter_id = EXCLUDED.chapter_id,
-           title = EXCLUDED.title,
-           objective = EXCLUDED.objective,
-           content = EXCLUDED.content,
-           bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level),
-           position = EXCLUDED.position`,
-        [
-          lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
-          lesson.content ?? '', lesson.bloomLevel ?? null, index,
-        ],
+      await run(
+        'UPDATE lessons SET position = position + $2 WHERE chapter_id = $1',
+        [chapterId, PostgresContentProvider.POSITION_OFFSET],
       );
 
-      // ⚠️ Les composants vivent dans leur propre table : ils sont réécrits APRÈS
-      // la leçon, dont ils dépendent par clé étrangère.
-      await this.remplacerComposants(lesson.id, lesson.components ?? []);
-    }
+      for (const [index, lesson] of lessons.entries()) {
+        // `type` et `points` sont initialisés à la création et **préservés** en mise à jour
+        // (absents du `DO UPDATE`) : la relecture les expose, mais l'écriture ne les écrase pas.
+        //
+        // ⚠️ **`bloom_level` en `COALESCE`.** Un appelant qui omet le niveau (génération
+        // ancienne, ou leçon non encore alignée) ne doit PAS le remettre à NULL : le niveau
+        // en base est la source de vérité, et l'effacer ferait perdre un travail d'alignement.
+        await run(
+          `INSERT INTO lessons (
+             id, chapter_id, source_id, title, objective, content, type, points,
+             bloom_level, position
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, 'TEXTE', 0, $7, $8)
+           ON CONFLICT (id) DO UPDATE SET
+             chapter_id = EXCLUDED.chapter_id,
+             title = EXCLUDED.title,
+             objective = EXCLUDED.objective,
+             content = EXCLUDED.content,
+             bloom_level = COALESCE(EXCLUDED.bloom_level, lessons.bloom_level),
+             position = EXCLUDED.position`,
+          [
+            lesson.id, chapterId, null, lesson.title, lesson.objective ?? '',
+            lesson.content ?? '', lesson.bloomLevel ?? null, index,
+          ],
+        );
 
-    await query(
-      `WITH leftovers AS (
-         SELECT id, ROW_NUMBER() OVER (ORDER BY position) AS rn
-         FROM lessons
-         WHERE chapter_id = $1 AND position >= $3
-       )
-       UPDATE lessons l SET position = $2 + r.rn - 1
-       FROM leftovers r
-       WHERE l.id = r.id`,
-      [chapterId, lessons.length, PostgresContentProvider.POSITION_OFFSET],
-    );
+        // ⚠️ Les composants vivent dans leur propre table : ils sont réécrits APRÈS
+        // la leçon, dont ils dépendent par clé étrangère.
+        await this.remplacerComposants(run, lesson.id, lesson.components ?? []);
+      }
+
+      await run(
+        `WITH leftovers AS (
+           SELECT id, ROW_NUMBER() OVER (ORDER BY position) AS rn
+           FROM lessons
+           WHERE chapter_id = $1 AND position >= $3
+         )
+         UPDATE lessons l SET position = $2 + r.rn - 1
+         FROM leftovers r
+         WHERE l.id = r.id`,
+        [chapterId, lessons.length, PostgresContentProvider.POSITION_OFFSET],
+      );
+    });
   }
 
   /**
@@ -405,30 +424,37 @@ export class PostgresContentProvider implements ContentProvider {
    * supprime (la trace passe à `NULL`) puis on insère un composant neuf.
    */
   private async remplacerComposants(
+    run: SqlRunner,
     lessonId: string,
     composants: Lesson['components'],
   ): Promise<void> {
-    const positions = composants.map((composant) => composant.position);
+    // ⚠️ **L'ordre du tableau est autoritaire ; les positions sont normalisées 0..N-1.**
+    // Faire confiance à la `position` fournie laissait des trous (ex. `[0, 2]` après retrait d'un
+    // composant en milieu de leçon), et rien ne garantissait que les positions forment une plage
+    // continue. Ici, comme pour les leçons (`saveLessons` utilise aussi l'index), la position en
+    // base est l'index du tableau : la relecture trie déjà par `position`, donc l'ordre rendu est
+    // inchangé, mais la numérotation ne peut plus comporter de trou.
+    const positions = composants.map((_composant, index) => index);
 
     // ⚠️ `<> ALL('{}')` vaut VRAI partout : une liste vide supprime donc bien tous
     // les composants de la leçon, ce qui est le comportement attendu.
-    await query(
+    await run(
       `DELETE FROM lesson_components WHERE lesson_id = $1 AND position <> ALL($2::int[])`,
       [lessonId, positions],
     );
 
-    for (const composant of composants) {
-      await query(
+    for (const [position, composant] of composants.entries()) {
+      await run(
         `DELETE FROM lesson_components
          WHERE lesson_id = $1 AND position = $2 AND component_name <> $3`,
-        [lessonId, composant.position, composant.name],
+        [lessonId, position, composant.name],
       );
 
-      await query(
+      await run(
         `INSERT INTO lesson_components (lesson_id, component_name, position, config)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (lesson_id, position) DO UPDATE SET config = EXCLUDED.config`,
-        [lessonId, composant.name, composant.position, JSON.stringify(composant.config ?? {})],
+        [lessonId, composant.name, position, JSON.stringify(composant.config ?? {})],
       );
     }
   }

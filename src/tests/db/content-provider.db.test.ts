@@ -244,6 +244,42 @@ describe('PostgresContentProvider', () => {
     expect(lesson.components.map((c) => c.id).sort()).toEqual(rows.map((r) => r.id).sort());
   });
 
+  it('normalise les positions des composants : aucun trou après écriture', async () => {
+    // ⚠️ **L'ordre du tableau est autoritaire.** Une position fournie trouée (ex. `[0, 5]`)
+    // laissait la leçon avec une numérotation discontinue ; l'écriture doit renuméroter 0..N-1.
+    if (!(await requireDatabaseOrSkip())) return;
+    const provider = getContentProvider();
+
+    const chapter = (await provider.listChapters(scope)).find((c) =>
+      c.lessons.some((l) => (l.components?.length ?? 0) >= 2),
+    );
+    if (!chapter) throw new Error('Aucune leçon à (au moins) deux composants dans le jeu de test.');
+    const lesson = chapter.lessons.find((l) => (l.components?.length ?? 0) >= 2)!;
+
+    // Deux composants, positions volontairement trouées.
+    const troues = lesson.components.slice(0, 2).map((composant, index) => ({
+      ...composant,
+      position: index * 5,
+    }));
+
+    await provider.saveChapters(scope, [
+      {
+        ...chapter,
+        lessons: chapter.lessons.map((l) =>
+          l.id === lesson.id ? { ...l, components: troues } : l,
+        ),
+      },
+    ]);
+
+    const relu = (await provider.listChapters(scope, chapter.courseId))
+      .find((c) => c.id === chapter.id)!
+      .lessons.find((l) => l.id === lesson.id)!;
+    expect(relu.components.map((c) => c.position)).toEqual([0, 1]);
+
+    // Restauration de l'état initial.
+    await provider.saveChapters(scope, [chapter]);
+  });
+
   it('n’expose pas de formule propre à une autre organisation (catalogue global)', async () => {
     if (!(await requireDatabaseOrSkip())) return;
 
