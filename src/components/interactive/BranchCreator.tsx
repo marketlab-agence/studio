@@ -7,12 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function BranchCreator() {
+export function BranchCreator({ config }: { config?: ComponentConfig }) {
   const [branches, setBranches] = useState(['main', 'develop']);
   const [newBranchName, setNewBranchName] = useState('');
   const [currentBranch, setCurrentBranch] = useState('main');
   const { toast } = useToast();
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de Création de Branches',
+      description: 'Créez et gérez des branches pour simuler un flux de travail de développement.',
+    },
+    config?.labels,
+  );
 
   const handleCreateBranch = () => {
     if (!newBranchName.trim()) {
@@ -47,11 +56,9 @@ export function BranchCreator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitBranch className="h-5 w-5 text-primary" />
-          Simulateur de Création de Branches
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Créez et gérez des branches pour simuler un flux de travail de développement.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex gap-2">

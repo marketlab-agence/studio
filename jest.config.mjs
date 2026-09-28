@@ -18,6 +18,14 @@ const ESM_DEPS = [
   'yaml',
   // `jose` est publie en ESM uniquement (Web Crypto, compatible Edge runtime).
   'jose',
+  // `next-intl` publie un build ESM (`dist/esm/...`) : un composant qui appelle
+  // `useFormatter`/`useTranslations` ne peut pas etre importe sans le transformer.
+  'next-intl',
+  'use-intl',
+  // `use-intl` s'appuie sur `@formatjs/*` et `intl-messageformat`, publies en ESM.
+  '@formatjs',
+  'intl-messageformat',
+  '@formatjs/icu-messageformat-parser',
 ].join('|')
 
 /** @type {import('jest').Config} */

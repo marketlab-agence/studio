@@ -262,6 +262,11 @@ describe('DATA_SCHEMAS — composants spécialisés non data-driven : aucune don
     'CollaborationSimulator',
     'ConflictPlayground',
     'TimelineNavigator',
+    'BranchCreator',
+    'ConflictResolver',
+    'PRWorkflowSimulator',
+    'IssueTracker',
+    'VersioningDemo',
   ] as const;
 
   it('déclarent un schéma objet sans aucune clé', () => {

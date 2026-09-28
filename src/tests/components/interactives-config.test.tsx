@@ -19,6 +19,20 @@ import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
 import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
 import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
 import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
+import { BranchCreator } from '@/components/interactive/BranchCreator';
+import { ConflictResolver } from '@/components/interactive/ConflictResolver';
+import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
+import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
+import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
+
+/**
+ * ⚠️ **`next-intl` est mocké.** `VersioningDemo` appelle `useFormatter()`, qui exige un
+ * `NextIntlClientProvider` (absent d'un rendu unitaire isolé). On ne teste ici que les
+ * **libellés de `config`** : le formatage de date n'est pas le sujet.
+ */
+jest.mock('next-intl', () => ({
+  useFormatter: () => ({ dateTime: () => '01/01/2026, 00:00' }),
+}));
 
 describe('interactifs spécialisés — libellés en configuration (non-régression)', () => {
   it('GitTimeTravel affiche son titre historique sans configuration', () => {
@@ -146,5 +160,79 @@ describe('interactifs spécialisés (paquet 2) — libellés en configuration (s
   it('TimelineNavigator remplace le titre par celui de la configuration', () => {
     render(<TimelineNavigator config={{ labels: { title: 'Ma timeline' } }} />);
     expect(screen.getByText('Ma timeline')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 3) — libellés en configuration (non-régression)', () => {
+  it('BranchCreator affiche son titre historique sans configuration', () => {
+    render(<BranchCreator />);
+    expect(screen.getByText('Simulateur de Création de Branches')).toBeInTheDocument();
+  });
+
+  it('ConflictResolver affiche son titre historique sans configuration', () => {
+    render(<ConflictResolver />);
+    expect(screen.getByText('Résolveur de Conflits Interactif')).toBeInTheDocument();
+  });
+
+  it('PRWorkflowSimulator affiche son titre historique sans configuration', () => {
+    render(<PRWorkflowSimulator />);
+    expect(screen.getByText('Simulateur de Workflow de Pull Request')).toBeInTheDocument();
+  });
+
+  it('IssueTracker affiche son texte historique (bouton « New Issue ») sans configuration', () => {
+    render(<IssueTracker />);
+    expect(screen.getByText('New Issue')).toBeInTheDocument();
+  });
+
+  it('VersioningDemo affiche ses textes historiques sans configuration', () => {
+    render(<VersioningDemo />);
+    expect(screen.getByText('Démonstration du Versioning')).toBeInTheDocument();
+    expect(screen.getByText('Historique des versions')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 3) — libellés en configuration (surcharge)', () => {
+  it('BranchCreator remplace le titre par celui de la configuration', () => {
+    render(<BranchCreator config={{ labels: { title: 'Mes branches' } }} />);
+    expect(screen.getByText('Mes branches')).toBeInTheDocument();
+    expect(screen.queryByText('Simulateur de Création de Branches')).toBeNull();
+  });
+
+  it('ConflictResolver remplace titre ET description de la configuration', () => {
+    render(
+      <ConflictResolver
+        config={{ labels: { title: 'Conflit maison', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Conflit maison')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('PRWorkflowSimulator remplace le titre par celui de la configuration', () => {
+    render(<PRWorkflowSimulator config={{ labels: { title: 'Mon cycle de PR' } }} />);
+    expect(screen.getByText('Mon cycle de PR')).toBeInTheDocument();
+  });
+
+  it('IssueTracker remplace le libellé du bouton « New Issue » par celui de la configuration', () => {
+    render(<IssueTracker config={{ labels: { createIssue: 'Nouvelle issue' } }} />);
+    expect(screen.getByText('Nouvelle issue')).toBeInTheDocument();
+    expect(screen.queryByText('New Issue')).toBeNull();
+  });
+
+  it('VersioningDemo remplace titre, en-tête d’historique et libellé de commit', () => {
+    render(
+      <VersioningDemo
+        config={{
+          labels: {
+            title: 'Mon versioning',
+            historyHeading: 'Mes versions',
+            commitButton: 'Enregistrer la version',
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText('Mon versioning')).toBeInTheDocument();
+    expect(screen.getByText('Mes versions')).toBeInTheDocument();
+    expect(screen.getByText('Enregistrer la version')).toBeInTheDocument();
   });
 });

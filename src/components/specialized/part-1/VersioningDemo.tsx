@@ -8,6 +8,7 @@ import { GitCommit, History, Pencil, Undo2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useFormatter } from 'next-intl';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type Commit = {
   id: string;
@@ -30,8 +31,19 @@ const initialCommits: Commit[] = [
   },
 ];
 
-export function VersioningDemo() {
+export function VersioningDemo({ config }: { config?: ComponentConfig }) {
   const format = useFormatter();
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Démonstration du Versioning',
+      description: 'Découvrez comment Git sauvegarde les versions de vos fichiers dans le temps.',
+      historyHeading: 'Historique des versions',
+      commitHeading: 'Effectuer un nouveau commit',
+      commitButton: 'Commit les changements',
+    },
+    config?.labels,
+  );
   const [commits, setCommits] = useState<Commit[]>(initialCommits);
   const [currentContent, setCurrentContent] = useState<string>(initialContent);
   const [commitMessage, setCommitMessage] = useState<string>('');
@@ -65,14 +77,14 @@ export function VersioningDemo() {
   return (
     <Card className="my-6 border-border/50 bg-transparent shadow-none">
       <CardHeader>
-        <CardTitle>Démonstration du Versioning</CardTitle>
-        <CardDescription>Découvrez comment Git sauvegarde les versions de vos fichiers dans le temps.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* History Column */}
           <div className="md:col-span-1">
-            <h4 className="mb-2 font-semibold">Historique des versions</h4>
+            <h4 className="mb-2 font-semibold">{libelles.historyHeading}</h4>
             <Card className="bg-muted/50">
               <ScrollArea className="h-64">
                 <CardContent className="p-2">
@@ -127,7 +139,7 @@ export function VersioningDemo() {
 
         {/* Commit Action Row */}
         <div className="mt-6">
-          <h4 className="mb-2 font-semibold">Effectuer un nouveau commit</h4>
+          <h4 className="mb-2 font-semibold">{libelles.commitHeading}</h4>
           <div className="rounded-lg border bg-card p-4">
             <div className="flex flex-col gap-4 md:flex-row">
               <Input
@@ -138,7 +150,7 @@ export function VersioningDemo() {
               />
               <Button onClick={handleCommit} disabled={!commitMessage.trim()}>
                 <GitCommit className="mr-2 h-4 w-4" />
-                Commit les changements
+                {libelles.commitButton}
               </Button>
             </div>
           </div>

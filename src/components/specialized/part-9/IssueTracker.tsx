@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const initialIssues = [
   { id: 123, title: 'Bug: The login button is not clickable on Firefox', status: 'Open', labels: ['bug', 'high-priority'], assignee: 'alex-dev' },
@@ -33,9 +34,11 @@ const labelColors: Record<string, string> = {
     triage: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 }
 
-export function IssueTracker() {
+export function IssueTracker({ config }: { config?: ComponentConfig }) {
     const [issues, setIssues] = useState(initialIssues);
     const [open, setOpen] = useState(false);
+    // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+    const libelles = fusionnerLibelles({ createIssue: 'New Issue' }, config?.labels);
 
     const handleCreateIssue = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -64,7 +67,7 @@ export function IssueTracker() {
                 <DialogTrigger asChild>
                      <Button size="sm">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        New Issue
+                        {libelles.createIssue}
                     </Button>
                 </DialogTrigger>
                 <DialogContent>

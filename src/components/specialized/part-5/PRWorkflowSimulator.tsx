@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type Step = 'create' | 'review' | 'checks' | 'merge' | 'merged';
 
@@ -19,8 +20,16 @@ const stepsConfig: Record<Step, { title: string; icon: React.ElementType }> = {
   merged: { title: 'Merged', icon: CheckCircle },
 };
 
-export function PRWorkflowSimulator() {
+export function PRWorkflowSimulator({ config }: { config?: ComponentConfig }) {
   const [currentStep, setCurrentStep] = useState<Step>('create');
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de Workflow de Pull Request',
+      description: "Suivez le cycle de vie d'une Pull Request, de la création à la fusion.",
+    },
+    config?.labels,
+  );
 
   const handleNextStep = () => {
     const order: Step[] = ['create', 'review', 'checks', 'merge', 'merged'];
@@ -114,9 +123,9 @@ export function PRWorkflowSimulator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitPullRequest className="h-5 w-5 text-primary" />
-          Simulateur de Workflow de Pull Request
+          {libelles.title}
         </CardTitle>
-        <CardDescription>Suivez le cycle de vie d'une Pull Request, de la création à la fusion.</CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="min-h-[300px]">
         
