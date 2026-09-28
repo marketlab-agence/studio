@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle, History, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const initialConflict = `<<<<<<< HEAD
 function greet() {
@@ -18,10 +19,18 @@ function greet() {
 }
 >>>>>>> feature/french-greeting`;
 
-export function ConflictPlayground() {
+export function ConflictPlayground({ config }: { config?: ComponentConfig }) {
   const [content, setContent] = useState(initialConflict);
   const [isResolved, setIsResolved] = useState(false);
   const { toast } = useToast();
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Terrain de Jeu pour Conflits',
+      description: 'Modifiez le texte ci-dessous pour résoudre le conflit manuellement.',
+    },
+    config?.labels,
+  );
 
   const handleVerify = () => {
     if (content.includes('<<<<<<<') || content.includes('=======') || content.includes('>>>>>>>')) {
@@ -48,8 +57,8 @@ export function ConflictPlayground() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Terrain de Jeu pour Conflits</CardTitle>
-        <CardDescription>Modifiez le texte ci-dessous pour résoudre le conflit manuellement.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>

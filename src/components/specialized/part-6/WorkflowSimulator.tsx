@@ -8,6 +8,7 @@ import { GitBranch, GitCommitHorizontal, GitMerge, Rocket, Bug, Plus, History } 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type Commit = { id: string; message: string };
 type Branches = {
@@ -31,11 +32,19 @@ const initialState: Branches = {
   hotfixes: {},
 };
 
-export function WorkflowSimulator() {
+export function WorkflowSimulator({ config }: { config?: ComponentConfig }) {
   const [branches, setBranches] = useState<Branches>(initialState);
   const [featureCounter, setFeatureCounter] = useState(1);
   const [releaseCounter, setReleaseCounter] = useState(1);
   const { toast } = useToast();
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de Workflow GitFlow',
+      description: 'Visualisez le flux GitFlow en créant des features, releases, et hotfixes.',
+    },
+    config?.labels,
+  );
 
   const handleReset = () => {
     setBranches(initialState);
@@ -114,8 +123,8 @@ export function WorkflowSimulator() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Simulateur de Workflow GitFlow</CardTitle>
-        <CardDescription>Visualisez le flux GitFlow en créant des features, releases, et hotfixes.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2 p-4 border rounded-lg mb-6">

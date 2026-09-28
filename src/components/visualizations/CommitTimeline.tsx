@@ -1,12 +1,15 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GitCommitHorizontal } from 'lucide-react';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function CommitTimeline() {
+export function CommitTimeline({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = titre historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles({ title: 'Frise Chronologique des Commits' }, config?.labels);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Frise Chronologique des Commits</CardTitle>
+        <CardTitle>{libelles.title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative pl-6">

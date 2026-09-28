@@ -1,0 +1,440 @@
+/**
+ * Composants INTERACTIFS spécialisés et configuration (lot 2 de la vague « config sur les 58 »).
+ *
+ * ⚠️ **Même double propriété que le lot 1 (visuels)** :
+ * 1. sans configuration, le rendu est **identique** (le libellé par défaut est celui affiché) ;
+ * 2. une `config.labels` fournie **remplace** ce libellé au rendu.
+ *
+ * Sans ce test, les composants spécialisés — qui affichaient des titres en dur ignorés par le
+ * créateur et l'IA — pourraient redevenir sourds à `config` sans qu'aucun test ne le voie.
+ */
+import { render, screen } from '@testing-library/react';
+import { GitTimeTravel } from '@/components/interactive/GitTimeTravel';
+import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
+import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
+import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
+import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
+import { PullRequestCreator } from '@/components/interactive/PullRequestCreator';
+import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
+import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
+import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
+import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
+import { BranchCreator } from '@/components/interactive/BranchCreator';
+import { ConflictResolver } from '@/components/interactive/ConflictResolver';
+import { PRWorkflowSimulator } from '@/components/specialized/part-5/PRWorkflowSimulator';
+import { IssueTracker } from '@/components/specialized/part-9/IssueTracker';
+import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
+import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
+import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
+import { GitignoreTester } from '@/components/specialized/part-11/GitignoreTester';
+import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
+import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimator';
+import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
+import { AiHelper } from '@/components/interactive/AiHelper';
+import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
+import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
+import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
+import { OpenSourceSimulator } from '@/components/specialized/part-10/OpenSourceSimulator';
+import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
+
+/**
+ * ⚠️ **`next-intl` est mocké.** `VersioningDemo` appelle `useFormatter()`, qui exige un
+ * `NextIntlClientProvider` (absent d'un rendu unitaire isolé). On ne teste ici que les
+ * **libellés de `config`** : le formatage de date n'est pas le sujet.
+ */
+jest.mock('next-intl', () => ({
+  useFormatter: () => ({ dateTime: () => '01/01/2026, 00:00' }),
+}));
+
+/**
+ * ⚠️ **Le flux Genkit est mocké.** `AiHelper` importe `contextual-helper-flow` (Genkit + Gemini) :
+ * l'importer tirerait le SDK IA dans un test unitaire. On n'observe ici que les libellés.
+ */
+jest.mock('@/ai/flows/contextual-helper-flow', () => ({
+  getContextualHelp: jest.fn().mockResolvedValue({ explanation: 'Réponse simulée.' }),
+}));
+
+/**
+ * ⚠️ **`react-markdown` est mocké.** Il tire tout l'écosystème unified/remark (ESM) dans le test ;
+ * on ne rend que les libellés de `config`, pas la réponse markdown.
+ */
+jest.mock('react-markdown', () => ({
+  __esModule: true,
+  default: ({ children }: { children?: unknown }) => <div>{children as never}</div>,
+}));
+
+describe('interactifs spécialisés — libellés en configuration (non-régression)', () => {
+  it('GitTimeTravel affiche son titre historique sans configuration', () => {
+    render(<GitTimeTravel />);
+    expect(screen.getByText('Machine à Remonter le Temps Git')).toBeInTheDocument();
+  });
+
+  it('ReflogExplorer affiche son titre et sa description historiques sans configuration', () => {
+    render(<ReflogExplorer />);
+    expect(screen.getByText('Explorateur Reflog')).toBeInTheDocument();
+    expect(screen.getByText(/filet de sécurité de Git/)).toBeInTheDocument();
+  });
+
+  it('ResolutionGuide affiche son titre historique sans configuration', () => {
+    render(<ResolutionGuide />);
+    expect(screen.getByText('Guide Pas-à-Pas de Résolution de Conflits')).toBeInTheDocument();
+  });
+
+  it('ForkVsCloneDemo affiche son titre historique sans configuration', () => {
+    render(<ForkVsCloneDemo />);
+    expect(screen.getByText('Démonstration Fork vs Clone')).toBeInTheDocument();
+  });
+
+  it('TrunkBasedDevelopmentVisualizer affiche son titre historique sans configuration', () => {
+    render(<TrunkBasedDevelopmentVisualizer />);
+    expect(screen.getByText('Visualisation du Trunk-Based Development')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés — libellés en configuration (surcharge)', () => {
+  it('GitTimeTravel remplace le titre par celui de la configuration', () => {
+    render(<GitTimeTravel config={{ labels: { title: 'Mon voyage Git' } }} />);
+    expect(screen.getByText('Mon voyage Git')).toBeInTheDocument();
+    expect(screen.queryByText('Machine à Remonter le Temps Git')).toBeNull();
+  });
+
+  it('ReflogExplorer remplace titre ET description de la configuration', () => {
+    render(
+      <ReflogExplorer
+        config={{ labels: { title: 'Journal local', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Journal local')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('ResolutionGuide remplace le titre sans toucher à la description par défaut', () => {
+    render(<ResolutionGuide config={{ labels: { title: 'Résoudre comme un pro' } }} />);
+    expect(screen.getByText('Résoudre comme un pro')).toBeInTheDocument();
+    expect(
+      screen.getByText('Suivez ces étapes pour résoudre un conflit de fusion comme un pro.'),
+    ).toBeInTheDocument();
+  });
+
+  it('ForkVsCloneDemo remplace le titre par celui de la configuration', () => {
+    render(<ForkVsCloneDemo config={{ labels: { title: 'Fork ou clone ?' } }} />);
+    expect(screen.getByText('Fork ou clone ?')).toBeInTheDocument();
+  });
+
+  it('TrunkBasedDevelopmentVisualizer remplace le titre par celui de la configuration', () => {
+    render(
+      <TrunkBasedDevelopmentVisualizer config={{ labels: { title: 'Trunk-based en pratique' } }} />,
+    );
+    expect(screen.getByText('Trunk-based en pratique')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 2) — libellés en configuration (non-régression)', () => {
+  it('PullRequestCreator affiche son titre historique sans configuration', () => {
+    render(<PullRequestCreator />);
+    expect(screen.getByText('Créateur de Pull Request')).toBeInTheDocument();
+  });
+
+  it('WorkflowDesigner affiche son titre historique sans configuration', () => {
+    render(<WorkflowDesigner />);
+    expect(screen.getByText('Designer de Workflow Git')).toBeInTheDocument();
+  });
+
+  it('CollaborationSimulator affiche son titre historique sans configuration', () => {
+    render(<CollaborationSimulator />);
+    expect(screen.getByText('Simulateur de Collaboration')).toBeInTheDocument();
+  });
+
+  it('ConflictPlayground affiche son titre historique sans configuration', () => {
+    render(<ConflictPlayground />);
+    expect(screen.getByText('Terrain de Jeu pour Conflits')).toBeInTheDocument();
+  });
+
+  it('TimelineNavigator affiche son titre historique sans configuration', () => {
+    render(<TimelineNavigator />);
+    expect(screen.getByText('Navigateur de Timeline')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 2) — libellés en configuration (surcharge)', () => {
+  it('PullRequestCreator remplace le titre par celui de la configuration', () => {
+    render(<PullRequestCreator config={{ labels: { title: 'Ma Pull Request' } }} />);
+    expect(screen.getByText('Ma Pull Request')).toBeInTheDocument();
+    expect(screen.queryByText('Créateur de Pull Request')).toBeNull();
+  });
+
+  it('WorkflowDesigner remplace titre ET description de la configuration', () => {
+    render(
+      <WorkflowDesigner
+        config={{ labels: { title: 'Mon workflow', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon workflow')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('CollaborationSimulator remplace le titre par celui de la configuration', () => {
+    render(<CollaborationSimulator config={{ labels: { title: 'Travail d’équipe' } }} />);
+    expect(screen.getByText('Travail d’équipe')).toBeInTheDocument();
+  });
+
+  it('ConflictPlayground remplace le titre sans toucher à la description par défaut', () => {
+    render(<ConflictPlayground config={{ labels: { title: 'Résous le conflit' } }} />);
+    expect(screen.getByText('Résous le conflit')).toBeInTheDocument();
+    expect(
+      screen.getByText('Modifiez le texte ci-dessous pour résoudre le conflit manuellement.'),
+    ).toBeInTheDocument();
+  });
+
+  it('TimelineNavigator remplace le titre par celui de la configuration', () => {
+    render(<TimelineNavigator config={{ labels: { title: 'Ma timeline' } }} />);
+    expect(screen.getByText('Ma timeline')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 3) — libellés en configuration (non-régression)', () => {
+  it('BranchCreator affiche son titre historique sans configuration', () => {
+    render(<BranchCreator />);
+    expect(screen.getByText('Simulateur de Création de Branches')).toBeInTheDocument();
+  });
+
+  it('ConflictResolver affiche son titre historique sans configuration', () => {
+    render(<ConflictResolver />);
+    expect(screen.getByText('Résolveur de Conflits Interactif')).toBeInTheDocument();
+  });
+
+  it('PRWorkflowSimulator affiche son titre historique sans configuration', () => {
+    render(<PRWorkflowSimulator />);
+    expect(screen.getByText('Simulateur de Workflow de Pull Request')).toBeInTheDocument();
+  });
+
+  it('IssueTracker affiche son texte historique (bouton « New Issue ») sans configuration', () => {
+    render(<IssueTracker />);
+    expect(screen.getByText('New Issue')).toBeInTheDocument();
+  });
+
+  it('VersioningDemo affiche ses textes historiques sans configuration', () => {
+    render(<VersioningDemo />);
+    expect(screen.getByText('Démonstration du Versioning')).toBeInTheDocument();
+    expect(screen.getByText('Historique des versions')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 3) — libellés en configuration (surcharge)', () => {
+  it('BranchCreator remplace le titre par celui de la configuration', () => {
+    render(<BranchCreator config={{ labels: { title: 'Mes branches' } }} />);
+    expect(screen.getByText('Mes branches')).toBeInTheDocument();
+    expect(screen.queryByText('Simulateur de Création de Branches')).toBeNull();
+  });
+
+  it('ConflictResolver remplace titre ET description de la configuration', () => {
+    render(
+      <ConflictResolver
+        config={{ labels: { title: 'Conflit maison', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Conflit maison')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('PRWorkflowSimulator remplace le titre par celui de la configuration', () => {
+    render(<PRWorkflowSimulator config={{ labels: { title: 'Mon cycle de PR' } }} />);
+    expect(screen.getByText('Mon cycle de PR')).toBeInTheDocument();
+  });
+
+  it('IssueTracker remplace le libellé du bouton « New Issue » par celui de la configuration', () => {
+    render(<IssueTracker config={{ labels: { createIssue: 'Nouvelle issue' } }} />);
+    expect(screen.getByText('Nouvelle issue')).toBeInTheDocument();
+    expect(screen.queryByText('New Issue')).toBeNull();
+  });
+
+  it('VersioningDemo remplace titre, en-tête d’historique et libellé de commit', () => {
+    render(
+      <VersioningDemo
+        config={{
+          labels: {
+            title: 'Mon versioning',
+            historyHeading: 'Mes versions',
+            commitButton: 'Enregistrer la version',
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText('Mon versioning')).toBeInTheDocument();
+    expect(screen.getByText('Mes versions')).toBeInTheDocument();
+    expect(screen.getByText('Enregistrer la version')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 4) — libellés en configuration (non-régression)', () => {
+  it('AliasCreator affiche son titre historique sans configuration', () => {
+    render(<AliasCreator />);
+    expect(screen.getByText("Assistant de Création d'Alias Git")).toBeInTheDocument();
+  });
+
+  it('CommitMessageLinter affiche son titre historique sans configuration', () => {
+    render(<CommitMessageLinter />);
+    expect(screen.getByText('Linter de Messages de Commit')).toBeInTheDocument();
+  });
+
+  it('GitignoreTester affiche son titre historique sans configuration', () => {
+    render(<GitignoreTester />);
+    expect(screen.getByText('Simulateur de `.gitignore`')).toBeInTheDocument();
+  });
+
+  it('SecurityScanner affiche son titre historique sans configuration', () => {
+    render(<SecurityScanner />);
+    expect(screen.getByText('Démonstration des Bonnes Pratiques de Sécurité')).toBeInTheDocument();
+  });
+
+  it('PushPullAnimator affiche ses textes historiques sans configuration', () => {
+    render(<PushPullAnimator />);
+    expect(screen.getByText('Animateur Push & Pull')).toBeInTheDocument();
+    expect(screen.getByText('Dépôt Local')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 4) — libellés en configuration (surcharge)', () => {
+  it('AliasCreator remplace titre ET description de la configuration', () => {
+    render(
+      <AliasCreator
+        config={{ labels: { title: 'Mes alias', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mes alias')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('CommitMessageLinter remplace le titre par celui de la configuration', () => {
+    render(<CommitMessageLinter config={{ labels: { title: 'Mon linter' } }} />);
+    expect(screen.getByText('Mon linter')).toBeInTheDocument();
+  });
+
+  it('GitignoreTester remplace le titre par celui de la configuration', () => {
+    render(<GitignoreTester config={{ labels: { title: 'Mes règles' } }} />);
+    expect(screen.getByText('Mes règles')).toBeInTheDocument();
+  });
+
+  it('SecurityScanner remplace le titre sans toucher à la description par défaut', () => {
+    render(<SecurityScanner config={{ labels: { title: 'Analyse de sécurité' } }} />);
+    expect(screen.getByText('Analyse de sécurité')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('PushPullAnimator remplace les trois libellés de dépôt', () => {
+    render(
+      <PushPullAnimator
+        config={{ labels: { title: 'Ma synchro', localHeading: 'En local', remoteHeading: 'Sur le serveur' } }}
+      />,
+    );
+    expect(screen.getByText('Ma synchro')).toBeInTheDocument();
+    expect(screen.getByText('En local')).toBeInTheDocument();
+    expect(screen.getByText('Sur le serveur')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (lot final) — libellés en configuration (non-régression)', () => {
+  it('GitRepositoryPlayground affiche son titre historique sans configuration', () => {
+    render(<GitRepositoryPlayground />);
+    expect(screen.getByText('Bac à Sable de Dépôt Git')).toBeInTheDocument();
+  });
+
+  it('AiHelper affiche ses textes historiques sans configuration', () => {
+    render(<AiHelper lessonContext="Leçon" courseTopic="Git" />);
+    expect(screen.getByText('Playground IA Katalyst')).toBeInTheDocument();
+    expect(screen.getByText("Demander à l'IA")).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (lot final) — libellés en configuration (surcharge)', () => {
+  it('GitRepositoryPlayground remplace titre ET description de la configuration', () => {
+    render(
+      <GitRepositoryPlayground
+        config={{ labels: { title: 'Mon dépôt', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon dépôt')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('AiHelper remplace titre et libellé du bouton de la configuration', () => {
+    render(
+      <AiHelper
+        lessonContext="Leçon"
+        courseTopic="Git"
+        config={{ labels: { title: 'Assistant maison', askButton: 'Interroger' } }}
+      />,
+    );
+    expect(screen.getByText('Assistant maison')).toBeInTheDocument();
+    expect(screen.getByText('Interroger')).toBeInTheDocument();
+    expect(screen.queryByText("Demander à l'IA")).toBeNull();
+  });
+});
+
+describe('interactifs spécialisés (paquet 5) — libellés en configuration (non-régression)', () => {
+  it('ActionsWorkflowBuilder affiche son titre historique sans configuration', () => {
+    render(<ActionsWorkflowBuilder />);
+    expect(screen.getByText('Constructeur de Workflow GitHub Actions')).toBeInTheDocument();
+  });
+
+  it('FlowDiagramBuilder affiche son titre historique sans configuration', () => {
+    render(<FlowDiagramBuilder />);
+    expect(screen.getByText('Constructeur de Diagrammes de Flux')).toBeInTheDocument();
+  });
+
+  it('GitHubInterfaceSimulator affiche son titre historique sans configuration', () => {
+    render(<GitHubInterfaceSimulator />);
+    expect(screen.getByText("Simulateur d'Interface GitHub")).toBeInTheDocument();
+  });
+
+  it('OpenSourceSimulator affiche son titre historique sans configuration', () => {
+    render(<OpenSourceSimulator />);
+    expect(screen.getByText('Simulateur de Contribution Open Source')).toBeInTheDocument();
+  });
+
+  it('WorkflowSimulator affiche son titre historique sans configuration', () => {
+    render(<WorkflowSimulator />);
+    expect(screen.getByText('Simulateur de Workflow GitFlow')).toBeInTheDocument();
+  });
+});
+
+describe('interactifs spécialisés (paquet 5) — libellés en configuration (surcharge)', () => {
+  it('ActionsWorkflowBuilder remplace titre ET description de la configuration', () => {
+    render(
+      <ActionsWorkflowBuilder
+        config={{ labels: { title: 'Mon pipeline', description: 'Description personnalisée.' } }}
+      />,
+    );
+    expect(screen.getByText('Mon pipeline')).toBeInTheDocument();
+    expect(screen.getByText('Description personnalisée.')).toBeInTheDocument();
+  });
+
+  it('FlowDiagramBuilder remplace le titre par celui de la configuration', () => {
+    render(<FlowDiagramBuilder config={{ labels: { title: 'Mon diagramme' } }} />);
+    expect(screen.getByText('Mon diagramme')).toBeInTheDocument();
+  });
+
+  it('GitHubInterfaceSimulator remplace le titre par celui de la configuration', () => {
+    render(<GitHubInterfaceSimulator config={{ labels: { title: 'Mon GitHub' } }} />);
+    expect(screen.getByText('Mon GitHub')).toBeInTheDocument();
+  });
+
+  it('OpenSourceSimulator remplace le titre sans toucher à la description par défaut', () => {
+    render(<OpenSourceSimulator config={{ labels: { title: 'Contribuer' } }} />);
+    expect(screen.getByText('Contribuer')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Suivez le flux de travail complet pour proposer une modification à un projet.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('WorkflowSimulator remplace le titre par celui de la configuration', () => {
+    render(<WorkflowSimulator config={{ labels: { title: 'Mon GitFlow' } }} />);
+    expect(screen.getByText('Mon GitFlow')).toBeInTheDocument();
+  });
+});

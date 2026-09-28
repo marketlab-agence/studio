@@ -382,6 +382,17 @@
       "moveDown": "Move down",
       "remove": "Remove",
       "labelsTitle": "Labels",
+      "labelKeys": {
+        "title": "Title",
+        "description": "Description",
+        "localHeading": "“Local repository” heading",
+        "remoteHeading": "“Remote repository” heading",
+        "historyHeading": "History heading",
+        "commitHeading": "Commit section heading",
+        "commitButton": "Commit button label",
+        "createIssue": "Create button label",
+        "askButton": "Ask button label"
+      },
       "dataTitle": "Data (JSON)",
       "dataHint": "Data validated by the component schema. Empty = default values.",
       "invalidJson": "Invalid JSON: {message}",

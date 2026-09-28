@@ -6,18 +6,9 @@ import { COMPONENT_CATALOG, type ComponentMeta } from './catalog';
 // primitives génériques et produisent une trace. Voir git-configurations.tsx.
 import {
   GitDoctorTool as GitDoctorToolConfig,
-  GitRepositoryPlayground as GitRepositoryPlaygroundConfig,
   MergeStrategyComparison,
   UndoCommandComparison as UndoCommandComparisonConfig,
-  ForkVsCloneDemo as ForkVsCloneDemoConfig,
-  TrunkBasedDevelopmentVisualizer as TrunkBasedDevelopmentVisualizerConfig,
-  ReflogExplorer as ReflogExplorerConfig,
-  ResolutionGuide as ResolutionGuideConfig,
-  PullRequestCreator as PullRequestCreatorConfig,
-  CollaborationSimulator as CollaborationSimulatorConfig,
-  WorkflowDesigner as WorkflowDesignerConfig,
   ConflictVisualizer as ConflictVisualizerConfig,
-  GitTimeTravel as GitTimeTravelConfig,
   StagingAreaVisualizer as StagingAreaVisualizerConfig,
 } from '@/components/interactive/git-configurations';
 import { AiHelper } from '@/components/interactive/AiHelper';
@@ -37,17 +28,14 @@ import { BranchCreator } from '@/components/interactive/BranchCreator';
 import { CollaborationSimulator } from '@/components/interactive/CollaborationSimulator';
 import { ConflictResolver } from '@/components/interactive/ConflictResolver';
 import { GitCommandSimulator } from '@/components/interactive/GitCommandSimulator';
-import { GitDoctorTool } from '@/components/interactive/GitDoctorTool';
 import { GitRepositoryPlayground } from '@/components/interactive/GitRepositoryPlayground';
 import { GitTimeTravel } from '@/components/interactive/GitTimeTravel';
-import { MergeSimulator } from '@/components/interactive/MergeSimulator';
 import { PullRequestCreator } from '@/components/interactive/PullRequestCreator';
 import { WorkflowDesigner } from '@/components/interactive/WorkflowDesigner';
 import { ActionsWorkflowBuilder } from '@/components/specialized/part-9/ActionsWorkflowBuilder';
 import { AliasCreator } from '@/components/specialized/part-11/AliasCreator';
 import { CommitMessageLinter } from '@/components/specialized/part-11/CommitMessageLinter';
 import { ConflictPlayground } from '@/components/specialized/part-7/ConflictPlayground';
-import { ConflictVisualizer } from '@/components/specialized/part-7/ConflictVisualizer';
 import { FlowDiagramBuilder } from '@/components/specialized/part-6/FlowDiagramBuilder';
 import { ForkVsCloneDemo } from '@/components/specialized/part-5/ForkVsCloneDemo';
 import { GitHubInterfaceSimulator } from '@/components/specialized/part-9/GitHubInterfaceSimulator';
@@ -59,10 +47,8 @@ import { PushPullAnimator } from '@/components/specialized/part-4/PushPullAnimat
 import { ReflogExplorer } from '@/components/specialized/part-8/ReflogExplorer';
 import { ResolutionGuide } from '@/components/specialized/part-7/ResolutionGuide';
 import { SecurityScanner } from '@/components/specialized/part-11/SecurityScanner';
-import { StagingAreaVisualizer } from '@/components/specialized/part-2/StagingAreaVisualizer';
 import { TimelineNavigator } from '@/components/specialized/part-8/TimelineNavigator';
 import { TrunkBasedDevelopmentVisualizer } from '@/components/specialized/part-6/TrunkBasedDevelopmentVisualizer';
-import { UndoCommandComparison } from '@/components/specialized/part-8/UndoCommandComparison';
 import { VersioningDemo } from '@/components/specialized/part-1/VersioningDemo';
 import { WorkflowSimulator } from '@/components/specialized/part-6/WorkflowSimulator';
 

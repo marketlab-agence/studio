@@ -90,10 +90,16 @@ describe('contrat de configuration', () => {
  */
 describe('DATA_SCHEMAS — alignés sur les données réellement lues par les composants', () => {
   /**
-   * ⚠️ **Périmètre verrouillé.** Les composants rendus config-aware par la Task 5 : les 12
-   * primitives + les 14 configurations Git éditées dans `git-configurations.tsx` (dont
-   * `GitCommandSimulator`, config-aware à part). Une omission ici est exactement ce qui a laissé
-   * passer les dérives `MergeSimulator` / `UndoCommandComparison`.
+   * ⚠️ **Périmètre verrouillé.** Les composants dont `config.data` est réellement **consommée**
+   * au rendu : les 12 primitives + les configurations Git câblées sur une primitive
+   * (`GitDoctorTool`, `MergeSimulator`, `UndoCommandComparison`, `ConflictVisualizer`,
+   * `StagingAreaVisualizer`, `GitRepositoryPlayground`) + `GitCommandSimulator`.
+   *
+   * Les composants spécialisés non data-driven (lots 2 paquets 1 et 2 : `GitTimeTravel`,
+   * `ReflogExplorer`, `ResolutionGuide`, `ForkVsCloneDemo`, `TrunkBasedDevelopmentVisualizer`,
+   * `PullRequestCreator`, `WorkflowDesigner`, `CollaborationSimulator`, `ConflictPlayground`,
+   * `TimelineNavigator`) sont hors de ce périmètre : leur rendu n'exploite aucune donnée
+   * structurée. Ils sont couverts par le bloc « aucune donnée attendue » plus bas.
    */
   const PERIMETRE = [
     // 12 primitives
@@ -109,21 +115,12 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
     'PeerReviewSimulator',
     'BuilderCanvas',
     'DraftCoach',
-    // 14 configurations Git config-aware
+    // configurations Git réellement câblées sur une primitive
     'GitCommandSimulator',
     'GitDoctorTool',
-    'GitRepositoryPlayground',
     'MergeSimulator',
     'UndoCommandComparison',
-    'ForkVsCloneDemo',
-    'TrunkBasedDevelopmentVisualizer',
-    'ReflogExplorer',
-    'ResolutionGuide',
-    'PullRequestCreator',
-    'CollaborationSimulator',
-    'WorkflowDesigner',
     'ConflictVisualizer',
-    'GitTimeTravel',
     'StagingAreaVisualizer',
   ] as const;
 
@@ -183,7 +180,6 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       causes: [{ id: 'ca1', label: 'Cause A' }, { id: 'ca2', label: 'Cause B' }],
       correctCauseId: 'ca1',
     },
-    GitRepositoryPlayground: { blocks: ['Rubrique A'] },
     // MergeSimulator → MergeStrategyComparison → CompareContrast
     MergeSimulator: {
       optionA: { id: 'ff', label: 'Fast-forward' },
@@ -196,33 +192,17 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       optionB: { id: 'reset', label: 'git reset' },
       criteria: [{ id: 'shared', label: 'Historique partagé' }],
     },
-    ForkVsCloneDemo: {
-      optionA: { id: 'a', label: 'Option A' },
-      optionB: { id: 'b', label: 'Option B' },
-      criteria: [{ id: 'cr1', label: 'Critère', guidance: 'À observer' }],
-    },
-    TrunkBasedDevelopmentVisualizer: {
-      optionA: { id: 'a', label: 'Option A' },
-      optionB: { id: 'b', label: 'Option B' },
-      criteria: [{ id: 'cr1', label: 'Critère', guidance: 'À observer' }],
-    },
-    ReflogExplorer: { steps: [{ id: 's1', instruction: 'Fais X', expected: 'x' }] },
-    ResolutionGuide: { checkpoints: [{ id: 'c1', label: 'Vérifie', detail: 'Détail' }] },
-    PullRequestCreator: { prompt: 'Consigne', criteria: [{ id: 'd1', label: 'Critère', guidance: 'Vérif' }] },
-    CollaborationSimulator: { scenario: 'Un scénario', options: [{ id: 'o1', label: 'Choix' }] },
-    WorkflowDesigner: { blocks: ['Rubrique A', 'Rubrique B'] },
     ConflictVisualizer: {
       categories: [{ id: 'cat1', label: 'Catégorie' }],
       items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
     },
-    GitTimeTravel: { pairs: [{ id: 'p1', left: 'Gauche', right: 'Droite' }] },
     StagingAreaVisualizer: {
       categories: [{ id: 'cat1', label: 'Catégorie' }],
       items: [{ id: 'i1', label: 'Élément', categoryId: 'cat1' }],
     },
   };
 
-  it('couvre EXACTEMENT les 12 primitives + les 14 configurations Git config-aware', () => {
+  it('couvre EXACTEMENT les composants dont `config.data` est consommée', () => {
     // ⚠️ Un nom manquant est précisément la faille qui a laissé passer une dérive silencieuse.
     expect(Object.keys(ECHANTILLONS).sort()).toEqual([...PERIMETRE].sort());
     for (const nom of PERIMETRE) {
@@ -256,5 +236,58 @@ describe('DATA_SCHEMAS — alignés sur les données réellement lues par les co
       .map(([nom]) => nom);
 
     expect(encoreAcceptees).toEqual([]);
+  });
+});
+
+/**
+ * ⚠️ **L'autre moitié de la vérité du schéma (lot 2).** Un composant qui affiche un contenu en
+ * dur — sans exploiter `config.data` — doit déclarer un schéma **vide**. L'ancienne forme
+ * (`{ pairs }`, `{ steps }`, `{ checkpoints }`, forme `CompareContrast`…) décrivait la
+ * configuration d'une variante **morte** : le créateur et l'IA pouvaient éditer une donnée
+ * silencieusement ignorée au rendu.
+ *
+ * Le test échoue si l'on réintroduit une clé : il verrouille le réalignement.
+ */
+describe('DATA_SCHEMAS — composants spécialisés non data-driven : aucune donnée attendue', () => {
+  const SANS_DONNEES = [
+    'GitTimeTravel',
+    'ReflogExplorer',
+    'ResolutionGuide',
+    'ForkVsCloneDemo',
+    'TrunkBasedDevelopmentVisualizer',
+    'PullRequestCreator',
+    'WorkflowDesigner',
+    'CollaborationSimulator',
+    'ConflictPlayground',
+    'TimelineNavigator',
+    'BranchCreator',
+    'ConflictResolver',
+    'PRWorkflowSimulator',
+    'IssueTracker',
+    'VersioningDemo',
+    'AliasCreator',
+    'CommitMessageLinter',
+    'GitignoreTester',
+    'SecurityScanner',
+    'PushPullAnimator',
+    'GitRepositoryPlayground',
+    'AiHelper',
+    'ActionsWorkflowBuilder',
+    'FlowDiagramBuilder',
+    'GitHubInterfaceSimulator',
+    'OpenSourceSimulator',
+    'WorkflowSimulator',
+  ] as const;
+
+  it('déclarent un schéma objet sans aucune clé', () => {
+    for (const nom of SANS_DONNEES) {
+      expect(COMPONENT_CATALOG_BY_NAME[nom]).toBeDefined();
+      const schema = DATA_SCHEMAS[nom];
+      const shape = (schema as unknown as { shape?: Record<string, unknown> }).shape;
+      // Un schéma non-objet n'a pas de `shape` : le message nomme alors le composant fautif.
+      expect({ nom, cles: Object.keys(shape ?? {}) }).toEqual({ nom, cles: [] });
+      // Aucune donnée n'est requise : `{}` est valide.
+      expect(schema.safeParse({}).success).toBe(true);
+    }
   });
 });

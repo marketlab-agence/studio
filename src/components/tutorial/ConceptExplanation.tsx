@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lightbulb, History, GitCompare, ArrowLeftRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const concepts = [
     {
@@ -20,10 +21,12 @@ const concepts = [
     }
 ]
 
-export function ConceptExplanation() {
+export function ConceptExplanation({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = titre historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles({ title: 'Pourquoi le Versioning est Important ?' }, config?.labels);
   return (
     <div className="my-8">
-        <h3 className="text-xl font-bold mb-4">Pourquoi le Versioning est Important ?</h3>
+        <h3 className="text-xl font-bold mb-4">{libelles.title}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {concepts.map(concept => (
                 <Card key={concept.title} className="bg-muted/50">

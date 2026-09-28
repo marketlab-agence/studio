@@ -11,12 +11,12 @@
 | Champ | Valeur |
 |---|---|
 | Version | `0.1.0` (voir `VERSION`) |
-| Branche Git active | à renseigner |
-| Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** · ✅ **Phase 8bis — Composants multiples** (T8bis.1-T8bis.9) |
-| Phase en cours | ✅ **Phase 8bis — Composants pédagogiques multiples par leçon terminée** : une leçon porte **N composants ordonnés** (`lesson_components`, clé de substitution `UUID`) · `config {labels,data}` avec **schéma strict 58/58** · sélection IA **pilotée par Bloom** · trace attribuée à **l'instance** (`lesson_component_id`, `ON DELETE SET NULL`) |
+| Branche Git active | `master` (fusion de `feat/phase8bis-config-58`) |
+| Dernière phase complétée | ✅ **Phases 0 à 5** · ✅ **Phase 4 — Authentification** · ✅ **Phase 8bis — Composants multiples** (T8bis.1-T8bis.9 + vague « config sur les 58 » + Group 6) |
+| Phase en cours | ✅ **Phase 8bis — composants pédagogiques multiples, terminée et vérifiée** : une leçon porte **N composants ordonnés** (`lesson_components`, clé de substitution `UUID`) · `config {labels,data}` avec **schéma strict 58/58 ET config effective au rendu sur tous les composants** · sélection IA **pilotée par Bloom** · trace attribuée à **l'instance** (`lesson_component_id`, `ON DELETE SET NULL`) |
 | 🔴 **DÉCISION ATTENDUE** | **Révoquer la clé de service account Firebase** dans la console (retirer la variable d'environnement **ne l'invalide pas**). Tant que ce n'est pas fait, la clé reste valide pour qui la détiendrait. **Action manuelle, hors dépôt.** |
 | Prochaine phase | **Phase 9 — API centrale v1** (`/api/v1/*`, chaîne auth → scope → autorisation → Zod → handler) |
-| Qualité | `typecheck` 0 · `lint` 0 · **`lint:i18n`** 576 clés · tests **33 suites / 340** · tests DB **18 suites / 199** · **E2E 84** *(non re-exécutés à la consignation : mémoire insuffisante, cf. décision 51)* |
+| Qualité | `typecheck` 0 · `lint` 0 · **`lint:i18n`** 587 clés (parité FR/EN) · tests **35 suites / 405** · tests DB **18 suites / 202** · **E2E 84/84** (re-exécutés le 2026-09-28) · audit **6/6** |
 | **Conformité — progrès mesuré** | **6/6 formations conformes** · `R2` : 142 → **0** · `R3` : 80 niveaux · `R6` conforme · `R5.1` : 6/6 · `PLACEHOLDER_COMPONENTS` vide |
 | **Documentation** | `@docs/rework/` (3 f.) et `@docs/katalyst/` (4 f. dont `conformite-rnq-v10.md`, `regles-conformite.md`, `primitives-pedagogiques.md`) |
 | CI | bloquants : lint, typecheck, tests, check:version, gitleaks, tests DB, E2E · report-only : build |

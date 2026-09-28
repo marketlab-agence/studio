@@ -1,18 +1,25 @@
 import React from 'react';
 import { FolderGit, File, Folder } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function GitRepositoryPlayground() {
+export function GitRepositoryPlayground({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Bac à Sable de Dépôt Git',
+      description: 'Visualisez et interagissez avec un système de fichiers de dépôt simulé.',
+    },
+    config?.labels,
+  );
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FolderGit className="h-5 w-5 text-primary" />
-          Bac à Sable de Dépôt Git
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Visualisez et interagissez avec un système de fichiers de dépôt simulé.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 bg-muted rounded-md font-code text-sm">
         <ul className="space-y-1">

@@ -187,17 +187,14 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
   // ⚠️ Une configuration qui transmet `config` à une primitive décrit **la même forme** que
   // cette primitive : c'est ce qui rend la validation à l'écriture et à l'audit significative.
   GitCommandSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  // ⚠️ Le composant enregistré (`src/components/interactive/GitRepositoryPlayground.tsx`) n'est
-  // pas encore config-aware, mais `git-configurations.tsx` expose une configuration qui forward
-  // vers `BuilderCanvas`. Le schéma décrit donc la forme de `BuilderCanvas` pour que la donnée
-  // soit valide le jour où le câblage l'utilise — et pour ne pas accepter un `blocks` requis
-  // quand `BuilderCanvas` accepte aussi `sections`.
-  GitRepositoryPlayground: z.object({
-    sections: z.array(RubriqueCanevas).min(1).optional(),
-    blocks: Textes.optional(),
-    repeatable: BlocRepetable.optional(),
-  }),
-  GitTimeTravel: z.object({ pairs: z.array(Paire).min(1) }),
+  // ⚠️ Lot final : `GitRepositoryPlayground` est rendu par le composant **spécialisé** (arbre de
+  // fichiers statique), qui n'expose aucune donnée structurée. L'ancienne forme (`BuilderCanvas`)
+  // décrivait la configuration morte de la variante non câblée.
+  GitRepositoryPlayground: z.object({}),
+  // ⚠️ Lot 2 : `GitTimeTravel` est rendu par le composant **spécialisé** (machine à remonter le
+  // temps), qui n'expose aucune donnée structurée configurable. Le schéma vide dit la vérité du
+  // rendu : aucune donnée n'est attendue (l'ancien `{ pairs }` décrivait la configuration morte).
+  GitTimeTravel: z.object({}),
   GitDoctorTool: z.object({
     situation: z.string().min(1),
     clues: z.array(IndiceDiagnostic).min(1),
@@ -208,8 +205,8 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
     categories: z.array(CategorieTri).min(1),
     items: z.array(ItemTrie).min(1),
   }),
-  VersioningDemo: z.object({ commits: Textes }),
-  BranchCreator: z.object({ branches: z.array(z.string().min(1)).optional() }),
+  VersioningDemo: z.object({}),
+  BranchCreator: z.object({}),
   // ⚠️ `MergeSimulator` est enregistré sur `MergeStrategyComparison`, qui transmet `config`
   // à `CompareContrast` : le schéma doit donc décrire la forme de `CompareContrast`.
   MergeSimulator: z.object({
@@ -218,44 +215,29 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
     criteria: z.array(CritereComparaison).min(1),
     expectedConclusion: z.string().optional(),
   }),
-  ConflictPlayground: z.object({ files: Textes }),
+  ConflictPlayground: z.object({}),
   ConflictVisualizer: z.object({
     categories: z.array(CategorieTri).min(1),
     items: z.array(ItemTrie).min(1),
   }),
-  ConflictResolver: z.object({ files: Textes }),
-  ResolutionGuide: z.object({ checkpoints: z.array(Checkpoint).min(1) }),
-  PushPullAnimator: z.object({ steps: z.array(Etape).min(1) }),
-  ForkVsCloneDemo: z.object({
-    optionA: OptionComparaison,
-    optionB: OptionComparaison,
-    criteria: z.array(CritereComparaison).min(1),
-    expectedConclusion: z.string().optional(),
-  }),
-  PRWorkflowSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  PullRequestCreator: z.object({
-    prompt: z.string().min(1),
-    example: z.string().optional(),
-    criteria: z.array(CritereRedaction).optional(),
-  }),
-  GitHubInterfaceSimulator: z.object({ blocks: Textes }),
-  IssueTracker: z.object({ items: z.array(ItemTrie).min(1) }),
-  ActionsWorkflowBuilder: z.object({ steps: z.array(Etape).min(1) }),
-  WorkflowSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  WorkflowDesigner: z.object({
-    sections: z.array(RubriqueCanevas).min(1).optional(),
-    blocks: Textes.optional(),
-    repeatable: BlocRepetable.optional(),
-  }),
-  FlowDiagramBuilder: z.object({ blocks: Textes }),
-  TrunkBasedDevelopmentVisualizer: z.object({
-    optionA: OptionComparaison,
-    optionB: OptionComparaison,
-    criteria: z.array(CritereComparaison).min(1),
-    expectedConclusion: z.string().optional(),
-  }),
-  ReflogExplorer: z.object({ steps: z.array(Etape).min(1) }),
-  TimelineNavigator: z.object({ commits: Textes }),
+  ConflictResolver: z.object({}),
+  ResolutionGuide: z.object({}),
+  PushPullAnimator: z.object({}),
+  // ⚠️ Lot 2 : rendu par le composant spécialisé « Fork vs Clone » (onglets), sans donnée
+  // structurée configurable. `{}` = aucune donnée attendue (l'ancienne forme `CompareContrast`
+  // décrivait la configuration morte).
+  ForkVsCloneDemo: z.object({}),
+  PRWorkflowSimulator: z.object({}),
+  PullRequestCreator: z.object({}),
+  GitHubInterfaceSimulator: z.object({}),
+  IssueTracker: z.object({}),
+  ActionsWorkflowBuilder: z.object({}),
+  WorkflowSimulator: z.object({}),
+  WorkflowDesigner: z.object({}),
+  FlowDiagramBuilder: z.object({}),
+  TrunkBasedDevelopmentVisualizer: z.object({}),
+  ReflogExplorer: z.object({}),
+  TimelineNavigator: z.object({}),
   // ⚠️ `UndoCommandComparison` est enregistré sur `UndoCommandComparisonConfig`, qui transmet
   // `config` à `CompareContrast` : le schéma doit décrire la forme de `CompareContrast`
   // (et non un `{ criteria: string[] }` que `CompareContrast` interpréterait comme des critères
@@ -266,31 +248,37 @@ export const DATA_SCHEMAS: Record<string, z.ZodType> = {
     criteria: z.array(CritereComparaison).min(1),
     expectedConclusion: z.string().optional(),
   }),
-  CommitMessageLinter: z.object({ examples: Textes }),
-  GitignoreTester: z.object({ patterns: Textes }),
-  AliasCreator: z.object({ examples: z.array(z.string().min(1)).optional() }),
-  SecurityScanner: z.object({ patterns: Textes }),
-  CollaborationSimulator: z.object({
-    scenario: z.string().min(1),
-    options: z.array(OptionDecision).min(1),
-  }),
-  OpenSourceSimulator: z.object({ steps: z.array(Etape).min(1) }),
-  AiHelper: z.object({ prompt: z.string().min(1) }),
+  CommitMessageLinter: z.object({}),
+  GitignoreTester: z.object({}),
+  AliasCreator: z.object({}),
+  SecurityScanner: z.object({}),
+  CollaborationSimulator: z.object({}),
+  OpenSourceSimulator: z.object({}),
+  AiHelper: z.object({}),
 
   // --- Composants visuels (illustratifs, sans obligation de niveau Bloom) ---
-  GitGraph: z.object({ commits: Textes }),
-  BranchDiagram: z.object({ branches: Textes }),
-  CommitTimeline: z.object({ commits: Textes }),
-  AnimatedFlow: z.object({ steps: z.array(Etape).min(1) }),
-  ConceptDiagram: z.object({ blocks: Textes }),
-  ConceptExplanation: z.object({ blocks: Textes }),
-  DiffViewer: z.object({ files: Textes }),
-  FileTreeViewer: z.object({ files: Textes }),
-  RepoComparison: z.object({ criteria: Textes }),
-  WorkflowComparisonTable: z.object({ criteria: Textes }),
-  LanguagesChart: z.object({ entries: Textes }),
-  StatisticsChart: z.object({ entries: Textes }),
-  ProjectDashboard: z.object({ entries: Textes }),
+  // ⚠️ Réalignés sur ce que chaque composant consomme RÉELLEMENT. Les illustrations
+  // n'ont aucune donnée structurée (pas de props de données) : `{}`. Les deux graphiques
+  // lisent `config.data.entries`.
+  GitGraph: z.object({}),
+  BranchDiagram: z.object({}),
+  CommitTimeline: z.object({}),
+  AnimatedFlow: z.object({}),
+  ConceptDiagram: z.object({}),
+  ConceptExplanation: z.object({}),
+  DiffViewer: z.object({}),
+  FileTreeViewer: z.object({}),
+  RepoComparison: z.object({}),
+  WorkflowComparisonTable: z.object({}),
+  LanguagesChart: z.object({
+    entries: z
+      .array(z.object({ name: z.string().min(1), value: z.number(), fill: z.string().min(1) }))
+      .min(1),
+  }),
+  StatisticsChart: z.object({
+    entries: z.array(z.object({ name: z.string().min(1), commits: z.number() })).min(1),
+  }),
+  ProjectDashboard: z.object({}),
 };
 
 /**
@@ -317,51 +305,56 @@ export const LABEL_KEYS: Record<string, Record<string, string>> = {
 
   // --- Configurations Git ---
   GitCommandSimulator: { title: 'Commandes Git essentielles', description: 'Exécute la procédure dans l’ordre.' },
-  GitRepositoryPlayground: { title: 'Dépôt à construire', description: 'Crée ton dépôt.' },
-  GitTimeTravel: { title: 'Voyage dans l’historique', description: 'Explore les versions.' },
+  GitRepositoryPlayground: { title: 'Bac à Sable de Dépôt Git', description: 'Visualisez et interagissez avec un système de fichiers de dépôt simulé.' },
+  GitTimeTravel: { title: 'Machine à Remonter le Temps Git', description: "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments." },
   GitDoctorTool: { title: 'Diagnostic de dépôt', description: 'Répare un état anormal.' },
   StagingAreaVisualizer: { title: 'Zone de staging', description: 'Suis l’état des fichiers.' },
-  VersioningDemo: { title: 'Le versioning en action', description: 'Crée des versions.' },
-  BranchCreator: { title: 'Création de branches', description: 'Crée et gère les branches.' },
+  VersioningDemo: { title: 'Démonstration du Versioning', description: 'Découvrez comment Git sauvegarde les versions de vos fichiers dans le temps.', historyHeading: 'Historique des versions', commitHeading: 'Effectuer un nouveau commit', commitButton: 'Commit les changements' },
+  BranchCreator: { title: 'Simulateur de Création de Branches', description: 'Créez et gérez des branches pour simuler un flux de travail de développement.' },
   MergeSimulator: { title: 'Fusion de branches', description: 'Combine le travail.' },
-  ConflictPlayground: { title: 'Terrain de conflit', description: 'Provoque un conflit.' },
+  ConflictPlayground: { title: 'Terrain de Jeu pour Conflits', description: 'Modifiez le texte ci-dessous pour résoudre le conflit manuellement.' },
   ConflictVisualizer: { title: 'Visualise le conflit', description: 'Comprends l’origine.' },
-  ConflictResolver: { title: 'Résous le conflit', description: 'Répare le conflit.' },
-  ResolutionGuide: { title: 'Guide de résolution', description: 'Suis la procédure.' },
-  PushPullAnimator: { title: 'Push et Pull', description: 'Synchronise avec le distant.' },
-  ForkVsCloneDemo: { title: 'Fork ou Clone ?', description: 'Choisis la bonne approche.' },
-  PRWorkflowSimulator: { title: 'Cycle d’une Pull Request', description: 'Suis le parcours complet.' },
-  PullRequestCreator: { title: 'Créer une Pull Request', description: 'Propose tes changements.' },
-  GitHubInterfaceSimulator: { title: 'Interface de GitHub', description: 'Repère les éléments.' },
-  IssueTracker: { title: 'Suivi des tâches', description: 'Crée et gère les issues.' },
-  ActionsWorkflowBuilder: { title: 'GitHub Actions', description: 'Automatise ton flux.' },
-  WorkflowSimulator: { title: 'Simulateur de workflow', description: 'Exécute le flux.' },
-  WorkflowDesigner: { title: 'Concevoir un workflow', description: 'Organise les étapes.' },
-  FlowDiagramBuilder: { title: 'Construis le diagramme', description: 'Représente le flux.' },
-  TrunkBasedDevelopmentVisualizer: { title: 'Trunk-Based Development', description: 'Comprends le flux minimaliste.' },
-  ReflogExplorer: { title: 'Explorateur de reflog', description: 'Retrouve les commits perdus.' },
-  TimelineNavigator: { title: 'Navigateur de timeline', description: 'Voyage dans le temps.' },
+  ConflictResolver: { title: 'Résolveur de Conflits Interactif', description: 'Apprenez à identifier et à résoudre les conflits de fusion en choisissant quelle version conserver.' },
+  ResolutionGuide: { title: 'Guide Pas-à-Pas de Résolution de Conflits', description: 'Suivez ces étapes pour résoudre un conflit de fusion comme un pro.' },
+  PushPullAnimator: { title: 'Animateur Push & Pull', localHeading: 'Dépôt Local', remoteHeading: 'Dépôt Distant (origin)' },
+  ForkVsCloneDemo: { title: 'Démonstration Fork vs Clone', description: "Visualisez les deux flux de travail principaux pour obtenir une copie d'un projet." },
+  PRWorkflowSimulator: { title: 'Simulateur de Workflow de Pull Request', description: "Suivez le cycle de vie d'une Pull Request, de la création à la fusion." },
+  PullRequestCreator: { title: 'Créateur de Pull Request', description: "Simulez la création d'une Pull Request pour proposer des modifications." },
+  GitHubInterfaceSimulator: { title: "Simulateur d'Interface GitHub", description: 'Explorez les fonctionnalités clés de GitHub comme les Issues et les Pull Requests.' },
+  IssueTracker: { createIssue: 'New Issue' },
+  ActionsWorkflowBuilder: { title: 'Constructeur de Workflow GitHub Actions', description: 'Créez un pipeline CI/CD, visualisez le fichier YAML, et simulez son exécution.' },
+  WorkflowSimulator: { title: 'Simulateur de Workflow GitFlow', description: 'Visualisez le flux GitFlow en créant des features, releases, et hotfixes.' },
+  WorkflowDesigner: { title: 'Designer de Workflow Git', description: 'Concevez et visualisez différents workflows Git comme GitFlow.' },
+  FlowDiagramBuilder: { title: 'Constructeur de Diagrammes de Flux', description: 'Créez votre propre flux de travail simple en ajoutant des étapes.' },
+  TrunkBasedDevelopmentVisualizer: { title: 'Visualisation du Trunk-Based Development', description: 'Dans ce flux, tous les développeurs travaillent directement sur une seule branche : le "trunk" (souvent `main`).' },
+  ReflogExplorer: { title: 'Explorateur Reflog', description: 'Le `reflog` est le filet de sécurité de Git. Il enregistre tous les mouvements de `HEAD`.' },
+  TimelineNavigator: { title: 'Navigateur de Timeline', description: "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments." },
   UndoCommandComparison: { title: 'Annuler : quelle commande ?', description: 'Choisis la bonne annulation.' },
-  CommitMessageLinter: { title: 'Messages de commit', description: 'Rédige un message clair.' },
-  GitignoreTester: { title: 'Tester .gitignore', description: 'Vérifie les règles.' },
-  AliasCreator: { title: 'Créer des alias', description: 'Raccourcis tes commandes.' },
-  SecurityScanner: { title: 'Scanner de secrets', description: 'Détecte les données sensibles.' },
-  CollaborationSimulator: { title: 'Collaboration', description: 'Travaille à plusieurs.' },
-  OpenSourceSimulator: { title: 'Contribuer à l’open source', description: 'Suis le processus complet.' },
-  AiHelper: { title: 'Assistant IA', description: 'Pose ta question.' },
+  CommitMessageLinter: { title: 'Linter de Messages de Commit', description: 'Écrivez de meilleurs messages de commit en suivant les bonnes pratiques.' },
+  GitignoreTester: { title: 'Simulateur de `.gitignore`', description: 'Testez vos règles `.gitignore` pour voir si un chemin de fichier serait ignoré. Le résultat se met à jour automatiquement.' },
+  AliasCreator: { title: "Assistant de Création d'Alias Git", description: 'Créez des raccourcis pour vos commandes Git les plus utilisées.' },
+  SecurityScanner: { title: 'Démonstration des Bonnes Pratiques de Sécurité', description: 'Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.' },
+  CollaborationSimulator: { title: 'Simulateur de Collaboration', description: 'Simulez un flux de travail collaboratif avec plusieurs contributeurs.' },
+  OpenSourceSimulator: { title: 'Simulateur de Contribution Open Source', description: 'Suivez le flux de travail complet pour proposer une modification à un projet.' },
+  // ⚠️ `AiHelper` interpole le sujet du cours dans sa description : elle n'est donc PAS un libellé
+  // statique personnalisable. Seuls le titre et le libellé du bouton le sont.
+  AiHelper: { title: 'Playground IA Katalyst', askButton: "Demander à l'IA" },
 
   // --- Composants visuels (illustratifs) ---
-  GitGraph: { title: 'Graphe Git', description: 'Visualise l’historique.' },
-  BranchDiagram: { title: 'Diagramme des branches', description: 'Comprends les branches.' },
-  CommitTimeline: { title: 'Chronologie des commits', description: 'Situe les commits.' },
-  AnimatedFlow: { title: 'Flux animé', description: 'Suis le mouvement.' },
-  ConceptDiagram: { title: 'Schéma de concept', description: 'Rends le concept lisible.' },
-  ConceptExplanation: { title: 'Explication illustrée', description: 'Comprends rapidement.' },
-  DiffViewer: { title: 'Vue des différences', description: 'Compare les versions.' },
-  FileTreeViewer: { title: 'Arborescence', description: 'Situe les fichiers.' },
-  RepoComparison: { title: 'Comparaison de dépôts', description: 'Confronte deux approches.' },
-  WorkflowComparisonTable: { title: 'Tableau comparatif', description: 'Compare les workflows.' },
-  LanguagesChart: { title: 'Répartition des langages', description: 'Visualise la composition.' },
-  StatisticsChart: { title: 'Statistiques', description: 'Visualise les chiffres.' },
-  ProjectDashboard: { title: 'Tableau de bord projet', description: 'Suis l’avancement.' },
+  // ⚠️ Réalignés sur le texte RÉELLEMENT affiché : modifier ce libellé par configuration
+  // doit produire exactement la valeur par défaut. Les composants qui n'affichent pas de
+  // description n'en déclarent donc pas.
+  GitGraph: { title: 'Illustration du Flux Git' },
+  BranchDiagram: { title: 'Diagramme des Branches' },
+  CommitTimeline: { title: 'Frise Chronologique des Commits' },
+  AnimatedFlow: { title: 'Flux Animé (ex: Push)' },
+  ConceptDiagram: { title: 'Diagramme de Concept' },
+  ConceptExplanation: { title: 'Pourquoi le Versioning est Important ?' },
+  DiffViewer: { title: 'Visualiseur de Différences' },
+  FileTreeViewer: { title: 'Explorateur de Fichiers', description: 'Visualisez la structure de votre projet.' },
+  RepoComparison: { title: 'Comparaison Local vs Distant' },
+  WorkflowComparisonTable: { title: 'Tableau Comparatif des Workflows Git', description: 'Comparez les approches populaires de gestion de branches pour choisir celle qui convient à votre projet.' },
+  LanguagesChart: { title: 'Répartition des langages' },
+  StatisticsChart: { title: 'Statistiques' },
+  ProjectDashboard: { title: 'Tableau de Bord du Projet Final', description: 'Un résumé de vos accomplissements durant le projet final simulé.' },
 };

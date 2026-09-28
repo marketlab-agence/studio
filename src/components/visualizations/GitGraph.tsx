@@ -2,11 +2,14 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GitMerge, GitPullRequest, GitCommit, ArrowRight, CornerDownRight, Users, ArrowLeft } from 'lucide-react';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function GitGraph() {
+export function GitGraph({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Le défaut est EXACTEMENT le titre historique : sans configuration, le rendu est identique.
+  const libelles = fusionnerLibelles({ title: 'Illustration du Flux Git' }, config?.labels);
   return (
     <div className="my-8">
-      <h3 className="text-xl font-bold mb-4">Illustration du Flux Git</h3>
+      <h3 className="text-xl font-bold mb-4">{libelles.title}</h3>
       <Card className="bg-muted/50">
         <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-x-4 gap-y-8 font-code text-sm">

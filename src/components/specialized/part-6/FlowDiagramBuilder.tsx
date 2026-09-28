@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, GitBranch, Bug, Rocket, FolderGit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type StepType = 'feature' | 'release' | 'hotfix';
 
@@ -24,8 +25,16 @@ const stepBlueprints: Record<StepType, Omit<WorkflowStep, 'id' | 'name'>> = {
     hotfix: { type: 'hotfix', icon: Bug, color: 'text-red-400' },
 };
 
-export function FlowDiagramBuilder() {
+export function FlowDiagramBuilder({ config }: { config?: ComponentConfig }) {
     const [steps, setSteps] = useState<WorkflowStep[]>([]);
+    // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+    const libelles = fusionnerLibelles(
+      {
+        title: 'Constructeur de Diagrammes de Flux',
+        description: 'Créez votre propre flux de travail simple en ajoutant des étapes.',
+      },
+      config?.labels,
+    );
     
     const addStep = (type: StepType) => {
         const count = steps.filter(s => s.type === type).length + 1;
@@ -45,8 +54,8 @@ export function FlowDiagramBuilder() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Constructeur de Diagrammes de Flux</CardTitle>
-        <CardDescription>Créez votre propre flux de travail simple en ajoutant des étapes.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="p-4 border rounded-lg mb-6">

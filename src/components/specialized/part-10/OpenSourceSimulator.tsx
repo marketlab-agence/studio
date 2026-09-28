@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle, GitBranch, GitCommitHorizontal, GitFork, GitPullRequest, Laptop, Server, History } from 'lucide-react';
 import { CodeBlock } from '@/components/ui/CodeBlock';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type Step = 'start' | 'fork' | 'clone' | 'branch' | 'commit' | 'push' | 'pr' | 'done';
 
@@ -21,8 +22,16 @@ const stepsConfig: Record<Step, { title: string; icon: React.ElementType; descri
   done: { title: 'Terminé !', icon: CheckCircle, description: 'Votre contribution a été proposée !' },
 };
 
-export function OpenSourceSimulator() {
+export function OpenSourceSimulator({ config }: { config?: ComponentConfig }) {
   const [currentStep, setCurrentStep] = useState<Step>('start');
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Simulateur de Contribution Open Source',
+      description: 'Suivez le flux de travail complet pour proposer une modification à un projet.',
+    },
+    config?.labels,
+  );
 
   const order: Step[] = ['start', 'fork', 'clone', 'branch', 'commit', 'push', 'pr', 'done'];
 
@@ -40,8 +49,8 @@ export function OpenSourceSimulator() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Simulateur de Contribution Open Source</CardTitle>
-        <CardDescription>Suivez le flux de travail complet pour proposer une modification à un projet.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="min-h-[250px]">
          <div className="flex flex-col items-center">

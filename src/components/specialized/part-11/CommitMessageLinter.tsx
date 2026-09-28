@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const rules = [
   { id: 'length', text: 'Le sujet ne doit pas dépasser 50 caractères.', test: (subject: string) => subject.length > 0 && subject.length <= 50 },
@@ -11,9 +12,17 @@ const rules = [
   { id: 'no-period', text: 'Le sujet ne doit pas se terminer par un point.', test: (subject: string) => !subject.endsWith('.') },
 ];
 
-export function CommitMessageLinter() {
+export function CommitMessageLinter({ config }: { config?: ComponentConfig }) {
   const [message, setMessage] = useState('feat: Ajout du linter de message de commit');
   const [subject, setSubject] = useState('');
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Linter de Messages de Commit',
+      description: 'Écrivez de meilleurs messages de commit en suivant les bonnes pratiques.',
+    },
+    config?.labels,
+  );
 
   useEffect(() => {
     const firstLine = message.split('\n')[0];
@@ -23,8 +32,8 @@ export function CommitMessageLinter() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Linter de Messages de Commit</CardTitle>
-        <CardDescription>Écrivez de meilleurs messages de commit en suivant les bonnes pratiques.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Textarea

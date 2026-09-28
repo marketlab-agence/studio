@@ -1,12 +1,15 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function AnimatedFlow() {
+export function AnimatedFlow({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = titre historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles({ title: 'Flux Animé (ex: Push)' }, config?.labels);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Flux Animé (ex: Push)</CardTitle>
+        <CardTitle>{libelles.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-around p-8">
         <div className="text-center">

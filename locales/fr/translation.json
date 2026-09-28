@@ -382,6 +382,17 @@
       "moveDown": "Descendre",
       "remove": "Retirer",
       "labelsTitle": "Libellés",
+      "labelKeys": {
+        "title": "Titre",
+        "description": "Description",
+        "localHeading": "Titre « dépôt local »",
+        "remoteHeading": "Titre « dépôt distant »",
+        "historyHeading": "Titre de l’historique",
+        "commitHeading": "Titre de la section commit",
+        "commitButton": "Libellé du bouton de commit",
+        "createIssue": "Libellé du bouton de création",
+        "askButton": "Libellé du bouton de question"
+      },
       "dataTitle": "Données (JSON)",
       "dataHint": "Données validées par le schéma du composant. Vide = valeurs par défaut.",
       "invalidJson": "JSON invalide : {message}",

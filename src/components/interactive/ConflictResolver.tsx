@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { CodeBlock } from '../ui/CodeBlock';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const INCOMING_CHANGES = `const greeting = "Hello, Universe!";`;
 const CURRENT_CHANGES = `const greeting = "Bonjour, Monde!";`;
@@ -17,9 +18,18 @@ ${CURRENT_CHANGES}
 ${INCOMING_CHANGES}
 >>>>>>> feature-branch (branche entrante)`;
 
-export function ConflictResolver() {
+export function ConflictResolver({ config }: { config?: ComponentConfig }) {
   const [status, setStatus] = useState<'unresolved' | 'resolved'>('unresolved');
   const [resolvedContent, setResolvedContent] = useState('');
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Résolveur de Conflits Interactif',
+      description:
+        'Apprenez à identifier et à résoudre les conflits de fusion en choisissant quelle version conserver.',
+    },
+    config?.labels,
+  );
 
   const handleResolve = (chosenContent: string) => {
     setResolvedContent(chosenContent);
@@ -36,11 +46,9 @@ export function ConflictResolver() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitPullRequestArrow className="h-5 w-5 text-destructive" />
-          Résolveur de Conflits Interactif
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Apprenez à identifier et à résoudre les conflits de fusion en choisissant quelle version conserver.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {status === 'unresolved' && (

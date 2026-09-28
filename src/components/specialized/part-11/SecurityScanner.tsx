@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Shield, ShieldAlert, ShieldCheck, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type ScanStatus = 'idle' | 'scanning' | 'safe' | 'vulnerable';
 
@@ -12,8 +13,17 @@ const fakeVulnerabilities = [
     { file: 'src/api/db.js', line: 12, issue: 'Clé API "sk_live_..." détectée en clair.' }
 ]
 
-export function SecurityScanner() {
+export function SecurityScanner({ config }: { config?: ComponentConfig }) {
   const [status, setStatus] = useState<ScanStatus>('idle');
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Démonstration des Bonnes Pratiques de Sécurité',
+      description:
+        'Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.',
+    },
+    config?.labels,
+  );
 
   const handleScan = () => {
     setStatus('scanning');
@@ -40,8 +50,8 @@ export function SecurityScanner() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Démonstration des Bonnes Pratiques de Sécurité</CardTitle>
-        <CardDescription>Lancez une analyse simulée pour détecter des secrets ou des clés API commités par erreur.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-4 items-center">

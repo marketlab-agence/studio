@@ -236,7 +236,12 @@ function LigneComposant({
             {Object.entries(meta.labelKeys).map(([cle, defaut]) => (
               <div key={cle} className="space-y-1">
                 <Label htmlFor={`label-${index}-${cle}`} className="text-xs">
-                  {cle}
+                  {/* ⚠️ Un libellé HUMAIN, pas la clé interne (`title`, `askButton`…) : le
+                      créateur lit ce qu'il modifie. Une clé inconnue (composant ajouté plus tard)
+                      retombe sur son identifiant plutôt que de faire échouer l'écran. */}
+                  {t.has(`editLesson.labelKeys.${cle}`)
+                    ? t(`editLesson.labelKeys.${cle}`)
+                    : cle}
                 </Label>
                 <Input
                   id={`label-${index}-${cle}`}

@@ -53,6 +53,12 @@ La version de référence est `VERSION` (source unique de vérité).
 - Rendu de N composants (`LessonView`) et **édition créateur** complète (ajout / retrait / réordonnancement / configuration).
 - Conformité : `R5.2` reformulée (« trace par composant », indicateur 19), `R7` (couverture Bloom des composants interactifs — rapport `donnees-a-completer`), `R8` (invariant catalogue : tout interactif déclare un niveau), `R9` (configuration valide).
 - ⚠️ **À suivre (contenu)** : 28 écarts composant ↔ niveau `R7` (Jira 10, Git 18) à aligner.
+- **Config effective sur les 58 composants** (vague A) : chaque composant rendu consomme `config.labels` — et `config.data` là où il est data-driven. Un libellé ou une donnée édité par le créateur ou produit par l'IA est donc **visible au rendu** ; les variantes non câblées du registre ont été écartées et 5 imports morts retirés.
+- **Robustesse d'écriture** : `saveLessons` / `remplacerComposants` en **tout ou rien** (transaction) ; positions des composants **normalisées 0..N-1**.
+- `R9` : `config.data == null` traité comme **absence** de donnée (et non comme une donnée invalide) ; le rapport d'audit présente les règles par **ordre canonique**.
+- **Éditeur** : les libellés sont affichés par leur **nom humain** (i18n) au lieu de la clé interne.
+- ADR **0014** — catalogue générique et slots pédagogiques réutilisables (une future formation non-Git réutilise les composants sans code).
+- **Vérification (2026-09-28)** : `typecheck` 0 · `lint` 0 · `lint:i18n` 587 clés (parité FR/EN) · **405 tests unitaires** · **202 tests DB** · **84 tests E2E** · audit RNQ **6/6**.
 
 ## [0.1.0] — état initial
 

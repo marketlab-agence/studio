@@ -4,18 +4,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
-export function PullRequestCreator() {
+export function PullRequestCreator({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Créateur de Pull Request',
+      description: "Simulez la création d'une Pull Request pour proposer des modifications.",
+    },
+    config?.labels,
+  );
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitPullRequestDraft className="h-5 w-5 text-primary" />
-          Créateur de Pull Request
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Simulez la création d'une Pull Request pour proposer des modifications.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">

@@ -410,11 +410,12 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     for (const composant of lesson.components) {
       const config = composant.config as { data?: unknown } | undefined;
 
-      // ⚠️ **`data === undefined` signifie « valeurs par défaut » : toujours valide.**
-      // Ne signaler que la donnée **réellement fournie** — sinon tout composant non
-      // configuré (ex. `AiHelper`) serait déclaré non conforme, et la porte d'audit
-      // échouerait sur des leçons pourtant saines.
-      if (config?.data === undefined) continue;
+      // ⚠️ **`data` absente OU `null` signifie « valeurs par défaut » : toujours valide.**
+      // `null` n'est pas une donnée fournie : c'est l'absence de donnée (une colonne JSONB
+      // `NULL`, ou un client qui envoie explicitement `null`). Le confondre avec une donnée
+      // présente ferait échouer l'audit d'un composant pourtant non configuré.
+      // Ne signaler que la donnée **réellement fournie**.
+      if (config?.data == null) continue;
 
       const meta = resolveComponentMeta(composant.name);
       if (!meta) continue;
@@ -542,6 +543,19 @@ export function auditCourseContent(course: CourseContent): ContentComplianceRepo
     evaluable: false,
     notEvaluableReason: 'arrete',
   });
+
+  /**
+   * ⚠️ **Ordre canonique.** Les règles sont produites par blocs (R2, puis R6, puis R9…), ce qui
+   * reflète l'ordre d'écriture du code, pas une logique de lecture. On les trie une seule fois ici
+   * pour que le rapport — CLI comme UI — présente toujours R2, R3, R4, R5.1… dans l'ordre des
+   * numéros. Un identifiant inconnu passe en dernier (jamais d'exception de tri).
+   */
+  const ORDRE_CANONIQUE = ['R1', 'R2', 'R3', 'R4', 'R5.1', 'R5.2', 'R5.3', 'R6', 'R7', 'R8', 'R9'];
+  const rang = (rule: string) => {
+    const index = ORDRE_CANONIQUE.indexOf(rule);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  rules.sort((a, b) => rang(a.rule) - rang(b.rule));
 
   return {
     totalLessons: lessons.length,

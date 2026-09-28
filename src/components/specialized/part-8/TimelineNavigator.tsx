@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import { AnimatePresence, motion } from 'framer-motion';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const commitHistory = [
   { id: 'a1b2c3d', message: 'Commit initial', content: 'Version 1 du fichier.' },
@@ -15,8 +16,17 @@ const commitHistory = [
   { id: 'k0l9m8n', message: 'Ajout de la conclusion', content: '# Mon Titre\nVersion 3 du fichier corrigée.\n\nCeci est la fin.' },
 ];
 
-export function TimelineNavigator() {
+export function TimelineNavigator({ config }: { config?: ComponentConfig }) {
   const [currentCommitIndex, setCurrentCommitIndex] = useState(commitHistory.length - 1);
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Navigateur de Timeline',
+      description:
+        "Naviguez dans l'historique des commits pour voir l'état du projet à différents moments.",
+    },
+    config?.labels,
+  );
 
   const handleSliderChange = (value: number[]) => {
     setCurrentCommitIndex(value[0]);
@@ -29,11 +39,9 @@ export function TimelineNavigator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
-          Navigateur de Timeline
+          {libelles.title}
         </CardTitle>
-        <CardDescription>
-          Naviguez dans l'historique des commits pour voir l'état du projet à différents moments.
-        </CardDescription>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const initialPRs = [
   { id: 101, title: 'feat: Add dark mode support', status: 'Open', author: 'sarah-dev', comments: 3, labels: ['enhancement'] },
@@ -115,12 +116,21 @@ function PullRequestList() {
     )
 }
 
-export function GitHubInterfaceSimulator() {
+export function GitHubInterfaceSimulator({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: "Simulateur d'Interface GitHub",
+      description:
+        'Explorez les fonctionnalités clés de GitHub comme les Issues et les Pull Requests.',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Simulateur d'Interface GitHub</CardTitle>
-        <CardDescription>Explorez les fonctionnalités clés de GitHub comme les Issues et les Pull Requests.</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="issues" className="w-full">

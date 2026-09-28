@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { ArrowLeftRight, GitCommitHorizontal, Server, HardDrive } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type Commit = {
   id: string;
@@ -19,9 +20,14 @@ const initialRemoteCommits: Commit[] = [
     { id: 'c1', message: 'docs: update README' },
 ];
 
-export function PushPullAnimator() {
+export function PushPullAnimator({ config }: { config?: ComponentConfig }) {
   const [localCommits, setLocalCommits] = useState<Commit[]>(initialLocalCommits);
   const [remoteCommits, setRemoteCommits] = useState<Commit[]>(initialRemoteCommits);
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    { title: 'Animateur Push & Pull', localHeading: 'Dépôt Local', remoteHeading: 'Dépôt Distant (origin)' },
+    config?.labels,
+  );
 
   const handlePush = () => {
     if (localCommits.length === 0) return;
@@ -51,13 +57,13 @@ export function PushPullAnimator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <ArrowLeftRight className="h-5 w-5 text-primary"/>
-            Animateur Push & Pull
+            {libelles.title}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[250px]">
         {/* Local Repository */}
         <div className="border rounded-lg p-4 flex flex-col">
-            <h3 className="font-semibold mb-2 flex items-center gap-2"><HardDrive className="h-5 w-5 text-blue-400"/> Dépôt Local</h3>
+            <h3 className="font-semibold mb-2 flex items-center gap-2"><HardDrive className="h-5 w-5 text-blue-400"/> {libelles.localHeading}</h3>
             <div className="flex-1 space-y-2">
                 <AnimatePresence>
                     {localCommits.map(commit => (
@@ -82,7 +88,7 @@ export function PushPullAnimator() {
 
         {/* Remote Repository */}
         <div className="border rounded-lg p-4 flex flex-col">
-            <h3 className="font-semibold mb-2 flex items-center gap-2"><Server className="h-5 w-5 text-green-400"/> Dépôt Distant (origin)</h3>
+            <h3 className="font-semibold mb-2 flex items-center gap-2"><Server className="h-5 w-5 text-green-400"/> {libelles.remoteHeading}</h3>
             <div className="flex-1 space-y-2">
                 <AnimatePresence>
                     {remoteCommits.map(commit => (

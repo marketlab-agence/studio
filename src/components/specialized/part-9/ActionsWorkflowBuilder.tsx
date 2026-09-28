@@ -7,6 +7,7 @@ import { CodeBlock } from '@/components/ui/CodeBlock';
 import { PlayCircle, Hammer, TestTube, Rocket, Trash2, CheckCircle, CircleDashed, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 type ActionStep = {
     id: number;
@@ -64,10 +65,18 @@ jobs:
   return intro + stepsYaml;
 };
 
-export function ActionsWorkflowBuilder() {
+export function ActionsWorkflowBuilder({ config }: { config?: ComponentConfig }) {
     const [workflowSteps, setWorkflowSteps] = useState<ActionStep[]>([]);
     const [logs, setLogs] = useState<Log[]>([]);
     const [isRunning, setIsRunning] = useState(false);
+    // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+    const libelles = fusionnerLibelles(
+      {
+        title: 'Constructeur de Workflow GitHub Actions',
+        description: 'Créez un pipeline CI/CD, visualisez le fichier YAML, et simulez son exécution.',
+      },
+      config?.labels,
+    );
 
     const addStep = (stepKey: string) => {
         setWorkflowSteps(prev => [...prev, { ...availableSteps[stepKey], id: Date.now() }]);
@@ -109,10 +118,8 @@ export function ActionsWorkflowBuilder() {
   return (
     <Card className="my-6">
       <CardHeader>
-        <CardTitle>Constructeur de Workflow GitHub Actions</CardTitle>
-        <CardDescription>
-          Créez un pipeline CI/CD, visualisez le fichier YAML, et simulez son exécution.
-        </CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

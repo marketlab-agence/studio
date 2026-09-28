@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { GitCommitHorizontal, GitMerge, Code, TestTube, Rocket } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { fusionnerLibelles, type ComponentConfig } from '@/lib/schemas/component-config';
 
 const TBD_STEPS = [
   { icon: Code, title: "Petit commit", description: "Un développeur fait un petit changement et le commit sur la branche principale." },
@@ -12,12 +13,21 @@ const TBD_STEPS = [
   { icon: Rocket, title: "Déploiement (optionnel)", description: "La branche principale est déployée en continu ou à la demande." },
 ];
 
-export function TrunkBasedDevelopmentVisualizer() {
+export function TrunkBasedDevelopmentVisualizer({ config }: { config?: ComponentConfig }) {
+  // ⚠️ Défaut = texte historique : rendu identique sans configuration.
+  const libelles = fusionnerLibelles(
+    {
+      title: 'Visualisation du Trunk-Based Development',
+      description:
+        'Dans ce flux, tous les développeurs travaillent directement sur une seule branche : le "trunk" (souvent `main`).',
+    },
+    config?.labels,
+  );
   return (
     <Card className="my-6 bg-transparent border-border/50">
       <CardHeader>
-        <CardTitle>Visualisation du Trunk-Based Development</CardTitle>
-        <CardDescription>Dans ce flux, tous les développeurs travaillent directement sur une seule branche : le "trunk" (souvent `main`).</CardDescription>
+        <CardTitle>{libelles.title}</CardTitle>
+        <CardDescription>{libelles.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
         <div>
