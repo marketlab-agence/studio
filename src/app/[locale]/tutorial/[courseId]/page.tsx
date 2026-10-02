@@ -12,8 +12,8 @@ const getChapterNumber = (title: string) => {
   return match ? parseInt(match[1], 10) : Infinity;
 };
 
-export default async function TutorialCoursePage({ params }: { params: { courseId: string } }) {
-  const { courseId } = params;
+export default async function TutorialCoursePage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = await params;
 
   const allCourses: CourseInfo[] = await getCourses();
   const allTutorials: Tutorial[] = await getTutorials();

@@ -25,9 +25,10 @@ import type { Tutorial } from '@/types/tutorial.types';
 import { PublishCourseButton } from './PublishCourseButton';
 
 
-export default async function CourseChaptersPage({ params }: { params: { courseId: string } }) {
+export default async function CourseChaptersPage({ params }: { params: Promise<{ courseId: string }> }) {
   const t = await getTranslations('admin');
-  const { course, chapters } = await getCourseAndChaptersAction(params.courseId);
+  const { courseId } = await params;
+  const { course, chapters } = await getCourseAndChaptersAction(courseId);
 
   if (!course) {
     notFound();
@@ -56,7 +57,7 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
           </div>
         </div>
         {courseInfo.status === 'Brouillon' && (
-           <PublishCourseButton courseId={params.courseId} />
+           <PublishCourseButton courseId={courseId} />
         )}
       </div>
 
@@ -82,7 +83,7 @@ export default async function CourseChaptersPage({ params }: { params: { courseI
                     <TableCell>{chapter.lessons.length}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${params.courseId}/chapters/${chapter.id}`}>{t('edit')}</Link>
+                        <Link href={`/admin/courses/${courseId}/chapters/${chapter.id}`}>{t('edit')}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

@@ -9,11 +9,12 @@ import { Lightbulb } from 'lucide-react';
 import Image from 'next/image';
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = BLOG_POSTS.find((p) => p.slug === params.slug);
+  const { slug } = await params;
+  const post = BLOG_POSTS.find((p) => p.slug === slug);
 
   if (!post) {
     return {
@@ -35,7 +36,8 @@ export async function generateStaticParams() {
 
 export default async function BlogPostPage({ params }: Props) {
   const t = await getTranslations('blog');
-  const post = BLOG_POSTS.find((p) => p.slug === params.slug);
+  const { slug } = await params;
+  const post = BLOG_POSTS.find((p) => p.slug === slug);
 
   if (!post) {
     notFound();

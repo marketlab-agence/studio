@@ -22,12 +22,13 @@ import { getTranslations } from 'next-intl/server';
 import { FileText, ChevronRight, GraduationCap } from 'lucide-react';
 import { getCourses } from '@/lib/courses';
 
-export default async function ChapterLessonsPage({ params }: { params: { courseId: string, chapterId: string } }) {
+export default async function ChapterLessonsPage({ params }: { params: Promise<{ courseId: string; chapterId: string }> }) {
   const t = await getTranslations('admin');
+  const { courseId, chapterId } = await params;
   const tutorials = await getTutorials();
-  const chapter = tutorials.find(c => c.id === params.chapterId);
+  const chapter = tutorials.find(c => c.id === chapterId);
   const courses = await getCourses();
-  const course = courses.find(c => c.id === params.courseId);
+  const course = courses.find(c => c.id === courseId);
 
   if (!chapter || !course) {
     notFound();
@@ -40,7 +41,7 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
         <ChevronRight className="h-4 w-4" />
         <Link href="/admin/courses" className="hover:text-primary">{t('courses.title')}</Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href={`/admin/courses/${params.courseId}`} className="hover:text-primary max-w-xs truncate">{course.title}</Link>
+        <Link href={`/admin/courses/${courseId}`} className="hover:text-primary max-w-xs truncate">{course.title}</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground max-w-xs truncate">{chapter.title}</span>
       </div>
@@ -56,7 +57,7 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
           </div>
         </div>
         <Button asChild variant="secondary">
-            <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/quiz`}>
+            <Link href={`/admin/courses/${courseId}/chapters/${chapterId}/quiz`}>
                 <GraduationCap className="mr-2 h-4 w-4" />
                 {t('chapterDetail.editQuiz')}
             </Link>
@@ -85,7 +86,7 @@ export default async function ChapterLessonsPage({ params }: { params: { courseI
                     <TableCell className="text-muted-foreground">{lesson.objective}</TableCell>
                     <TableCell>
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${params.courseId}/chapters/${params.chapterId}/lessons/${lesson.id}`}>{t('edit')}</Link>
+                        <Link href={`/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`}>{t('edit')}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
